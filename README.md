@@ -39,6 +39,7 @@ Tired of your old & easy survival worlds? Try Sudden Death. It will give you a h
 - Witches summon old runes (linear projectiles) that attack nearby players and slow them down.
 - Wither Skeletons can quickly blink to players, dealing damage.
 - Wither Skeletons can fire damaging coal pieces.
+
 ![image](https://github.com/user-attachments/assets/1fcdbad5-5c56-4335-96bd-d958248dc608)
 
 ## New Monsters
@@ -55,6 +56,7 @@ Tired of your old & easy survival worlds? Try Sudden Death. It will give you a h
     - Enchantments & leather armor colors for equipped items
     - Spawn Chance
     - Potion Effects
+
 ![55eabf4bc062dfd84d870d2bf1e38e04fcad9ec9](https://github.com/user-attachments/assets/00bf3468-a922-4a1f-ac8a-cca6b1b06549)
 
 ## 5 Custom Difficulties
@@ -70,6 +72,7 @@ Players can select among the 5 different difficulties the one that fits the most
 - All non-admin messages & GUIs can be translated
 - WorldGuard flags
 - Full tab completion system
+
 ![image](https://github.com/user-attachments/assets/31b13b0c-d8e2-4634-813e-280ae6d081d7)
 
 ## Commands
