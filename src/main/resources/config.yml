@@ -1,0 +1,5 @@
+disable-difficulties: false
+default-difficulty: SANDBOX
+update-notify: true
+custom-mobs-world-blacklist:
+  - world_the_end
