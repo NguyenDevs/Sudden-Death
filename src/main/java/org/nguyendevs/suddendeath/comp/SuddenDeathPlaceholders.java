@@ -1,23 +1,24 @@
 package org.nguyendevs.suddendeath.comp;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.Utils;
 import org.bukkit.entity.Player;
 
 public class SuddenDeathPlaceholders extends PlaceholderExpansion {
 	@Override
-	public String getAuthor() {
+	public @NotNull String getAuthor() {
 		return "NguyenDevs";
 	}
 
 	@Override
-	public String getIdentifier() {
+	public @NotNull String getIdentifier() {
 		return "suddendeath";
 	}
 
 	@Override
-	public String getVersion() {
+	public @NotNull String getVersion() {
 		return "1.0";
 	}
 

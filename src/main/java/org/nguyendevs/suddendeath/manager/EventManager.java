@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Random;
 
 public class EventManager extends BukkitRunnable {
-    private final Map<String, StatusRetriever> status = new HashMap<>();
+    private static final Map<String, StatusRetriever> status = new HashMap<>();
 
     private static final Random random = new Random();
 
@@ -83,7 +83,7 @@ public class EventManager extends BukkitRunnable {
         status.put(world.getName(), retriever);
     }
 
-    public WorldStatus getStatus(World world) {
+    public static WorldStatus getStatus(World world) {
         return status.containsKey(world.getName()) ? status.get(world.getName()).getStatus() : WorldStatus.DAY;
     }
 
@@ -116,10 +116,10 @@ public class EventManager extends BukkitRunnable {
 
     @Override
     public void run() {
-        Bukkit.getWorlds().stream().filter(world -> world.getEnvironment() == Environment.NORMAL).forEach(world -> checkForEvent(world));
+        Bukkit.getWorlds().stream().filter(world -> world.getEnvironment() == Environment.NORMAL).forEach(this::checkForEvent);
     }
 
-    public class SimpleStatusRetriever implements StatusRetriever {
+    public static class SimpleStatusRetriever implements StatusRetriever {
         private final WorldStatus status;
 
         public SimpleStatusRetriever(WorldStatus status) {

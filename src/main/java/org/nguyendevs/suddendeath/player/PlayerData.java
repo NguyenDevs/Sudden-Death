@@ -35,7 +35,7 @@ public class PlayerData {
 	private final OfflinePlayer offlinePlayer;
 	private Player player;
 
-	private static Map<UUID, PlayerData> map = new HashMap<>();
+	private static final Map<UUID, PlayerData> map = new HashMap<>();
 
 	private PlayerData(Player player) {
 		offlinePlayer = player;
@@ -48,9 +48,9 @@ public class PlayerData {
 
 		if (config.contains("difficulty"))
 			try {
-				difficulty = Difficulty.valueOf(config.getString("difficulty").toUpperCase());
+				difficulty = Difficulty.valueOf(Objects.requireNonNull(config.getString("difficulty")).toUpperCase());
 			} catch (IllegalArgumentException e) {
-				SuddenDeath.plugin.getLogger().log(Level.WARNING, "Couldn't read difficulty (userdata) from " + config.getString("difficulty").toUpperCase());
+				SuddenDeath.plugin.getLogger().log(Level.WARNING, "Couldn't read difficulty (userdata) from " + Objects.requireNonNull(config.getString("difficulty")).toUpperCase());
 			}
 
 		return this;
@@ -122,11 +122,10 @@ public class PlayerData {
 	}
 
 	public void cleanAttributeModifiers(AttributeInstance ins) {
-		for (Iterator<AttributeModifier> iterator = ins.getModifiers().iterator(); iterator.hasNext();) {
-			AttributeModifier mod = iterator.next();
-			if (mod.getName().startsWith("suddenDeath."))
-				ins.removeModifier(mod);
-		}
+        for (AttributeModifier mod : ins.getModifiers()) {
+            if (mod.getName().startsWith("suddenDeath."))
+                ins.removeModifier(mod);
+        }
 	}
 
 	public void updateMovementSpeed() {
@@ -142,7 +141,8 @@ public class PlayerData {
 					t += malus;
 
 		AttributeInstance ins = player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-		cleanAttributeModifiers(ins);
+        assert ins != null;
+        cleanAttributeModifiers(ins);
 		if (t > 0)
 			ins.addModifier(new AttributeModifier(UUID.randomUUID(), "suddenDeath.armorSlow", -t, Operation.ADD_SCALAR));
 	}
@@ -155,12 +155,12 @@ public class PlayerData {
 		return map.values();
 	}
 
-	public static PlayerData setup(Player player) {
+	public static void setup(Player player) {
 		if (!map.containsKey(player.getUniqueId())) {
 			PlayerData data = new PlayerData(player).load(new ConfigFile("/userdata", player.getUniqueId().toString()).getConfig());
 			map.put(player.getUniqueId(), data);
-			return data;
+			return;
 		}
-		return get(player).setPlayer(player);
+		get(player).setPlayer(player);
 	}
 }

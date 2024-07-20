@@ -1,12 +1,10 @@
 package org.nguyendevs.suddendeath.world;
 
 import org.bukkit.*;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -15,15 +13,15 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
-import org.nguyendevs.suddendeath.manager.EventManager.WorldStatus;
+import org.nguyendevs.suddendeath.manager.EventManager;
 
+import java.util.Objects;
 import java.util.Random;
 
 public class BloodMoon extends WorldEventHandler {
-	private final Random random = new Random();
 
 	public BloodMoon(World world) {
-		super(world, 3 * 20, WorldStatus.BLOOD_MOON);
+		super(world, 3 * 20, EventManager.WorldStatus.BLOOD_MOON);
 	}
 
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -63,8 +61,8 @@ public class BloodMoon extends WorldEventHandler {
 
 			new BukkitRunnable() {
 				double ti = 0.0D;
-				Location loc = zombie.getLocation().clone();
-				Random r = new Random();
+				final Location loc = zombie.getLocation().clone();
+				final Random r = new Random();
 
 				public void run() {
 					if (this.ti > 2.0D) {
@@ -77,7 +75,7 @@ public class BloodMoon extends WorldEventHandler {
 							if (this.r.nextDouble() >= 0.4D) {
 								// Add a height offset of 2 blocks to the y-coordinate
 								Location loc1 = this.loc.clone().add(Math.cos(i) * 0.8D, this.ti + 2.0D, Math.sin(i) * 0.8D);
-								loc1.getWorld().spawnParticle(Particle.REDSTONE, loc1, 0, new Particle.DustOptions(Color.BLACK, 1.0F));
+								Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.REDSTONE, loc1, 0, new Particle.DustOptions(Color.BLACK, 1.0F));
 							}
 						}
 					}

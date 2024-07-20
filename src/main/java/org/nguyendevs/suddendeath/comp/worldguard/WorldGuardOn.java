@@ -14,9 +14,9 @@ import org.bukkit.entity.Player;
 import java.util.HashMap;
 
 public class WorldGuardOn implements WGPlugin {
-	private WorldGuard worldguard;
-	private WorldGuardPlugin worldguardPlugin;
-	private HashMap<String, StateFlag> flags = new HashMap<String, StateFlag>();
+	private final WorldGuard worldguard;
+	private final WorldGuardPlugin worldguardPlugin;
+	private final HashMap<String, StateFlag> flags = new HashMap<String, StateFlag>();
 
 	public WorldGuardOn() {
 		worldguard = WorldGuard.getInstance();

@@ -9,6 +9,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public class ItemUtils {
@@ -21,12 +22,12 @@ public class ItemUtils {
 			if (i.getItemMeta() instanceof LeatherArmorMeta)
 				format += ",color=" + ((LeatherArmorMeta) i.getItemMeta()).getColor().asRGB();
 
-			if (i.getItemMeta().hasEnchants()) {
-				String enchFormat = "";
+			if (Objects.requireNonNull(i.getItemMeta()).hasEnchants()) {
+				StringBuilder enchFormat = new StringBuilder();
 				for (Enchantment ench : i.getItemMeta().getEnchants().keySet())
-					enchFormat += ";" + ench.getKey().getKey() + ":" + i.getItemMeta().getEnchantLevel(ench);
+					enchFormat.append(";").append(ench.getKey().getKey()).append(":").append(i.getItemMeta().getEnchantLevel(ench));
 
-				enchFormat = enchFormat.substring(1);
+				enchFormat = new StringBuilder(enchFormat.substring(1));
 				format += ",enchants=" + enchFormat;
 			}
 		}
@@ -51,7 +52,7 @@ public class ItemUtils {
 				Material material = Material.AIR;
 				try {
 					material = Material.valueOf(arg);
-				} catch (Exception e) {
+				} catch (Exception ignored) {
 				}
 				i = new ItemStack(material);
 				meta = i.getItemMeta();
@@ -75,8 +76,10 @@ public class ItemUtils {
 					String[] split = ench.split(Pattern.quote(":"));
 					Enchantment name = Enchantment.getByKey(NamespacedKey.minecraft(split[0]));
 					int level = Integer.parseInt(split[1]);
-					if (name != null && level != 0)
-						meta.addEnchant(name, level, true);
+					if (name != null && level != 0) {
+                        assert meta != null;
+                        meta.addEnchant(name, level, true);
+                    }
 				}
 			}
 		}

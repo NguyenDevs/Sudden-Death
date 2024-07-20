@@ -16,6 +16,8 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.weather.LightningStrikeEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.Objects;
+
 public class Thunderstorm extends WorldEventHandler {
 	public Thunderstorm(World world) {
 		super(world, 4 * 20, WorldStatus.THUNDER_STORM);
@@ -57,7 +59,7 @@ public class Thunderstorm extends WorldEventHandler {
 				public void run() {
 					ti += Math.PI / 16;
 					Location loc1 = randomLoc.clone().add(.5 + Math.cos(ti), 1, .5 + Math.sin(ti)); // Thêm 1 vào trục Y để cách mặt đất 1 block
-					loc1.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc1, 0, 0, 0, 0, 0);
+					Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.SMOKE_NORMAL, loc1, 0, 0, 0, 0, 0);
 					loc1.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, loc1, 0, 0, 0, 0, 0);
 					loc1.getWorld().playSound(loc1, Sound.BLOCK_GLASS_BREAK, 2, 2);
 					if (ti > Math.PI * 2) {
