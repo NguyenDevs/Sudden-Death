@@ -17,7 +17,7 @@ public enum CustomItem {
 	COOKED_HUMAN_FLESH(Material.COOKED_BEEF, "Cooked Human Flesh", new String[] { "Looks tasty!" }),
 	SHARP_KNIFE(Material.IRON_SWORD, "Sharp Knife", new String[] { "A super sharp knife.", "Hit someone to make him bleed." }),;
 
-	public Material material;
+	public final Material material;
 	private String name;
 	public String[] lore;
 	public String[] craft;
@@ -54,7 +54,8 @@ public enum CustomItem {
 	public ItemStack a() {
 		ItemStack i = new ItemStack(material);
 		ItemMeta meta = i.getItemMeta();
-		meta.setDisplayName(getName());
+        assert meta != null;
+        meta.setDisplayName(getName());
 		meta.addItemFlags(ItemFlag.values());
 		if (lore != null) {
 			ArrayList<String> lore = new ArrayList<String>();

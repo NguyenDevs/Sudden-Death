@@ -19,10 +19,10 @@ public enum Difficulty {
 	SUDDEN_DEATH("Sudden Death", Material.BLACK_TERRACOTTA, 20, 60, 10);
 
 	// this difficulty index is 100% cosmetic
-	private int difficulty;
+	private final int difficulty;
 
 	// item in the gui
-	private ItemStack item;
+	private final ItemStack item;
 
 	private String name;
 	private List<String> lore;
@@ -71,7 +71,8 @@ public enum Difficulty {
 
 	public void applyHealthMalus(PlayerData data) {
 		AttributeInstance ins = data.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH);
-		data.cleanAttributeModifiers(ins);
+        assert ins != null;
+        data.cleanAttributeModifiers(ins);
 		ins.addModifier(new AttributeModifier("suddenDeath.difficultyMalus", -healthMalus, Operation.ADD_NUMBER));
 	}
 
@@ -83,6 +84,6 @@ public enum Difficulty {
 	}
 
 	public String getMainName() {
-		return name().substring(0, 1) + name().toLowerCase().substring(1);
+		return name().charAt(0) + name().toLowerCase().substring(1);
 	}
 }

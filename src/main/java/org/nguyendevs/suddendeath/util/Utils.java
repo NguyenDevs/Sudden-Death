@@ -11,14 +11,15 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Utils {
     public static boolean isIDType(String str) {
         for (char c : str.toCharArray())
             if (!Character.isLetter(c) && !Character.toString(c).equals("_"))
-                return false;
-        return true;
+                return true;
+        return false;
     }
 
     public static boolean hasCreativeGameMode(Player player) {
@@ -26,7 +27,7 @@ public class Utils {
     }
 
     public static boolean isPluginItem(ItemStack item, boolean lore) {
-        return item != null && item.hasItemMeta() && item.getItemMeta().hasDisplayName() && (!lore || item.getItemMeta().hasLore());
+        return item != null && item.hasItemMeta() && Objects.requireNonNull(item.getItemMeta()).hasDisplayName() && (!lore || item.getItemMeta().hasLore());
     }
 
     /**
@@ -34,7 +35,7 @@ public class Utils {
      * @return Translated message taking into account color codes
      */
     public static String msg(String path) {
-        return ChatColor.translateAlternateColorCodes('&', SuddenDeath.plugin.messages.getConfig().getString(path));
+        return ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(SuddenDeath.plugin.messages.getConfig().getString(path)));
     }
 
     /**
@@ -43,8 +44,7 @@ public class Utils {
      */
     public static List<String> msgList(String path) {
         List<String> list = SuddenDeath.plugin.messages.getConfig().getStringList(path);
-        for (int j = 0; j < list.size(); j++)
-            list.set(j, ChatColor.translateAlternateColorCodes('&', list.get(j)));
+        list.replaceAll(textToTranslate -> ChatColor.translateAlternateColorCodes('&', textToTranslate));
         return list;
     }
 
@@ -57,11 +57,11 @@ public class Utils {
     }
 
     public static List<EntityType> getLivingEntityTypes() {
-        return Arrays.asList(EntityType.values()).stream().filter(type -> type.isSpawnable() && type.isAlive()).collect(Collectors.toList());
+        return Arrays.stream(EntityType.values()).filter(type -> type.isSpawnable() && type.isAlive()).collect(Collectors.toList());
     }
 
     public static int romanToInt(String number) {
-        if (number.equals(""))
+        if (number.isEmpty())
             return 0;
         if (number.startsWith("CD"))
             return 400 + romanToInt(number.substring(2));
@@ -89,48 +89,48 @@ public class Utils {
     public static String intToRoman(int input) {
         if (input < 1 || input > 499)
             return ">499";
-        String s = "";
+        StringBuilder s = new StringBuilder();
         while (input >= 400) {
-            s += "CD";
+            s.append("CD");
             input -= 400;
         }
         while (input >= 100) {
-            s += "C";
+            s.append("C");
             input -= 100;
         }
         while (input >= 90) {
-            s += "XC";
+            s.append("XC");
             input -= 90;
         }
         while (input >= 50) {
-            s += "L";
+            s.append("L");
             input -= 50;
         }
         while (input >= 40) {
-            s += "XL";
+            s.append("XL");
             input -= 40;
         }
         while (input >= 10) {
-            s += "X";
+            s.append("X");
             input -= 10;
         }
         while (input >= 9) {
-            s += "IX";
+            s.append("IX");
             input -= 9;
         }
         while (input >= 5) {
-            s += "V";
+            s.append("V");
             input -= 5;
         }
         while (input >= 4) {
-            s += "IV";
+            s.append("IV");
             input -= 4;
         }
         while (input >= 1) {
-            s += "I";
+            s.append("I");
             input -= 1;
         }
-        return s;
+        return s.toString();
     }
 
     public static String caseOnWords(String str) {
@@ -154,7 +154,7 @@ public class Utils {
     }
 
     public static String displayName(ItemStack item) {
-        return item.hasItemMeta() && item.getItemMeta().hasDisplayName() ? item.getItemMeta().getDisplayName() : caseOnWords(item.getType().name().replace("_", " "));
+        return item.hasItemMeta() && Objects.requireNonNull(item.getItemMeta()).hasDisplayName() ? item.getItemMeta().getDisplayName() : caseOnWords(item.getType().name().replace("_", " "));
     }
 
     public static String lowerCaseId(String str) {

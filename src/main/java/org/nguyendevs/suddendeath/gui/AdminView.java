@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.gui;
 
+import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.util.Utils;
@@ -16,6 +17,7 @@ import org.bukkit.persistence.PersistentDataType;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class AdminView extends PluginInventory {
     private int page;
@@ -27,7 +29,7 @@ public class AdminView extends PluginInventory {
     }
 
     @Override
-    public Inventory getInventory() {
+    public @NotNull Inventory getInventory() {
         int maxPage = 1 + Feature.values().length / 21;
         Inventory inv = Bukkit.createInventory(this, 45, ChatColor.UNDERLINE + "SD Admin GUI (" + (page + 1) + "/" + maxPage + ")");
 
@@ -36,11 +38,12 @@ public class AdminView extends PluginInventory {
             List<String> list = SuddenDeath.plugin.getConfig().getStringList(feature.getPath());
             ItemStack item = new ItemStack(Material.GRAY_DYE);
             ItemMeta meta = item.getItemMeta();
+            assert meta != null;
             meta.setDisplayName(ChatColor.GOLD + feature.getName());
             List<String> lore = new ArrayList<>();
             lore.add("");
             for (String s : feature.getLore()) {
-                s = statsInLore(feature, s, feature.name());
+                s = statsInLore(feature, s);
                 lore.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', s));
             }
             if (!list.isEmpty()) {
@@ -67,11 +70,13 @@ public class AdminView extends PluginInventory {
 
         ItemStack next = new ItemStack(Material.ARROW);
         ItemMeta nextMeta = next.getItemMeta();
+        assert nextMeta != null;
         nextMeta.setDisplayName(ChatColor.GREEN + "Next");
         next.setItemMeta(nextMeta);
 
         ItemStack previous = new ItemStack(Material.ARROW);
         ItemMeta previousMeta = previous.getItemMeta();
+        assert previousMeta != null;
         previousMeta.setDisplayName(ChatColor.GREEN + "Previous");
         previous.setItemMeta(previousMeta);
 
@@ -90,7 +95,7 @@ public class AdminView extends PluginInventory {
         if (e.getInventory() != e.getClickedInventory() || !Utils.isPluginItem(item, false))
             return;
 
-        if (item.getItemMeta().getDisplayName().equals(ChatColor.GREEN + "Next")) {
+        if (Objects.requireNonNull(item.getItemMeta()).getDisplayName().equals(ChatColor.GREEN + "Next")) {
             page++;
             open();
         }
@@ -101,7 +106,7 @@ public class AdminView extends PluginInventory {
         }
 
         String tag = item.getItemMeta().getPersistentDataContainer().get(Utils.nsk("featureId"), PersistentDataType.STRING);
-        if (tag == null || tag.equals(""))
+        if (tag == null || tag.isEmpty())
             return;
 
         Feature feature = Feature.valueOf(tag);
@@ -124,11 +129,11 @@ public class AdminView extends PluginInventory {
 
     }
 
-    public static String statsInLore(Feature feature, String lore1, String mainName) {
+    public static String statsInLore(Feature feature, String lore1) {
         if (lore1.contains("#")) {
             String stat = lore1.split("#")[1];
-            lore1 = lore1.replace("#" + stat + "#", ChatColor.WHITE + "" + digit.format(feature.getDouble(stat)) + ChatColor.GRAY);
-            lore1 = statsInLore(feature, lore1, mainName);
+            lore1 = lore1.replace("#" + stat + "#", ChatColor.WHITE + digit.format(feature.getDouble(stat)) + ChatColor.GRAY);
+            lore1 = statsInLore(feature, lore1);
         }
         return lore1;
     }

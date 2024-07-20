@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.command.completion;
 
+import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.Feature;
 import org.nguyendevs.suddendeath.util.CustomItem;
 import org.bukkit.Bukkit;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class SuddenDeathStatusCompletion implements TabCompleter {
 	@Override
-	public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
+	public List<String> onTabComplete(CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
 		if (!sender.hasPermission("suddendeath.op"))
 			return null;
 

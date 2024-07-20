@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.gui;
 
+import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.player.Difficulty;
@@ -18,9 +19,10 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Status extends PluginInventory {
-    private PlayerData data;
+    private final PlayerData data;
 
     public Status(Player player) {
         super(player);
@@ -28,12 +30,13 @@ public class Status extends PluginInventory {
     }
 
     @Override
-    public Inventory getInventory() {
+    public @NotNull Inventory getInventory() {
         Inventory inv = Bukkit.createInventory(this, 45, ChatColor.UNDERLINE + Utils.msg("gui-name"));
 
         if (Feature.BLEEDING.isEnabled(player) && data.isBleeding()) {
             ItemStack item = new ItemStack(Material.RED_DYE);
             ItemMeta meta = item.getItemMeta();
+            assert meta != null;
             meta.setDisplayName(ChatColor.GREEN + Utils.msg("gui-bleeding-name"));
             List<String> lore = new ArrayList<String>();
             for (String s : Utils.msgList("gui-bleeding-lore"))
@@ -47,6 +50,7 @@ public class Status extends PluginInventory {
         if (Feature.INFECTION.isEnabled(player) && data.isInfected()) {
             ItemStack item = new ItemStack(Material.ROTTEN_FLESH);
             ItemMeta meta = item.getItemMeta();
+            assert meta != null;
             meta.setDisplayName(ChatColor.GREEN + Utils.msg("gui-infected-name"));
             List<String> lore = new ArrayList<String>();
             for (String s : Utils.msgList("gui-infected-lore"))
@@ -60,6 +64,7 @@ public class Status extends PluginInventory {
         if (inv.getItem(10) == null) {
             ItemStack item = new ItemStack(Material.RED_STAINED_GLASS);
             ItemMeta meta = item.getItemMeta();
+            assert meta != null;
             meta.setDisplayName(ChatColor.GREEN + Utils.msg("gui-no-special-status-name"));
             List<String> lore = new ArrayList<>();
             for (String s : Utils.msgList("gui-no-special-status-lore"))
@@ -76,6 +81,7 @@ public class Status extends PluginInventory {
 
                 ItemStack item = difficulty.getNewItem();
                 ItemMeta meta = item.getItemMeta();
+                assert meta != null;
                 meta.setDisplayName(ChatColor.GREEN + (has ? "[" + Utils.msg("current") + "] " : "")
                         + ChatColor.translateAlternateColorCodes('&', difficulty.getName()));
 
@@ -91,7 +97,7 @@ public class Status extends PluginInventory {
                 lore.add("");
                 for (String s : difficulty.getLore())
                     lore.add(ChatColor.BLUE + ChatColor.translateAlternateColorCodes('&', s));
-                if (lore.get(lore.size() - 1).equals(""))
+                if (lore.get(lore.size() - 1).isEmpty())
                     lore = lore.subList(0, lore.size() - 1);
                 lore.add(ChatColor.DARK_GRAY + "" + ChatColor.STRIKETHROUGH + "--------------------------------");
                 if (!has) {
@@ -126,8 +132,8 @@ public class Status extends PluginInventory {
         if (!Utils.isPluginItem(item, true))
             return;
 
-        String tag = item.getItemMeta().getPersistentDataContainer().get(Utils.nsk("difficultyId"), PersistentDataType.STRING);
-        if (tag == null || tag.equals(""))
+        String tag = Objects.requireNonNull(item.getItemMeta()).getPersistentDataContainer().get(Utils.nsk("difficultyId"), PersistentDataType.STRING);
+        if (tag == null || tag.isEmpty())
             return;
 
         Difficulty difficulty = Difficulty.valueOf(tag);

@@ -10,13 +10,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Objects;
+
 public class NoInteractItemEntity implements Listener {
 	private final Item item;
 
 	public NoInteractItemEntity(Location loc, ItemStack item) {
 		item.setAmount(1);
 		
-		this.item = loc.getWorld().dropItem(loc, item);
+		this.item = Objects.requireNonNull(loc.getWorld()).dropItem(loc, item);
 		this.item.setPickupDelay(1000000);
 
 		Bukkit.getPluginManager().registerEvents(this, SuddenDeath.plugin);

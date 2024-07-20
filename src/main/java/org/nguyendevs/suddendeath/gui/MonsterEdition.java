@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.gui;
 
+import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.listener.MainListener;
 import org.nguyendevs.suddendeath.util.*;
@@ -21,10 +22,7 @@ import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MonsterEdition extends PluginInventory {
     private final EntityType type;
@@ -32,73 +30,71 @@ public class MonsterEdition extends PluginInventory {
 
     public MonsterEdition(Player player, EntityType type, String id) {
         super(player);
-
         this.type = type;
         this.id = id;
     }
 
     @Override
-    public Inventory getInventory() {
+    public @NotNull Inventory getInventory() {
         FileConfiguration config = new ConfigFile(type).getConfig();
         Inventory inv = Bukkit.createInventory(this, 54, ChatColor.UNDERLINE + "Mob Editor: " + id);
 
         for (MobStat stat : MobStat.values()) {
             ItemStack item = stat.getNewItem().clone();
             ItemMeta meta = item.getItemMeta();
+            assert meta != null;
             meta.setDisplayName(ChatColor.GREEN + stat.getName());
             meta.addItemFlags(ItemFlag.values());
-            List<String> lore = new ArrayList<String>();
+            List<String> lore = new ArrayList<>();
             for (String s : stat.getLore())
                 lore.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', s));
 
             lore.add("");
-            if (stat.getType() == MobStat.Type.DOUBLE) {
-                lore.add(ChatColor.GRAY + "Current Value: " + ChatColor.WHITE + config.getDouble(id + "." + stat.getPath()));
-                lore.add("");
-                lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Left click to change this value.");
-            }
-            if (stat.getType() == MobStat.Type.ITEMSTACK) {
-                lore.add(ChatColor.GRAY + "Current Value:");
-
-                ItemStack deserialized = ItemUtils.deserialize(config.getString(id + "." + stat.getPath()));
-                String format = Utils.caseOnWords(deserialized.getType().name().toLowerCase().replace("_", " "));
-                format += (deserialized.getAmount() > 0 ? " x" + deserialized.getAmount() : "");
-                lore.add(ChatColor.AQUA + format);
-                if (deserialized.hasItemMeta()) {
-                    if (deserialized.getType().name().startsWith("LEATHER_"))
-                        if (((LeatherArmorMeta) deserialized.getItemMeta()).getColor() != null)
+            switch (stat.getType()) {
+                case DOUBLE:
+                    lore.add(ChatColor.GRAY + "Current Value: " + ChatColor.WHITE + config.getDouble(id + "." + stat.getPath()));
+                    lore.add("");
+                    lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Left click to change this value.");
+                    break;
+                case ITEMSTACK:
+                    lore.add(ChatColor.GRAY + "Current Value:");
+                    ItemStack deserialized = ItemUtils.deserialize(config.getString(id + "." + stat.getPath()));
+                    String format = Utils.caseOnWords(deserialized.getType().name().toLowerCase().replace("_", " "));
+                    format += (deserialized.getAmount() > 0 ? " x" + deserialized.getAmount() : "");
+                    lore.add(ChatColor.AQUA + format);
+                    if (deserialized.hasItemMeta()) {
+                        if (deserialized.getType().name().startsWith("LEATHER_") && ((LeatherArmorMeta) deserialized.getItemMeta()).getColor() != null)
                             lore.add(ChatColor.AQUA + "* Dye color: " + ((LeatherArmorMeta) deserialized.getItemMeta()).getColor().asRGB());
-                    if (deserialized.getItemMeta().hasEnchants())
-                        for (Enchantment ench : deserialized.getItemMeta().getEnchants().keySet())
-                            lore.add(ChatColor.AQUA + "* " + Utils.caseOnWords(ench.getKey().getKey().replace("_", " ")) + " "
-                                    + deserialized.getItemMeta().getEnchantLevel(ench));
-                }
-                lore.add("");
-                lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Drag & drop an item to change this value.");
-                lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Right click to remove this value.");
-            }
-            if (stat.getType() == MobStat.Type.STRING) {
-                lore.add(ChatColor.GRAY + "Current Value: " + ChatColor.WHITE + config.getString(id + "." + stat.getPath()));
-                lore.add("");
-                lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Left click to change this value.");
-            }
-            if (stat.getType() == MobStat.Type.POTION_EFFECTS) {
-                lore.add(ChatColor.GRAY + "Current Value:");
-                if (!config.getConfigurationSection(id).contains(stat.getPath()))
-                    lore.add(ChatColor.RED + "No permanent effect.");
-                else if (config.getConfigurationSection(id + "." + stat.getPath()).getKeys(false).isEmpty())
-                    lore.add(ChatColor.RED + "No permanent effect.");
-                else
-                    for (String s1 : config.getConfigurationSection(id + "." + stat.getPath()).getKeys(false)) {
-                        String effect = s1;
-                        effect = effect.replace("-", " ").replace("_", " ");
-                        effect = effect.substring(0, 1).toUpperCase() + effect.substring(1).toLowerCase();
-                        String level = Utils.intToRoman(config.getInt(id + "." + stat.getPath() + "." + s1));
-                        lore.add("�b* " + effect + " " + level);
+                        if (Objects.requireNonNull(deserialized.getItemMeta()).hasEnchants())
+                            for (Enchantment ench : deserialized.getItemMeta().getEnchants().keySet())
+                                lore.add(ChatColor.AQUA + "* " + Utils.caseOnWords(ench.getKey().getKey().replace("_", " ")) + " " + deserialized.getItemMeta().getEnchantLevel(ench));
                     }
-                lore.add("");
-                lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Left click to add an effect.");
-                lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Right click to remove the last effect.");
+                    lore.add("");
+                    lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Drag & drop an item to change this value.");
+                    lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Right click to remove this value.");
+                    break;
+                case STRING:
+                    lore.add(ChatColor.GRAY + "Current Value: " + ChatColor.WHITE + config.getString(id + "." + stat.getPath()));
+                    lore.add("");
+                    lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Left click to change this value.");
+                    break;
+                case POTION_EFFECTS:
+                    lore.add(ChatColor.GRAY + "Current Value:");
+                    if (!Objects.requireNonNull(config.getConfigurationSection(id)).contains(stat.getPath()))
+                        lore.add(ChatColor.RED + "No permanent effect.");
+                    else if (Objects.requireNonNull(config.getConfigurationSection(id + "." + stat.getPath())).getKeys(false).isEmpty())
+                        lore.add(ChatColor.RED + "No permanent effect.");
+                    else
+                        for (String s1 : Objects.requireNonNull(config.getConfigurationSection(id + "." + stat.getPath())).getKeys(false)) {
+                            String effect = s1.replace("-", " ").replace("_", " ").toLowerCase();
+                            effect = effect.substring(0, 1).toUpperCase() + effect.substring(1);
+                            String level = Utils.intToRoman(config.getInt(id + "." + stat.getPath() + "." + s1));
+                            lore.add(ChatColor.AQUA + "* " + effect + " " + level);
+                        }
+                    lore.add("");
+                    lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Left click to add an effect.");
+                    lore.add(ChatColor.YELLOW + SpecialChar.listDash + " Right click to remove the last effect.");
+                    break;
             }
             meta.getPersistentDataContainer().set(Utils.nsk("mobStatId"), PersistentDataType.STRING, stat.name());
             meta.setLore(lore);
@@ -109,9 +105,9 @@ public class MonsterEdition extends PluginInventory {
 
         ItemStack egg = new ItemStack(Material.CREEPER_SPAWN_EGG);
         ItemMeta eggMeta = egg.getItemMeta();
-        eggMeta.setDisplayName(ChatColor.GREEN
-                + (config.getString(id + ".name").equals("") ? id : ChatColor.translateAlternateColorCodes('&', config.getString(id + ".name"))));
-        List<String> eggLore = new ArrayList<String>();
+        assert eggMeta != null;
+        eggMeta.setDisplayName(ChatColor.GREEN + (Objects.equals(config.getString(id + ".name"), "") ? id : ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(config.getString(id + ".name")))));
+        List<String> eggLore = new ArrayList<>();
         eggLore.add(ChatColor.GRAY + type.name());
         eggMeta.setLore(eggLore);
         egg.setItemMeta(eggMeta);
@@ -123,74 +119,71 @@ public class MonsterEdition extends PluginInventory {
     @Override
     public void whenClicked(InventoryClickEvent event) {
         ItemStack item = event.getCurrentItem();
-        if (event.getClickedInventory() != event.getInventory())
-            return;
+        if (event.getClickedInventory() != event.getInventory()) return;
         if (event.getSlot() == 4) {
             event.setCancelled(true);
             return;
         }
-        if (!Utils.isPluginItem(item, false))
-            return;
-        if (item.getItemMeta().getDisplayName().length() < 2)
-            return;
+        if (!Utils.isPluginItem(item, false)) return;
+        if (Objects.requireNonNull(item.getItemMeta()).getDisplayName().length() < 2) return;
 
         String tag = item.getItemMeta().getPersistentDataContainer().get(Utils.nsk("mobStatId"), PersistentDataType.STRING);
-        if (tag == null || tag.equals(""))
-            return;
+        if (tag == null || tag.isEmpty()) return;
 
         MobStat stat = MobStat.valueOf(tag);
         event.setCancelled(true);
         ConfigFile config = new ConfigFile(type);
 
-        if (stat.getType() == MobStat.Type.DOUBLE || stat.getType() == MobStat.Type.STRING) {
-            new StatEditor(id, type, stat, config);
-            player.closeInventory();
-            seeChat(player);
-            player.sendMessage(ChatColor.YELLOW + "Write in the chat the value you want!");
-        }
-        if (stat.getType() == MobStat.Type.ITEMSTACK) {
-            if (event.getAction() == InventoryAction.SWAP_WITH_CURSOR) {
-                ItemStack c = event.getCursor();
-                String serialized = ItemUtils.serialize(c);
-                MainListener.cancelNextDrop(player);
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
-                config.getConfig().set(id + "." + stat.getPath(), serialized);
-                config.save();
-                open();
-                player.sendMessage(ChatColor.YELLOW + stat.getName() + " succesfully updated.");
-            }
-            if (event.getAction() == InventoryAction.PICKUP_HALF)
-                if (config.getConfig().contains(id))
-                    if (config.getConfig().getConfigurationSection(id).contains(stat.getPath()))
-                        if (!config.getConfig().getString(id + "." + stat.getPath()).equals("[material=AIR:0]")) {
-                            config.getConfig().set(id + "." + stat.getPath(), "[material=AIR:0]");
-                            config.save();
-                            player.sendMessage(ChatColor.YELLOW + "Succesfully removed " + stat.getName() + ".");
-                            open();
-                            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
-                        }
-        }
-        if (stat.getType() == MobStat.Type.POTION_EFFECTS) {
-            if (event.getAction() == InventoryAction.PICKUP_ALL) {
+        switch (stat.getType()) {
+            case DOUBLE:
+            case STRING:
                 new StatEditor(id, type, stat, config);
                 player.closeInventory();
                 seeChat(player);
-                player.sendMessage(ChatColor.YELLOW + "Write in the chat the permanent potion effect you want to add.");
-                player.sendMessage(ChatColor.AQUA + "Format: [POTION_EFFECT] [AMPLIFIER]");
-            }
-            if (event.getAction() == InventoryAction.PICKUP_HALF)
-                if (config.getConfig().getConfigurationSection(id).getKeys(false).contains(stat.getPath())) {
-                    Set<String> set = config.getConfig().getConfigurationSection(id + "." + stat.getPath()).getKeys(false);
-                    // get last element of array
-                    String last = Arrays.asList(set.toArray(new String[0])).get(set.size() - 1);
-                    config.getConfig().set(id + "." + stat.getPath() + "." + last, null);
-                    if (set.size() <= 1)
-                        config.getConfig().set(id + "." + stat.getPath(), null);
+                player.sendMessage(ChatColor.YELLOW + "Write in the chat the value you want!");
+                break;
+            case ITEMSTACK:
+                if (event.getAction() == InventoryAction.SWAP_WITH_CURSOR) {
+                    ItemStack cursorItem = event.getCursor();
+                    assert cursorItem != null;
+                    String serialized = ItemUtils.serialize(cursorItem);
+                    MainListener.cancelNextDrop(player);
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    config.getConfig().set(id + "." + stat.getPath(), serialized);
                     config.save();
                     open();
-                    player.sendMessage(ChatColor.YELLOW + "Succesfully removed " + last.substring(0, 1).toUpperCase()
-                            + last.substring(1).toLowerCase() + ChatColor.GRAY + ".");
+                    player.sendMessage(ChatColor.YELLOW + stat.getName() + " successfully updated.");
+                } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
+                    if (config.getConfig().contains(id) && Objects.requireNonNull(config.getConfig().getConfigurationSection(id)).contains(stat.getPath())
+                            && !Objects.equals(config.getConfig().getString(id + "." + stat.getPath()), "[material=AIR:0]")) {
+                        config.getConfig().set(id + "." + stat.getPath(), "[material=AIR:0]");
+                        config.save();
+                        player.sendMessage(ChatColor.YELLOW + "Successfully removed " + stat.getName() + ".");
+                        open();
+                        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    }
                 }
+                break;
+            case POTION_EFFECTS:
+                if (event.getAction() == InventoryAction.PICKUP_ALL) {
+                    new StatEditor(id, type, stat, config);
+                    player.closeInventory();
+                    seeChat(player);
+                    player.sendMessage(ChatColor.YELLOW + "Write in the chat the permanent potion effect you want to add.");
+                    player.sendMessage(ChatColor.AQUA + "Format: [POTION_EFFECT] [AMPLIFIER]");
+                } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
+                    if (Objects.requireNonNull(config.getConfig().getConfigurationSection(id)).getKeys(false).contains(stat.getPath())) {
+                        Set<String> effects = Objects.requireNonNull(config.getConfig().getConfigurationSection(id + "." + stat.getPath())).getKeys(false);
+                        String lastEffect = new ArrayList<>(effects).get(effects.size() - 1);
+                        config.getConfig().set(id + "." + stat.getPath() + "." + lastEffect, null);
+                        if (effects.size() <= 1)
+                            config.getConfig().set(id + "." + stat.getPath(), null);
+                        config.save();
+                        open();
+                        player.sendMessage(ChatColor.YELLOW + "Successfully removed " + lastEffect.substring(0, 1).toUpperCase() + lastEffect.substring(1).toLowerCase() + ChatColor.GRAY + ".");
+                    }
+                }
+                break;
         }
     }
 
@@ -198,6 +191,7 @@ public class MonsterEdition extends PluginInventory {
         player.sendMessage(ChatColor.DARK_GRAY + "" + ChatColor.STRIKETHROUGH + "-----------------------------------------------------");
         player.sendTitle(ChatColor.GOLD + "" + ChatColor.BOLD + "Mob Edition", "See chat.", 10, 40, 10);
         new BukkitRunnable() {
+            @Override
             public void run() {
                 player.sendMessage(ChatColor.YELLOW + "Type 'cancel' to abort editing the mob.");
             }

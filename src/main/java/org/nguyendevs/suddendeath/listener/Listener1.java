@@ -29,6 +29,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 
 public class Listener1 implements Listener {
@@ -85,9 +86,9 @@ public class Listener1 implements Listener {
                         ti += .25;
                         for (double j = 0; j < Math.PI * 2; j += Math.PI / 16) {
                             Location loc1 = loc.clone().add(Math.cos(j) * ti, .1, Math.sin(j) * ti);
-                            loc1.getWorld().spawnParticle(Particle.BLOCK_CRACK, loc1, 0, Material.DIRT.createBlockData());
+                            Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.BLOCK_CRACK, loc1, 0, Material.DIRT.createBlockData());
                         }
-                        loc.getWorld().playSound(loc, Sound.BLOCK_GRAVEL_BREAK, 2, 2);
+                        Objects.requireNonNull(loc.getWorld()).playSound(loc, Sound.BLOCK_GRAVEL_BREAK, 2, 2);
                         if (ti >= 2)
                             cancel();
                     }
@@ -134,7 +135,7 @@ public class Listener1 implements Listener {
                 event.setCancelled(true);
                 w.getWorld().playSound(w.getLocation(), Sound.BLOCK_ANVIL_LAND, 1, 2);
                 new BukkitRunnable() {
-                    double r = 1.5;
+                    final double r = 1.5;
                     double step = 0;
                     final Location loc = w.getLocation();
 
@@ -144,7 +145,7 @@ public class Listener1 implements Listener {
                             for (double i = 0; i < Math.PI * 2; i += Math.PI / 16) {
                                 Location loc1 = loc.clone().add(r * Math.cos(i) * Math.sin(step), r * (1 + Math.cos(step)),
                                         r * Math.sin(i) * Math.sin(step));
-                                loc1.getWorld().spawnParticle(Particle.REDSTONE, loc1, 0, new Particle.DustOptions(Color.WHITE, 1));
+                                Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.REDSTONE, loc1, 0, new Particle.DustOptions(Color.WHITE, 1));
                             }
                         }
                         if (step >= Math.PI * 2)
@@ -194,7 +195,7 @@ public class Listener1 implements Listener {
                             for (int j1 = 0; j1 < 3; j1++) {
                                 ti += Math.PI / 15;
                                 Location loc1 = loc.clone().add(Math.cos(ti), 1, Math.sin(ti));
-                                loc1.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc1, 0);
+                                Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.SMOKE_NORMAL, loc1, 0);
                             }
                             if (ti >= Math.PI * 2)
                                 cancel();
@@ -260,7 +261,7 @@ public class Listener1 implements Listener {
                         if (loc.getBlock().getType().isSolid())
                             continue;
 
-                        loc.getWorld().spawnParticle(Particle.FLAME, loc, 0);
+                        Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.FLAME, loc, 0);
                         if (random.nextDouble() < .45)
                             loc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc, 0);
                     }
@@ -280,7 +281,7 @@ public class Listener1 implements Listener {
                 Player player = (Player) event.getEntity();
                 ItemStack i = damager.getInventory().getItemInMainHand();
                 if (Utils.isPluginItem(i, false)) {
-                    if (i.getItemMeta().getDisplayName().equals(CustomItem.SHARP_KNIFE.getName())) {
+                    if (Objects.requireNonNull(i.getItemMeta()).getDisplayName().equals(CustomItem.SHARP_KNIFE.getName())) {
                         PlayerData data = PlayerData.get(player);
                         if (!data.isBleeding()) {
                             data.setBleeding(true);
@@ -338,6 +339,7 @@ public class Listener1 implements Listener {
                 if (advanced.getBoolean("player-skull")) {
                     skull.setType(Material.PLAYER_HEAD);
                     SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
+                    assert skullMeta != null;
                     skullMeta.setOwningPlayer(player);
                     skull.setItemMeta(skullMeta);
                 }
@@ -359,7 +361,7 @@ public class Listener1 implements Listener {
 
     @EventHandler
     public void e(PlayerMoveEvent event) {
-        if (event.getFrom().getBlockX() == event.getTo().getBlockX() && event.getFrom().getBlockY() == event.getTo().getBlockY()
+        if (event.getFrom().getBlockX() == Objects.requireNonNull(event.getTo()).getBlockX() && event.getFrom().getBlockY() == event.getTo().getBlockY()
                 && event.getFrom().getBlockZ() == event.getTo().getBlockZ())
             return;
 
@@ -476,16 +478,16 @@ public class Listener1 implements Listener {
 
         // quick mobs
         if (Feature.QUICK_MOBS.isEnabled(m)) {
-            double ms = m.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getBaseValue();
+            double ms = Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)).getBaseValue();
             ms *= 1 + Feature.QUICK_MOBS.getDouble("additional-ms-percent." + event.getEntity().getType().name()) / 100;
-            m.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).setBaseValue(ms);
+            Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)).setBaseValue(ms);
         }
 
         // force of the undead
         if (Feature.FORCE_OF_THE_UNDEAD.isEnabled(m)) {
-            double ad = m.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).getBaseValue();
+            double ad = Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)).getBaseValue();
             ad *= 1 + Feature.FORCE_OF_THE_UNDEAD.getDouble("additional-ad-percent." + event.getEntity().getType().name()) / 100;
-            m.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE).setBaseValue(ad);
+            Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)).setBaseValue(ad);
         }
     }
 
@@ -496,13 +498,15 @@ public class Listener1 implements Listener {
         // stone stiffness
         if (Feature.STONE_STIFFNESS.isEnabled(player)) {
             Block b = event.getClickedBlock();
-            if (event.hasBlock() && event.getAction() == Action.LEFT_CLICK_BLOCK && !Utils.hasCreativeGameMode(player) && !event.hasItem())
+            if (event.hasBlock() && event.getAction() == Action.LEFT_CLICK_BLOCK && !Utils.hasCreativeGameMode(player) && !event.hasItem()) {
+                assert b != null;
                 if (Arrays
                         .asList(new Material[]{Material.STONE, Material.COAL_ORE, Material.IRON_ORE, Material.NETHER_QUARTZ_ORE, Material.GOLD_ORE,
                                 Material.LAPIS_ORE, Material.DIAMOND_ORE, Material.REDSTONE_ORE, Material.EMERALD_ORE, Material.COBBLESTONE,
                                 Material.STONE_SLAB, Material.COBBLESTONE_SLAB, Material.BRICK_STAIRS, Material.BRICK, Material.MOSSY_COBBLESTONE})
                         .contains(b.getType()))
                     Utils.damage(player, Feature.STONE_STIFFNESS.getDouble("damage"), true);
+            }
         }
 
         if (!event.hasItem())
@@ -514,7 +518,7 @@ public class Listener1 implements Listener {
 
         // bleeding cure
         if (Feature.BLEEDING.isEnabled(player))
-            if (i.getItemMeta().getDisplayName().equals(CustomItem.BANDAGE.getName())) {
+            if (Objects.requireNonNull(i.getItemMeta()).getDisplayName().equals(CustomItem.BANDAGE.getName())) {
                 event.setCancelled(true);
                 PlayerData data = PlayerData.get(player);
                 if (!data.isBleeding())
@@ -528,7 +532,7 @@ public class Listener1 implements Listener {
 
         // infection cure
         if (Feature.INFECTION.isEnabled(player))
-            if (i.getItemMeta().getDisplayName().equals(CustomItem.STRANGE_BREW.getName())) {
+            if (Objects.requireNonNull(i.getItemMeta()).getDisplayName().equals(CustomItem.STRANGE_BREW.getName())) {
                 event.setCancelled(true);
                 PlayerData data = PlayerData.get(player);
                 if (!data.isInfected())
@@ -554,7 +558,7 @@ public class Listener1 implements Listener {
         if (!Utils.isPluginItem(item, false))
             return;
 
-        if (item.getItemMeta().getDisplayName().equals(CustomItem.RAW_HUMAN_FLESH.getName()))
+        if (Objects.requireNonNull(item.getItemMeta()).getDisplayName().equals(CustomItem.RAW_HUMAN_FLESH.getName()))
             event.setResult(CustomItem.COOKED_HUMAN_FLESH.a());
     }
 

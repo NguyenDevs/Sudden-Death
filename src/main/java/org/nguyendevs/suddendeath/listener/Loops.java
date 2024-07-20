@@ -18,6 +18,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 
@@ -40,7 +41,7 @@ public class Loops {
 				for (double j = 0; j < 1; j += .04) {
 					Vector d = loc1.toVector().subtract(loc.toVector());
 					Location loc2 = loc.clone().add(d.multiply(j));
-					loc2.getWorld().spawnParticle(Particle.FLAME, loc2, 4, .1, .1, .1, 0);
+					Objects.requireNonNull(loc2.getWorld()).spawnParticle(Particle.FLAME, loc2, 4, .1, .1, .1, 0);
 					loc2.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc2, 4, .1, .1, .1, 0);
 				}
 			}
@@ -52,7 +53,8 @@ public class Loops {
 			return;
 
 		Player target = (Player) skeleton.getTarget();
-		if (!target.getWorld().equals(skeleton.getWorld()))
+        assert target != null;
+        if (!target.getWorld().equals(skeleton.getWorld()))
 			return;
 		
 		if (new Random().nextDouble() < .5) {
@@ -62,15 +64,15 @@ public class Loops {
 			Vector v1 = skeleton.getLocation().add(0, .75, 0).toVector();
 			Vector v2 = target.getLocation().add(0, .5, 0).toVector();
 			new BukkitRunnable() {
-				Vector v = v2.subtract(v1).normalize().multiply(.5);
-				Location loc = skeleton.getEyeLocation();
+				final Vector v = v2.subtract(v1).normalize().multiply(.5);
+				final Location loc = skeleton.getEyeLocation();
 				double ti = 0;
 
 				public void run() {
 					for (int j = 0; j < 2; j++) {
 						ti += .5;
 						loc.add(v);
-						loc.getWorld().spawnParticle(Particle.FLAME, loc, 4, .1, .1, .1, 0);
+						Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.FLAME, loc, 4, .1, .1, .1, 0);
 						loc.getWorld().spawnParticle(Particle.LAVA, loc, 0);
 						for (Player player : skeleton.getWorld().getPlayers())
 							if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 1.7) {
@@ -95,12 +97,12 @@ public class Loops {
 		double amplifier = Feature.BONE_WIZARDS.getDouble("frost-curse-amplifier");
 		new BukkitRunnable() {
 			double ti = 0;
-			double r = 4;
+			final double r = 4;
 			final Location loc = target.getLocation();
 
 			public void run() {
 				ti += 1;
-				loc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc, 0);
+				Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.SMOKE_NORMAL, loc, 0);
 				loc.getWorld().playSound(loc, Sound.BLOCK_FIRE_EXTINGUISH, 2, 2);
 				if (ti > 27) {
 					loc.getWorld().playSound(loc, Sound.BLOCK_GLASS_BREAK, 2, 0);
@@ -127,7 +129,8 @@ public class Loops {
 			return;
 
 		Player target = (Player) zombie.getTarget();
-		if (!target.getWorld().equals(zombie.getWorld()))
+        assert target != null;
+        if (!target.getWorld().equals(zombie.getWorld()))
 			return;
 
 		double damage = Feature.UNDEAD_GUNNERS.getDouble("damage");
@@ -135,15 +138,15 @@ public class Loops {
 		Vector v1 = zombie.getLocation().add(0, .75, 0).toVector();
 		Vector v2 = target.getLocation().add(0, .5, 0).toVector();
 		new BukkitRunnable() {
-			Vector v = v2.subtract(v1).normalize().multiply(.5);
-			Location loc = zombie.getEyeLocation();
+			final Vector v = v2.subtract(v1).normalize().multiply(.5);
+			final Location loc = zombie.getEyeLocation();
 			double ti = 0;
 
 			public void run() {
 				for (int j = 0; j < 2; j++) {
 					ti += .5;
 					loc.add(v);
-					loc.getWorld().spawnParticle(Particle.CLOUD, loc, 0);
+					Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.CLOUD, loc, 0);
 					loc.getWorld().playSound(loc, Sound.BLOCK_NOTE_BLOCK_HAT, 2, 0);
 					for (Player player : zombie.getWorld().getPlayers()) {
 						if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 2.3) {
@@ -186,7 +189,7 @@ public class Loops {
 				for (double j = 0; j < 1; j += .04) {
 					Vector d = loc1.toVector().subtract(loc.toVector());
 					Location loc2 = loc.clone().add(d.multiply(j));
-					loc2.getWorld().spawnParticle(Particle.SPELL_WITCH, loc2, 4, .1, .1, .1, 0);
+					Objects.requireNonNull(loc2.getWorld()).spawnParticle(Particle.SPELL_WITCH, loc2, 4, .1, .1, .1, 0);
 				}
 			}
 		}
@@ -197,7 +200,8 @@ public class Loops {
 			return;
 
 		Player target = (Player) ((Creature) entity).getTarget();
-		if (!target.getWorld().equals(entity.getWorld()))
+        assert target != null;
+        if (!target.getWorld().equals(entity.getWorld()))
 			return;
 		
 		if (Feature.WITHER_MACHINEGUN.isEnabled(entity) && new Random().nextDouble() < .5) {
@@ -208,7 +212,8 @@ public class Loops {
 						entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_SKELETON_DEATH, 1, 2);
 						ItemStack stack = new ItemStack(Material.COAL);
 						ItemMeta stack_meta = stack.getItemMeta();
-						stack_meta.setDisplayName("SUDDEN_DEATH:" + UUID.randomUUID().toString());
+                        assert stack_meta != null;
+                        stack_meta.setDisplayName("SUDDEN_DEATH:" + UUID.randomUUID().toString());
 						stack.setItemMeta(stack_meta);
 
 						NoInteractItemEntity item = new NoInteractItemEntity(entity.getLocation().add(0, 1, 0), stack);
@@ -256,7 +261,7 @@ public class Loops {
 				ti += Math.PI / 20;
 				for (int j = 0; j < 2; j++) {
 					Location loc1 = loc.clone().add(Math.cos(j * Math.PI + ti), 2.2, Math.sin(j * Math.PI + ti));
-					loc1.getWorld().spawnParticle(Particle.SMOKE_LARGE, loc1, 0);
+					Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.SMOKE_LARGE, loc1, 0);
 				}
 				if (ti >= Math.PI) {
 					cancel();
@@ -264,7 +269,7 @@ public class Loops {
 					Vector v = target.getLocation().add(0, 1, 0).toVector().subtract(sta.toVector());
 					for (double j = 0; j < 1; j += .03) {
 						Location loc1 = sta.clone().add(v.getX() * j, v.getY() * j, v.getZ() * j);
-						loc1.getWorld().spawnParticle(Particle.SMOKE_LARGE, loc1, 0);
+						Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.SMOKE_LARGE, loc1, 0);
 					}
 					entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 2, 0);
 					entity.teleport(target);
@@ -280,7 +285,8 @@ public class Loops {
 			return;
 
 		Player target = (Player) spider.getTarget();
-		if (!target.getWorld().equals(spider.getWorld()))
+        assert target != null;
+        if (!target.getWorld().equals(spider.getWorld()))
 			return;
 
 		if (Feature.ANGRY_SPIDERS.isEnabled(spider) && new Random().nextDouble() < .5) {

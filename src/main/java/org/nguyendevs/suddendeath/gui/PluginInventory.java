@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.gui;
 
+import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -19,7 +20,7 @@ public abstract class PluginInventory implements InventoryHolder {
     }
 
     @Override
-    public abstract Inventory getInventory();
+    public abstract @NotNull Inventory getInventory();
 
     public abstract void whenClicked(InventoryClickEvent event);
 

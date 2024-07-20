@@ -43,19 +43,18 @@ public class StatEditor implements Listener {
     }
 
     @EventHandler
-    public void doThings(AsyncPlayerChatEvent event) {
+    public void handleChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         event.setCancelled(true);
 
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
-        if (event.getMessage().equals("cancel")) {
+        if (event.getMessage().equalsIgnoreCase("cancel")) {
             close();
             player.sendMessage(ChatColor.YELLOW + "Mob editing canceled.");
             new MonsterEdition(player, type, path).open();
             return;
         }
 
-        ConfigFile config = new ConfigFile(type);
         MobStat.Type valueType = stat.getType();
         // ==================================================================================================================================
         if (valueType == MobStat.Type.STRING) {
@@ -69,15 +68,15 @@ public class StatEditor implements Listener {
 
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(ChatColor.YELLOW + stat.getName() + " succesfully changed to " + msg + "�7.");
+            player.sendMessage(ChatColor.YELLOW + stat.getName() + " successfully changed to " + msg + "�7.");
             return;
         }
         // ==================================================================================================================================
         if (valueType == MobStat.Type.DOUBLE) {
-            double value = 0;
+            double value;
             try {
                 value = Double.parseDouble(event.getMessage());
-            } catch (Exception e1) {
+            } catch (NumberFormatException e) {
                 player.sendMessage(ChatColor.RED + event.getMessage() + " is not a valid number.");
                 return;
             }
@@ -85,7 +84,7 @@ public class StatEditor implements Listener {
             config.getConfig().set(path + "." + stat.getPath(), value == 0 ? null : value);
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(ChatColor.YELLOW + stat.getName() + " succesfully changed to " + value + ".");
+            player.sendMessage(ChatColor.YELLOW + stat.getName() + " successfully changed to " + value + ".");
             return;
         }
         // ==================================================================================================================================
@@ -98,13 +97,7 @@ public class StatEditor implements Listener {
             }
 
             // effect
-            PotionEffectType effect = null;
-            for (PotionEffectType effect1 : PotionEffectType.values())
-                if (effect1 != null && effect1.getName().equalsIgnoreCase(split[0].replace("-", "_"))) {
-                    effect = effect1;
-                    break;
-                }
-
+            PotionEffectType effect = PotionEffectType.getByName(split[0].replace("-", "_"));
             if (effect == null) {
                 player.sendMessage(ChatColor.RED + split[0] + " is not a valid potion effect!");
                 player.sendMessage(ChatColor.RED + "All potion effects can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html");
@@ -112,10 +105,10 @@ public class StatEditor implements Listener {
             }
 
             // amplifier
-            int amplifier = 0;
+            int amplifier;
             try {
-                amplifier = (int) Double.parseDouble(split[1]);
-            } catch (Exception e1) {
+                amplifier = Integer.parseInt(split[1]);
+            } catch (NumberFormatException e) {
                 player.sendMessage(ChatColor.RED + split[1] + " is not a valid number!");
                 return;
             }
@@ -124,7 +117,7 @@ public class StatEditor implements Listener {
             config.getConfig().set(path + "." + stat.getPath() + "." + effect.getName(), amplifier);
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(ChatColor.YELLOW + effect.getName() + " " + amplifier + " succesfully added.");
+            player.sendMessage(ChatColor.YELLOW + effect.getName() + " " + amplifier + " successfully added.");
             return;
         }
     }

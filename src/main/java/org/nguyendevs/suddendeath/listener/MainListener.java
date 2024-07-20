@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class MainListener implements Listener {
-    private static Set<UUID> noDrop = new HashSet<>();
+    private static final Set<UUID> noDrop = new HashSet<>();
 
     @EventHandler
     public void a(PlayerJoinEvent event) {
