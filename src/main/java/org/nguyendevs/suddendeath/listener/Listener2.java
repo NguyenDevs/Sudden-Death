@@ -27,6 +27,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.Objects;
 import java.util.Random;
 
 public class Listener2 implements Listener {
@@ -143,13 +144,14 @@ public class Listener2 implements Listener {
 					for (int j = 0; j < 8; j++) {
 						ItemStack stack = new ItemStack(Material.GOLD_NUGGET);
 						ItemMeta stack_meta = stack.getItemMeta();
-						stack_meta.setDisplayName("BOUNTYHUNTERS:chest " + player.getUniqueId().toString() + " " + j);
+                        assert stack_meta != null;
+                        stack_meta.setDisplayName("BOUNTYHUNTERS:chest " + player.getUniqueId().toString() + " " + j);
 						stack.setItemMeta(stack_meta);
 
 						NoInteractItemEntity item = new NoInteractItemEntity(player.getLocation(), stack);
-						Bukkit.getScheduler().scheduleSyncDelayedTask(SuddenDeath.plugin, () -> item.close(), 30 + random.nextInt(30));
+						Bukkit.getScheduler().scheduleSyncDelayedTask(SuddenDeath.plugin, item::close, 30 + random.nextInt(30));
 					}
-					int newExp = (current - exp < 0 ? 0 : current - exp);
+					int newExp = (Math.max(current - exp, 0));
 					m.setTotalExperience(newExp);
 				}
 			}
@@ -196,7 +198,7 @@ public class Listener2 implements Listener {
 								y += .07;
 								int par_n = 3;
 								for (int j = 0; j < par_n; j++)
-									loc.getWorld().spawnParticle(Particle.REDSTONE,
+									Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE,
 											loc.clone().add(Math.cos(y * Math.PI + (j * Math.PI * 2 / par_n)) * (3 - y) / 2.5, y,
 													Math.sin(y * Math.PI + (j * Math.PI * 2 / par_n)) * (3 - y) / 2.5),
 											0, new Particle.DustOptions(Color.BLACK, 1));
@@ -223,7 +225,7 @@ public class Listener2 implements Listener {
 			return;
 
 		Player player = event.getPlayer();
-		if (event.getFrom().getBlockX() == event.getTo().getBlockX() && event.getFrom().getBlockY() == event.getTo().getBlockY()
+		if (event.getFrom().getBlockX() == Objects.requireNonNull(event.getTo()).getBlockX() && event.getFrom().getBlockY() == event.getTo().getBlockY()
 				&& event.getFrom().getBlockZ() == event.getTo().getBlockZ())
 			return;
 
@@ -275,15 +277,18 @@ public class Listener2 implements Listener {
 
 			// hp
 			AttributeInstance maxHealth = freddy.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-			maxHealth.setBaseValue(maxHealth.getBaseValue() * 1.75);
+            assert maxHealth != null;
+            maxHealth.setBaseValue(maxHealth.getBaseValue() * 1.75);
 
 			// ms
 			AttributeInstance movementSpeed = freddy.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
-			movementSpeed.setBaseValue(movementSpeed.getBaseValue() * 1.35);
+            assert movementSpeed != null;
+            movementSpeed.setBaseValue(movementSpeed.getBaseValue() * 1.35);
 
 			// atk
 			AttributeInstance attackDamage = freddy.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-			attackDamage.setBaseValue(attackDamage.getBaseValue() * 1.35);
+            assert attackDamage != null;
+            attackDamage.setBaseValue(attackDamage.getBaseValue() * 1.35);
 
 			freddy.setTarget(player);
 			player.sendMessage(ChatColor.DARK_RED + Utils.msg("freddy-summoned"));

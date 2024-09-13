@@ -42,6 +42,7 @@ public enum Feature {
 	// first time.", "Explosion radius: #radius#.", "&4Still in Beta." },
 	// "trapped-dungeon-chests", new Modifier[] { new Modifier("radius", 4), new
 	// Modifier("chance-percent", 35.0) }),
+	//REALISTIC_SPAWN("Realistic Spawn", new String[] {"All Mob will have animation spawn like growup from underground"}, "realistic-spawn", new Modifier[] {new Modifier("spawn-duration-seconds", 1.5)}),
 	ENDER_POWER("Ender Power", new String[] { "Players have a #chance-percent#% chance to get", "blinded for #duration# seconds when hitting", "endermen, endermites, shulkers and dragons." }, "ender-power", new Modifier[] { new Modifier("chance-percent", 70), new Modifier("duration", 6.0) }),
 	UNDEAD_GUNNERS("Undead Gunners", new String[] { "Zombies named 'Undead Gunner' become gunners.", "Gunners can cast 1 spell!", "Rocket: #damage# damage, AoE" }, "undead-gunners", new Modifier[] { new Modifier("damage", 7.0), new Modifier("block-damage", 0) }),
 	REALISTIC_PICKUP("Realistic Pickup", new String[] { "Players need to crouch near an", "item and look down in order to pick", "it up. Players also get briefly slowed." }, "realistic-pickup", new Modifier[] {}),
@@ -55,8 +56,8 @@ public enum Feature {
 	SNOW_SLOW("Snow Slow", new String[] { "Players who are not wearing iron,", "gold or diamond boots are permanently", "slowed when walking on snow." }, "snow-slow", new Modifier[] {}),
 	// ENDLESS_DOOM("Endless Doom", new String[] { "", "", "" }, "endless-doom",
 	// new Modifier[] {}),
-	BLOOD_MOON("Blood Moon", new String[] { "When night comes, it has a #chance#% chance to turn red...", "Players take #damage-percent#% more damage and get", "slowed for #slow-duration#s whenever taking damage.", "", "Monsters spawn with Speed #speed#, Strength", "#increase-damage# and Resistance #damage-resistance#" }, "blood-moon", new Modifier[] { new Modifier("chance", 2), new Modifier("damage-percent", 60), new Modifier("slow-duration", 3), new Modifier("increase-damage", 2), new Modifier("speed", 2), new Modifier("damage-resistance", 2) }, (world) -> new BloodMoon(world)),
-	THUNDERSTORM("Thunderstorm", new String[] { "Each storm has a #chance#% chance to become a thunderstorm.", "Lightning strikes deal #damage-percent#% more AoE damage", "and appear way more frequently around players!!" }, "thunderstorm", new Modifier[] { new Modifier("chance", 25), new Modifier("damage-percent", 125) }, (world) -> new Thunderstorm(world)),
+	BLOOD_MOON("Blood Moon", new String[] { "When night comes, it has a #chance#% chance to turn red...", "Players take #damage-percent#% more damage and get", "slowed for #slow-duration#s whenever taking damage.", "", "Monsters spawn with Speed #speed#, Strength", "#increase-damage# and Resistance #damage-resistance#" }, "blood-moon", new Modifier[] { new Modifier("chance", 2),new Modifier("drowned-per-chunk", 3), new Modifier("damage-percent", 60), new Modifier("slow-duration", 3), new Modifier("increase-damage", 2), new Modifier("speed", 2), new Modifier("damage-resistance", 2) }, BloodMoon::new),
+	THUNDERSTORM("Thunderstorm", new String[] { "Each storm has a #chance#% chance to become a thunderstorm.", "Lightning strikes deal #damage-percent#% more AoE damage", "and appear way more frequently around players!!" }, "thunderstorm", new Modifier[] { new Modifier("chance", 25), new Modifier("damage-percent", 125) }, Thunderstorm::new),
 	// PLAYER_NIGHTMARES("Player Nightmares", new String[] { "Players can
 	// trigger nightmares when", "leaving their beds (#chance#% chance).", "",
 	// "During nightmares, tiny monsters will spawn", "and target the unlucky

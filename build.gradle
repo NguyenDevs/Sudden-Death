@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'org.NguyenDevs'
-version = '2.0.2'
+version = '2.0.5'
 
 repositories {
     mavenCentral()
@@ -18,16 +18,25 @@ repositories {
     maven {
         url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
     }
-    mavenCentral()
-    maven { url "https://maven.enginehub.org/repo/" }
+    maven {
+        url = "https://maven.enginehub.org/repo/"
+    }
+    maven {
+        url = "https://repo.dmulloy2.net/repository/public/"
+    }
+
 }
 
 dependencies {
+    compileOnly group: "com.comphenix.protocol", name: "ProtocolLib", version: "4.7.0";
     compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.9'
     implementation 'org.apache.commons:commons-lang3:3.14.0'
     compileOnly "org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT"
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     compileOnly 'me.clip:placeholderapi:2.11.6'
+    // https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core
+    implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
 }
 
 def targetJavaVersion = 17

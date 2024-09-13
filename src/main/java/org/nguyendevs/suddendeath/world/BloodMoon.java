@@ -46,21 +46,31 @@ public class BloodMoon extends WorldEventHandler {
 		final LivingEntity entity = event.getEntity();
 		if (!entity.getWorld().equals(getWorld()) || !(entity instanceof Creature)) return;
 
-		if (!(entity instanceof Zombie) && !(entity instanceof Drowned)) {
+		Location loc = entity.getLocation();
+		boolean isWaterNearby = isWaterNearby(loc);
+
+		// Skip spawning zombies if water is nearby
+		if (isWaterNearby && entity instanceof Zombie) {
+			event.setCancelled(true);
+			return;
+		}
+
+		if (!(entity instanceof Zombie)) {
 			event.setCancelled(true);
 
-			Location loc = entity.getLocation();
-			boolean isWaterNearby = isWaterNearby(loc);
-
-			// Tạo zombie hoặc drowned thay thế
-			EntityType type = isWaterNearby ? EntityType.DROWNED : EntityType.ZOMBIE;
+			// Spawn zombie
+			EntityType type = EntityType.ZOMBIE;
 			Zombie zombie = (Zombie) entity.getWorld().spawnEntity(loc, type);
-			for (PotionEffectType effectType : new PotionEffectType[]{PotionEffectType.SPEED, PotionEffectType.INCREASE_DAMAGE, PotionEffectType.DAMAGE_RESISTANCE}) {
+			for (PotionEffectType effectType : new PotionEffectType[]{
+					PotionEffectType.SPEED,
+					PotionEffectType.INCREASE_DAMAGE,
+					PotionEffectType.DAMAGE_RESISTANCE}) {
 				zombie.addPotionEffect(new PotionEffect(effectType, 1000000,
 						(int) Feature.BLOOD_MOON.getDouble(effectType.getName().toLowerCase().replace("_", "-"))));
 			}
 			zombie.setMetadata("BloodmoonMob", new FixedMetadataValue(SuddenDeath.plugin, Boolean.TRUE));
 
+			// Custom particle effect
 			new BukkitRunnable() {
 				double ti = 0.0D;
 				Location loc = zombie.getLocation().clone();
@@ -75,7 +85,6 @@ public class BloodMoon extends WorldEventHandler {
 						this.ti += 0.12D;
 						for (double i = 0.0D; i < 6.283185307179586D; i += 0.39269908169872414D) {
 							if (this.r.nextDouble() >= 0.4D) {
-								// Add a height offset of 2 blocks to the y-coordinate
 								Location loc1 = this.loc.clone().add(Math.cos(i) * 0.8D, this.ti + 2.0D, Math.sin(i) * 0.8D);
 								loc1.getWorld().spawnParticle(Particle.REDSTONE, loc1, 0, new Particle.DustOptions(Color.BLACK, 1.0F));
 							}
@@ -85,6 +94,7 @@ public class BloodMoon extends WorldEventHandler {
 			}.runTaskTimer(SuddenDeath.plugin, 0L, 1L);
 		}
 	}
+
 
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityExplode(EntityExplodeEvent event) {
@@ -98,15 +108,15 @@ public class BloodMoon extends WorldEventHandler {
 
 	@Override
 	public void run() {
-		// Biến tất cả các quái vật hiện có thành Zombie hoặc Drowned
+		// Biến tất cả các quái vật hiện có thành Zombie
 		for (Entity entity : getWorld().getEntities()) {
-			if (entity instanceof Monster && !(entity instanceof Zombie || entity instanceof Drowned)) {
+			if (entity instanceof Monster && !(entity instanceof Zombie)) {
 				Location loc = entity.getLocation();
 				boolean isWaterNearby = isWaterNearby(loc);
 				entity.remove();
 
-				// Tạo zombie hoặc drowned thay thế
-				EntityType type = isWaterNearby ? EntityType.DROWNED : EntityType.ZOMBIE;
+				// Tạo zombie
+				EntityType type = EntityType.ZOMBIE;
 				Zombie zombie = (Zombie) getWorld().spawnEntity(loc, type);
 				for (PotionEffectType effectType : new PotionEffectType[]{PotionEffectType.SPEED, PotionEffectType.INCREASE_DAMAGE, PotionEffectType.DAMAGE_RESISTANCE}) {
 					zombie.addPotionEffect(new PotionEffect(effectType, 1000000,

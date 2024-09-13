@@ -7,13 +7,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum MobStat {
-    HELMET(new ItemStack(Material.LEATHER_HELMET), "equipment.helmet", serialize(Material.AIR), Type.ITEMSTACK, "Helmet", new String[]{"Give your monster a helmet!"}),
-    CHESTPLATE(new ItemStack(Material.LEATHER_CHESTPLATE), "equipment.chestplate", serialize(Material.AIR), Type.ITEMSTACK, "Chestplate", new String[]{"Give your monster a nice chestplate!"}),
-    LEGGINGS(new ItemStack(Material.LEATHER_LEGGINGS), "equipment.leggings", serialize(Material.AIR), Type.ITEMSTACK, "Leggings", new String[]{"Give your monster some pants!"}),
-    BOOTS(new ItemStack(Material.LEATHER_BOOTS), "equipment.boots", serialize(Material.AIR), Type.ITEMSTACK, "Boots", new String[]{"Give your monster a pair of shoes!"}),
+    HELMET(new ItemStack(Material.LEATHER_HELMET), "equipment.helmet", serialize(), Type.ITEMSTACK, "Helmet", new String[]{"Give your monster a helmet!"}),
+    CHESTPLATE(new ItemStack(Material.LEATHER_CHESTPLATE), "equipment.chestplate", serialize(), Type.ITEMSTACK, "Chestplate", new String[]{"Give your monster a nice chestplate!"}),
+    LEGGINGS(new ItemStack(Material.LEATHER_LEGGINGS), "equipment.leggings", serialize(), Type.ITEMSTACK, "Leggings", new String[]{"Give your monster some pants!"}),
+    BOOTS(new ItemStack(Material.LEATHER_BOOTS), "equipment.boots", serialize(), Type.ITEMSTACK, "Boots", new String[]{"Give your monster a pair of shoes!"}),
 
-    MAIN_HAND(new ItemStack(Material.IRON_SWORD), "equipment.mainHand", serialize(Material.AIR), Type.ITEMSTACK, "Main Hand Item", new String[]{"The item your monster holds."}),
-    OFF_HAND(new ItemStack(Material.BOW), "equipment.offHand", serialize(Material.AIR), Type.ITEMSTACK, "Off Hand Item", new String[]{"The second item your monster holds."}),
+    MAIN_HAND(new ItemStack(Material.IRON_SWORD), "equipment.mainHand", serialize(), Type.ITEMSTACK, "Main Hand Item", new String[]{"The item your monster holds."}),
+    OFF_HAND(new ItemStack(Material.BOW), "equipment.offHand", serialize(), Type.ITEMSTACK, "Off Hand Item", new String[]{"The second item your monster holds."}),
 
     POTION_EFFECTS(new ItemStack(Material.POTION), "eff", null, Type.POTION_EFFECTS, "Potion Effects", new String[]{"Give your monster cool potion effects!"}),
     DISPLAY_NAME(new ItemStack(Material.NAME_TAG), "name", "My Custom Mob", Type.STRING, "Display Name", new String[]{"Set the custom name of your monster."}),
@@ -73,7 +73,7 @@ public enum MobStat {
         POTION_EFFECTS;
     }
 
-    static String serialize(Material m) {
-        return ItemUtils.serialize(new ItemStack(m));
+    static String serialize() {
+        return ItemUtils.serialize(new ItemStack(Material.AIR));
     }
 }

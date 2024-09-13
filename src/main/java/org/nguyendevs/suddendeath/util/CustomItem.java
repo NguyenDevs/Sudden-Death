@@ -10,14 +10,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 
 public enum CustomItem {
-	BANDAGE(Material.PAPER, "Bandage", new String[] { "Stops &nBleeding&r." }, new String[] { "AIR,AIR,AIR", "PAPER,STICK,PAPER", "AIR,AIR,AIR" }),
-	STRANGE_BREW(Material.MUSHROOM_STEW, "Strange Brew", new String[] { "Stops &nInfection&r." }, new String[] { "AIR,AIR,AIR", "INK_SAC,BOWL,CLAY_BALL", "AIR,AIR,AIR" }),
+	BANDAGE(Material.PAPER, "&fBandage", new String[] { "Stops Bleeding." }, new String[] { "AIR,AIR,AIR", "PAPER,STICK,PAPER", "AIR,AIR,AIR" }),
+	STRANGE_BREW(Material.BEETROOT_SOUP, "&fStrange Brew", new String[] { "Stops Infection." }, new String[] { "AIR,AIR,AIR", "INK_SAC,BOWL,CLAY_BALL", "AIR,AIR,AIR" }),
 	RAW_HUMAN_FLESH(Material.BEEF, "Human Flesh", new String[] { "Some fresh human meet.", "I wonder if I can cook it?" }),
 	HUMAN_BONE(Material.BONE, "Human Bone"),
 	COOKED_HUMAN_FLESH(Material.COOKED_BEEF, "Cooked Human Flesh", new String[] { "Looks tasty!" }),
 	SHARP_KNIFE(Material.IRON_SWORD, "Sharp Knife", new String[] { "A super sharp knife.", "Hit someone to make him bleed." }),;
 
-	public Material material;
+	public final Material material;
 	private String name;
 	public String[] lore;
 	public String[] craft;
@@ -54,15 +54,20 @@ public enum CustomItem {
 	public ItemStack a() {
 		ItemStack i = new ItemStack(material);
 		ItemMeta meta = i.getItemMeta();
-		meta.setDisplayName(getName());
-		meta.addItemFlags(ItemFlag.values());
-		if (lore != null) {
-			ArrayList<String> lore = new ArrayList<String>();
-			for (String s : this.lore)
-				lore.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', s));
-			meta.setLore(lore);
+
+		if (meta != null) {
+			meta.setDisplayName(getName());
+			meta.addItemFlags(ItemFlag.values());
+			if (lore != null) {
+				ArrayList<String> loreList = new ArrayList<>();
+				for (String s : this.lore) {
+					loreList.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', s));
+				}
+				meta.setLore(loreList);
+			}
+			i.setItemMeta(meta);
 		}
-		i.setItemMeta(meta);
 		return i;
 	}
+
 }

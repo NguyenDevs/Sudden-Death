@@ -36,7 +36,7 @@ public enum Message {
 	GIVE_ITEM("You gave &f#player# #item##amount#&e."),
 	RECEIVE_ITEM("You received &f#item##amount#&e."),;
 
-	public Object value;
+	public final Object value;
 
 	private Message(Object value) {
 		this.value = value;
