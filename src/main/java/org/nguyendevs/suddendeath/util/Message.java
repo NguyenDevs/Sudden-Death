@@ -3,6 +3,7 @@ package org.nguyendevs.suddendeath.util;
 import java.util.Arrays;
 
 public enum Message {
+	NO_LONGER_BLEEDING("You are no longer bleeding."), // no-longer-bleeding
 	NOW_BLEEDING("You are now bleeding. Quickly find a bandage or you'll die within seconds."),
 	NOW_INFECTED("You're starting to feel very wieird..."),
 	PAPI_INFECTED("Infected"),

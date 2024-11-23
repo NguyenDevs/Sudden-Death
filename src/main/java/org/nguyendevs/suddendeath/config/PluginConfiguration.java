@@ -4,6 +4,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
 import org.nguyendevs.suddendeath.FadingType;
 
+import java.util.Objects;
+
 public class PluginConfiguration extends AbstractConfig {
     private final Plugin plugin;
 
@@ -17,7 +19,7 @@ public class PluginConfiguration extends AbstractConfig {
         if (coefficient >= 1.0D) {
             coefficient = 0.95D;
             this.plugin.getLogger()
-                    .warning("You selected the wrong coefficient value, which is greater than or equal to one.The coefficient is set to the default value of 0.95.");
+                    .warning(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "You selected the wrong coefficient value, which is greater than or equal to one.The coefficient is set to the default value of 0.95.");
         }
         return coefficient;
     }
@@ -37,10 +39,6 @@ public class PluginConfiguration extends AbstractConfig {
             default -> mode;
         };
 
-    }
-
-    private String getColoredString(String name, String def) {
-        return ChatColor.translateAlternateColorCodes('&', getConfig().getString(name, def));
     }
 
     public int getInterval() {

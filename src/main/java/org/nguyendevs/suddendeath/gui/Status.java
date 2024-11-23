@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Status extends PluginInventory {
+public class  Status extends PluginInventory {
     private final PlayerData data;
 
     public Status(Player player) {

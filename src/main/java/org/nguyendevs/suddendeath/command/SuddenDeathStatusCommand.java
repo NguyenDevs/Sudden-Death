@@ -24,18 +24,43 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.Objects;
 
+import static org.nguyendevs.suddendeath.SuddenDeath.plugin;
+
 public class SuddenDeathStatusCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+            // Console hoặc Command Block
+            if (args.length == 0) {
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Invalid command. Use /sds help for a list of commands.");
+                return true;
+            }
+
+            switch (args[0].toLowerCase()) {
+                case "reload":
+                    handleReloadCommand(sender);
+                    break;
+                case "give":
+                    handleGiveCommand(sender, args);
+                    break;
+                case "clean":
+                    handleCleanCommand(sender, args);
+                    break;
+                case "itemlist":
+                    handleCleanCommand(sender, args);
+                    break;
+                default:
+                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" " +ChatColor.RED + "Only players can use this command.");
+                    break;
+            }
             return true;
         }
 
+        // Player
         Player player = (Player) sender;
         if (!player.hasPermission("suddendeath.status")) {
-            player.sendMessage(ChatColor.RED + SuddenDeath.plugin.messages.getConfig().getString("not-enough-perms"));
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + plugin.messages.getConfig().getString("not-enough-perms"));
             playSound(player);
             return true;
         }
@@ -62,7 +87,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                 break;
             case "reload":
                 handleReloadCommand(player);
-
                 break;
             case "itemlist":
                 sendItemList(player);
@@ -71,7 +95,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                 handleGiveCommand(player, args);
                 break;
             default:
-                player.sendMessage(ChatColor.RED + "Unknown command. Use /sds help for a list of commands.");
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Unknown command. Use /sds help for a list of commands.");
                 playSound(player);
                 break;
         }
@@ -95,27 +119,24 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         playSound(player);
     }
 
-    private void handleCleanCommand(Player player, String[] args) {
-        Player target = args.length < 2 ? player : Bukkit.getPlayer(args[1]);
+    private void handleCleanCommand(CommandSender sender, String[] args) {
+        Player target = args.length < 2 ? (sender instanceof Player ? (Player) sender : null) : Bukkit.getPlayer(args[1]);
         if (target == null) {
-            assert player != null;
-            player.sendMessage(ChatColor.RED + "Couldn't find player called " + args[1] + ".");
-            playSound(player);
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Couldn't find player called " + args[1] + ".");
+            if (sender instanceof Player) playSound((Player) sender);
             return;
         }
 
         PlayerData data = PlayerData.get(target);
-        if (data.isInfected())
-            data.setInfected(false);
-        if (data.isBleeding())
-            data.setBleeding(false);
-        player.sendMessage(ChatColor.GREEN + "Removed bad status for " + target.getName() + ".");
-        playSound(player);
+        if (data.isInfected()) data.setInfected(false);
+        if (data.isBleeding()) data.setBleeding(false);
+        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ ChatColor.GREEN + "Removed bad status for " + target.getName() + ".");
+        if (sender instanceof Player) playSound((Player) sender);
     }
 
     private void handleStartCommand(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(ChatColor.RED + "Please specify an event to start.");
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ ChatColor.RED + "Please specify an event to start.");
             playSound(player);
             return;
         }
@@ -125,13 +146,13 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
             feature = Feature.valueOf(args[1].toUpperCase().replace("-", "_"));
             Validate.isTrue(feature.isEvent());
         } catch (IllegalArgumentException exception) {
-            player.sendMessage(ChatColor.RED + "Could not find event called " + args[1].toUpperCase().replace("-", "_") + ".");
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Could not find event called " + args[1].toUpperCase().replace("-", "_") + ".");
             playSound(player);
             return;
         }
 
         player.getWorld().setTime(14000);
-        SuddenDeath.plugin.getEventManager().applyStatus(player.getWorld(), feature.generateWorldEventHandler(player.getWorld()));
+        plugin.getEventManager().applyStatus(player.getWorld(), feature.generateWorldEventHandler(player.getWorld()));
         String message = ChatColor.DARK_RED + "" + ChatColor.ITALIC + Utils.msg(feature.getPath());
         for (Player online : player.getWorld().getPlayers()) {
             online.sendMessage(message);
@@ -142,16 +163,16 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         playSound(player);
     }
 
-    private void handleReloadCommand(Player player) {
-        SuddenDeath.plugin.saveDefaultConfig();
-        SuddenDeath.plugin.reloadConfigFiles();
-        SuddenDeath.plugin.reloadConfig();
+    private void handleReloadCommand(CommandSender sender) {
+        plugin.saveDefaultConfig();
+        plugin.reloadConfigFiles();
+        plugin.reloadConfig();
         for (Feature feature : Feature.values())
             feature.updateConfig();
         for (CustomItem item : CustomItem.values())
-            item.update(Objects.requireNonNull(SuddenDeath.plugin.items.getConfig().getConfigurationSection(item.name())));
-        player.sendMessage(ChatColor.YELLOW + SuddenDeath.plugin.getName() + " " + SuddenDeath.plugin.getDescription().getVersion() + " reloaded.");
-        playSound(player);
+            item.update(Objects.requireNonNull(plugin.items.getConfig().getConfigurationSection(item.name())));
+        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" " + plugin.getName() + " " + plugin.getDescription().getVersion() + " reloaded.");
+        if (sender instanceof Player) playSound((Player) sender);
     }
 
     private void sendItemList(Player player) {
@@ -173,10 +194,10 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         playSound(player);
     }
 
-    private void handleGiveCommand(Player player, String[] args) {
+    private void handleGiveCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(ChatColor.RED + "Please specify an item to give.");
-            playSound(player);
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Please specify an item to give.");
+            if (sender instanceof Player) playSound((Player) sender);
             return;
         }
 
@@ -184,8 +205,8 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         try {
             itemStack = CustomItem.valueOf(args[1].replace("-", "_").toUpperCase()).a();
         } catch (Exception e) {
-            player.sendMessage(ChatColor.RED + "Couldn't find the item called " + args[1].replace("-", "_").toUpperCase() + ".");
-            playSound(player);
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Couldn't find the item called " + args[1].replace("-", "_").toUpperCase() + ".");
+            if (sender instanceof Player) playSound((Player) sender);
             return;
         }
 
@@ -193,22 +214,21 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
             try {
                 itemStack.setAmount((int) Double.parseDouble(args[3]));
             } catch (Exception e) {
-                player.sendMessage(ChatColor.RED + args[3] + " is not a valid number.");
-                playSound(player);
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" "+ChatColor.RED + args[3] + " is not a valid number.");
+                if (sender instanceof Player) playSound((Player) sender);
                 return;
             }
         }
 
-        Player target = args.length > 2 ? Bukkit.getPlayer(args[2]) : player;
+        Player target = args.length > 2 ? Bukkit.getPlayer(args[2]) : (sender instanceof Player ? (Player) sender : null);
         if (target == null) {
-            assert player != null;
-            player.sendMessage(ChatColor.RED + "Couldn't find player called " + args[2] + ".");
-            playSound(player);
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Couldn't find player called " + args[2] + ".");
+            if (sender instanceof Player) playSound((Player) sender);
             return;
         }
 
-        if (player != target) {
-            player.sendMessage(ChatColor.YELLOW + Utils.msg("give-item")
+        if (!Objects.equals(sender, target)) {
+            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.YELLOW + Utils.msg("give-item")
                     .replace("#item#", Utils.displayName(itemStack))
                     .replace("#player#", target.getName())
                     .replace("#amount#", itemStack.getAmount() > 1 ? " x" + itemStack.getAmount() : ""));
@@ -222,12 +242,10 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         } else {
             target.getInventory().addItem(itemStack);
         }
-        playSound(player);
+        if (sender instanceof Player) playSound((Player) sender);
     }
 
     private void playSound(Player player) {
-        if (player != null) {
-            player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1, 1);
-        }
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1f);
     }
 }

@@ -20,7 +20,6 @@ import org.nguyendevs.suddendeath.listener.*;
 import org.nguyendevs.suddendeath.manager.EventManager;
 import org.nguyendevs.suddendeath.packets.PacketSender;
 import org.nguyendevs.suddendeath.packets.v1_17.ProtocolLibImpl;
-import org.nguyendevs.suddendeath.packets.v1_8.LegacyProtocolLibImpl;
 import org.nguyendevs.suddendeath.player.Difficulty;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.PlayerData;
@@ -53,7 +52,7 @@ public class SuddenDeath extends JavaPlugin {
     public ConfigFile messages, difficulties, items;
     public Difficulty defaultDifficulty;
     private static SuddenDeath instance;
-    public static SuddenDeath getInstance() {
+    public static Plugin getInstance() {
         return instance;
     }
 

@@ -15,7 +15,10 @@ import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
+
+import static org.nguyendevs.suddendeath.SuddenDeath.plugin;
 
 public class StatEditor implements Listener {
     private final String path;
@@ -31,7 +34,7 @@ public class StatEditor implements Listener {
         this.stat = stat;
         this.config = config;
 
-        Bukkit.getPluginManager().registerEvents(this, SuddenDeath.plugin);
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public void close() {
@@ -50,7 +53,7 @@ public class StatEditor implements Listener {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
         if (event.getMessage().equalsIgnoreCase("cancel")) {
             close();
-            player.sendMessage(ChatColor.YELLOW + "Mob editing canceled.");
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.YELLOW + "Mob editing canceled.");
             new MonsterEdition(player, type, path).open();
             return;
         }
@@ -68,7 +71,7 @@ public class StatEditor implements Listener {
 
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(ChatColor.YELLOW + stat.getName() + " successfully changed to " + msg + "�7.");
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ ChatColor.YELLOW + stat.getName() + " successfully changed to " + msg + "�7.");
             return;
         }
         // ==================================================================================================================================
@@ -77,14 +80,14 @@ public class StatEditor implements Listener {
             try {
                 value = Double.parseDouble(event.getMessage());
             } catch (NumberFormatException e) {
-                player.sendMessage(ChatColor.RED + event.getMessage() + " is not a valid number.");
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + event.getMessage() + " is not a valid number.");
                 return;
             }
             close();
             config.getConfig().set(path + "." + stat.getPath(), value == 0 ? null : value);
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(ChatColor.YELLOW + stat.getName() + " successfully changed to " + value + ".");
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.YELLOW + stat.getName() + " successfully changed to " + value + ".");
             return;
         }
         // ==================================================================================================================================
@@ -99,8 +102,8 @@ public class StatEditor implements Listener {
             // effect
             PotionEffectType effect = PotionEffectType.getByName(split[0].replace("-", "_"));
             if (effect == null) {
-                player.sendMessage(ChatColor.RED + split[0] + " is not a valid potion effect!");
-                player.sendMessage(ChatColor.RED + "All potion effects can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html");
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + split[0] + " is not a valid potion effect!");
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "All potion effects can be found here: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html");
                 return;
             }
 
@@ -109,7 +112,7 @@ public class StatEditor implements Listener {
             try {
                 amplifier = Integer.parseInt(split[1]);
             } catch (NumberFormatException e) {
-                player.sendMessage(ChatColor.RED + split[1] + " is not a valid number!");
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + split[1] + " is not a valid number!");
                 return;
             }
 
@@ -117,7 +120,7 @@ public class StatEditor implements Listener {
             config.getConfig().set(path + "." + stat.getPath() + "." + effect.getName(), amplifier);
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(ChatColor.YELLOW + effect.getName() + " " + amplifier + " successfully added.");
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.YELLOW + effect.getName() + " " + amplifier + " successfully added.");
             return;
         }
     }
