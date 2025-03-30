@@ -337,7 +337,7 @@ public class Loops {
 			return;
 
 		if (Feature.HUNGER_NAUSEA.isEnabled(player) && player.getFoodLevel() < 8)
-			player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 600, 0));
+			player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 300, 0));
 
 		PlayerData data = PlayerData.get(player);
 		if (Feature.BLEEDING.isEnabled(player) && data.isBleeding() && SuddenDeath.plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT)

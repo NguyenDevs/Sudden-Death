@@ -2,7 +2,7 @@
 disable-difficulties: false
 default-difficulty: SANDBOX
 update-notify: true
-prefix: "&e[Sudden Death] &7"
+
 #SETTINGS FOR BLOOD SCREEN EFFECT
 #Turn on or off this feature
 blood-enable: true

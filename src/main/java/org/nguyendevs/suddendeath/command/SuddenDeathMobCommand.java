@@ -20,23 +20,19 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
-import java.util.Objects;
-
-import static org.nguyendevs.suddendeath.SuddenDeath.plugin;
-
 public class SuddenDeathMobCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(plugin.getConfig().getString("prefix") + ChatColor.RED + " Only players can use this command.");
+            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
             return true;
         }
 
         Player player = (Player) sender;
 
         if (!player.hasPermission("suddendeath.op")) {
-            player.sendMessage(plugin.getConfig().getString("prefix") +" "+ChatColor.RED + Utils.msg("not-enough-perms"));
+            player.sendMessage(ChatColor.RED + Utils.msg("not-enough-perms"));
             playSound(player);
             return true;
         }
@@ -65,7 +61,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
                 handleListCommand(player, args);
                 break;
             default:
-                player.sendMessage(plugin.getConfig().getString("prefix") +" "+ChatColor.RED + "Unknown command. Use /sdmob for help.");
+                player.sendMessage(ChatColor.RED + "Unknown command. Use /sdmob for help.");
                 playSound(player);
                 break;
         }
@@ -89,7 +85,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
 
     private void handleKillCommand(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" " +ChatColor.RED + "Usage: /sdmob kill <radius>");
+            player.sendMessage(ChatColor.RED + "Usage: /sdmob kill <radius>");
             playSound(player);
             return;
         }
@@ -98,7 +94,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         try {
             radius = Double.parseDouble(args[1]);
         } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" " +ChatColor.RED + args[1] + " is not a valid number.");
+            player.sendMessage(ChatColor.RED + args[1] + " is not a valid number.");
             playSound(player);
             return;
         }
@@ -111,13 +107,13 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             }
         }
 
-        player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" " +ChatColor.YELLOW + "Successfully killed " + count + " custom mob" + (count > 1 ? "s" : "") + ".");
+        player.sendMessage(ChatColor.YELLOW + "Successfully killed " + count + " custom mob" + (count > 1 ? "s" : "") + ".");
         playSound(player);
     }
 
     private void handleEditCommand(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" " +ChatColor.RED + "Usage: /sdmob edit <type> <mob-id>");
+            player.sendMessage(ChatColor.RED + "Usage: /sdmob edit <type> <mob-id>");
             playSound(player);
             return;
         }
@@ -130,15 +126,15 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             type = EntityType.valueOf(typeFormat);
             Validate.isTrue(type.isAlive());
         } catch (IllegalArgumentException exception) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" " +ChatColor.RED + typeFormat + " is not a supported mob type.");
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Type /sdmob list to see all available mob types.");
+            player.sendMessage(ChatColor.RED + typeFormat + " is not a supported mob type.");
+            player.sendMessage(ChatColor.RED + "Type /sdmob list to see all available mob types.");
             playSound(player);
             return;
         }
 
         ConfigFile mobs = new ConfigFile(type);
         if (!mobs.getConfig().contains(id)) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Couldn't find the mob called " + id + ".");
+            player.sendMessage(ChatColor.RED + "Couldn't find the mob called " + id + ".");
             playSound(player);
             return;
         }
@@ -149,7 +145,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
 
     private void handleCreateCommand(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" " +ChatColor.RED + "Usage: /sdmob create <type> <mob-id>");
+            player.sendMessage(ChatColor.RED + "Usage: /sdmob create <type> <mob-id>");
             playSound(player);
             return;
         }
@@ -162,8 +158,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             type = EntityType.valueOf(typeFormat);
             Validate.isTrue(type.isAlive());
         } catch (IllegalArgumentException e) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" "+ChatColor.RED + typeFormat + " is not a supported mob type.");
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix")))+" "+ChatColor.RED + "Use /sdmob list type to see all available mob types.");
+            player.sendMessage(ChatColor.RED + typeFormat + " is not a supported mob type.");
+            player.sendMessage(ChatColor.RED + "Use /sdmob list type to see all available mob types.");
             playSound(player);
             return;
         }
@@ -171,20 +167,20 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         ConfigFile mobs = new ConfigFile(type);
 
         if (Utils.isIDType(id)) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + id + " is not a valid ID.");
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "ID Format: USE_THIS_FORMAT");
+            player.sendMessage(ChatColor.RED + id + " is not a valid ID.");
+            player.sendMessage(ChatColor.RED + "ID Format: USE_THIS_FORMAT");
             playSound(player);
             return;
         }
 
         if (id.equalsIgnoreCase("DEFAULT_KEY")) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "This ID is forbidden.");
+            player.sendMessage(ChatColor.RED + "This ID is forbidden.");
             playSound(player);
             return;
         }
 
         if (mobs.getConfig().contains(id)) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "There is already a mob with ID " + id + ".");
+            player.sendMessage(ChatColor.RED + "There is already a mob with ID " + id + ".");
             playSound(player);
             return;
         }
@@ -194,14 +190,14 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         mobs.save();
-        player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.YELLOW + "You successfully created a new mob: " + ChatColor.WHITE + id + ChatColor.YELLOW + "!");
+        player.sendMessage(ChatColor.YELLOW + "You successfully created a new mob: " + ChatColor.WHITE + id + ChatColor.YELLOW + "!");
         playSound(player);
         new MonsterEdition(player, type, id).open();
     }
 
     private void handleDeleteCommand(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Usage: /sdmob delete <type> <mob-id>");
+            player.sendMessage(ChatColor.RED + "Usage: /sdmob delete <type> <mob-id>");
             playSound(player);
             return;
         }
@@ -214,8 +210,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             type = EntityType.valueOf(typeFormat);
             Validate.isTrue(type.isAlive());
         } catch (IllegalArgumentException e) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + typeFormat + " is not a supported mob type.");
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Use /sdmob list type to see all available mob types.");
+            player.sendMessage(ChatColor.RED + typeFormat + " is not a supported mob type.");
+            player.sendMessage(ChatColor.RED + "Use /sdmob list type to see all available mob types.");
             playSound(player);
             return;
         }
@@ -223,33 +219,33 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         ConfigFile mobs = new ConfigFile(type);
 
         if (Utils.isIDType(id)) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + id + " is not a valid ID.");
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "ID Format: USE_THIS_FORMAT");
+            player.sendMessage(ChatColor.RED + id + " is not a valid ID.");
+            player.sendMessage(ChatColor.RED + "ID Format: USE_THIS_FORMAT");
             playSound(player);
             return;
         }
 
         if (id.equalsIgnoreCase("DEFAULT_KEY")) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "This ID is forbidden.");
+            player.sendMessage(ChatColor.RED + "This ID is forbidden.");
             playSound(player);
             return;
         }
 
         if (!mobs.getConfig().contains(id)) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "There is no mob called " + id + "!");
+            player.sendMessage(ChatColor.RED + "There is no mob called " + id + "!");
             playSound(player);
             return;
         }
 
         mobs.getConfig().set(id, null);
         mobs.save();
-        player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.YELLOW + "You successfully removed " + ChatColor.WHITE + id + ChatColor.YELLOW + "!");
+        player.sendMessage(ChatColor.YELLOW + "You successfully removed " + ChatColor.WHITE + id + ChatColor.YELLOW + "!");
         playSound(player);
     }
 
     private void handleListCommand(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Usage: /sdmob list <mob-type/'type'>");
+            player.sendMessage(ChatColor.RED + "Usage: /sdmob list <mob-type/'type'>");
             playSound(player);
             return;
         }
@@ -277,8 +273,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             type = EntityType.valueOf(typeFormat);
             Validate.isTrue(type.isAlive());
         } catch (IllegalArgumentException e) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + typeFormat + " is not a supported custom mob type.");
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Objects.requireNonNull(plugin.getConfig().getString("prefix"))) +" "+ChatColor.RED + "Use /sdmob list type to see all available mob types.");
+            player.sendMessage(ChatColor.RED + typeFormat + " is not a supported custom mob type.");
+            player.sendMessage(ChatColor.RED + "Use /sdmob list type to see all available mob types.");
             playSound(player);
             return;
         }

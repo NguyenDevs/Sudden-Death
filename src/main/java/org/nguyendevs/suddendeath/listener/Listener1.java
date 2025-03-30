@@ -33,8 +33,6 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 
-import static org.nguyendevs.suddendeath.SuddenDeath.plugin;
-
 public class Listener1 implements Listener {
     private static final Random random = new Random();
 
@@ -45,7 +43,7 @@ public class Listener1 implements Listener {
                     if (Feature.WITCH_SCROLLS.isEnabled(w))
                         w.getEntitiesByClass(Witch.class).forEach(Loops::loop4s_witch);
             }
-        }.runTaskTimer(plugin, 20, 80);
+        }.runTaskTimer(SuddenDeath.plugin, 20, 80);
 
         new BukkitRunnable() {
             public void run() {
@@ -55,7 +53,7 @@ public class Listener1 implements Listener {
 
                 Bukkit.getOnlinePlayers().forEach(Loops::loop3s_player);
             }
-        }.runTaskTimer(plugin, 20, 60);
+        }.runTaskTimer(SuddenDeath.plugin, 20, 60);
 
         new BukkitRunnable() {
             public void run() {
@@ -65,7 +63,7 @@ public class Listener1 implements Listener {
                             if (t.getTarget() instanceof Player)
                                 Loops.loop3s_spider(t);
             }
-        }.runTaskTimer(plugin, 20, 40);
+        }.runTaskTimer(SuddenDeath.plugin, 20, 40);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -95,7 +93,7 @@ public class Listener1 implements Listener {
                         if (ti >= 2)
                             cancel();
                     }
-                }.runTaskTimer(plugin, 0, 1);
+                }.runTaskTimer(SuddenDeath.plugin, 0, 1);
             }
 
             // start bleeding
@@ -110,20 +108,8 @@ public class Listener1 implements Listener {
                     player.sendMessage(ChatColor.DARK_RED + Utils.msg("now-bleeding"));
                     player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
                     player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1, 2);
-
-                    // Lập lịch dừng bleeding sau khoảng thời gian nhất định
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            if (data.isBleeding()) {
-                                data.setBleeding(false);
-                                player.sendMessage(ChatColor.GREEN + Utils.msg("no-longer-bleeding"));
-                            }
-                        }
-                    }.runTaskLater(SuddenDeath.getInstance(), (long) (Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
                 }
             }
-
         }
 
         // tanky monsters
@@ -167,7 +153,7 @@ public class Listener1 implements Listener {
                             cancel();
                     }
 
-                }.runTaskTimer(plugin, 0, 1);
+                }.runTaskTimer(SuddenDeath.plugin, 0, 1);
             }
         }
     }
@@ -215,7 +201,7 @@ public class Listener1 implements Listener {
                             if (ti >= Math.PI * 2)
                                 cancel();
                         }
-                    }.runTaskTimer(plugin, 0, 1);
+                    }.runTaskTimer(SuddenDeath.plugin, 0, 1);
 
                     // Apply shaking effect to the player
                     double duration = Feature.SHOCKING_SKELETON_ARROWS.getDouble("shock-duration");
@@ -230,7 +216,7 @@ public class Listener1 implements Listener {
                             // Apply shaking effect (damage with 0.0)
                             player.playHurtAnimation(0.004f);
                         }
-                    }.runTaskTimer(plugin, 0, 2);
+                    }.runTaskTimer(SuddenDeath.plugin, 0, 2);
                     // Play hurt sound
                     new BukkitRunnable() {
                         int playCount = 0;
@@ -243,7 +229,7 @@ public class Listener1 implements Listener {
                             player.playSound(player.getLocation(), "minecraft:entity.player.hurt", 1.0f, 1.2f);
                             playCount++;
                         }
-                    }.runTaskTimer(plugin, 0, 2);
+                    }.runTaskTimer(SuddenDeath.plugin, 0, 2);
                 }
             }
 
@@ -307,7 +293,6 @@ public class Listener1 implements Listener {
                     }
                 }
             }
-
 
             // infection from ZOMBIE to PLAYER
             if ((event.getEntity() instanceof PigZombie || event.getEntity() instanceof Zombie) && event.getDamager() instanceof Player) {
@@ -411,7 +396,7 @@ public class Listener1 implements Listener {
                         // Apply shaking effect
                         player.playHurtAnimation(0.005f);
                     }
-                }.runTaskTimer(plugin, 0, 2);
+                }.runTaskTimer(SuddenDeath.plugin, 0, 2);
 
                 // Play hurt sound
                 new BukkitRunnable() {
@@ -425,46 +410,18 @@ public class Listener1 implements Listener {
                         player.playSound(player.getLocation(), "minecraft:entity.player.hurt", 1.0f, 1.2f);
                         playCount++;
                     }
-                }.runTaskTimer(plugin, 0, 2);
+                }.runTaskTimer(SuddenDeath.plugin, 0, 2);
             }
         }
 
 
         // bleeding block effect
-        if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT)) {
-            if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
-                double offsetX = (Math.random() - 0.5D) * 2.0D;
-                double offsetY = Math.random() * 2.0D;
-                double offsetZ = (Math.random() - 0.5D) * 2.0D;
+        if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT))
+            if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding())
+                player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getLocation().add(0, 1, 0), 5, Material.REDSTONE_WIRE.createBlockData());
 
-                player.getWorld().spawnParticle(
-                        Particle.BLOCK_CRACK,
-                        player.getLocation().add(offsetX, offsetY, offsetZ),
-                        30,
-                        Material.REDSTONE_BLOCK.createBlockData()
-                );
-            }
-        }
-/*
-        if (Feature.BLEEDING.isEnabled(player) && plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT)) {
-            if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
-                Location spawnLocation = player.getLocation();
-                double offsetX = (Math.random() - 0.5D) * 2.0D;
-                double offsetY = Math.random() * 2.0D;
-                double offsetZ = (Math.random() - 0.5D) * 2.0D;
-
-                spawnLocation = spawnLocation.add(offsetX, offsetY, offsetZ);
-                player.getWorld().spawnParticle(
-                        Particle.BLOCK_CRACK,
-                        spawnLocation,
-                        30,
-                        Material.REDSTONE_BLOCK.createBlockData()
-                );
-            }
-        }
-*/
         // infection effect
-        if (Feature.INFECTION.isEnabled(player) && plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT))
+        if (Feature.INFECTION.isEnabled(player) && SuddenDeath.plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT))
             if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isInfected())
                 player.getWorld().spawnParticle(Particle.SPELL_MOB, player.getLocation().add(0, 1, 0), 5, .3, 0, .3, 0);
 
@@ -492,7 +449,7 @@ public class Listener1 implements Listener {
                         }
                         entity.getWorld().createExplosion(entity.getLocation(), 3);
                     }
-                }.runTaskLater(plugin, 15);
+                }.runTaskLater(SuddenDeath.plugin, 15);
             }
         }
 
