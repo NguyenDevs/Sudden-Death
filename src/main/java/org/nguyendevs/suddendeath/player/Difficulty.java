@@ -7,83 +7,231 @@ import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.attribute.AttributeModifier.Operation;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
+import org.nguyendevs.suddendeath.SuddenDeath;
+import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.logging.Level;
 
+/**
+ * Enum representing difficulty levels in the SuddenDeath plugin.
+ */
 public enum Difficulty {
-	SANDBOX("Sandbox", Material.YELLOW_TERRACOTTA, 2, 0, 0),
-	DIFFICULT("Difficult", Material.ORANGE_TERRACOTTA, 9, 30, 4),
-	HARDCORE("Hardcore", Material.RED_TERRACOTTA, 14, 40, 6),
-	DEATH_WISH("Death Wish", Material.BROWN_TERRACOTTA, 17, 50, 8),
-	SUDDEN_DEATH("Sudden Death", Material.BLACK_TERRACOTTA, 20, 60, 10);
+	SANDBOX("Sandbox", Material.YELLOW_TERRACOTTA, 2, 0.0, 0.0),
+	DIFFICULT("Difficult", Material.ORANGE_TERRACOTTA, 9, 30.0, 4.0),
+	HARDCORE("Hardcore", Material.RED_TERRACOTTA, 14, 40.0, 6.0),
+	DEATH_WISH("Death Wish", Material.BROWN_TERRACOTTA, 17, 50.0, 8.0),
+	SUDDEN_DEATH("Sudden Death", Material.BLACK_TERRACOTTA, 20, 60.0, 10.0);
 
-	// this difficulty index is 100% cosmetic
-	private final int difficulty;
-
-	// item in the gui
+	private static final String MODIFIER_NAME = "suddenDeath.difficultyMalus";
+	private final int difficultyIndex;
 	private final ItemStack item;
-
 	private String name;
 	private List<String> lore;
-	private double increasedDamage, healthMalus;
+	private double increasedDamage;
+	private double healthMalus;
 
-	private Difficulty(String name, Material material, int difficulty, double increasedDamage, double healthMalus) {
+	/**
+	 * Constructs a Difficulty with the specified properties.
+	 *
+	 * @param name            The default name of the difficulty.
+	 * @param material        The material representing the difficulty in the GUI.
+	 * @param difficultyIndex The cosmetic difficulty index.
+	 * @param increasedDamage The percentage increase in damage.
+	 * @param healthMalus     The health reduction amount.
+	 * @throws IllegalArgumentException if name or material is null.
+	 */
+	Difficulty(String name, Material material, int difficultyIndex, double increasedDamage, double healthMalus) {
+		if (name == null || material == null) {
+			throw new IllegalArgumentException("Name and material cannot be null");
+		}
 		this.name = name;
 		this.item = new ItemStack(material);
-		this.difficulty = difficulty;
-
+		this.difficultyIndex = difficultyIndex;
 		this.increasedDamage = increasedDamage;
 		this.healthMalus = healthMalus;
+		this.lore = new ArrayList<>();
 	}
 
+	/**
+	 * Creates a new copy of the representative item.
+	 *
+	 * @return A cloned ItemStack.
+	 */
 	public ItemStack getNewItem() {
-		return item.clone();
+		try {
+			return item.clone();
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error cloning item for difficulty: " + name, e);
+			return new ItemStack(Material.AIR);
+		}
 	}
 
+	/**
+	 * Gets the cosmetic difficulty index.
+	 *
+	 * @return The difficulty index.
+	 */
 	public int getDifficultyIndex() {
-		return difficulty;
+		return difficultyIndex;
 	}
 
+	/**
+	 * Gets the display name of the difficulty.
+	 *
+	 * @return The difficulty name.
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * Gets the lore/description of the difficulty.
+	 *
+	 * @return An unmodifiable list of lore strings.
+	 */
 	public List<String> getLore() {
-		return lore == null ? new ArrayList<>() : lore;
+		return Collections.unmodifiableList(lore);
 	}
 
+	/**
+	 * Gets the permission node for this difficulty.
+	 *
+	 * @return The permission string.
+	 */
 	public String getPermission() {
-		return "suddendeath.difficulty." + name().toLowerCase().replace("_", "-");
+		return "suddendeath.difficulty." + Utils.lowerCaseId(name());
 	}
 
+	/**
+	 * Gets the health reduction amount.
+	 *
+	 * @return The health malus value.
+	 */
 	public double getHealthMalus() {
 		return healthMalus;
 	}
 
+	/**
+	 * Gets the damage increase percentage.
+	 *
+	 * @return The increased damage percentage.
+	 */
 	public double getIncreasedDamage() {
 		return increasedDamage;
 	}
 
+	/**
+	 * Gets the damage multiplier based on the increased damage percentage.
+	 *
+	 * @return The damage multiplier (1 + increasedDamage / 100).
+	 */
 	public double getDamageMultiplier() {
-		return 1 + increasedDamage / 100;
+		try {
+			return 1.0 + increasedDamage / 100.0;
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error calculating damage multiplier for difficulty: " + name, e);
+			return 1.0;
+		}
 	}
 
+	/**
+	 * Applies the health malus to the player's max health attribute.
+	 *
+	 * @param data The PlayerData instance for the player.
+	 */
 	public void applyHealthMalus(PlayerData data) {
-		AttributeInstance ins = data.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH);
-        assert ins != null;
-        data.cleanAttributeModifiers(ins);
-		ins.addModifier(new AttributeModifier("suddenDeath.difficultyMalus", -healthMalus, Operation.ADD_NUMBER));
+		if (data == null || data.getPlayer() == null) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Cannot apply health malus: PlayerData or Player is null");
+			return;
+		}
+
+		try {
+			AttributeInstance attributeInstance = data.getPlayer().getAttribute(Attribute.GENERIC_MAX_HEALTH);
+			if (attributeInstance == null) {
+				SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+						"Max health attribute not found for player: " + data.getPlayer().getName());
+				return;
+			}
+
+			data.cleanAttributeModifiers(attributeInstance);
+			if (healthMalus > 0) {
+				attributeInstance.addModifier(new AttributeModifier(
+						UUID.randomUUID(),
+						MODIFIER_NAME,
+						-healthMalus,
+						Operation.ADD_NUMBER
+				));
+			}
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error applying health malus for player: " + data.getPlayer().getName(), e);
+		}
 	}
 
+	/**
+	 * Updates the difficulty properties from a configuration file.
+	 *
+	 * @param config The configuration file containing difficulty data.
+	 */
 	public void update(FileConfiguration config) {
-		name = config.getString(name() + ".name");
-		lore = config.getStringList(name() + ".lore");
-		increasedDamage = config.getDouble(name() + ".increased-damage");
-		healthMalus = config.getDouble(name() + ".health-malus");
+		if (config == null) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Configuration is null for updating difficulty: " + name());
+			return;
+		}
+
+		try {
+			String configPath = name();
+			String configName = config.getString(configPath + ".name");
+			if (configName != null && !configName.trim().isEmpty()) {
+				this.name = configName;
+			}
+
+			List<String> configLore = config.getStringList(configPath + ".lore");
+			if (!configLore.isEmpty()) {
+				this.lore = new ArrayList<>(configLore);
+			}
+
+			double configIncreasedDamage = config.getDouble(configPath + ".increased-damage", increasedDamage);
+			if (configIncreasedDamage >= 0) {
+				this.increasedDamage = configIncreasedDamage;
+			} else {
+				SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+						"Invalid increased-damage value for difficulty: " + name());
+			}
+
+			double configHealthMalus = config.getDouble(configPath + ".health-malus", healthMalus);
+			if (configHealthMalus >= 0) {
+				this.healthMalus = configHealthMalus;
+			} else {
+				SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+						"Invalid health-malus value for difficulty: " + name());
+			}
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error updating difficulty: " + name(), e);
+		}
 	}
 
+	/**
+	 * Gets the formatted main name of the difficulty (first letter capitalized).
+	 *
+	 * @return The formatted name.
+	 */
 	public String getMainName() {
-		return name().charAt(0) + name().toLowerCase().substring(1);
+		try {
+			return Utils.caseOnWords(name().toLowerCase());
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error formatting main name for difficulty: " + name(), e);
+			return name();
+		}
 	}
 }

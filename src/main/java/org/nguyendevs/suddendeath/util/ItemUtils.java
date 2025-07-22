@@ -8,121 +8,172 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.nguyendevs.suddendeath.SuddenDeath;
 
-import java.util.Objects;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
 
-public class ItemUtils {
+/**
+ * Utility class for serializing and deserializing ItemStacks in the SuddenDeath plugin.
+ */
+public final class ItemUtils {
+	private static final Pattern ARGUMENT_SPLITTER = Pattern.compile(",");
+	private static final Pattern ENCHANTMENT_SPLITTER = Pattern.compile(";");
+	private static final Pattern LEVEL_SPLITTER = Pattern.compile(":");
 
-	public static String serialize(ItemStack i) {
-		if (i == null || i.getType() == Material.AIR) {
+	private ItemUtils() {
+		// Prevent instantiation
+	}
+
+	/**
+	 * Serializes an ItemStack into a string representation.
+	 *
+	 * @param item The ItemStack to serialize.
+	 * @return A string representation of the ItemStack, or "[material=AIR]" if null or AIR.
+	 */
+	public static String serialize(ItemStack item) {
+		if (item == null || item.getType() == Material.AIR) {
 			return "[material=AIR]";
 		}
 
-		StringBuilder format = new StringBuilder("material=" + i.getType().name());
+		try {
+			StringBuilder format = new StringBuilder("material=" + item.getType().name());
 
-		if (i.hasItemMeta() && i.getItemMeta() != null) {
-			ItemMeta meta = i.getItemMeta();
+			ItemMeta meta = item.getItemMeta();
+			if (meta != null) {
+				// Damage
+				if (meta instanceof Damageable damageable) {
+					format.append(",damage=").append(damageable.getDamage());
+				}
 
-			// Damage
-			if (meta instanceof Damageable) {
-				format.append(",damage=").append(((Damageable) meta).getDamage());
-			}
+				// Color (for leather armor)
+				if (meta instanceof LeatherArmorMeta leatherMeta) {
+					format.append(",color=").append(leatherMeta.getColor().asRGB());
+				}
 
-			// Color (for leather armor)
-			if (meta instanceof LeatherArmorMeta) {
-				format.append(",color=").append(((LeatherArmorMeta) meta).getColor().asRGB());
-			}
-
-			// Enchantments
-			if (meta.hasEnchants()) {
-				StringBuilder enchFormat = new StringBuilder();
-				meta.getEnchants().forEach((enchantment, level) ->
-						enchFormat.append(";")
-								.append(enchantment.getKey().getKey())
-								.append(":")
-								.append(level)
-				);
-
-				if (!enchFormat.isEmpty()) {
-					format.append(",enchants=").append(enchFormat.substring(1)); // Remove leading semicolon
+				// Enchantments
+				if (meta.hasEnchants()) {
+					StringBuilder enchFormat = new StringBuilder();
+					meta.getEnchants().forEach((enchantment, level) ->
+							enchFormat.append(";")
+									.append(enchantment.getKey().getKey())
+									.append(":")
+									.append(level));
+					format.append(",enchants=").append(enchFormat.substring(1));
 				}
 			}
+
+			return "[" + format + "]";
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error serializing ItemStack: " + item.getType(), e);
+			return "[material=AIR]";
 		}
-
-		return "[" + format + "]";
 	}
 
-	public static String serialize(Material m) {
-		return serialize(new ItemStack(m));
+	/**
+	 * Serializes a Material into a string representation.
+	 *
+	 * @param material The Material to serialize.
+	 * @return A string representation of the Material.
+	 */
+	public static String serialize(Material material) {
+		if (material == null) {
+			return "[material=AIR]";
+		}
+		try {
+			return serialize(new ItemStack(material));
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error serializing Material: " + material, e);
+			return "[material=AIR]";
+		}
 	}
 
-	public static ItemStack deserialize(String s) {
-		if (s == null || s.length() < 3) {
+	/**
+	 * Deserializes a string into an ItemStack.
+	 *
+	 * @param input The string to deserialize.
+	 * @return The deserialized ItemStack, or an AIR ItemStack if invalid.
+	 */
+	public static ItemStack deserialize(String input) {
+		if (input == null || input.length() < 3 || !input.startsWith("[") || !input.endsWith("]")) {
 			return new ItemStack(Material.AIR);
 		}
 
-		// Strip square brackets
-		s = s.substring(1, s.length() - 1);
+		try {
+			String cleanInput = input.substring(1, input.length() - 1);
+			ItemStack item = new ItemStack(Material.AIR);
+			ItemMeta meta = item.getItemMeta();
 
-		ItemStack i = new ItemStack(Material.AIR);
-		ItemMeta meta = i.getItemMeta();
-
-		for (String arg : s.split(Pattern.quote(","))) {
-			// Material
-			if (arg.startsWith("material=")) {
-				arg = arg.replaceFirst("material=", "");
-				Material material;
-				try {
-					material = Material.valueOf(arg);
-				} catch (IllegalArgumentException e) {
-					material = Material.AIR; // Fallback to AIR if material is not found
+			for (String arg : ARGUMENT_SPLITTER.split(cleanInput)) {
+				// Material
+				if (arg.startsWith("material=")) {
+					String materialName = arg.replace("material=", "");
+					try {
+						Material material = Material.valueOf(materialName);
+						item = new ItemStack(material);
+						meta = item.getItemMeta();
+					} catch (IllegalArgumentException e) {
+						SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+								"Invalid material name: " + materialName);
+						return new ItemStack(Material.AIR);
+					}
 				}
-				i = new ItemStack(material);
-				meta = i.getItemMeta();
-			}
 
-			// Color for leather armor
-			if (arg.startsWith("color=")) {
-				arg = arg.replaceFirst("color=", "");
-				if (meta instanceof LeatherArmorMeta) {
-					((LeatherArmorMeta) meta).setColor(Color.fromRGB(Integer.parseInt(arg)));
+				// Color for leather armor
+				if (arg.startsWith("color=") && meta instanceof LeatherArmorMeta leatherMeta) {
+					String colorValue = arg.replace("color=", "");
+					try {
+						leatherMeta.setColor(Color.fromRGB(Integer.parseInt(colorValue)));
+					} catch (NumberFormatException e) {
+						SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+								"Invalid color value: " + colorValue);
+					}
 				}
-			}
 
-			// Damage for items
-			if (arg.startsWith("damage=")) {
-				arg = arg.replaceFirst("damage=", "");
-				if (meta instanceof Damageable) {
-					((Damageable) meta).setDamage(Integer.parseInt(arg));
+				// Damage for items
+				if (arg.startsWith("damage=") && meta instanceof Damageable damageable) {
+					String damageValue = arg.replace("damage=", "");
+					try {
+						damageable.setDamage(Integer.parseInt(damageValue));
+					} catch (NumberFormatException e) {
+						SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+								"Invalid damage value: " + damageValue);
+					}
 				}
-			}
 
-			// Enchantments
-			if (arg.startsWith("enchants=")) {
-				arg = arg.replaceFirst("enchants=", "");
-				for (String ench : arg.split(Pattern.quote(";"))) {
-					String[] split = ench.split(Pattern.quote(":"));
-					if (split.length == 2) {
-						Enchantment name = Enchantment.getByKey(NamespacedKey.minecraft(split[0]));
-						int level;
-						try {
-							level = Integer.parseInt(split[1]);
-						} catch (NumberFormatException e) {
-							level = 0; // Default level to 0 if parsing fails
-						}
-						if (name != null && level > 0 && meta != null) {
-							meta.addEnchant(name, level, true);
+				// Enchantments
+				if (arg.startsWith("enchants=")) {
+					String enchants = arg.replace("enchants=", "");
+					for (String ench : ENCHANTMENT_SPLITTER.split(enchants)) {
+						String[] split = LEVEL_SPLITTER.split(ench);
+						if (split.length == 2) {
+							Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(split[0]));
+							int level;
+							try {
+								level = Integer.parseInt(split[1]);
+							} catch (NumberFormatException e) {
+								SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+										"Invalid enchantment level: " + split[1]);
+								continue;
+							}
+							if (enchantment != null && level > 0 && meta != null) {
+								meta.addEnchant(enchantment, level, true);
+							}
 						}
 					}
 				}
 			}
-		}
 
-		if (meta != null) {
-			i.setItemMeta(meta);
+			if (meta != null) {
+				item.setItemMeta(meta);
+			}
+			return item;
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error deserializing ItemStack: " + input, e);
+			return new ItemStack(Material.AIR);
 		}
-
-		return i;
 	}
 }

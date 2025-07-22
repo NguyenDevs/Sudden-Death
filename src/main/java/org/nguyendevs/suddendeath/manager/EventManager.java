@@ -1,10 +1,5 @@
 package org.nguyendevs.suddendeath.manager;
 
-import org.nguyendevs.suddendeath.Feature;
-import org.nguyendevs.suddendeath.SuddenDeath;
-import org.nguyendevs.suddendeath.util.Utils;
-import org.nguyendevs.suddendeath.world.StatusRetriever;
-import org.nguyendevs.suddendeath.world.WorldEventHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -12,117 +7,218 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.nguyendevs.suddendeath.Feature;
+import org.nguyendevs.suddendeath.SuddenDeath;
+import org.nguyendevs.suddendeath.util.Utils;
+import org.nguyendevs.suddendeath.world.StatusRetriever;
+import org.nguyendevs.suddendeath.world.WorldEventHandler;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 
+/**
+ * Manages world events such as Blood Moon and Thunderstorm in the SuddenDeath plugin.
+ */
 public class EventManager extends BukkitRunnable {
-    private static final Map<String, StatusRetriever> status = new HashMap<>();
-
+    private static final Map<String, StatusRetriever> statusMap = new HashMap<>();
     private static final Random random = new Random();
+    private static final long TICK_INTERVAL = 80L;
+    private static final long INITIAL_DELAY = 20L;
+    private static final Feature[] EVENT_FEATURES = {Feature.THUNDERSTORM, Feature.BLOOD_MOON};
 
+    /**
+     * Constructs an EventManager and schedules it to run periodically.
+     */
     public EventManager() {
-        runTaskTimer(SuddenDeath.plugin, 20, 80);
+        runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, TICK_INTERVAL);
     }
 
-    /*
-     * this loop does not have to end events because it is handled in the
-     * runnable of worldEventHandlers
+    /**
+     * Checks and applies world events for a specific world.
+     *
+     * @param world The world to check for events.
      */
     private void checkForEvent(World world) {
-        WorldStatus status = getStatus(world);
-
-        /*
-         * check if there is an event and if the event can end.
-         */
-        if (isDay(world) && status != WorldStatus.DAY)
-            applyStatus(world, WorldStatus.DAY);
-
-        /*
-         * check for a new event if world it is night time and if the status is
-         * DAY
-         */
-        if (isDay(world) || status != WorldStatus.DAY)
-            return;
-
-        /*
-         * try to find an event which can be applied on this world. if cannot
-         * find, set status to NIGHT so no further event is called.
-         */
-        for (Feature feature : new Feature[]{Feature.THUNDERSTORM, Feature.BLOOD_MOON}) {
-            if (!feature.isEnabled(world) || random.nextDouble() > feature.getDouble("chance") / 100)
-                continue;
-
-            applyStatus(world, feature.generateWorldEventHandler(world));
-            for (Player online : world.getPlayers()) {
-                String message = ChatColor.DARK_RED + "" + ChatColor.ITALIC + Utils.msg(feature.name().toLowerCase().replace("_", "-"));
-                online.sendMessage(message);
-                online.sendTitle("", message, 10, 40, 10);
-                online.playSound(online.getLocation(), Sound.ENTITY_SKELETON_HORSE_DEATH, 1.0f, 0.0f); // Volume = 1.0, Pitch = 0
-            }
+        if (world == null) {
             return;
         }
 
-        applyStatus(world, WorldStatus.NIGHT);
+        try {
+            WorldStatus currentStatus = getStatus(world);
+
+            // Transition to DAY if it's daytime and not already DAY
+            if (isDay(world) && currentStatus != WorldStatus.DAY) {
+                applyStatus(world, WorldStatus.DAY);
+                return;
+            }
+
+            // Only check for new events at night and if current status is DAY
+            if (isDay(world) || currentStatus != WorldStatus.DAY) {
+                return;
+            }
+
+            // Try to trigger a random event
+            for (Feature feature : EVENT_FEATURES) {
+                if (!feature.isEnabled(world) || random.nextDouble() > feature.getDouble("chance") / 100.0) {
+                    continue;
+                }
+
+                applyStatus(world, feature.generateWorldEventHandler(world));
+                String messageKey = feature.name().toLowerCase().replace("_", "-");
+                String message = ChatColor.DARK_RED + "" + ChatColor.ITALIC + Utils.msg(messageKey);
+
+                for (Player player : world.getPlayers()) {
+                    try {
+                        player.sendMessage(message);
+                        player.sendTitle("", message, 10, 40, 10);
+                        player.playSound(player.getLocation(), Sound.ENTITY_SKELETON_HORSE_DEATH, 1.0f, 0.0f);
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error sending event notification to player: " + player.getName(), e);
+                    }
+                }
+                return;
+            }
+
+            // If no event is triggered, set to NIGHT
+            applyStatus(world, WorldStatus.NIGHT);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error checking for event in world: " + world.getName(), e);
+        }
     }
 
+    /**
+     * Applies a status to a world using a StatusRetriever.
+     *
+     * @param world     The world to apply the status to.
+     * @param retriever The StatusRetriever providing the status.
+     */
+    public void applyStatus(World world, StatusRetriever retriever) {
+        if (world == null || retriever == null) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Cannot apply status: world or retriever is null");
+            return;
+        }
+
+        try {
+            // Close the previous event if it exists
+            StatusRetriever existing = statusMap.get(world.getName());
+            if (existing instanceof WorldEventHandler) {
+                try {
+                    ((WorldEventHandler) existing).close();
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                            "Error closing previous event in world: " + world.getName(), e);
+                }
+            }
+
+            statusMap.put(world.getName(), retriever);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying status to world: " + world.getName(), e);
+        }
+    }
+
+    /**
+     * Applies a simple WorldStatus to a world.
+     *
+     * @param world  The world to apply the status to.
+     * @param status The WorldStatus to apply.
+     */
     public void applyStatus(World world, WorldStatus status) {
         applyStatus(world, new SimpleStatusRetriever(status));
     }
 
-    public void applyStatus(World world, StatusRetriever retriever) {
-
-        // make sure to close the previous event
-        if (status.containsKey(world.getName())) {
-            StatusRetriever event = status.get(world.getName());
-            if (event instanceof WorldEventHandler)
-                ((WorldEventHandler) event).close();
-        }
-
-        status.put(world.getName(), retriever);
-    }
-
+    /**
+     * Gets the current status of a world.
+     *
+     * @param world The world to check.
+     * @return The WorldStatus, or DAY if not set.
+     */
     public static WorldStatus getStatus(World world) {
-        return status.containsKey(world.getName()) ? status.get(world.getName()).getStatus() : WorldStatus.DAY;
+        if (world == null) {
+            return WorldStatus.DAY;
+        }
+        StatusRetriever retriever = statusMap.get(world.getName());
+        return retriever != null ? retriever.getStatus() : WorldStatus.DAY;
     }
 
+    /**
+     * Checks if it is daytime in the specified world.
+     *
+     * @param world The world to check.
+     * @return True if it is daytime (time < 12300 or time > 23850).
+     */
     public boolean isDay(World world) {
-        return world.getTime() < 12300 || world.getTime() > 23850;
-    }
-
-    public enum WorldStatus {
-
-        /*
-         * when it is a normal night and no event started.
-         */
-        NIGHT,
-
-        /*
-         * event statuses
-         */
-        BLOOD_MOON,
-        THUNDER_STORM,
-
-        /*
-         * when an event can potentially start if night time is detected.
-         */
-        DAY;
-
-        public String getName() {
-            return Utils.caseOnWords(name().toLowerCase().replace("_", " "));
+        if (world == null) {
+            return true;
+        }
+        try {
+            long time = world.getTime();
+            return time < 12300 || time > 23850;
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error checking daytime for world: " + world.getName(), e);
+            return true;
         }
     }
 
     @Override
     public void run() {
-        Bukkit.getWorlds().stream().filter(world -> world.getEnvironment() == Environment.NORMAL).forEach(this::checkForEvent);
+        try {
+            Bukkit.getWorlds().stream()
+                    .filter(world -> world.getEnvironment() == Environment.NORMAL)
+                    .forEach(this::checkForEvent);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.SEVERE,
+                    "Error running EventManager task", e);
+        }
     }
 
+    /**
+     * Enum representing possible world statuses in the SuddenDeath plugin.
+     */
+    public enum WorldStatus {
+        NIGHT,
+        BLOOD_MOON,
+        THUNDER_STORM,
+        DAY;
+
+        /**
+         * Gets the formatted name of the status.
+         *
+         * @return The formatted status name.
+         */
+        public String getName() {
+            try {
+                return Utils.caseOnWords(name().toLowerCase().replace("_", " "));
+            } catch (Exception e) {
+                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                        "Error formatting name for WorldStatus: " + name(), e);
+                return name();
+            }
+        }
+    }
+
+    /**
+     * Simple implementation of StatusRetriever for static world statuses.
+     */
     public static class SimpleStatusRetriever implements StatusRetriever {
         private final WorldStatus status;
 
+        /**
+         * Constructs a SimpleStatusRetriever with the specified status.
+         *
+         * @param status The WorldStatus to retrieve.
+         * @throws IllegalArgumentException if status is null.
+         */
         public SimpleStatusRetriever(WorldStatus status) {
+            if (status == null) {
+                throw new IllegalArgumentException("WorldStatus cannot be null");
+            }
             this.status = status;
         }
 

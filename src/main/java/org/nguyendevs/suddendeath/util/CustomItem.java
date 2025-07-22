@@ -6,68 +6,192 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.nguyendevs.suddendeath.SuddenDeath;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 
+/**
+ * Enum representing custom items in the SuddenDeath plugin.
+ */
 public enum CustomItem {
-	BANDAGE(Material.PAPER, "&fBandage", new String[] { "Stops Bleeding." }, new String[] { "AIR,AIR,AIR", "PAPER,STICK,PAPER", "AIR,AIR,AIR" }),
-	STRANGE_BREW(Material.BEETROOT_SOUP, "&fStrange Brew", new String[] { "Stops Infection." }, new String[] { "AIR,AIR,AIR", "INK_SAC,BOWL,CLAY_BALL", "AIR,AIR,AIR" }),
-	RAW_HUMAN_FLESH(Material.BEEF, "Human Flesh", new String[] { "Some fresh human meet.", "I wonder if I can cook it?" }),
-	HUMAN_BONE(Material.BONE, "Human Bone"),
-	COOKED_HUMAN_FLESH(Material.COOKED_BEEF, "Cooked Human Flesh", new String[] { "Looks tasty!" }),
-	SHARP_KNIFE(Material.IRON_SWORD, "Sharp Knife", new String[] { "A super sharp knife.", "Hit someone to make him bleed." }),;
+	BANDAGE(
+			Material.PAPER,
+			"&fBandage",
+			new String[]{"Stops Bleeding."},
+			new String[]{"AIR,AIR,AIR", "PAPER,STICK,PAPER", "AIR,AIR,AIR"}
+	),
+	STRANGE_BREW(
+			Material.BEETROOT_SOUP,
+			"&fStrange Brew",
+			new String[]{"Stops Infection."},
+			new String[]{"AIR,AIR,AIR", "INK_SAC,BOWL,CLAY_BALL", "AIR,AIR,AIR"}
+	),
+	RAW_HUMAN_FLESH(
+			Material.BEEF,
+			"Human Flesh",
+			new String[]{"Some fresh human meat.", "I wonder if I can cook it?"},
+			null
+	),
+	HUMAN_BONE(
+			Material.BONE,
+			"Human Bone",
+			new String[]{},
+			null
+	),
+	COOKED_HUMAN_FLESH(
+			Material.COOKED_BEEF,
+			"Cooked Human Flesh",
+			new String[]{"Looks tasty!"},
+			null
+	),
+	SHARP_KNIFE(
+			Material.IRON_SWORD,
+			"Sharp Knife",
+			new String[]{"A super sharp knife.", "Hit someone to make them bleed."},
+			null
+	);
 
-	public final Material material;
+	private final Material material;
 	private String name;
-	public String[] lore;
-	public String[] craft;
+	private List<String> lore;
+	private List<String> craft;
 
-	private CustomItem(Material material, String name) {
-		this(material, name, new String[0], null);
-	}
-
-	private CustomItem(Material material, String name, String[] lore) {
-		this(material, name, lore, null);
-	}
-
-	private CustomItem(Material material, String name, String[] lore, String[] craft) {
+	/**
+	 * Constructs a CustomItem with the specified properties.
+	 *
+	 * @param material The material of the item.
+	 * @param name The default display name with color codes.
+	 * @param lore The default lore of the item.
+	 * @param craft The crafting recipe, or null if not craftable.
+	 */
+	CustomItem(Material material, String name, String[] lore, String[] craft) {
+		if (material == null || name == null || lore == null) {
+			throw new IllegalArgumentException("Material, name, and lore cannot be null");
+		}
 		this.material = material;
 		this.name = name;
-		this.lore = lore;
-		this.craft = craft;
+		this.lore = Collections.unmodifiableList(Arrays.stream(lore)
+				.map(line -> line == null ? "" : line)
+				.collect(Collectors.toList()));
+		this.craft = craft == null ? null : Collections.unmodifiableList(Arrays.asList(craft));
 	}
 
+	/**
+	 * Updates the item properties from a configuration section.
+	 *
+	 * @param config The configuration section containing item data.
+	 */
 	public void update(ConfigurationSection config) {
-		this.name = config.getString("name");
-		this.lore = config.getStringList("lore").toArray(new String[0]);
-		this.craft = config.getStringList("craft").toArray(new String[0]);
+		if (config == null) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Configuration section is null for CustomItem: " + name());
+			return;
+		}
+		try {
+			String configName = config.getString("name");
+			if (configName != null) {
+				this.name = configName;
+			}
+
+			List<String> configLore = config.getStringList("lore");
+			if (!configLore.isEmpty()) {
+				this.lore = Collections.unmodifiableList(configLore);
+			}
+
+			List<String> configCraft = config.getStringList("craft");
+			if (!configCraft.isEmpty()) {
+				this.craft = Collections.unmodifiableList(configCraft);
+			}
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error updating CustomItem: " + name(), e);
+		}
 	}
 
+	/**
+	 * Gets the material of the item.
+	 *
+	 * @return The Material.
+	 */
+	public Material getMaterial() {
+		return material;
+	}
+
+	/**
+	 * Gets the default or configured name of the item.
+	 *
+	 * @return The name with color codes.
+	 */
 	public String getDefaultName() {
 		return name;
 	}
 
+	/**
+	 * Gets the formatted display name of the item.
+	 *
+	 * @return The translated name with color codes applied.
+	 */
 	public String getName() {
-		return "" + ChatColor.RESET + ChatColor.WHITE + ChatColor.translateAlternateColorCodes('&', name);
+		try {
+			return ChatColor.RESET + "" + ChatColor.WHITE + ChatColor.translateAlternateColorCodes('&', name);
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error translating name for CustomItem: " + name(), e);
+			return name;
+		}
 	}
 
-	public ItemStack a() {
-		ItemStack i = new ItemStack(material);
-		ItemMeta meta = i.getItemMeta();
+	/**
+	 * Gets the lore of the item.
+	 *
+	 * @return An unmodifiable list of lore strings.
+	 */
+	public List<String> getLore() {
+		return lore;
+	}
 
-		if (meta != null) {
+	/**
+	 * Gets the crafting recipe of the item, if applicable.
+	 *
+	 * @return An unmodifiable list of crafting recipe strings, or null if not craftable.
+	 */
+	public List<String> getCraft() {
+		return craft;
+	}
+
+	/**
+	 * Creates a new ItemStack for this custom item with applied metadata.
+	 *
+	 * @return The configured ItemStack.
+	 */
+	public ItemStack createItem() {
+		try {
+			ItemStack item = new ItemStack(material);
+			ItemMeta meta = item.getItemMeta();
+			if (meta == null) {
+				SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+						"ItemMeta is null for CustomItem: " + name());
+				return item;
+			}
+
 			meta.setDisplayName(getName());
 			meta.addItemFlags(ItemFlag.values());
-			if (lore != null) {
-				ArrayList<String> loreList = new ArrayList<>();
-				for (String s : this.lore) {
-					loreList.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', s));
-				}
-				meta.setLore(loreList);
+			if (!lore.isEmpty()) {
+				List<String> formattedLore = lore.stream()
+						.map(line -> ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', line))
+						.collect(Collectors.toList());
+				meta.setLore(formattedLore);
 			}
-			i.setItemMeta(meta);
+			item.setItemMeta(meta);
+			return item;
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error creating ItemStack for CustomItem: " + name(), e);
+			return new ItemStack(Material.AIR);
 		}
-		return i;
 	}
-
 }

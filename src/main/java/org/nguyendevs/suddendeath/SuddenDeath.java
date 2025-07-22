@@ -2,9 +2,13 @@ package org.nguyendevs.suddendeath;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.nguyendevs.suddendeath.command.SuddenDeathMobCommand;
 import org.nguyendevs.suddendeath.command.SuddenDeathStatusCommand;
 import org.nguyendevs.suddendeath.command.completion.SuddenDeathMobCompletion;
@@ -20,146 +24,186 @@ import org.nguyendevs.suddendeath.listener.*;
 import org.nguyendevs.suddendeath.manager.EventManager;
 import org.nguyendevs.suddendeath.packets.PacketSender;
 import org.nguyendevs.suddendeath.packets.v1_17.ProtocolLibImpl;
-import org.nguyendevs.suddendeath.packets.v1_8.LegacyProtocolLibImpl;
 import org.nguyendevs.suddendeath.player.Difficulty;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.scheduler.BloodEffectRunnable;
 import org.nguyendevs.suddendeath.util.*;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.entity.EntityType;
-import org.bukkit.inventory.ShapedRecipe;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 public class SuddenDeath extends JavaPlugin {
-    // plugin data
+    private static SuddenDeath instance;
     private final Map<Player, Integer> players = new ConcurrentHashMap<>();
-
-    private final PluginConfiguration configuration = new PluginConfiguration((Plugin)this);
-
-
+    private PluginConfiguration configuration;
     private PacketSender packetSender;
-
-    public static SuddenDeath plugin;
     private WGPlugin wgPlugin;
     private EventManager eventManager;
-
-    public ConfigFile messages, difficulties, items;
+    public ConfigFile messages;
+    private ConfigFile difficulties;
+    private ConfigFile items;
     public Difficulty defaultDifficulty;
-    private static SuddenDeath instance;
+
     public static SuddenDeath getInstance() {
         return instance;
     }
 
+    @Override
     public void onLoad() {
-        plugin = this;
+        instance = this;
         wgPlugin = getServer().getPluginManager().getPlugin("WorldGuard") != null ? new WorldGuardOn() : new WorldGuardOff();
-    }
-    public Map<Player, Integer> getPlayers() {
-        return this.players;
+        configuration = new PluginConfiguration(this);
     }
 
-    public PluginConfiguration getConfiguration() {
-        return this.configuration;
-    }
-    private void setPackerSender(ProtocolManager manager) {
-        double subversion = Double.parseDouble("21.1");
-        if (subversion == 21.1D) {
-            this.packetSender = (PacketSender)new ProtocolLibImpl(manager);
-        }
-    }
-    /*
-     private void setPackerSender(ProtocolManager manager) {
-        String version = getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
-        double subversion = Double.parseDouble(version.replace("v1_", "").replaceAll("_R", "."));
-        if (subversion >= 17.0D) {
-            this.packetSender = (PacketSender)new ProtocolLibImpl(manager);
-        } else if (subversion >= 8.0D) {
-            this.packetSender = (PacketSender)new LegacyProtocolLibImpl(manager);
-        } else {
-            throw new UnsupportedOperationException("Your Minecraft version is unsupported by this plugin");
-        }
-    }*/
-
-    public PacketSender getPacketSender() {
-        return this.packetSender;
-    }
-    public void onDisable() {
-        PlayerData.getLoaded().forEach(data -> {
-            ConfigFile file = new ConfigFile("/userdata", data.getUniqueId().toString());
-            data.save(file.getConfig());
-            file.save();
-        });
-    }
-
+    @Override
     public void onEnable() {
-        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
-        if (protocolManager == null) {
-            getLogger().warning("ProtocolLib is unavailable, stopping...");
+        try {
+            initializePlugin();
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Failed to enable SuddenDeath plugin", e);
             setEnabled(false);
         }
-        setPackerSender(protocolManager);
-        this.configuration.load();
-        getServer().getPluginManager().registerEvents((Listener)new BloodEffectListener(this), (Plugin)this);
-        getServer().getScheduler().runTaskTimer((Plugin)this, (Runnable)new BloodEffectRunnable(this), 0L, 1L);
+    }
 
-        instance = this;
+    @Override
+    public void onDisable() {
+        try {
+            savePlayerData();
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error while saving player data on disable", e);
+        }
+    }
+
+    private void initializePlugin() {
+        // Initialize ProtocolLib
+        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
+        if (protocolManager == null) {
+            getLogger().severe("ProtocolLib is unavailable, stopping...");
+            throw new IllegalStateException("ProtocolLib is required but not found");
+        }
+        packetSender = new ProtocolLibImpl(protocolManager);
+
+        // Load configuration
+        configuration.load();
         saveDefaultConfig();
         reloadConfig();
+
+        // Initialize config files
+        initializeConfigFiles();
+
+        // Register listeners
+        registerListeners();
+
+        // Hook into other plugins
+        hookIntoPlugins();
+
+        // Initialize features and entities
+        initializeFeaturesAndEntities();
+
+        // Initialize difficulties
+        initializeDifficulties();
+
+        // Initialize items and recipes
+        initializeItemsAndRecipes();
+
+        // Register commands
+        registerCommands();
+
+        // Start schedulers
+        getServer().getScheduler().runTaskTimer(this, new BloodEffectRunnable(this), 0L, 1L);
+
+        // Check for updates
         new SpigotPlugin(119526, this).checkForUpdate();
+    }
 
-        new Metrics(this);
-        eventManager = new EventManager();
-        Bukkit.getServer().getPluginManager().registerEvents(new GuiListener(), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new MainListener(), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new CustomMobs(), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new Listener1(), this);
-        Bukkit.getServer().getPluginManager().registerEvents(new Listener2(), this);
+    private void initializeConfigFiles() {
+        messages = new ConfigFile("/language", "messages");
+        difficulties = new ConfigFile("/language", "difficulties");
+        items = new ConfigFile("/language", "items");
 
-        // worldguard flags
-        if (getServer().getPluginManager().getPlugin("WorldGuard") != null)
-            getLogger().log(Level.INFO, "Hooked onto WorldGuard");
-
-        // placeholderapi
-        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new SuddenDeathPlaceholders().register();
-            getLogger().log(Level.INFO, "Hooked onto PlaceholderAPI");
+        // Initialize default config
+        for (Feature feature : Feature.values()) {
+            if (!getConfig().contains(feature.getPath())) {
+                List<String> worlds = new ArrayList<>();
+                Bukkit.getWorlds().forEach(world -> worlds.add(world.getName()));
+                getConfig().set(feature.getPath(), worlds);
+            }
         }
 
-        // initialize config
-        saveDefaultConfig();
-        reloadConfig();
-        for (Feature feature : Feature.values())
-            if (!getConfig().contains(feature.getPath())) {
-                List<String> list = new ArrayList<>();
-                Bukkit.getWorlds().forEach(world -> list.add(world.getName()));
-                getConfig().set(feature.getPath(), list);
+        // Initialize spawn coefficients
+        for (EntityType type : EntityType.values()) {
+            if (type.isAlive() && !getConfig().contains("default-spawn-coef." + type.name())) {
+                getConfig().set("default-spawn-coef." + type.name(), 20);
             }
-        for (EntityType type : EntityType.values())
-            if (type.isAlive()) {
-                if (!getConfig().contains("default-spawn-coef")) {
-                    getConfig().set("default-spawn-coef." + type.name(), 20);
-                    continue;
-                }
-                if (!Objects.requireNonNull(getConfig().getConfigurationSection("default-spawn-coef")).contains(type.name()))
-                    getConfig().set("default-spawn-coef." + type.name(), 20);
-            }
+        }
         saveConfig();
+    }
 
-        for (EntityType type : EntityType.values())
-            if (type.isAlive())
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new BloodEffectListener(this), this);
+        getServer().getPluginManager().registerEvents(new GuiListener(), this);
+        getServer().getPluginManager().registerEvents(new MainListener(), this);
+        getServer().getPluginManager().registerEvents(new CustomMobs(), this);
+        getServer().getPluginManager().registerEvents(new Listener1(), this);
+        getServer().getPluginManager().registerEvents(new Listener2(), this);
+
+        if (!getConfig().getBoolean("disable-difficulties")) {
+            getServer().getPluginManager().registerEvents(new DifficultiesListener(), this);
+        }
+    }
+
+    private void hookIntoPlugins() {
+        // WorldGuard hook
+        if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            getLogger().info("Hooked onto WorldGuard");
+        }
+
+        // PlaceholderAPI hook
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new SuddenDeathPlaceholders().register();
+            getLogger().info("Hooked onto PlaceholderAPI");
+        }
+
+        // Initialize Metrics
+        new Metrics(this);
+    }
+
+    private void initializeFeaturesAndEntities() {
+        eventManager = new EventManager();
+
+        // Initialize custom mobs
+        for (EntityType type : EntityType.values()) {
+            if (type.isAlive()) {
                 new ConfigFile("/customMobs", Utils.lowerCaseId(type.name())).setup();
+            }
+        }
 
+        // Load player data
         Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
 
-        // difficulties
-        difficulties = new ConfigFile("/language", "difficulties");
+        // Initialize feature modifiers
+        for (Feature feature : Feature.values()) {
+            feature.updateConfig();
+            ConfigFile modifiers = feature.getConfigFile();
+            for (Modifier mod : feature.getModifiers()) {
+                if (modifiers.getConfig().contains(mod.getName())) {
+                    continue;
+                }
+                if (mod.getType() == Modifier.Type.NONE) {
+                    modifiers.getConfig().set(mod.getName(), mod.getDefaultValue());
+                } else if (mod.getType() == Modifier.Type.EACH_MOB) {
+                    for (EntityType type : Utils.getLivingEntityTypes()) {
+                        modifiers.getConfig(). set(mod.getName() + "." + type.name(), mod.getDefaultValue());
+                    }
+                }
+            }
+            modifiers.save();
+        }
+    }
+
+    private void initializeDifficulties() {
         for (Difficulty difficulty : Difficulty.values()) {
             if (!difficulties.getConfig().contains(difficulty.name())) {
                 difficulties.getConfig().set(difficulty.name() + ".name", difficulty.getName());
@@ -167,126 +211,132 @@ public class SuddenDeath extends JavaPlugin {
                 difficulties.getConfig().set(difficulty.name() + ".health-malus", difficulty.getHealthMalus());
                 difficulties.getConfig().set(difficulty.name() + ".increased-damage", difficulty.getIncreasedDamage());
             }
-
             difficulty.update(difficulties.getConfig());
         }
         difficulties.save();
 
-        // default difficulty
         if (!getConfig().getBoolean("disable-difficulties")) {
-            Bukkit.getServer().getPluginManager().registerEvents(new DifficultiesListener(), this);
             try {
-                defaultDifficulty = Difficulty.valueOf(getConfig().getString("default-difficulty"));
-            } catch (Exception e) {
+                defaultDifficulty = Difficulty.valueOf(getConfig().getString("default-difficulty", "SANDBOX"));
+            } catch (IllegalArgumentException e) {
                 defaultDifficulty = Difficulty.SANDBOX;
-                getLogger().log(Level.WARNING, "Could not read default difficulty.");
+                getLogger().warning("Invalid default difficulty in config, defaulting to SANDBOX");
             }
         }
+    }
 
-        // messages
-        messages = new ConfigFile("/language", "messages");
-        for (Message pa : Message.values()) {
-            String path = pa.name().toLowerCase().replace("_", "-");
-            if (!messages.getConfig().contains(path))
-                messages.getConfig().set(path, pa.value);
-        }
-        messages.save();
-
-        // params
-        for (Feature feature : Feature.values()) {
-            feature.updateConfig();
-            ConfigFile modifiers = feature.getConfigFile();
-            for (Modifier mod : feature.getModifiers()) {
-                if (modifiers.getConfig().contains(mod.getName()))
-                    continue;
-
-                if (mod.getType() == Modifier.Type.NONE)
-                    modifiers.getConfig().set(mod.getName(), mod.getDefaultValue());
-                if (mod.getType() == Modifier.Type.EACH_MOB)
-                    for (EntityType type : Utils.getLivingEntityTypes())
-                        modifiers.getConfig().set(mod.getName() + "." + type.name(), mod.getDefaultValue());
-            }
-            modifiers.save();
-        }
-
-        // items initialize
-        items = new ConfigFile("/language", "items");
-        for (CustomItem i : CustomItem.values()) {
-            if (!items.getConfig().contains(i.name())) {
-                items.getConfig().set(i.name() + ".name", i.getDefaultName());
-                items.getConfig().set(i.name() + ".lore", Arrays.asList(i.lore));
-                if (i.craft != null) {
-                    items.getConfig().set(i.name() + ".craft-enabled", true);
-                    items.getConfig().set(i.name() + ".craft", Arrays.asList(i.craft));
+    private void initializeItemsAndRecipes() {
+        for (CustomItem item : CustomItem.values()) {
+            if (!items.getConfig().contains(item.name())) {
+                items.getConfig().set(item.name() + ".name", item.getDefaultName());
+                items.getConfig().set(item.name() + ".lore", Arrays.asList(item.lore));
+                if (item.craft != null) {
+                    items.getConfig().set(item.name() + ".craft-enabled", true);
+                    items.getConfig().set(item.name() + ".craft", Arrays.asList(item.craft));
                 }
             }
 
-            i.update(Objects.requireNonNull(items.getConfig().getConfigurationSection(i.name())));
+            item.update(Objects.requireNonNull(items.getConfig().getConfigurationSection(item.name())));
 
-            // crafting recipes
-            if (items.getConfig().getBoolean(i.name() + ".craft-enabled") && i.craft != null) {
-                ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "SuddenDeath_" + i.name()), i.a());
-                recipe.shape(new String[]{"ABC", "DEF", "GHI"});
-                char[] chars = new char[]{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'};
-                boolean check = true;
-                List<String> list = items.getConfig().getStringList(i.name() + ".craft");
-                for (int j = 0; j < 9; j++) {
-                    char c = chars[j];
-                    if (list.size() != 3) {
-                        getLogger().log(Level.WARNING, "Couldn't register recipe of " + i.name() + " (format error)");
-                        check = false;
-                        break;
-                    }
-
-                    List<String> line = Arrays.asList(list.get(j / 3).split(","));
-                    if (line.size() < 3) {
-                        getLogger().log(Level.WARNING, "Couldn't register recipe of " + i.name() + " (format error)");
-                        check = false;
-                        break;
-                    }
-
-                    String s = line.get(j % 3);
-                    Material material = null;
-                    try {
-                        material = Material.valueOf(s);
-                    } catch (Exception e1) {
-                        getLogger().log(Level.WARNING, "Couldn't register recipe of " + i.name() + " (" + s + " is not a valid material)");
-                        check = false;
-                        break;
-                    }
-
-                    if (material == Material.AIR)
-                        continue;
-
-                    recipe.setIngredient(c, material);
+            if (items.getConfig().getBoolean(item.name() + ".craft-enabled") && item.craft != null) {
+                try {
+                    registerCraftingRecipe(item);
+                } catch (IllegalArgumentException e) {
+                    getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
                 }
-                if (check)
-                    getServer().addRecipe(recipe);
             }
         }
         items.save();
+    }
 
-        // commands
-        Objects.requireNonNull(getCommand("sdstatus")).setExecutor(new SuddenDeathStatusCommand());
-        Objects.requireNonNull(getCommand("sdmob")).setExecutor(new SuddenDeathMobCommand());
+    private void registerCraftingRecipe(CustomItem item) {
+        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(this, "SuddenDeath_" + item.name()), item.a());
+        recipe.shape("ABC", "DEF", "GHI");
+        char[] chars = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'};
+        List<String> craftLines = items.getConfig().getStringList(item.name() + ".craft");
 
-        Objects.requireNonNull(getCommand("sdstatus")).setTabCompleter(new SuddenDeathStatusCompletion());
-        Objects.requireNonNull(getCommand("sdmob")).setTabCompleter(new SuddenDeathMobCompletion());
+        if (craftLines.size() != 3) {
+            throw new IllegalArgumentException("Invalid craft format for " + item.name());
+        }
+
+        for (int i = 0; i < 9; i++) {
+            String[] line = craftLines.get(i / 3).split(",");
+            if (line.length < 3) {
+                throw new IllegalArgumentException("Invalid craft line format for " + item.name());
+            }
+
+            String materialName = line[i % 3].trim();
+            if (materialName.equalsIgnoreCase("AIR")) {
+                continue;
+            }
+
+            Material material = Material.getMaterial(materialName);
+            if (material == null) {
+                throw new IllegalArgumentException("Invalid material: " + materialName + " for " + item.name());
+            }
+
+            recipe.setIngredient(chars[i], material);
+        }
+
+        getServer().addRecipe(recipe);
+    }
+
+    private void registerCommands() {
+        Optional.ofNullable(getCommand("sdstatus")).ifPresent(cmd -> {
+            cmd.setExecutor(new SuddenDeathStatusCommand());
+            cmd.setTabCompleter(new SuddenDeathStatusCompletion());
+        });
+        Optional.ofNullable(getCommand("sdmob")).ifPresent(cmd -> {
+            cmd.setExecutor(new SuddenDeathMobCommand());
+            cmd.setTabCompleter(new SuddenDeathMobCompletion());
+        });
+    }
+
+    private void savePlayerData() {
+        PlayerData.getLoaded().forEach(data -> {
+            try {
+                ConfigFile file = new ConfigFile("/userdata", data.getUniqueId().toString());
+                data.save(file.getConfig());
+                file.save();
+            } catch (Exception e) {
+                getLogger().log(Level.WARNING, "Failed to save player data for " + data.getUniqueId(), e);
+            }
+        });
     }
 
     public void reloadConfigFiles() {
-
-        messages = new ConfigFile("/language", "messages");
-        items = new ConfigFile("/language", "items");
-        difficulties = new ConfigFile("/language", "difficulties");
-        saveDefaultConfig();
-        reloadConfig();
+        try {
+            messages = new ConfigFile("/language", "messages");
+            items = new ConfigFile("/language", "items");
+            difficulties = new ConfigFile("/language", "difficulties");
+            saveDefaultConfig();
+            reloadConfig();
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Error reloading configuration files", e);
+        }
     }
+
+    public Map<Player, Integer> getPlayers() {
+        return players;
+    }
+
+    public ConfigFile getConfiguration() {
+        return configuration;
+    }
+
+    public PacketSender getPacketSender() {
+        return packetSender;
+    }
+
     public WGPlugin getWorldGuard() {
         return wgPlugin;
     }
 
     public EventManager getEventManager() {
         return eventManager;
+    }
+
+    public Difficulty getDefaultDifficulty() {
+        return defaultDifficulty;
     }
 }
