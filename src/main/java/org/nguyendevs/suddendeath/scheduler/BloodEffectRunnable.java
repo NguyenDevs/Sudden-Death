@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.scheduler;
 
+import org.apache.logging.log4j.core.config.plugins.PluginConfiguration;
 import org.bukkit.WorldBorder;
 import org.bukkit.entity.Player;
 import org.nguyendevs.suddendeath.SuddenDeath;

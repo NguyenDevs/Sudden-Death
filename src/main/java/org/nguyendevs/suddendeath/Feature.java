@@ -480,7 +480,11 @@ public enum Feature {
      * Generates a WorldEventHandler for the given world, if applicable.
      */
 	public StatusRetriever generateWorldEventHandler(World world) {
-		return isEvent() ? Optional.ofNullable(event.apply(world)) : Optional.empty();
+		if (isEvent()) {
+			WorldEventHandler handler = event.apply(world);
+			return handler;
+		}
+		return null;
 	}
 
 	/**

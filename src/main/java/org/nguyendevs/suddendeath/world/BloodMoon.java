@@ -237,7 +237,7 @@ public class BloodMoon extends WorldEventHandler {
 							continue;
 						}
 						Location effectLoc = location.clone().add(
-								Math.cos(angle) * 0.8, time + 2.0, Math.sin(angle) * 0.8);
+								Math.cos(angle) * 0.8, time, Math.sin(angle) * 0.8);
 						world.spawnParticle(Particle.REDSTONE, effectLoc, 0,
 								new Particle.DustOptions(Color.BLACK, 1.0F));
 					}

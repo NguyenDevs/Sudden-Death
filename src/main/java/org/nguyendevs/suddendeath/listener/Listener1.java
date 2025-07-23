@@ -1,14 +1,8 @@
 package org.nguyendevs.suddendeath.listener;
 
-import org.bukkit.inventory.meta.ItemMeta;
-import org.nguyendevs.suddendeath.Feature;
-import org.nguyendevs.suddendeath.SuddenDeath;
-import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
-import org.nguyendevs.suddendeath.player.PlayerData;
-import org.nguyendevs.suddendeath.util.CustomItem;
-import org.nguyendevs.suddendeath.util.Utils;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.*;
@@ -28,551 +22,912 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import org.nguyendevs.suddendeath.Feature;
+import org.nguyendevs.suddendeath.SuddenDeath;
+import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
+import org.nguyendevs.suddendeath.player.PlayerData;
+import org.nguyendevs.suddendeath.util.CustomItem;
+import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
+import java.util.logging.Level;
 
+/**
+ * Event listener for handling various entity, player, and block interactions in the SuddenDeath plugin.
+ */
 public class Listener1 implements Listener {
-    private static final Random random = new Random();
+    private static final Random RANDOM = new Random();
+    private static final long WITCH_LOOP_INTERVAL = 80L;
+    private static final long BLAZE_PLAYER_LOOP_INTERVAL = 60L;
+    private static final long SPIDER_LOOP_INTERVAL = 40L;
+    private static final long INITIAL_DELAY = 20L;
+    private static final Set<Material> STIFFNESS_MATERIALS = Set.of(
+            Material.STONE, Material.COAL_ORE, Material.IRON_ORE, Material.NETHER_QUARTZ_ORE,
+            Material.GOLD_ORE, Material.LAPIS_ORE, Material.DIAMOND_ORE, Material.REDSTONE_ORE,
+            Material.EMERALD_ORE, Material.COBBLESTONE, Material.STONE_SLAB, Material.COBBLESTONE_SLAB,
+            Material.BRICK_STAIRS, Material.BRICK, Material.MOSSY_COBBLESTONE);
 
+    /**
+     * Initializes periodic tasks for Witch, Blaze, Player, and Spider entities.
+     */
     public Listener1() {
+        // Witch loop
         new BukkitRunnable() {
+            @Override
             public void run() {
-                for (World w : Bukkit.getWorlds())
-                    if (Feature.WITCH_SCROLLS.isEnabled(w))
-                        w.getEntitiesByClass(Witch.class).forEach(Loops::loop4s_witch);
-            }
-        }.runTaskTimer(SuddenDeath.plugin, 20, 80);
-
-        new BukkitRunnable() {
-            public void run() {
-                for (World w : Bukkit.getWorlds())
-                    if (Feature.EVERBURNING_BLAZES.isEnabled(w))
-                        w.getEntitiesByClass(Blaze.class).forEach(Loops::loop3s_blaze);
-
-                Bukkit.getOnlinePlayers().forEach(Loops::loop3s_player);
-            }
-        }.runTaskTimer(SuddenDeath.plugin, 20, 60);
-
-        new BukkitRunnable() {
-            public void run() {
-                for (World w : Bukkit.getWorlds())
-                    if (Feature.ANGRY_SPIDERS.isEnabled(w) || Feature.LEAPING_SPIDERS.isEnabled(w))
-                        for (Spider t : w.getEntitiesByClass(Spider.class))
-                            if (t.getTarget() instanceof Player)
-                                Loops.loop3s_spider(t);
-            }
-        }.runTaskTimer(SuddenDeath.plugin, 20, 40);
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void a(EntityDamageEvent event) {
-        if (event.isCancelled() || event.getEntity().hasMetadata("NPC") || event.getDamage() <= 0)
-            return;
-
-        if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
-
-            // fall stun
-            if (Feature.FALL_STUN.isEnabled(player) && event.getCause() == DamageCause.FALL) {
-                player.removePotionEffect(PotionEffectType.SLOW);
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
-                        (int) (event.getDamage() * 10 * Feature.FALL_STUN.getDouble("duration-amplifier")), 2));
-                new BukkitRunnable() {
-                    double ti = 0;
-                    Location loc = player.getLocation().clone();
-
-                    public void run() {
-                        ti += .25;
-                        for (double j = 0; j < Math.PI * 2; j += Math.PI / 16) {
-                            Location loc1 = loc.clone().add(Math.cos(j) * ti, .1, Math.sin(j) * ti);
-                            Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.BLOCK_CRACK, loc1, 0, Material.DIRT.createBlockData());
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.WITCH_SCROLLS.isEnabled(world)) {
+                            world.getEntitiesByClass(Witch.class).forEach(Loops::loop4s_witch);
                         }
-                        Objects.requireNonNull(loc.getWorld()).playSound(loc, Sound.BLOCK_GRAVEL_BREAK, 2, 2);
-                        if (ti >= 2)
-                            cancel();
                     }
-                }.runTaskTimer(SuddenDeath.plugin, 0, 1);
-            }
-
-            // start bleeding
-            if (Feature.BLEEDING.isEnabled(player) && event.getCause() != DamageCause.STARVATION && event.getCause() != DamageCause.DROWNING
-                    && event.getCause() != DamageCause.SUICIDE && event.getCause() != DamageCause.MELTING && event.getCause() != DamageCause.FIRE_TICK
-                    && event.getCause() != DamageCause.VOID && event.getCause() != DamageCause.SUFFOCATION
-                    && event.getCause() != DamageCause.POISON) {
-                double chance = Feature.BLEEDING.getDouble("chance-percent") / 100;
-                PlayerData data = PlayerData.get(player);
-                if (random.nextDouble() <= chance && !data.isBleeding()) {
-                    data.setBleeding(true);
-                    player.sendMessage(ChatColor.DARK_RED + Utils.msg("now-bleeding"));
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
-                    player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1, 2);
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Witch loop task", e);
                 }
             }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, WITCH_LOOP_INTERVAL);
+
+        // Blaze and Player loop
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.EVERBURNING_BLAZES.isEnabled(world)) {
+                            world.getEntitiesByClass(Blaze.class).forEach(Loops::loop3s_blaze);
+                        }
+                    }
+                    Bukkit.getOnlinePlayers().forEach(Loops::loop3s_player);
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Blaze/Player loop task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BLAZE_PLAYER_LOOP_INTERVAL);
+
+        // Spider loop
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.ANGRY_SPIDERS.isEnabled(world) || Feature.LEAPING_SPIDERS.isEnabled(world)) {
+                            for (Spider spider : world.getEntitiesByClass(Spider.class)) {
+                                if (spider.getTarget() instanceof Player) {
+                                    Loops.loop3s_spider(spider);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Spider loop task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, SPIDER_LOOP_INTERVAL);
+    }
+
+    /**
+     * Handles general entity damage events (fall stun, bleeding, tanky monsters, undead rage, witch scrolls).
+     *
+     * @param event The EntityDamageEvent.
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (event.getDamage() <= 0 || event.getEntity().hasMetadata("NPC")) {
+            return;
         }
 
-        // tanky monsters
-        if (event.getEntity() instanceof LivingEntity && !(event.getEntity() instanceof Player))
-            if (Feature.TANKY_MONSTERS.isEnabled(event.getEntity()))
-                event.setDamage(event.getDamage()
-                        * (1 - Feature.TANKY_MONSTERS.getDouble("dmg-reduction-percent." + event.getEntity().getType().name()) / 100));
-
-        // undead rage
-        if (event.getEntity() instanceof Zombie)
-            if (Feature.UNDEAD_GUNNERS.isEnabled(event.getEntity())) {
-                Zombie z = (Zombie) event.getEntity();
-                int duration = (int) (Feature.UNDEAD_RAGE.getDouble("rage-duration") * 20);
-                z.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, z.getLocation().add(0, 1.7, 0), 6, .35, .35, .35, 0);
-                z.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, duration, 1));
-                z.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, duration, 1));
+        try {
+            // Fall Stun
+            if (event.getEntity() instanceof Player player && Feature.FALL_STUN.isEnabled(player) &&
+                    event.getCause() == DamageCause.FALL) {
+                applyFallStun(player, event.getDamage());
             }
 
-        // witch scrolls
-        if (event.getEntity() instanceof Witch) {
-            Witch w = (Witch) event.getEntity();
-            double chance = Feature.WITCH_SCROLLS.getDouble("chance-percent") / 100;
-            if (Feature.WITCH_SCROLLS.isEnabled(w) && random.nextDouble() <= chance) {
-                event.setCancelled(true);
-                w.getWorld().playSound(w.getLocation(), Sound.BLOCK_ANVIL_LAND, 1, 2);
-                new BukkitRunnable() {
-                    final double r = 1.5;
-                    double step = 0;
-                    final Location loc = w.getLocation();
+            // Bleeding
+            if (event.getEntity() instanceof Player player && Feature.BLEEDING.isEnabled(player) &&
+                    !isExcludedDamageCause(event.getCause())) {
+                applyBleeding(player);
+            }
 
-                    public void run() {
+            // Tanky Monsters
+            if (event.getEntity() instanceof LivingEntity entity && !(event.getEntity() instanceof Player) &&
+                    Feature.TANKY_MONSTERS.isEnabled(entity)) {
+                double reduction = Feature.TANKY_MONSTERS.getDouble("dmg-reduction-percent." + entity.getType().name()) / 100.0;
+                event.setDamage(event.getDamage() * (1 - reduction));
+            }
+
+            // Undead Rage
+            if (event.getEntity() instanceof Zombie zombie && Feature.UNDEAD_GUNNERS.isEnabled(zombie)) {
+                applyUndeadRage(zombie);
+            }
+
+            // Witch Scrolls
+            if (event.getEntity() instanceof Witch witch && Feature.WITCH_SCROLLS.isEnabled(witch)) {
+                double chance = Feature.WITCH_SCROLLS.getDouble("chance-percent") / 100.0;
+                if (RANDOM.nextDouble() <= chance) {
+                    event.setCancelled(true);
+                    applyWitchScrollsEffect(witch);
+                }
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling EntityDamageEvent for entity: " + event.getEntity().getType(), e);
+        }
+    }
+
+    /**
+     * Checks if the damage cause should be excluded from triggering bleeding.
+     *
+     * @param cause The damage cause.
+     * @return True if the cause is excluded.
+     */
+    private boolean isExcludedDamageCause(DamageCause cause) {
+        return cause == DamageCause.STARVATION || cause == DamageCause.DROWNING ||
+                cause == DamageCause.SUICIDE || cause == DamageCause.MELTING ||
+                cause == DamageCause.FIRE_TICK || cause == DamageCause.VOID ||
+                cause == DamageCause.SUFFOCATION || cause == DamageCause.POISON;
+    }
+
+    /**
+     * Applies the fall stun effect to a player.
+     *
+     * @param player The player to apply the effect to.
+     * @param damage The damage taken from the fall.
+     */
+    private void applyFallStun(Player player, double damage) {
+        try {
+            player.removePotionEffect(PotionEffectType.SLOW);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
+                    (int) (damage * 10 * Feature.FALL_STUN.getDouble("duration-amplifier")), 2));
+
+            Location loc = player.getLocation().clone();
+            new BukkitRunnable() {
+                double ticks = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        ticks += 0.25;
+                        for (double j = 0; j < Math.PI * 2; j += Math.PI / 16) {
+                            Location particleLoc = loc.clone().add(Math.cos(j) * ticks, 0.1, Math.sin(j) * ticks);
+                            particleLoc.getWorld().spawnParticle(Particle.BLOCK_CRACK, particleLoc, 0, Material.DIRT.createBlockData());
+                        }
+                        loc.getWorld().playSound(loc, Sound.BLOCK_GRAVEL_BREAK, 2.0f, 2.0f);
+                        if (ticks >= 2) {
+                            cancel();
+                        }
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Fall Stun particle task for player: " + player.getName(), e);
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Fall Stun for player: " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Applies the bleeding effect to a player.
+     *
+     * @param player The player to apply the effect to.
+     */
+    private void applyBleeding(Player player) {
+        try {
+            double chance = Feature.BLEEDING.getDouble("chance-percent") / 100.0;
+            PlayerData data = PlayerData.get(player);
+            if (data == null) {
+                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                        "PlayerData not found for player: " + player.getName());
+                return;
+            }
+            if (RANDOM.nextDouble() <= chance && !data.isBleeding()) {
+                data.setBleeding(true);
+                player.sendMessage(ChatColor.DARK_RED + Utils.msg("now-bleeding"));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
+                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Bleeding for player: " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Applies the undead rage effect to a zombie.
+     *
+     * @param zombie The zombie to apply the effect to.
+     */
+    private void applyUndeadRage(Zombie zombie) {
+        try {
+            int duration = (int) (Feature.UNDEAD_RAGE.getDouble("rage-duration") * 20);
+            zombie.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, zombie.getLocation().add(0, 1.7, 0), 6, 0.35, 0.35, 0.35, 0);
+            zombie.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, duration, 1));
+            zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, duration, 1));
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Undead Rage for zombie: " + zombie.getUniqueId(), e);
+        }
+    }
+
+    /**
+     * Applies the witch scrolls effect.
+     *
+     * @param witch The witch to apply the effect to.
+     */
+    private void applyWitchScrollsEffect(Witch witch) {
+        try {
+            witch.getWorld().playSound(witch.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 2.0f);
+            Location loc = witch.getLocation();
+            double radius = 1.5;
+
+            new BukkitRunnable() {
+                double step = 0;
+
+                @Override
+                public void run() {
+                    try {
                         for (double j = 0; j < 3; j++) {
                             step += Math.PI / 20;
                             for (double i = 0; i < Math.PI * 2; i += Math.PI / 16) {
-                                Location loc1 = loc.clone().add(r * Math.cos(i) * Math.sin(step), r * (1 + Math.cos(step)),
-                                        r * Math.sin(i) * Math.sin(step));
-                                Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.REDSTONE, loc1, 0, new Particle.DustOptions(Color.WHITE, 1));
+                                Location particleLoc = loc.clone().add(
+                                        radius * Math.cos(i) * Math.sin(step),
+                                        radius * (1 + Math.cos(step)),
+                                        radius * Math.sin(i) * Math.sin(step));
+                                particleLoc.getWorld().spawnParticle(Particle.REDSTONE, particleLoc, 0,
+                                        new Particle.DustOptions(Color.WHITE, 1));
                             }
                         }
-                        if (step >= Math.PI * 2)
+                        if (step >= Math.PI * 2) {
                             cancel();
+                        }
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Witch Scrolls particle task for witch: " + witch.getUniqueId(), e);
+                        cancel();
                     }
-
-                }.runTaskTimer(SuddenDeath.plugin, 0, 1);
-            }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Witch Scrolls for witch: " + witch.getUniqueId(), e);
         }
     }
 
+    /**
+     * Handles entity damage by entity events (infection, arrow slow, shocking skeleton arrows, nether shield, sharp knife).
+     *
+     * @param event The EntityDamageByEntityEvent.
+     */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void b(EntityDamageByEntityEvent event) {
-        if (event.isCancelled() || event.getEntity().hasMetadata("NPC") || event.getDamager().hasMetadata("NPC") || event.getDamage() <= 0)
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (event.getDamage() <= 0 || event.getEntity().hasMetadata("NPC") || event.getDamager().hasMetadata("NPC")) {
             return;
-
-        // infection from zombie to player
-        if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
-            if ((event.getDamager() instanceof PigZombie || event.getDamager() instanceof ZombieVillager || event.getDamager() instanceof Zombie) && Feature.INFECTION.isEnabled(player)) {
-                PlayerData data = PlayerData.get(player);
-                double chance = Feature.INFECTION.getDouble("chance-percent") / 100;
-                if (random.nextDouble() <= chance && !data.isInfected()) {
-                    data.setInfected(true);
-                    player.sendMessage(ChatColor.DARK_RED + Utils.msg("now-infected"));
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
-                    player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1, 2);
-                }
-            }
-
-            // arrow slow
-            if (event.getDamager() instanceof Arrow && Feature.ARROW_SLOW.isEnabled(player))
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) (Feature.ARROW_SLOW.getDouble("slow-duration") * 20), 2));
-
-            // skeleton shocking arrows
-            if (event.getDamager() instanceof Arrow && Feature.SHOCKING_SKELETON_ARROWS.isEnabled(player)) {
-                Arrow a = (Arrow) event.getDamager();
-                if (a.getShooter() != null && a.getShooter() instanceof Skeleton) {
-                    Skeleton shooter = (Skeleton) a.getShooter();
-
-                    // Spawn smoke particles around the player
-                    new BukkitRunnable() {
-                        final Location loc = player.getLocation();
-                        double ti = 0;
-
-                        public void run() {
-                            for (int j1 = 0; j1 < 3; j1++) {
-                                ti += Math.PI / 15;
-                                Location loc1 = loc.clone().add(Math.cos(ti), 1, Math.sin(ti));
-                                Objects.requireNonNull(loc1.getWorld()).spawnParticle(Particle.SMOKE_NORMAL, loc1, 0);
-                            }
-                            if (ti >= Math.PI * 2)
-                                cancel();
-                        }
-                    }.runTaskTimer(SuddenDeath.plugin, 0, 1);
-
-                    // Apply shaking effect to the player
-                    double duration = Feature.SHOCKING_SKELETON_ARROWS.getDouble("shock-duration");
-                    new BukkitRunnable() {
-                        int ticksPassed = 0;
-
-                        public void run() {
-                            ticksPassed++;
-                            if (ticksPassed > duration * 20) // Convert seconds to ticks
-                                cancel();
-
-                            // Apply shaking effect (damage with 0.0)
-                            player.playHurtAnimation(0.004f);
-                        }
-                    }.runTaskTimer(SuddenDeath.plugin, 0, 2);
-                    // Play hurt sound
-                    new BukkitRunnable() {
-                        int playCount = 0;
-
-                        public void run() {
-                            if (playCount >= duration * 20) {
-                                cancel();
-                                return;
-                            }
-                            player.playSound(player.getLocation(), "minecraft:entity.player.hurt", 1.0f, 1.2f);
-                            playCount++;
-                        }
-                    }.runTaskTimer(SuddenDeath.plugin, 0, 2);
-                }
-            }
-
         }
 
-        // nether shield on nether mobs
-        if ((event.getEntity() instanceof PigZombie || event.getEntity() instanceof MagmaCube || event.getEntity() instanceof Blaze)
-                && event.getDamager() instanceof Player) {
-            LivingEntity entity = (LivingEntity) event.getEntity();
-            Player damager = (Player) event.getDamager();
-            double chance = Feature.NETHER_SHIELD.getDouble("chance-percent") / 100;
-            if (Feature.NETHER_SHIELD.isEnabled(entity) && random.nextDouble() <= chance) {
+        try {
+            // Infection from Zombie to Player
+            if (event.getEntity() instanceof Player player && isZombieEntity(event.getDamager()) &&
+                    Feature.INFECTION.isEnabled(player)) {
+                applyInfection(player);
+            }
+
+            // Arrow Slow
+            if (event.getEntity() instanceof Player player && event.getDamager() instanceof Arrow &&
+                    Feature.ARROW_SLOW.isEnabled(player)) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
+                        (int) (Feature.ARROW_SLOW.getDouble("slow-duration") * 20), 2));
+            }
+
+            // Shocking Skeleton Arrows
+            if (event.getEntity() instanceof Player player && event.getDamager() instanceof Arrow arrow &&
+                    Feature.SHOCKING_SKELETON_ARROWS.isEnabled(player) && arrow.getShooter() instanceof Skeleton) {
+                applyShockingSkeletonArrows(player);
+            }
+
+            // Nether Shield
+            if (isNetherEntity(event.getEntity()) && event.getDamager() instanceof Player player &&
+                    Feature.NETHER_SHIELD.isEnabled(event.getEntity())) {
+                applyNetherShield(event, (LivingEntity) event.getEntity(), player);
+            }
+
+            // Sharp Knife Bleeding
+            if (event.getEntity() instanceof Player player && event.getDamager() instanceof Player damager &&
+                    Feature.INFECTION.isEnabled(player)) {
+                ItemStack item = damager.getInventory().getItemInMainHand();
+                if (Utils.isPluginItem(item, false) && item.isSimilar(CustomItem.SHARP_KNIFE.a())) {
+                    applyBleeding(player);
+                }
+            }
+
+            // Infection from Zombie to Player (hand attack)
+            if (isZombieEntity(event.getEntity()) && event.getDamager() instanceof Player player &&
+                    Feature.INFECTION.isEnabled(event.getEntity()) && player.getInventory().getItemInMainHand().getType() == Material.AIR &&
+                    !Utils.hasCreativeGameMode(player)) {
+                applyInfection(player);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling EntityDamageByEntityEvent for entity: " + event.getEntity().getType(), e);
+        }
+    }
+
+    /**
+     * Checks if the entity is a zombie-related entity.
+     *
+     * @param entity The entity to check.
+     * @return True if the entity is a Zombie, PigZombie, or ZombieVillager.
+     */
+    private boolean isZombieEntity(Entity entity) {
+        return entity instanceof Zombie || entity instanceof PigZombie || entity instanceof ZombieVillager;
+    }
+
+    /**
+     * Checks if the entity is a nether-related entity.
+     *
+     * @param entity The entity to check.
+     * @return True if the entity is a PigZombie, MagmaCube, or Blaze.
+     */
+    private boolean isNetherEntity(Entity entity) {
+        return entity instanceof PigZombie || entity instanceof MagmaCube || entity instanceof Blaze;
+    }
+
+    /**
+     * Applies the infection effect to a player.
+     *
+     * @param player The player to apply the effect to.
+     */
+    private void applyInfection(Player player) {
+        try {
+            PlayerData data = PlayerData.get(player);
+            if (data == null) {
+                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                        "PlayerData not found for player: " + player.getName());
+                return;
+            }
+            double chance = Feature.INFECTION.getDouble("chance-percent") / 100.0;
+            if (RANDOM.nextDouble() <= chance && !data.isInfected()) {
+                data.setInfected(true);
+                player.sendMessage(ChatColor.DARK_RED + Utils.msg("now-infected"));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
+                player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Infection for player: " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Applies the shocking skeleton arrows effect to a player.
+     *
+     * @param player The player to apply the effect to.
+     */
+    private void applyShockingSkeletonArrows(Player player) {
+        try {
+            double duration = Feature.SHOCKING_SKELETON_ARROWS.getDouble("shock-duration");
+            Location loc = player.getLocation();
+
+            // Smoke particles
+            new BukkitRunnable() {
+                double ticks = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        for (int j = 0; j < 3; j++) {
+                            ticks += Math.PI / 15;
+                            Location particleLoc = loc.clone().add(Math.cos(ticks), 1, Math.sin(ticks));
+                            particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 0);
+                        }
+                        if (ticks >= Math.PI * 2) {
+                            cancel();
+                        }
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Shocking Skeleton Arrows particle task for player: " + player.getName(), e);
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+
+            // Shaking effect
+            new BukkitRunnable() {
+                int ticksPassed = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        ticksPassed++;
+                        if (ticksPassed > duration * 20) {
+                            cancel();
+                            return;
+                        }
+                        player.playHurtAnimation(0.004f);
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Shocking Skeleton Arrows shaking task for player: " + player.getName(), e);
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
+
+            // Hurt sound
+            new BukkitRunnable() {
+                int playCount = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        if (playCount >= duration * 20) {
+                            cancel();
+                            return;
+                        }
+                        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.2f);
+                        playCount++;
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Shocking Skeleton Arrows sound task for player: " + player.getName(), e);
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Shocking Skeleton Arrows for player: " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Applies the nether shield effect to a nether entity.
+     *
+     * @param event  The damage event.
+     * @param entity The nether entity.
+     * @param player The attacking player.
+     */
+    private void applyNetherShield(EntityDamageByEntityEvent event, LivingEntity entity, Player player) {
+        try {
+            double chance = Feature.NETHER_SHIELD.getDouble("chance-percent") / 100.0;
+            if (RANDOM.nextDouble() <= chance) {
                 event.setCancelled(true);
-                entity.getWorld().playSound(entity.getLocation(), Sound.BLOCK_ANVIL_LAND, 1, 2);
-                int radius = 1;
+                entity.getWorld().playSound(entity.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 2.0f);
+                int radius = entity instanceof MagmaCube && ((MagmaCube) entity).getSize() == 4 ? 2 : 1;
 
-                if (entity instanceof MagmaCube)
-                    if (((MagmaCube) entity).getSize() == 4)
-                        radius = 2;
-
-                for (double j = 0; j < Math.PI * 2; j += .3) {
+                for (double j = 0; j < Math.PI * 2; j += 0.3) {
                     double x = Math.cos(j) * radius;
                     double z = Math.sin(j) * radius;
-                    for (double y = 0; y < 2; y += .2) {
-                        if (random.nextDouble() < .3)
+                    for (double y = 0; y < 2; y += 0.2) {
+                        if (RANDOM.nextDouble() < 0.3) {
                             continue;
-
-                        Location loc = entity.getLocation().clone();
-                        loc.add(x, y, z);
-                        if (loc.getBlock().getType().isSolid())
+                        }
+                        Location loc = entity.getLocation().clone().add(x, y, z);
+                        if (loc.getBlock().getType().isSolid()) {
                             continue;
-
-                        Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.FLAME, loc, 0);
-                        if (random.nextDouble() < .45)
+                        }
+                        loc.getWorld().spawnParticle(Particle.FLAME, loc, 0);
+                        if (RANDOM.nextDouble() < 0.45) {
                             loc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc, 0);
-                    }
-                }
-                damager.setVelocity(damager.getEyeLocation().getDirection().multiply(-.6).setY(.3));
-                damager.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, damager.getLocation().add(0, 1, 0), 0);
-                damager.setFireTicks((int) Feature.NETHER_SHIELD.getDouble("burn-duration"));
-                Utils.damage(damager, event.getDamage() * Feature.NETHER_SHIELD.getDouble("dmg-reflection-percent") / 100, true);
-            }
-        }
-
-        if (Feature.INFECTION.isEnabled(event.getEntity())) {
-
-            // sharp knife bleeding effect
-            if (event.getEntity() instanceof Player && event.getDamager() instanceof Player) {
-                Player damager = (Player) event.getDamager();
-                Player player = (Player) event.getEntity();
-                ItemStack i = damager.getInventory().getItemInMainHand();
-                if (Utils.isPluginItem(i, false)) {
-                    if (Objects.requireNonNull(i.getItemMeta()).getDisplayName().equals(CustomItem.SHARP_KNIFE.getName())) {
-                        PlayerData data = PlayerData.get(player);
-                        if (!data.isBleeding()) {
-                            data.setBleeding(true);
-                            player.sendMessage(ChatColor.DARK_RED + Utils.msg("now-bleeding"));
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
-                            player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1, 2);
                         }
                     }
                 }
+                player.setVelocity(player.getEyeLocation().getDirection().multiply(-0.6).setY(0.3));
+                player.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, player.getLocation().add(0, 1, 0), 0);
+                player.setFireTicks((int) Feature.NETHER_SHIELD.getDouble("burn-duration"));
+                Utils.damage(player, event.getDamage() * Feature.NETHER_SHIELD.getDouble("dmg-reflection-percent") / 100.0, true);
             }
-
-            // infection from ZOMBIE to PLAYER
-            if ((event.getEntity() instanceof PigZombie || event.getEntity() instanceof Zombie) && event.getDamager() instanceof Player) {
-                Player player = (Player) event.getDamager();
-                ItemStack i = player.getInventory().getItemInMainHand();
-                if (i.getType() == Material.AIR && !Utils.hasCreativeGameMode(player)) {
-                    PlayerData data = PlayerData.get(player);
-                    double chance = Feature.INFECTION.getDouble("chance-percent") / 100;
-                    if (random.nextDouble() <= chance && !data.isInfected()) {
-                        data.setInfected(true);
-                        player.sendMessage(ChatColor.DARK_RED + Utils.msg("now-infected"));
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
-                        player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1, 2);
-                    }
-                }
-            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Nether Shield for entity: " + entity.getType(), e);
         }
     }
 
+    /**
+     * Prevents health regeneration for infected or bleeding players.
+     *
+     * @param event The EntityRegainHealthEvent.
+     */
     @EventHandler
-    public void c(EntityRegainHealthEvent event) {
-        if (event.getEntity().hasMetadata("NPC") || !(event.getEntity() instanceof Player)
-                || (event.getRegainReason() != RegainReason.SATIATED && event.getRegainReason() != RegainReason.REGEN))
+    public void onEntityRegainHealth(EntityRegainHealthEvent event) {
+        if (!(event.getEntity() instanceof Player player) || event.getEntity().hasMetadata("NPC") ||
+                (event.getRegainReason() != RegainReason.SATIATED && event.getRegainReason() != RegainReason.REGEN)) {
             return;
+        }
 
-        Player player = (Player) event.getEntity();
-        PlayerData data = PlayerData.get(player);
-        if ((Feature.INFECTION.isEnabled(player) && data.isInfected()) || (Feature.BLEEDING.isEnabled(player) && data.isBleeding()))
-            event.setCancelled(true);
-    }
-
-    @EventHandler
-    public void d(PlayerDeathEvent event) {
-        if (event.getEntity().hasMetadata("NPC"))
-            return;
-
-        Player player = event.getEntity();
-        PlayerData data = PlayerData.get(player);
-        data.setBleeding(false);
-        data.setInfected(false);
-        if (Feature.ADVANCED_PLAYER_DROPS.isEnabled(player)) {
-            FileConfiguration advanced = Feature.ADVANCED_PLAYER_DROPS.getConfigFile().getConfig();
-            if (advanced.getBoolean("drop-skull")) {
-                ItemStack skull = new ItemStack(Material.SKELETON_SKULL);
-                if (advanced.getBoolean("player-skull")) {
-                    skull.setType(Material.PLAYER_HEAD);
-                    SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
-                    assert skullMeta != null;
-                    skullMeta.setOwningPlayer(player);
-                    skull.setItemMeta(skullMeta);
-                }
-                player.getWorld().dropItemNaturally(player.getLocation(), skull);
+        try {
+            PlayerData data = PlayerData.get(player);
+            if (data == null) {
+                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                        "PlayerData not found for player: " + player.getName());
+                return;
             }
-
-            if (advanced.getInt("dropped-bones") > 0) {
-                ItemStack bone = CustomItem.HUMAN_BONE.a().clone();
-                bone.setAmount(advanced.getInt("dropped-bones"));
-                player.getWorld().dropItemNaturally(player.getLocation(), bone);
-            }
-            if (advanced.getInt("dropped-flesh") > 0) {
-                ItemStack flesh = CustomItem.RAW_HUMAN_FLESH.a().clone();
-                flesh.setAmount(advanced.getInt("dropped-flesh"));
-                player.getWorld().dropItemNaturally(player.getLocation(), flesh);
-            }
-        }
-    }
-
-    @EventHandler
-    public void e(PlayerMoveEvent event) {
-        if (event.getFrom().getBlockX() == Objects.requireNonNull(event.getTo()).getBlockX() && event.getFrom().getBlockY() == event.getTo().getBlockY()
-                && event.getFrom().getBlockZ() == event.getTo().getBlockZ())
-            return;
-
-        Player player = event.getPlayer();
-        PlayerData data = PlayerData.get(player);
-        if (player.hasMetadata("NPC"))
-            return;
-
-        // electricity shock
-        if (Feature.ELECTRICITY_SHOCK.isEnabled(player)) {
-            Block b = player.getLocation().getBlock();
-            if (isPoweredRedstoneBlock(b) && !Utils.hasCreativeGameMode(player) && !data.isOnCooldown(Feature.ELECTRICITY_SHOCK)) {
-                data.applyCooldown(Feature.ELECTRICITY_SHOCK, 3);
-
-                // Spawn particle effects
-                player.getWorld().spawnParticle(Particle.SNOW_SHOVEL, player.getLocation(), 16, 0, 0, 0, .15);
-                player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getLocation(), 24, 0, 0, 0, .15);
-
-                // Apply damage
-                Utils.damage(player, Feature.ELECTRICITY_SHOCK.getDouble("damage"), true);
-
-                // Apply shaking effect
-                new BukkitRunnable() {
-                    int ticksPassed = 0;
-
-                    public void run() {
-                        ticksPassed++;
-                        if (ticksPassed > 15) // 15 intervals of 2 ticks each
-                            cancel();
-
-                        // Apply shaking effect
-                        player.playHurtAnimation(0.005f);
-                    }
-                }.runTaskTimer(SuddenDeath.plugin, 0, 2);
-
-                // Play hurt sound
-                new BukkitRunnable() {
-                    int playCount = 0;
-
-                    public void run() {
-                        if (playCount >= 15) {
-                            cancel();
-                            return;
-                        }
-                        player.playSound(player.getLocation(), "minecraft:entity.player.hurt", 1.0f, 1.2f);
-                        playCount++;
-                    }
-                }.runTaskTimer(SuddenDeath.plugin, 0, 2);
-            }
-        }
-
-
-        // bleeding block effect
-        if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT))
-            if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding())
-                player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getLocation().add(0, 1, 0), 5, Material.REDSTONE_WIRE.createBlockData());
-
-        // infection effect
-        if (Feature.INFECTION.isEnabled(player) && SuddenDeath.plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT))
-            if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isInfected())
-                player.getWorld().spawnParticle(Particle.SPELL_MOB, player.getLocation().add(0, 1, 0), 5, .3, 0, .3, 0);
-
-        // armor weight
-        if (Feature.ARMOR_WEIGHT.isEnabled(player))
-            PlayerData.get(player).updateMovementSpeed();
-    }
-
-    @EventHandler
-    public void f(EntityDeathEvent event) {
-        if (event.getEntity().hasMetadata("NPC"))
-            return;
-
-        Entity entity = event.getEntity();
-
-        // creeper revenge
-        if (Feature.CREEPER_REVENGE.isEnabled(entity)) {
-            double chance = Feature.CREEPER_REVENGE.getDouble("chance-percent") / 100;
-            if (random.nextDouble() <= chance && entity instanceof Creeper) {
-                new BukkitRunnable() {
-                    public void run() {
-                        if (((Creeper) entity).isPowered()) {
-                            entity.getWorld().createExplosion(entity.getLocation(), 6);
-                            return;
-                        }
-                        entity.getWorld().createExplosion(entity.getLocation(), 3);
-                    }
-                }.runTaskLater(SuddenDeath.plugin, 15);
-            }
-        }
-
-        // silverfishes summon
-        if (Feature.SILVERFISHES_SUMMON.isEnabled(entity) && entity instanceof Zombie) {
-            double chance = Feature.SILVERFISHES_SUMMON.getDouble("chance-percent") / 100;
-            int min = (int) Feature.SILVERFISHES_SUMMON.getDouble("min");
-            int max = (int) Feature.SILVERFISHES_SUMMON.getDouble("max");
-            if (random.nextDouble() <= chance)
-                for (int j = 0; j < min + random.nextInt(max); j++) {
-                    Random r = random;
-                    Vector v = new Vector(r.nextDouble() - .5, r.nextDouble() - .5, r.nextDouble() - .5);
-                    entity.getWorld().spawnParticle(Particle.SMOKE_LARGE, entity.getLocation(), 0);
-                    entity.getWorld().spawnEntity(entity.getLocation(), EntityType.SILVERFISH).setVelocity(v);
-                }
-        }
-    }
-
-    @EventHandler
-    public void g(EntitySpawnEvent event) {
-        if (event.getEntity().hasMetadata("NPC"))
-            return;
-        if (!(event.getEntity() instanceof Monster))
-            return;
-
-        Monster m = (Monster) event.getEntity();
-
-        // quick mobs
-        if (Feature.QUICK_MOBS.isEnabled(m)) {
-            double ms = Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)).getBaseValue();
-            ms *= 1 + Feature.QUICK_MOBS.getDouble("additional-ms-percent." + event.getEntity().getType().name()) / 100;
-            Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)).setBaseValue(ms);
-        }
-
-        // force of the undead
-        if (Feature.FORCE_OF_THE_UNDEAD.isEnabled(m)) {
-            double ad = Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)).getBaseValue();
-            ad *= 1 + Feature.FORCE_OF_THE_UNDEAD.getDouble("additional-ad-percent." + event.getEntity().getType().name()) / 100;
-            Objects.requireNonNull(m.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)).setBaseValue(ad);
-        }
-    }
-
-    @EventHandler
-    public void h(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-
-        // stone stiffness
-        if (Feature.STONE_STIFFNESS.isEnabled(player)) {
-            Block b = event.getClickedBlock();
-            if (event.hasBlock() && event.getAction() == Action.LEFT_CLICK_BLOCK && !Utils.hasCreativeGameMode(player) && !event.hasItem()) {
-                assert b != null;
-                if (Arrays
-                        .asList(new Material[]{Material.STONE, Material.COAL_ORE, Material.IRON_ORE, Material.NETHER_QUARTZ_ORE, Material.GOLD_ORE,
-                                Material.LAPIS_ORE, Material.DIAMOND_ORE, Material.REDSTONE_ORE, Material.EMERALD_ORE, Material.COBBLESTONE,
-                                Material.STONE_SLAB, Material.COBBLESTONE_SLAB, Material.BRICK_STAIRS, Material.BRICK, Material.MOSSY_COBBLESTONE})
-                        .contains(b.getType()))
-                    Utils.damage(player, Feature.STONE_STIFFNESS.getDouble("damage"), true);
-            }
-        }
-
-        if (!event.hasItem())
-            return;
-
-        ItemStack i = player.getInventory().getItemInMainHand();
-        if (!Utils.isPluginItem(i, false))
-            return;
-
-        // bleeding cure
-        if (Feature.BLEEDING.isEnabled(player)) {
-            ItemMeta meta = i.getItemMeta();
-            if (meta != null && i.isSimilar(CustomItem.BANDAGE.a())) { // Use isSimilar() instead of getDisplayName()
+            if ((Feature.INFECTION.isEnabled(player) && data.isInfected()) ||
+                    (Feature.BLEEDING.isEnabled(player) && data.isBleeding())) {
                 event.setCancelled(true);
-                PlayerData data = PlayerData.get(player);
-                if (!data.isBleeding()) {
-                    return;
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling EntityRegainHealthEvent for player: " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Handles player death to reset bleeding/infection and drop custom items.
+     *
+     * @param event The PlayerDeathEvent.
+     */
+    @EventHandler
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (event.getEntity().hasMetadata("NPC")) {
+            return;
+        }
+
+        try {
+            Player player = event.getEntity();
+            PlayerData data = PlayerData.get(player);
+            if (data == null) {
+                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                        "PlayerData not found for player: " + player.getName());
+                return;
+            }
+            data.setBleeding(false);
+            data.setInfected(false);
+
+            if (Feature.ADVANCED_PLAYER_DROPS.isEnabled(player)) {
+                FileConfiguration config = Feature.ADVANCED_PLAYER_DROPS.getConfigFile().getConfig();
+                if (config.getBoolean("drop-skull", false)) {
+                    ItemStack skull = new ItemStack(config.getBoolean("player-skull", false) ? Material.PLAYER_HEAD : Material.SKELETON_SKULL);
+                    if (skull.getType() == Material.PLAYER_HEAD) {
+                        SkullMeta skullMeta = (SkullMeta) skull.getItemMeta();
+                        if (skullMeta != null) {
+                            skullMeta.setOwningPlayer(player);
+                            skull.setItemMeta(skullMeta);
+                        } else {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "SkullMeta is null for player skull drop");
+                        }
+                    }
+                    player.getWorld().dropItemNaturally(player.getLocation(), skull);
                 }
 
-                consume(player);
+                int boneAmount = config.getInt("dropped-bones", 0);
+                if (boneAmount > 0) {
+                    ItemStack bone = CustomItem.HUMAN_BONE.a().clone();
+                    bone.setAmount(boneAmount);
+                    player.getWorld().dropItemNaturally(player.getLocation(), bone);
+                }
+
+                int fleshAmount = config.getInt("dropped-flesh", 0);
+                if (fleshAmount > 0) {
+                    ItemStack flesh = CustomItem.RAW_HUMAN_FLESH.a().clone();
+                    flesh.setAmount(fleshAmount);
+                    player.getWorld().dropItemNaturally(player.getLocation(), flesh);
+                }
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling PlayerDeathEvent for player: " + event.getEntity().getName(), e);
+        }
+    }
+
+    /**
+     * Handles player movement to apply electricity shock, bleeding/infection effects, and armor weight.
+     *
+     * @param event The PlayerMoveEvent.
+     */
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        if (player.hasMetadata("NPC") || !hasMovedBlock(event)) {
+            return;
+        }
+
+        try {
+            PlayerData data = PlayerData.get(player);
+            if (data == null) {
+                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                        "PlayerData not found for player: " + player.getName());
+                return;
+            }
+
+            // Electricity Shock
+            if (Feature.ELECTRICITY_SHOCK.isEnabled(player) && isPoweredRedstoneBlock(player.getLocation().getBlock()) &&
+                    !Utils.hasCreativeGameMode(player) && !data.isOnCooldown(Feature.ELECTRICITY_SHOCK)) {
+                data.applyCooldown(Feature.ELECTRICITY_SHOCK, 3);
+                applyElectricityShock(player);
+            }
+
+            // Bleeding Effect
+            if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT) &&
+                    player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
+                player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getLocation().add(0, 1, 0), 5, Material.REDSTONE_WIRE.createBlockData());
+            }
+
+            // Infection Effect
+            if (Feature.INFECTION.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT) &&
+                    player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isInfected()) {
+
+                // Option 1: Use SPELL_MOB with Color data (recommended for infection effect)
+                Color infectionColor = Color.fromRGB(34, 139, 34); // Dark green color for infection
+                player.getWorld().spawnParticle(Particle.SPELL_MOB, player.getLocation().add(0, 1, 0), 5, 0.3, 0, 0.3, 0, infectionColor);
+
+                // Option 2: Alternative - Use a different particle that doesn't require Color data
+                // player.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, player.getLocation().add(0, 1, 0), 5, 0.3, 0, 0.3, 0);
+
+                // Option 3: Use DUST particle with custom color (another good option)
+                // Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(34, 139, 34), 1.0f);
+                // player.getWorld().spawnParticle(Particle.REDSTONE, player.getLocation().add(0, 1, 0), 5, 0.3, 0, 0.3, 0, dustOptions);
+            }
+
+            // Armor Weight
+            if (Feature.ARMOR_WEIGHT.isEnabled(player)) {
+                data.updateMovementSpeed();
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling PlayerMoveEvent for player: " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Checks if the player has moved to a different block.
+     *
+     * @param event The PlayerMoveEvent.
+     * @return True if the player moved to a new block.
+     */
+    private boolean hasMovedBlock(PlayerMoveEvent event) {
+        Location from = event.getFrom();
+        Location to = event.getTo();
+        return to != null &&
+                (from.getBlockX() != to.getBlockX() ||
+                        from.getBlockY() != to.getBlockY() ||
+                        from.getBlockZ() != to.getBlockZ());
+    }
+
+    /**
+     * Applies the electricity shock effect to a player.
+     *
+     * @param player The player to apply the effect to.
+     */
+    private void applyElectricityShock(Player player) {
+        try {
+            player.getWorld().spawnParticle(Particle.SNOW_SHOVEL, player.getLocation(), 16, 0, 0, 0, 0.15);
+            player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getLocation(), 24, 0, 0, 0, 0.15);
+            Utils.damage(player, Feature.ELECTRICITY_SHOCK.getDouble("damage"), true);
+
+            new BukkitRunnable() {
+                int ticksPassed = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        ticksPassed++;
+                        if (ticksPassed > 15) {
+                            cancel();
+                            return;
+                        }
+                        player.playHurtAnimation(0.005f);
+                        player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.2f);
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Electricity Shock task for player: " + player.getName(), e);
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Electricity Shock for player: " + player.getName(), e);
+        }
+    }
+
+    /**
+     * Handles entity death to trigger creeper revenge and silverfish summon.
+     *
+     * @param event The EntityDeathEvent.
+     */
+    @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        if (event.getEntity().hasMetadata("NPC")) {
+            return;
+        }
+
+        try {
+            Entity entity = event.getEntity();
+
+            // Creeper Revenge
+            if (Feature.CREEPER_REVENGE.isEnabled(entity) && entity instanceof Creeper creeper) {
+                double chance = Feature.CREEPER_REVENGE.getDouble("chance-percent") / 100.0;
+                if (RANDOM.nextDouble() <= chance) {
+                    float power = creeper.isPowered() ? 6.0f : 3.0f;
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                entity.getWorld().createExplosion(entity.getLocation(), power);
+                            } catch (Exception e) {
+                                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                        "Error in Creeper Revenge explosion for entity: " + entity.getType(), e);
+                            }
+                        }
+                    }.runTaskLater(SuddenDeath.getInstance(), 15);
+                }
+            }
+
+            // Silverfish Summon
+            if (Feature.SILVERFISHES_SUMMON.isEnabled(entity) && entity instanceof Zombie) {
+                double chance = Feature.SILVERFISHES_SUMMON.getDouble("chance-percent") / 100.0;
+                int min = (int) Feature.SILVERFISHES_SUMMON.getDouble("min");
+                int max = (int) Feature.SILVERFISHES_SUMMON.getDouble("max");
+                if (RANDOM.nextDouble() <= chance) {
+                    int count = min + RANDOM.nextInt(max);
+                    for (int j = 0; j < count; j++) {
+                        Vector velocity = new Vector(RANDOM.nextDouble() - 0.5, RANDOM.nextDouble() - 0.5, RANDOM.nextDouble() - 0.5);
+                        entity.getWorld().spawnParticle(Particle.SMOKE_LARGE, entity.getLocation(), 0);
+                        entity.getWorld().spawnEntity(entity.getLocation(), EntityType.SILVERFISH).setVelocity(velocity);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling EntityDeathEvent for entity: " + event.getEntity().getType(), e);
+        }
+    }
+
+    /**
+     * Handles entity spawn to apply quick mobs and force of the undead effects.
+     *
+     * @param event The EntitySpawnEvent.
+     */
+    @EventHandler
+    public void onEntitySpawn(EntitySpawnEvent event) {
+        if (event.getEntity().hasMetadata("NPC") || !(event.getEntity() instanceof Monster monster)) {
+            return;
+        }
+
+        try {
+            // Quick Mobs
+            if (Feature.QUICK_MOBS.isEnabled(monster)) {
+                AttributeInstance movementSpeed = monster.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
+                if (movementSpeed != null) {
+                    double multiplier = 1 + Feature.QUICK_MOBS.getDouble("additional-ms-percent." + monster.getType().name()) / 100.0;
+                    movementSpeed.setBaseValue(movementSpeed.getBaseValue() * multiplier);
+                } else {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                            "Movement speed attribute not found for monster: " + monster.getType());
+                }
+            }
+
+            // Force of the Undead
+            if (Feature.FORCE_OF_THE_UNDEAD.isEnabled(monster)) {
+                AttributeInstance attackDamage = monster.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
+                if (attackDamage != null) {
+                    double multiplier = 1 + Feature.FORCE_OF_THE_UNDEAD.getDouble("additional-ad-percent." + monster.getType().name()) / 100.0;
+                    attackDamage.setBaseValue(attackDamage.getBaseValue() * multiplier);
+                } else {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                            "Attack damage attribute not found for monster: " + monster.getType());
+                }
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling EntitySpawnEvent for entity: " + event.getEntity().getType(), e);
+        }
+    }
+
+    /**
+     * Handles player interactions to apply stone stiffness and cure effects.
+     *
+     * @param event The PlayerInteractEvent.
+     */
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        try {
+            // Stone Stiffness
+            if (Feature.STONE_STIFFNESS.isEnabled(player) && event.hasBlock() &&
+                    event.getAction() == Action.LEFT_CLICK_BLOCK && !Utils.hasCreativeGameMode(player) && !event.hasItem()) {
+                Block block = event.getClickedBlock();
+                if (block != null && STIFFNESS_MATERIALS.contains(block.getType())) {
+                    Utils.damage(player, Feature.STONE_STIFFNESS.getDouble("damage"), true);
+                }
+            }
+
+            if (!event.hasItem()) {
+                return;
+            }
+
+            ItemStack item = player.getInventory().getItemInMainHand();
+            if (!Utils.isPluginItem(item, false)) {
+                return;
+            }
+
+            PlayerData data = PlayerData.get(player);
+            if (data == null) {
+                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                        "PlayerData not found for player: " + player.getName());
+                return;
+            }
+
+            // Bleeding Cure
+            if (Feature.BLEEDING.isEnabled(player) && item.isSimilar(CustomItem.BANDAGE.a()) && data.isBleeding()) {
+                event.setCancelled(true);
+                consumeItem(player);
                 data.setBleeding(false);
                 player.sendMessage(ChatColor.YELLOW + Utils.msg("use-bandage"));
-                player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1, 0);
+                player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1.0f, 0.0f);
             }
-        }
 
-        // infection cure
-        if (Feature.INFECTION.isEnabled(player)) {
-            ItemMeta meta = i.getItemMeta();
-            if (meta != null && i.isSimilar(CustomItem.STRANGE_BREW.a())) { // Use isSimilar() instead of getDisplayName()
+            // Infection Cure
+            if (Feature.INFECTION.isEnabled(player) && item.isSimilar(CustomItem.STRANGE_BREW.a()) && data.isInfected()) {
                 event.setCancelled(true);
-                PlayerData data = PlayerData.get(player);
-                if (!data.isInfected()) {
-                    return;
-                }
-
-                consume(player);
+                consumeItem(player);
                 data.setInfected(false);
                 player.sendMessage(ChatColor.YELLOW + Utils.msg("use-strange-brew"));
                 player.removePotionEffect(PotionEffectType.CONFUSION);
-                player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 1, 0);
+                player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 1.0f, 0.0f);
             }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling PlayerInteractEvent for player: " + player.getName(), e);
         }
-
     }
 
-    private void consume(Player player) {
-        ItemStack item = player.getInventory().getItemInMainHand();
-        item.setAmount(item.getAmount() - 1);
-        player.getInventory().setItemInMainHand(item.getAmount() < 1 ? null : item);
+    /**
+     * Consumes one item from the player's main hand.
+     *
+     * @param player The player consuming the item.
+     */
+    private void consumeItem(Player player) {
+        try {
+            ItemStack item = player.getInventory().getItemInMainHand();
+            item.setAmount(item.getAmount() - 1);
+            player.getInventory().setItemInMainHand(item.getAmount() < 1 ? null : item);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error consuming item for player: " + player.getName(), e);
+        }
     }
 
+    /**
+     * Handles furnace smelting to convert raw human flesh to cooked human flesh.
+     *
+     * @param event The FurnaceSmeltEvent.
+     */
     @EventHandler
-    public void i(FurnaceSmeltEvent event) {
-        ItemStack item = event.getSource();
-        if (!Utils.isPluginItem(item, false))
-            return;
-
-        if (Objects.requireNonNull(item.getItemMeta()).getDisplayName().equals(CustomItem.RAW_HUMAN_FLESH.getName()))
-            event.setResult(CustomItem.COOKED_HUMAN_FLESH.a());
+    public void onFurnaceSmelt(FurnaceSmeltEvent event) {
+        try {
+            ItemStack item = event.getSource();
+            if (Utils.isPluginItem(item, false) && item.isSimilar(CustomItem.RAW_HUMAN_FLESH.a())) {
+                event.setResult(CustomItem.COOKED_HUMAN_FLESH.a());
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling FurnaceSmeltEvent", e);
+        }
     }
 
-    public boolean isPoweredRedstoneBlock(Block b) {
-        Material m = b.getType();
-        return b.isBlockPowered()
-                && (m == Material.REDSTONE_WIRE || m == Material.COMPARATOR || m == Material.REPEATER || m == Material.REDSTONE_TORCH);
+    /**
+     * Checks if a block is a powered redstone block.
+     *
+     * @param block The block to check.
+     * @return True if the block is powered and is a redstone wire, comparator, repeater, or torch.
+     */
+    public boolean isPoweredRedstoneBlock(Block block) {
+        try {
+            if (!block.isBlockPowered()) {
+                return false;
+            }
+            Material type = block.getType();
+            return type == Material.REDSTONE_WIRE || type == Material.COMPARATOR ||
+                    type == Material.REPEATER || type == Material.REDSTONE_TORCH;
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error checking powered redstone block", e);
+            return false;
+        }
     }
 }

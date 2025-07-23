@@ -252,6 +252,33 @@ public class PlayerData {
 	 *
 	 * @param attributeInstance The AttributeInstance to clean.
 	 */
+	/**
+	 * Removes specific attribute modifiers by name.
+	 *
+	 * @param attributeInstance The AttributeInstance to clean.
+	 * @param modifierName The specific modifier name to remove.
+	 */
+	public void removeSpecificModifier(AttributeInstance attributeInstance, String modifierName) {
+		if (attributeInstance == null || modifierName == null) {
+			return;
+		}
+		try {
+			attributeInstance.getModifiers().stream()
+					.filter(modifier -> modifierName.equals(modifier.getName()))
+					.collect(java.util.stream.Collectors.toList())
+					.forEach(attributeInstance::removeModifier);
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error removing specific modifier '" + modifierName + "' for player: " + offlinePlayer.getUniqueId(), e);
+		}
+	}
+
+	/**
+	 * Removes attribute modifiers prefixed with the plugin's namespace.
+	 * USE WITH CAUTION - this removes ALL plugin modifiers.
+	 *
+	 * @param attributeInstance The AttributeInstance to clean.
+	 */
 	public void cleanAttributeModifiers(AttributeInstance attributeInstance) {
 		if (attributeInstance == null) {
 			return;
@@ -259,6 +286,7 @@ public class PlayerData {
 		try {
 			attributeInstance.getModifiers().stream()
 					.filter(mod -> mod.getName().startsWith(MODIFIER_PREFIX))
+					.collect(java.util.stream.Collectors.toList())
 					.forEach(attributeInstance::removeModifier);
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,

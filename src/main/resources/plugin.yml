@@ -10,7 +10,23 @@ commands:
   sdmob:
     description: Main command from the custom monster system.
     aliases: [sdm, sdmonster]
+  sdrecipe:
+    description: Unlock SuddenDeath recipes
+    usage: /<command>
 permissions:
+  suddendeath.recipe.*:
+    description: Access to all recipes
+    default: true
+    children:
+      suddendeath.recipe.bandage:
+        description: Access to bandage recipe
+        default: true
+      suddendeath.recipe.strange_brew:
+        description: Access to strange brew recipe
+        default: true
+      suddendeath.admin.recipe:
+        description: Admin commands for recipe management
+        default: op
   suddendeath.status:
     default: op
   suddendeath.op:

@@ -25,6 +25,7 @@ public enum Difficulty {
 	HARDCORE("Hardcore", Material.RED_TERRACOTTA, 14, 40.0, 6.0),
 	DEATH_WISH("Death Wish", Material.BROWN_TERRACOTTA, 17, 50.0, 8.0),
 	SUDDEN_DEATH("Sudden Death", Material.BLACK_TERRACOTTA, 20, 60.0, 10.0);
+	private final Material material;
 
 	private static final String MODIFIER_NAME = "suddenDeath.difficultyMalus";
 	private final int difficultyIndex;
@@ -32,6 +33,7 @@ public enum Difficulty {
 	private String name;
 	private List<String> lore;
 	private double increasedDamage;
+
 	private double healthMalus;
 
 	/**
@@ -48,6 +50,7 @@ public enum Difficulty {
 		if (name == null || material == null) {
 			throw new IllegalArgumentException("Name and material cannot be null");
 		}
+		this.material = material;
 		this.name = name;
 		this.item = new ItemStack(material);
 		this.difficultyIndex = difficultyIndex;
@@ -55,7 +58,9 @@ public enum Difficulty {
 		this.healthMalus = healthMalus;
 		this.lore = new ArrayList<>();
 	}
-
+	public Material getMaterial() {
+		return material;
+	}
 	/**
 	 * Creates a new copy of the representative item.
 	 *
@@ -145,6 +150,11 @@ public enum Difficulty {
 	 *
 	 * @param data The PlayerData instance for the player.
 	 */
+	/**
+	 * Applies the health malus to the player's max health attribute.
+	 *
+	 * @param data The PlayerData instance for the player.
+	 */
 	public void applyHealthMalus(PlayerData data) {
 		if (data == null || data.getPlayer() == null) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -160,20 +170,45 @@ public enum Difficulty {
 				return;
 			}
 
-			data.cleanAttributeModifiers(attributeInstance);
+			// Xóa tất cả modifier có tên MODIFIER_NAME
+			List<AttributeModifier> toRemove = attributeInstance.getModifiers().stream()
+					.filter(mod -> MODIFIER_NAME.equals(mod.getName()))
+					.collect(java.util.stream.Collectors.toList());
+			toRemove.forEach(attributeInstance::removeModifier);
+
+			// Đặt lại base value
+			attributeInstance.setBaseValue(20.0);
+
+			// Áp dụng modifier mới nếu cần
 			if (healthMalus > 0) {
-				attributeInstance.addModifier(new AttributeModifier(
-						UUID.randomUUID(),
+				UUID uuid = UUID.nameUUIDFromBytes((MODIFIER_NAME + data.getPlayer().getUniqueId()).getBytes());
+				AttributeModifier healthModifier = new AttributeModifier(
+						uuid,
 						MODIFIER_NAME,
 						-healthMalus,
 						Operation.ADD_NUMBER
-				));
+				);
+				attributeInstance.addModifier(healthModifier);
 			}
+
+			// Cập nhật máu hiện tại
+			double newMaxHealth = attributeInstance.getValue();
+			if (data.getPlayer().getHealth() > newMaxHealth) {
+				data.getPlayer().setHealth(newMaxHealth);
+			}
+
+			SuddenDeath.getInstance().getLogger().info(String.format(
+					"Applied difficulty %s to %s: MaxHealth=%.1f, CurrentHealth=%.1f, HealthMalus=%.1f",
+					this.name(), data.getPlayer().getName(), newMaxHealth,
+					data.getPlayer().getHealth(), healthMalus
+			));
+
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error applying health malus for player: " + data.getPlayer().getName(), e);
 		}
 	}
+
 
 	/**
 	 * Updates the difficulty properties from a configuration file.

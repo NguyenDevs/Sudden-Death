@@ -104,7 +104,12 @@ public enum CustomItem {
 
 			List<String> configCraft = config.getStringList("craft");
 			if (!configCraft.isEmpty()) {
-				this.craft = Collections.unmodifiableList(configCraft);
+				if (configCraft.size() == 3 && configCraft.stream().allMatch(line -> line.split(",").length == 3)) {
+					this.craft = Collections.unmodifiableList(configCraft);
+				} else {
+					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+							"Invalid craft format for " + name() + ": Expected 3 lines with 3 materials each, got " + configCraft);
+				}
 			}
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -193,5 +198,14 @@ public enum CustomItem {
 					"Error creating ItemStack for CustomItem: " + name(), e);
 			return new ItemStack(Material.AIR);
 		}
+	}
+
+	/**
+	 * Alias method to create the custom item. Used for compatibility.
+	 *
+	 * @return The ItemStack of this CustomItem.
+	 */
+	public ItemStack a() {
+		return createItem();
 	}
 }
