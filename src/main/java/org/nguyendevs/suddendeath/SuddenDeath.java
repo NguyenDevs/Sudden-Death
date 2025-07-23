@@ -66,7 +66,7 @@ public class SuddenDeath extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6              Version 2.0.7"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6              Version 2.0.8"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&b         Development by NguyenDevs"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
     }
