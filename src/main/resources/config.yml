@@ -1,26 +1,7 @@
 #SETTING FOR SUDDEN DEATH
 update-notify: true
-
-#SETTINGS FOR BLOOD SCREEN EFFECT
-#Turn on or off this feature
-blood-enable: true
-#  default (Default) - The fading occurs equal to the amount of time set by the variable interval.
-#  health - Fading occurs depending on the interval and the value of the remaining health of the player.
-#           The lower the health of the player, the longer and more pronounced the effect.
-#  damage - Fading occurs depending on the interval and the damage received by the player.
-#           The more damage the player received, the longer and more pronounced the effect.
-mode: default
-
-# The fading time for the player.
-# Default value: 6 (~2 seconds)
-interval: 6
-
 # The coefficient of speed with which the animation (fake distance) decreases at the edges.
 # The smaller the coefficient, the faster the animation (fading).
 # Accepts a value in decimal fraction from 0.1 to 0.9 inclusive.
 # Values greater than or equal to one are not accepted.
-#
-# Default value: 0.95
-coefficient: 0.95
-
 #WORLD SETTING FOR SUDDEN DEATH

@@ -19,6 +19,18 @@ import java.util.logging.Level;
  * Each feature defines gameplay modifiers and optional world events.
  */
 public enum Feature {
+	BLOOD_SCREEN(
+			"Blood Screen",
+			new String[]{
+					"Player screen turn red when get damage.",
+			},
+			"blood-screen",
+			new Modifier[]{
+					new Modifier("mode", "HEALTH"),
+					new Modifier("interval", 6),
+					new Modifier("coefficient", 0.95),
+			}
+	),
 	QUICK_MOBS(
 			"Quick Mobs",
 			new String[]{"Monsters have increased movement speed.", "&cConfigurable for each monster."},
@@ -79,7 +91,7 @@ public enum Feature {
 			"Shocking Skeleton Arrows",
 			new String[]{"Skeleton arrows shock players for #shock-duration# seconds."},
 			"shocking-skeleton-arrows",
-			new Modifier[]{new Modifier("shock-duration", 2.0)}
+			new Modifier[]{new Modifier("shock-duration", 1.0)}
 	),
 	SILVERFISHES_SUMMON(
 			"Silverfishes Summon",

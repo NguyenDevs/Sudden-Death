@@ -22,6 +22,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import org.nguyendevs.suddendeath.util.FadingType;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
@@ -29,6 +30,7 @@ import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.CustomItem;
 import org.nguyendevs.suddendeath.util.Utils;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
@@ -41,17 +43,20 @@ public class Listener1 implements Listener {
     private static final long WITCH_LOOP_INTERVAL = 80L;
     private static final long BLAZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
-    private static final long INITIAL_DELAY = 20L;
+    private static final long BLOOD_EFFECT_INTERVAL = 0L; // Adjust interval as needed
+    private static final long INITIAL_DELAY = 0L;
     private static final Set<Material> STIFFNESS_MATERIALS = Set.of(
             Material.STONE, Material.COAL_ORE, Material.IRON_ORE, Material.NETHER_QUARTZ_ORE,
             Material.GOLD_ORE, Material.LAPIS_ORE, Material.DIAMOND_ORE, Material.REDSTONE_ORE,
             Material.EMERALD_ORE, Material.COBBLESTONE, Material.STONE_SLAB, Material.COBBLESTONE_SLAB,
             Material.BRICK_STAIRS, Material.BRICK, Material.MOSSY_COBBLESTONE);
+    private final SuddenDeath plugin;
 
     /**
-     * Initializes periodic tasks for Witch, Blaze, Player, and Spider entities.
+     * Initializes periodic tasks for Witch, Blaze, Player, Spider, and Blood Effect.
      */
-    public Listener1() {
+    public Listener1(SuddenDeath plugin) {
+        this.plugin = plugin;
         // Witch loop
         new BukkitRunnable() {
             @Override
@@ -104,6 +109,50 @@ public class Listener1 implements Listener {
                 }
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, SPIDER_LOOP_INTERVAL);
+
+        // Blood Effect loop
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    Map<Player, Integer> players = plugin.getPlayers();
+
+                    for (Map.Entry<Player, Integer> entry : players.entrySet()) {
+                        Player player = entry.getKey();
+                        if (!player.isOnline() || player.isDead()) {
+                            players.remove(player);
+                            continue;
+                        }
+
+                        try {
+                            WorldBorder border = player.getWorld().getWorldBorder();
+                            double distanceToBorder = border.getSize() / 2.0 - player.getLocation().distance(border.getCenter());
+                            int currentDistance = entry.getValue();
+
+                            // Apply fading effect
+                            plugin.getPacketSender().fading(player, currentDistance);
+
+                            // Update distance with coefficient
+                            double coefficient = Feature.BLOOD_SCREEN.getDouble("coefficient");
+                            int newDistance = (int) (currentDistance * coefficient);
+                            entry.setValue(newDistance);
+
+                            // Remove player if they are too close to the border
+                            if (distanceToBorder >= currentDistance) {
+                                players.remove(player);
+                                plugin.getPacketSender().fading(player, border.getWarningDistance());
+                            }
+                        } catch (Exception e) {
+                            plugin.getLogger().log(Level.WARNING,
+                                    "Error processing blood effect for player: " + player.getName(), e);
+                            players.remove(player);
+                        }
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.SEVERE, "Error running BloodEffect task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BLOOD_EFFECT_INTERVAL);
     }
 
     /**
@@ -118,6 +167,30 @@ public class Listener1 implements Listener {
         }
 
         try {
+            // Blood Screen
+            if (event.getEntity() instanceof Player player && Feature.BLOOD_SCREEN.isEnabled(player)) {
+                try {
+                    // Calculate fake distance based on world border
+                    double distance = player.getWorld().getWorldBorder().getSize() / 2.0 - player.getLocation().distance(player.getWorld().getWorldBorder().getCenter());
+                    int fakeDistance = (int) (distance * Feature.BLOOD_SCREEN.getDouble("interval"));
+
+                    // Adjust fake distance based on fading mode
+                    FadingType mode = FadingType.valueOf(Feature.BLOOD_SCREEN.getString("mode"));
+                    if (mode == FadingType.DAMAGE) {
+                        fakeDistance = (int) (fakeDistance * event.getDamage());
+                    } else if (mode == FadingType.HEALTH) {
+                        int health = (int) (player.getMaxHealth() - player.getHealth());
+                        health = Math.max(health, 1); // Ensure health is at least 1
+                        fakeDistance *= health;
+                    }
+
+                    // Update player's blood effect distance
+                    plugin.getPlayers().put(player, Math.abs(fakeDistance));
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING,
+                            "Error handling EntityDamageEvent for player: " + player.getName(), e);
+                }
+            }
             // Fall Stun
             if (event.getEntity() instanceof Player player && Feature.FALL_STUN.isEnabled(player) &&
                     event.getCause() == DamageCause.FALL) {

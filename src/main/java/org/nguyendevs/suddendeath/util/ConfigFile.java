@@ -15,9 +15,7 @@ import java.util.logging.Level;
  * Utility class for managing configuration files in the SuddenDeath plugin.
  */
 public class ConfigFile {
-    private static final double DEFAULT_COEFFICIENT = 0.95;
-    private static final int DEFAULT_INTERVAL = 6;
-    private static final String DEFAULT_MODE = "default";
+    private static final boolean DEFAULT_UPDATE_NOTIFY = true;
 
     private final Plugin plugin;
     private final String path;
@@ -89,6 +87,7 @@ public class ConfigFile {
 
     /**
      * Sets up the configuration file by creating its directory and file if they do not exist.
+     * For config.yml, copies the file from resources if it does not exist.
      */
     public void setup() {
         try {
@@ -98,15 +97,32 @@ public class ConfigFile {
             }
 
             if (!configFile.exists()) {
-                if (!configFile.createNewFile()) {
-                    plugin.getLogger().log(Level.WARNING, "Failed to create configuration file: " + name + ".yml");
+                if (name.equals("config") && path.isEmpty()) {
+                    try {
+                        plugin.saveResource("config.yml", false);
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().log(Level.WARNING, "Failed to copy config.yml from resources, creating empty file with defaults", e);
+                        setDefaultConfigValues();
+                        save();
+                    }
+                } else {
+                    if (!configFile.createNewFile()) {
+                        plugin.getLogger().log(Level.WARNING, "Failed to create configuration file: " + name + ".yml");
+                    }
                 }
-            } else {
-                // Tải file hiện có để giữ các thay đổi
-                load();
             }
+            load();
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Error setting up configuration file: " + name + ".yml", e);
+        }
+    }
+
+    /**
+     * Sets default values for config.yml if it cannot be copied from resources.
+     */
+    private void setDefaultConfigValues() {
+        if (name.equals("config") && path.isEmpty()) {
+            config.set("update-notify", DEFAULT_UPDATE_NOTIFY);
         }
     }
 
@@ -169,62 +185,6 @@ public class ConfigFile {
     }
 
     /**
-     * Retrieves the coefficient value from the configuration, ensuring it is less than 1.0.
-     * Only applicable for config.yml.
-     *
-     * @return The coefficient value, defaulting to 0.95 if invalid.
-     */
-    public double getCoefficient() {
-        if (!name.equals("config")) {
-            plugin.getLogger().log(Level.WARNING, "getCoefficient is only applicable for config.yml, not " + name + ".yml");
-            return DEFAULT_COEFFICIENT;
-        }
-        try {
-            double coefficient = getConfig().getDouble("coefficient", DEFAULT_COEFFICIENT);
-            if (coefficient >= 1.0) {
-                plugin.getLogger().log(Level.WARNING,
-                        "Invalid coefficient value (>= 1.0) in config.yml. Using default value: " + DEFAULT_COEFFICIENT);
-                return DEFAULT_COEFFICIENT;
-            }
-            return coefficient;
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING,
-                    "Error reading coefficient from config.yml. Using default value: " + DEFAULT_COEFFICIENT, e);
-            return DEFAULT_COEFFICIENT;
-        }
-    }
-
-    /**
-     * Retrieves the fading mode from the configuration.
-     * Only applicable for config.yml.
-     *
-     * @return The FadingType, defaulting to DEFAULT if invalid.
-     */
-    public FadingType getMode() {
-        if (!name.equals("config")) {
-            plugin.getLogger().log(Level.WARNING, "getMode is only applicable for config.yml, not " + name + ".yml");
-            return FadingType.DEFAULT;
-        }
-        try {
-            String type = getConfig().getString("mode", DEFAULT_MODE).toLowerCase();
-            return switch (type) {
-                case "default" -> FadingType.DEFAULT;
-                case "health" -> FadingType.HEALTH;
-                case "damage" -> FadingType.DAMAGE;
-                default -> {
-                    plugin.getLogger().log(Level.WARNING,
-                            "Invalid mode '" + type + "' in config.yml. Using default mode: " + DEFAULT_MODE);
-                    yield FadingType.DEFAULT;
-                }
-            };
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING,
-                    "Error reading mode from config.yml. Using default mode: " + DEFAULT_MODE, e);
-            return FadingType.DEFAULT;
-        }
-    }
-
-    /**
      * Retrieves a colored string from the configuration with color codes translated.
      *
      * @param path         The configuration path.
@@ -243,28 +203,23 @@ public class ConfigFile {
     }
 
     /**
-     * Retrieves the interval value from the configuration.
+     * Retrieves the update-notify value from the configuration.
      * Only applicable for config.yml.
      *
-     * @return The interval value, defaulting to 6 if invalid.
+     * @return The update-notify value, defaulting to true if invalid.
      */
-    public int getInterval() {
+    public boolean getUpdateNotify() {
         if (!name.equals("config")) {
-            plugin.getLogger().log(Level.WARNING, "getInterval is only applicable for config.yml, not " + name + ".yml");
-            return DEFAULT_INTERVAL;
+            plugin.getLogger().log(Level.WARNING, "getUpdateNotify is only applicable for config.yml, not " + name + ".yml");
+            return DEFAULT_UPDATE_NOTIFY;
         }
         try {
-            int interval = getConfig().getInt("interval", DEFAULT_INTERVAL);
-            if (interval <= 0) {
-                plugin.getLogger().log(Level.WARNING,
-                        "Invalid interval value (<= 0) in config.yml. Using default value: " + DEFAULT_INTERVAL);
-                return DEFAULT_INTERVAL;
-            }
-            return interval;
+            return getConfig().getBoolean("update-notify", DEFAULT_UPDATE_NOTIFY);
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
-                    "Error reading interval from config.yml. Using default value: " + DEFAULT_INTERVAL, e);
-            return DEFAULT_INTERVAL;
+                    "Error reading update-notify from config.yml. Using default value: " + DEFAULT_UPDATE_NOTIFY, e);
+            return DEFAULT_UPDATE_NOTIFY;
         }
     }
+
 }

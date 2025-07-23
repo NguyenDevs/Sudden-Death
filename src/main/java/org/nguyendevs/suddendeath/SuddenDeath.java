@@ -4,6 +4,8 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Recipe;
@@ -24,9 +26,9 @@ import org.nguyendevs.suddendeath.packets.PacketSender;
 import org.nguyendevs.suddendeath.packets.v1_17.ProtocolLibImpl;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.PlayerData;
-import org.nguyendevs.suddendeath.scheduler.BloodEffectRunnable;
 import org.nguyendevs.suddendeath.util.*;
 
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -44,7 +46,6 @@ public class SuddenDeath extends JavaPlugin {
     public static SuddenDeath getInstance() {
         return instance;
     }
-
 
     /**
      * Prints the Sudden Death plugin logo to the console.
@@ -111,7 +112,6 @@ public class SuddenDeath extends JavaPlugin {
         initializeFeaturesAndEntities();
         initializeItemsAndRecipes();
         registerCommands();
-        getServer().getScheduler().runTaskTimer(this, new BloodEffectRunnable(this), 0L, 1L);
         printLogo();
         new SpigotPlugin(119526, this).checkForUpdate();
     }
@@ -122,28 +122,44 @@ public class SuddenDeath extends JavaPlugin {
 
         initializeDefaultMessages();
 
+        // Load default config from resources if it exists
+        FileConfiguration defaultConfig = new YamlConfiguration();
+        try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(getResource("config.yml")))) {
+            defaultConfig.load(reader);
+        } catch (Exception e) {
+            getLogger().log(Level.WARNING, "Failed to load default config.yml from resources", e);
+        }
+
+        // Merge default values if they don't exist in config.yml
+        ConfigurationSection configSection = configuration.getConfig();
+        if (!configSection.contains("update-notify")) {
+            configSection.set("update-notify", defaultConfig.getBoolean("update-notify", true));
+        }
+
+        // Add feature worlds
         for (Feature feature : Feature.values()) {
-            if (!configuration.getConfig().contains(feature.getPath())) {
+            if (!configSection.contains(feature.getPath())) {
                 List<String> worlds = new ArrayList<>();
                 Bukkit.getWorlds().forEach(world -> worlds.add(world.getName()));
-                configuration.getConfig().set(feature.getPath(), worlds);
+                configSection.set(feature.getPath(), worlds);
             }
         }
 
+        // Add default spawn coefficients
         for (EntityType type : EntityType.values()) {
-            if (type.isAlive() && !configuration.getConfig().contains("default-spawn-coef." + type.name())) {
-                configuration.getConfig().set("default-spawn-coef." + type.name(), 20);
+            if (type.isAlive() && !configSection.contains("default-spawn-coef." + type.name())) {
+                configSection.set("default-spawn-coef." + type.name(), 20);
             }
         }
+
         configuration.save();
     }
 
     private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new BloodEffectListener(this), this);
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new MainListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
-        getServer().getPluginManager().registerEvents(new Listener1(), this);
+        getServer().getPluginManager().registerEvents(new Listener1(this), this);
         getServer().getPluginManager().registerEvents(new Listener2(), this);
     }
 
@@ -373,6 +389,9 @@ public class SuddenDeath extends JavaPlugin {
                     mobConfig.reload();
                 }
             }
+
+            // Reinitialize config to ensure default values
+            initializeConfigFiles();
 
             reRegisterRecipes();
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
