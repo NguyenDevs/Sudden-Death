@@ -154,7 +154,7 @@ public enum Feature {
 			}
 	),
 	STONE_STIFFNESS(
-			" honourableStone Stiffness",
+			"Stone Stiffness",
 			new String[]{"Players take #damage# damage when punching stone."},
 			"stone-stiffness",
 			new Modifier[]{new Modifier("damage", 1.0)}
