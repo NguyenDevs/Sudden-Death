@@ -21,7 +21,6 @@ public enum Message {
 	FREDDY_SUMMONED("You summoned Freddy!"),
 	LOST_EXP("You just lost #exp# EXP!"),
 	NOT_ENOUGH_PERMS("You don't have enough permissions."),
-	CHOSE_DIFF("You successfully selected &f#difficulty#&e."),
 
 	BLOOD_MOON("The Blood Moon is rising..."),
 	THUNDERSTORM("You feel the air above you getting colder..."),
@@ -41,14 +40,6 @@ public enum Message {
 	GUI_NO_SPECIAL_STATUS_LORE(Arrays.asList(
 			"You seem clean... for now."
 	)),
-	GUI_DIFFICULTY_LORE(Arrays.asList(
-			"Increased Damage: &f#increased-damage#&7%",
-			"Health Malus: &f#health-malus#",
-			"Difficulty: #difficulty#"
-	)),
-	GUI_CLICK_SELECT_DIFF("Click to select your difficulty."),
-	GUI_CURRENT_DIFF("This is your current difficulty."),
-	CURRENT("Current"),
 
 	GIVE_ITEM("You gave &f#player# #item##amount#&e."),
 	RECEIVE_ITEM("You received &f#item##amount#&e.");
