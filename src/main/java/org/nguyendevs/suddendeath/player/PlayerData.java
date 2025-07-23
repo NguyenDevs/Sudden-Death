@@ -9,7 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
-import org.nguyendevs.suddendeath.Feature;
+import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.util.ConfigFile;
 
@@ -26,7 +26,6 @@ public class PlayerData {
 
 	private boolean isInfected;
 	private boolean isBleeding;
-	private Difficulty difficulty;
 	private final Map<Feature, Long> cooldowns = new HashMap<>();
 	private final OfflinePlayer offlinePlayer;
 	private Player player;
@@ -61,16 +60,6 @@ public class PlayerData {
 		try {
 			isBleeding = config.getBoolean("bleeding", false);
 			isInfected = config.getBoolean("infected", false);
-
-			String difficultyStr = config.getString("difficulty");
-			if (difficultyStr != null) {
-				try {
-					difficulty = Difficulty.valueOf(difficultyStr.toUpperCase());
-				} catch (IllegalArgumentException e) {
-					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-							"Invalid difficulty in config for player " + offlinePlayer.getUniqueId() + ": " + difficultyStr);
-				}
-			}
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error loading player data for: " + offlinePlayer.getUniqueId(), e);
@@ -93,7 +82,6 @@ public class PlayerData {
 		try {
 			config.set("bleeding", isBleeding ? true : null);
 			config.set("infected", isInfected ? true : null);
-			config.set("difficulty", difficulty != null ? difficulty.name() : null);
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error saving player data for: " + offlinePlayer.getUniqueId(), e);
@@ -180,43 +168,6 @@ public class PlayerData {
 						"Error removing confusion effect for player: " + player.getName(), e);
 			}
 		}
-	}
-
-	/**
-	 * Gets the player's difficulty, falling back to the plugin's default if not set.
-	 *
-	 * @return The Difficulty level.
-	 */
-	public Difficulty getDifficulty() {
-		return hasDifficulty() ? difficulty : SuddenDeath.getInstance().defaultDifficulty;
-	}
-
-	/**
-	 * Checks if the player has a set difficulty.
-	 *
-	 * @return True if a difficulty is set.
-	 */
-	public boolean hasDifficulty() {
-		return difficulty != null;
-	}
-
-	/**
-	 * Checks if the player has the specified difficulty.
-	 *
-	 * @param difficulty The difficulty to check.
-	 * @return True if the player has the specified difficulty.
-	 */
-	public boolean hasDifficulty(Difficulty difficulty) {
-		return difficulty != null && difficulty.equals(getDifficulty());
-	}
-
-	/**
-	 * Sets the player's difficulty.
-	 *
-	 * @param difficulty The difficulty to set.
-	 */
-	public void setDifficulty(Difficulty difficulty) {
-		this.difficulty = difficulty;
 	}
 
 	/**

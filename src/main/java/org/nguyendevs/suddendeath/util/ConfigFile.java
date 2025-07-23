@@ -5,7 +5,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.Plugin;
-import org.nguyendevs.suddendeath.FadingType;
 import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.io.File;
@@ -86,7 +85,6 @@ public class ConfigFile {
         this.configFile = new File(plugin.getDataFolder(), this.path + this.name + ".yml");
         this.config = new YamlConfiguration();
         setup();
-        load();
     }
 
     /**
@@ -100,13 +98,12 @@ public class ConfigFile {
             }
 
             if (!configFile.exists()) {
-                if (name.equals("config")) {
-                    plugin.saveResource("config.yml", false);
-                } else {
-                    if (!configFile.createNewFile()) {
-                        plugin.getLogger().log(Level.WARNING, "Failed to create configuration file: " + name + ".yml");
-                    }
+                if (!configFile.createNewFile()) {
+                    plugin.getLogger().log(Level.WARNING, "Failed to create configuration file: " + name + ".yml");
                 }
+            } else {
+                // Tải file hiện có để giữ các thay đổi
+                load();
             }
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Error setting up configuration file: " + name + ".yml", e);
@@ -114,11 +111,15 @@ public class ConfigFile {
     }
 
     /**
-     * Loads the configuration from the file.
+     * Loads the configuration from the file without overwriting in-memory changes.
      */
     public void load() {
         try {
-            config.load(configFile);
+            if (configFile.exists()) {
+                config.load(configFile);
+            } else {
+                plugin.getLogger().log(Level.WARNING, "Configuration file does not exist: " + name + ".yml");
+            }
         } catch (IOException | org.bukkit.configuration.InvalidConfigurationException e) {
             plugin.getLogger().log(Level.WARNING,
                     "Failed to load configuration file: " + name + ".yml. Error: " + e.getMessage(), e);
@@ -126,11 +127,33 @@ public class ConfigFile {
     }
 
     /**
+     * Reloads the configuration from the file, preserving user changes on disk.
+     */
+    public void reload() {
+        try {
+            if (configFile.exists()) {
+                config.load(configFile);
+            } else {
+                plugin.getLogger().log(Level.WARNING, "Configuration file does not exist: " + name + ".yml");
+                setup(); // Recreate the file if it’s missing
+            }
+        } catch (IOException | org.bukkit.configuration.InvalidConfigurationException e) {
+            plugin.getLogger().log(Level.WARNING,
+                    "Failed to reload configuration file: " + name + ".yml. Error: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Saves the configuration to its file.
      */
     public void save() {
+        if (config.getKeys(true).isEmpty()) {
+            plugin.getLogger().log(Level.INFO, "No changes to save for configuration file: " + name + ".yml");
+            return;
+        }
         try {
             config.save(configFile);
+            plugin.getLogger().log(Level.INFO, "Saved configuration file: " + name + ".yml");
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save configuration file: " + name + ".yml", e);
         }

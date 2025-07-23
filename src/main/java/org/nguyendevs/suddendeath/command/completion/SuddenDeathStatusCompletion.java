@@ -6,11 +6,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.nguyendevs.suddendeath.Feature;
+import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.util.CustomItem;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,18 +22,11 @@ import java.util.stream.Collectors;
  */
 public class SuddenDeathStatusCompletion implements TabCompleter {
 	private static final String PERMISSION_OP = "suddendeath.op";
-	private static final String PERMISSION_ADMIN_RECIPE = "suddendeath.admin.recipe";
-	private static final List<String> MAIN_COMMANDS = Arrays.asList("admin", "help", "give", "itemlist", "reload", "clean", "start", "recipe");
-	private static final List<String> RECIPE_SUBCOMMANDS = Arrays.asList("unlock", "lock", "reload");
+	private static final List<String> MAIN_COMMANDS = Arrays.asList("admin", "help", "give", "itemlist", "reload", "clean", "start");
 	private static final List<String> QUANTITY_SUGGESTIONS = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "16", "32", "64");
 
 	@Override
 	public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-		// Permission check
-		if (!sender.hasPermission(PERMISSION_OP) && !sender.hasPermission(PERMISSION_ADMIN_RECIPE)) {
-			return Collections.emptyList();
-		}
-
 		try {
 			switch (args.length) {
 				case 1 -> {
@@ -80,12 +72,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 			case "clean" -> {
 				return filterCompletions(getOnlinePlayerNames(), args[1]);
 			}
-			case "recipe" -> {
-				if (sender.hasPermission(PERMISSION_ADMIN_RECIPE) || sender.hasPermission("suddendeath.recipe.*")) {
-					return filterCompletions(RECIPE_SUBCOMMANDS, args[1]);
-				}
-				return Collections.emptyList();
-			}
 			default -> {
 				return Collections.emptyList();
 			}
@@ -100,11 +86,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 	 */
 	private List<String> handleThirdArgument(String[] args) {
 		String firstArg = args[0].toLowerCase();
-		String secondArg = args[1].toLowerCase();
-
-		if (firstArg.equals("recipe") && (secondArg.equals("unlock") || secondArg.equals("lock"))) {
-			return filterCompletions(getOnlinePlayerNames(), args[2]);
-		}
 		if (firstArg.equals("give")) {
 			return filterCompletions(getOnlinePlayerNames(), args[2]);
 		}
@@ -119,11 +100,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 	 */
 	private List<String> handleFourthArgument(String[] args) {
 		String firstArg = args[0].toLowerCase();
-		String secondArg = args[1].toLowerCase();
-
-		if (firstArg.equals("recipe") && (secondArg.equals("unlock") || secondArg.equals("lock"))) {
-			return filterCompletions(getCustomItemNames(), args[3]);
-		}
 		if (firstArg.equals("give")) {
 			return filterCompletions(QUANTITY_SUGGESTIONS, args[3]);
 		}

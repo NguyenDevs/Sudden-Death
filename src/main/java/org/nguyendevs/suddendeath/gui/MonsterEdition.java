@@ -231,29 +231,42 @@ public class MonsterEdition extends PluginInventory {
      */
     @Override
     public void whenClicked(InventoryClickEvent event) {
-        // Chỉ hủy sự kiện nếu nhấp vào slot không hợp lệ hoặc slot mob egg
-        if (event.getClickedInventory() != event.getInventory() || !isAvailableSlot(event.getSlot())) {
-            event.setCancelled(true);
-            return;
+        Inventory clickedInv = event.getClickedInventory();
+        Inventory topInv = event.getView().getTopInventory();
+
+        if (clickedInv == null || topInv == null) return;
+
+        // Click trong GUI (top inventory)
+        if (clickedInv.equals(topInv)) {
+            if (!isAvailableSlot(event.getSlot()) && event.getSlot() != 4) {
+                event.setCancelled(true);
+                return;
+            }
+
+            // Slot mob egg thì cancel
+            if (event.getSlot() == 4) {
+                event.setCancelled(true);
+                return;
+            }
         }
 
+        // Lấy item và xử lý
         ItemStack item = event.getCurrentItem();
         if (item == null || !Utils.isPluginItem(item, false)) {
-            event.setCancelled(true);
-            return;
+            return; // Không hủy ở đây để không ngăn người chơi tương tác với inventory của họ
         }
 
         ItemMeta meta = item.getItemMeta();
         if (meta == null || meta.getDisplayName().isEmpty()) {
-            event.setCancelled(true);
             return;
         }
 
         String tag = meta.getPersistentDataContainer().get(Utils.nsk("mobStatId"), PersistentDataType.STRING);
         if (tag == null || tag.isEmpty()) {
-            event.setCancelled(true);
             return;
         }
+
+        event.setCancelled(true); // Chỉ hủy sau khi biết chắc đang xử lý item plugin
 
         try {
             MobStat stat = MobStat.valueOf(tag);
@@ -277,6 +290,7 @@ public class MonsterEdition extends PluginInventory {
             player.sendMessage(translateColors("&cAn error occurred while processing your action."));
         }
     }
+
 
     /**
      * Handles clicks for DOUBLE or STRING type stats.

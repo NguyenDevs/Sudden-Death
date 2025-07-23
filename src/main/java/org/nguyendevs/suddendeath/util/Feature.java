@@ -1,10 +1,10 @@
-package org.nguyendevs.suddendeath;
+package org.nguyendevs.suddendeath.util;
 
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
+import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.Modifier.Type;
-import org.nguyendevs.suddendeath.util.ConfigFile;
 import org.nguyendevs.suddendeath.world.BloodMoon;
 import org.nguyendevs.suddendeath.world.StatusRetriever;
 import org.nguyendevs.suddendeath.world.Thunderstorm;

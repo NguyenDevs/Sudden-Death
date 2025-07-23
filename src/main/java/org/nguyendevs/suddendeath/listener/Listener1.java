@@ -22,14 +22,13 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.nguyendevs.suddendeath.Feature;
+import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.CustomItem;
 import org.nguyendevs.suddendeath.util.Utils;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;

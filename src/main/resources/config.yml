@@ -1,6 +1,4 @@
 #SETTING FOR SUDDEN DEATH
-disable-difficulties: false
-default-difficulty: SANDBOX
 update-notify: true
 
 #SETTINGS FOR BLOOD SCREEN EFFECT

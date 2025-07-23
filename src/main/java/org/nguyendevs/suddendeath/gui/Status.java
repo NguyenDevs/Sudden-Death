@@ -3,22 +3,18 @@ package org.nguyendevs.suddendeath.gui;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
-import org.nguyendevs.suddendeath.Feature;
+import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
-import org.nguyendevs.suddendeath.player.Difficulty;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -27,7 +23,6 @@ import java.util.logging.Level;
  */
 public class Status extends PluginInventory {
     private static final int[] STATUS_SLOTS = {10, 11, 12, 13, 14, 15, 16};
-    private static final int[] DIFFICULTY_SLOTS = {29, 30, 31, 32, 33};
     private static final String GUI_TITLE = ChatColor.UNDERLINE + Utils.msg("gui-name");
     private final PlayerData data;
 
@@ -48,7 +43,7 @@ public class Status extends PluginInventory {
      */
     @Override
     public @NotNull Inventory getInventory() {
-        Inventory inventory = Bukkit.createInventory(this, 45, GUI_TITLE);
+        Inventory inventory = Bukkit.createInventory(this, 27, GUI_TITLE);
 
         try {
             // Add bleeding status item
@@ -65,16 +60,8 @@ public class Status extends PluginInventory {
 
             // Add no-status item if no status effects are present
             if (inventory.getItem(10) == null) {
-                inventory.setItem(13, createStatusItem(Material.RED_STAINED_GLASS,
+                inventory.setItem(4, createStatusItem(Material.RED_STAINED_GLASS,
                         "gui-no-special-status-name", "gui-no-special-status-lore"));
-            }
-
-            // Add difficulty selection items
-            if (!SuddenDeath.getInstance().getConfig().getBoolean("disable-difficulties", false)) {
-                for (Difficulty difficulty : Difficulty.values()) {
-                    inventory.setItem(getAvailableSlot(inventory, DIFFICULTY_SLOTS),
-                            createDifficultyItem(difficulty));
-                }
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -111,55 +98,6 @@ public class Status extends PluginInventory {
         return item;
     }
 
-    /**
-     * Creates an item representing a difficulty level.
-     *
-     * @param difficulty The difficulty level.
-     * @return The created ItemStack.
-     */
-    private ItemStack createDifficultyItem(Difficulty difficulty) {
-        boolean isCurrent = data.hasDifficulty(difficulty);
-        ItemStack item = new ItemStack(isCurrent ? difficulty.getMaterial() : Material.GRAY_DYE);
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "ItemMeta is null for difficulty: " + difficulty.name());
-            return item;
-        }
-
-        String difficultyBar = "||||||||||||||||||||";
-        int index = difficulty.getDifficultyIndex();
-        difficultyBar = ChatColor.GREEN + difficultyBar.substring(0, index) + ChatColor.DARK_GRAY + difficultyBar.substring(index);
-
-        meta.setDisplayName(ChatColor.GREEN + (isCurrent ? "[" + Utils.msg("current") + "] " : "") +
-                ChatColor.translateAlternateColorCodes('&', difficulty.getName()));
-
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.DARK_GRAY + "" + ChatColor.STRIKETHROUGH + "--------------------------------");
-        for (String line : Utils.msgList("gui-difficulty-lore")) {
-            lore.add(ChatColor.GRAY + line
-                    .replace("#health-malus#", String.valueOf(difficulty.getHealthMalus()))
-                    .replace("#increased-damage#", String.valueOf(difficulty.getIncreasedDamage()))
-                    .replace("#difficulty#", difficultyBar));
-        }
-        lore.add("");
-        for (String line : difficulty.getLore()) {
-            lore.add(ChatColor.BLUE + ChatColor.translateAlternateColorCodes('&', line));
-        }
-        if (!lore.isEmpty() && lore.get(lore.size() - 1).isEmpty()) {
-            lore.remove(lore.size() - 1);
-        }
-        lore.add(ChatColor.DARK_GRAY + "" + ChatColor.STRIKETHROUGH + "--------------------------------");
-        if (!isCurrent) {
-            lore.add("");
-            lore.add(ChatColor.YELLOW + Utils.msg("gui-click-select-diff"));
-        }
-
-        meta.setLore(lore);
-        meta.getPersistentDataContainer().set(Utils.nsk("difficultyId"), PersistentDataType.STRING, difficulty.name());
-        item.setItemMeta(meta);
-        return item;
-    }
 
     /**
      * Finds the first available slot in the inventory from the provided slot list.
@@ -185,47 +123,5 @@ public class Status extends PluginInventory {
     @Override
     public void whenClicked(InventoryClickEvent event) {
         event.setCancelled(true);
-
-        try {
-            ItemStack item = event.getCurrentItem();
-            if (item == null || !Utils.isPluginItem(item, true)) {
-                return;
-            }
-
-            ItemMeta meta = item.getItemMeta();
-            if (meta == null) {
-                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                        "ItemMeta is null for clicked item in Status GUI for player: " + player.getName());
-                return;
-            }
-
-            String difficultyId = meta.getPersistentDataContainer().get(Utils.nsk("difficultyId"), PersistentDataType.STRING);
-            if (difficultyId == null || difficultyId.isEmpty()) {
-                return;
-            }
-
-            Difficulty difficulty;
-            try {
-                difficulty = Difficulty.valueOf(difficultyId);
-            } catch (IllegalArgumentException e) {
-                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                        "Invalid difficulty ID: " + difficultyId + " for player: " + player.getName(), e);
-                return;
-            }
-
-            if (!player.hasPermission(difficulty.getPermission())) {
-                player.sendMessage(ChatColor.RED + Utils.msg("no-permission"));
-                return;
-            }
-
-            data.setDifficulty(difficulty);
-            difficulty.applyHealthMalus(data);
-            player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 2.0f);
-            player.sendMessage(ChatColor.YELLOW + Utils.msg("chose-diff").replace("#difficulty#", difficulty.getName()));
-            open();
-        } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error handling InventoryClickEvent for player: " + player.getName(), e);
-        }
     }
 }

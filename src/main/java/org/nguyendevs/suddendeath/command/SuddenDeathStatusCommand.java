@@ -15,7 +15,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import org.nguyendevs.suddendeath.Feature;
+import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.gui.AdminView;
 import org.nguyendevs.suddendeath.gui.Status;
@@ -31,7 +31,6 @@ import java.util.logging.Level;
  */
 public class SuddenDeathStatusCommand implements CommandExecutor {
     private static final String PERMISSION_STATUS = "suddendeath.status";
-    private static final String PERMISSION_ADMIN_RECIPE = "suddendeath.admin.recipe";
     private static final String STRIKETHROUGH = "&8&m---------------";
     private static final String HELP_HEADER = STRIKETHROUGH + "[&d Sudden Death Help Page &8&m]---------------";
     private static final String ITEM_LIST_HEADER = STRIKETHROUGH + "[&d Sudden Death Items &8&m]-----------------";
@@ -40,110 +39,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(translateColors("&cOnly players can use this command."));
-            return true;
-        }
-
-        if (args.length > 0 && args[0].equalsIgnoreCase("recipe")) {
-            if (args.length < 2) {
-                sender.sendMessage(translateColors("&cUsage: /sds recipe <unlock|lock|reload> [player] [item]"));
-                return true;
-            }
-
-            String action = args[1].toLowerCase();
-
-            switch (action) {
-                case "unlock":
-                    // Cho phép người chơi tự mở khóa công thức nếu có quyền suddendeath.recipe.*
-                    if (args.length == 2 && player.hasPermission("suddendeath.recipe.*")) {
-                        SuddenDeath.getInstance().unlockRecipesForPlayer(player);
-                        sender.sendMessage(translateColors("&aUnlocked all recipes for yourself."));
-                        playSound(player);
-                        return true;
-                    }
-
-                    // Kiểm tra quyền admin để mở khóa công thức cho người khác
-                    if (!sender.hasPermission(PERMISSION_ADMIN_RECIPE)) {
-                        sender.sendMessage(translateColors("&cYou don't have permission to manage recipes."));
-                        return true;
-                    }
-
-                    if (args.length >= 3) {
-                        Player target = Bukkit.getPlayer(args[2]);
-                        if (target == null) {
-                            sender.sendMessage(translateColors("&cPlayer not found!"));
-                            return true;
-                        }
-
-                        if (args.length >= 4) {
-                            // Unlock specific item recipe
-                            try {
-                                CustomItem item = CustomItem.valueOf(args[3].toUpperCase());
-                                if (!target.hasPermission("suddendeath.recipe." + item.name().toLowerCase()) &&
-                                        !target.hasPermission("suddendeath.recipe.*")) {
-                                    sender.sendMessage(translateColors("&c" + target.getName() + " does not have permission for " + item.name() + " recipe."));
-                                    return true;
-                                }
-                                NamespacedKey key = new NamespacedKey(SuddenDeath.getInstance(),
-                                        "suddendeath_" + item.name().toLowerCase());
-                                target.discoverRecipe(key);
-                                sender.sendMessage(translateColors("&aUnlocked " + item.name() + " recipe for " + target.getName()));
-                            } catch (IllegalArgumentException e) {
-                                sender.sendMessage(translateColors("&cInvalid item name!"));
-                            }
-                        } else {
-                            // Unlock all recipes
-                            SuddenDeath.getInstance().unlockRecipesForPlayer(target);
-                            sender.sendMessage(translateColors("&aUnlocked all recipes for " + target.getName()));
-                        }
-                    } else {
-                        sender.sendMessage(translateColors("&cUsage: /sds recipe unlock [player] [item]"));
-                    }
-                    break;
-
-                case "lock":
-                    if (!sender.hasPermission(PERMISSION_ADMIN_RECIPE)) {
-                        sender.sendMessage(translateColors("&cYou don't have permission to manage recipes."));
-                        return true;
-                    }
-
-                    if (args.length >= 4) {
-                        Player target = Bukkit.getPlayer(args[2]);
-                        if (target == null) {
-                            sender.sendMessage(translateColors("&cPlayer not found!"));
-                            return true;
-                        }
-
-                        try {
-                            CustomItem item = CustomItem.valueOf(args[3].toUpperCase());
-                            SuddenDeath.getInstance().revokeRecipeFromPlayer(target, item);
-                            sender.sendMessage(translateColors("&aLocked " + item.name() + " recipe for " + target.getName()));
-                        } catch (IllegalArgumentException e) {
-                            sender.sendMessage(translateColors("&cInvalid item name!"));
-                        }
-                    } else {
-                        sender.sendMessage(translateColors("&cUsage: /sds recipe lock <player> <item>"));
-                    }
-                    break;
-
-                case "reload":
-                    if (!sender.hasPermission(PERMISSION_ADMIN_RECIPE)) {
-                        sender.sendMessage(translateColors("&cYou don't have permission to manage recipes."));
-                        return true;
-                    }
-
-                    try {
-                        SuddenDeath.getInstance().reloadConfigFiles();
-                        sender.sendMessage(translateColors("&aRecipes reloaded and updated in Recipe Book!"));
-                    } catch (Exception e) {
-                        sender.sendMessage(translateColors("&cError reloading recipes: " + e.getMessage()));
-                    }
-                    break;
-
-                default:
-                    sender.sendMessage(translateColors("&cUsage: /sds recipe <unlock|lock|reload> [player] [item]"));
-                    break;
-            }
-            playSound(player);
             return true;
         }
 
@@ -203,9 +98,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         player.sendMessage(translateColors("&d/sds reload &freloads the config file."));
         player.sendMessage(translateColors("&d/sds clean &fremoves all negative effects (Bleeding...)."));
         player.sendMessage(translateColors("&d/sds start <event> &fstarts an event."));
-        player.sendMessage(translateColors("&d/sds recipe unlock (player) (item) &funlocks all or specific recipes."));
-        player.sendMessage(translateColors("&d/sds recipe lock <player> <item> &flocks a specific recipe."));
-        player.sendMessage(translateColors("&d/sds recipe reload &freloads all recipes."));
         playSound(player);
     }
 
