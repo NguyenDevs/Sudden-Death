@@ -7,7 +7,6 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -15,12 +14,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.gui.AdminView;
 import org.nguyendevs.suddendeath.gui.Status;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.CustomItem;
+import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.logging.Level;
@@ -37,81 +36,115 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage(translateColors("&cOnly players can use this command."));
-            return true;
-        }
-
-        if (!player.hasPermission(PERMISSION_STATUS)) {
-            player.sendMessage(translateColors("&c" + getMessage("not-enough-perms")));
-            playSound(player);
+        if (!sender.hasPermission(PERMISSION_STATUS)) {
+            sender.sendMessage(translateColors("&c" + getMessage("not-enough-perms")));
+            if (sender instanceof Player) {
+                playSound((Player) sender);
+            }
             return true;
         }
 
         try {
             if (args.length == 0) {
-                new Status(player).open();
-                playSound(player);
+                if (sender instanceof Player player) {
+                    new Status(player).open();
+                    playSound(player);
+                } else {
+                    sender.sendMessage(translateColors("&cThis command is only available for players."));
+                }
                 return true;
             }
 
             switch (args[0].toLowerCase()) {
-                case "help" -> sendHelpMessage(player);
-                case "clean" -> handleCleanCommand(player, args);
-                case "start" -> handleStartCommand(player, args);
-                case "admin" -> {
-                    new AdminView(player).open();
-                    playSound(player);
+                case "help" -> sendHelpMessage(sender);
+                case "clean" -> handleCleanCommand(sender, args);
+                case "start" -> {
+                    if (sender instanceof Player player) {
+                        handleStartCommand(player, args);
+                    } else {
+                        sender.sendMessage(translateColors("&cThis command is only available for players."));
+                    }
                 }
-                case "reload" -> handleReloadCommand(player);
-                case "itemlist" -> sendItemList(player);
-                case "give" -> handleGiveCommand(player, args);
+                case "admin" -> {
+                    if (sender instanceof Player player) {
+                        new AdminView(player).open();
+                        playSound(player);
+                    } else {
+                        sender.sendMessage(translateColors("&cThis command is only available for players."));
+                    }
+                }
+                case "reload" -> handleReloadCommand(sender);
+                case "itemlist" -> sendItemList(sender);
+                case "give" -> handleGiveCommand(sender, args);
                 default -> {
-                    player.sendMessage(translateColors("&cUnknown command. Use /sds help for a list of commands."));
-                    playSound(player);
+                    sender.sendMessage(translateColors("&cUnknown command. Use /sds help for a list of commands."));
+                    if (sender instanceof Player) {
+                        playSound((Player) sender);
+                    }
                 }
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error processing command /sds for player: " + player.getName(), e);
-            player.sendMessage(translateColors("&cAn error occurred while processing your command."));
+                    "Error processing command /sds for sender: " + sender.getName(), e);
+            sender.sendMessage(translateColors("&cAn error occurred while processing your command."));
         }
         return true;
     }
 
     /**
-     * Sends the help message with available commands to the player.
+     * Sends the help message with available commands to the sender.
      *
-     * @param player The player to send the message to.
+     * @param sender The sender to send the message to.
      */
-    private void sendHelpMessage(Player player) {
-        player.sendMessage(translateColors(HELP_HEADER));
-        player.sendMessage(translateColors("&d<> &7= required"));
-        player.sendMessage(translateColors("&d() &7= optional"));
-        player.sendMessage(translateColors("&d... &7= multiple args support"));
-        player.sendMessage("");
-        player.sendMessage(translateColors("&d/sds &fshows your status."));
-        player.sendMessage(translateColors("&d/sds admin &fopens the admin GUI."));
-        player.sendMessage(translateColors("&d/sds help &fdisplays the help page."));
-        player.sendMessage(translateColors("&d/sds give <item> (player) (amount) &fgives a player an item."));
-        player.sendMessage(translateColors("&d/sds itemlist &fdisplays the item list."));
-        player.sendMessage(translateColors("&d/sds reload &freloads the config file."));
-        player.sendMessage(translateColors("&d/sds clean &fremoves all negative effects (Bleeding...)."));
-        player.sendMessage(translateColors("&d/sds start <event> &fstarts an event."));
-        playSound(player);
+    private void sendHelpMessage(CommandSender sender) {
+        sender.sendMessage(translateColors(HELP_HEADER));
+        sender.sendMessage(translateColors("&d<> &7= required"));
+        sender.sendMessage(translateColors("&d() &7= optional"));
+        sender.sendMessage(translateColors("&d... &7= multiple args support"));
+        sender.sendMessage("");
+        sender.sendMessage(translateColors("&d/sds &fshows your status."));
+        sender.sendMessage(translateColors("&d/sds admin &fopens the admin GUI."));
+        sender.sendMessage(translateColors("&d/sds help &fdisplays the help page."));
+        sender.sendMessage(translateColors("&d/sds give <item> (player) (amount) &fgives a player an item."));
+        sender.sendMessage(translateColors("&d/sds itemlist &fdisplays the item list."));
+        sender.sendMessage(translateColors("&d/sds reload &freloads the config file."));
+        sender.sendMessage(translateColors("&d/sds clean &fremoves all negative effects (Bleeding...)."));
+        sender.sendMessage(translateColors("&d/sds start <event> &fstarts an event."));
+        if (sender instanceof Player) {
+            playSound((Player) sender);
+        }
     }
 
     /**
      * Handles the clean command to remove negative effects from a player.
      *
-     * @param player The player executing the command.
+     * @param sender The sender executing the command.
      * @param args   The command arguments.
      */
-    private void handleCleanCommand(Player player, String[] args) {
-        Player target = args.length < 2 ? player : Bukkit.getPlayer(args[1]);
+    private void handleCleanCommand(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            if (sender instanceof Player player) {
+                PlayerData data = PlayerData.get(player);
+                if (data.isInfected()) {
+                    data.setInfected(false);
+                }
+                if (data.isBleeding()) {
+                    data.setBleeding(false);
+                }
+                sender.sendMessage(translateColors("&aRemoved bad status for " + player.getName() + "."));
+                playSound(player);
+            } else {
+                sender.sendMessage(translateColors("&cPlease specify a player to clean."));
+            }
+            return;
+        }
+
+        Player target = Bukkit.getPlayer(args[1]);
         if (target == null) {
-            player.sendMessage(translateColors("&cCouldn't find player called " + args[1] + "."));
-            playSound(player);
+            sender.sendMessage(translateColors("&cCouldn't find player called " + args[1] + "."));
+            if (sender instanceof Player) {
+                playSound((Player) sender);
+            }
             return;
         }
 
@@ -122,8 +155,10 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         if (data.isBleeding()) {
             data.setBleeding(false);
         }
-        player.sendMessage(translateColors("&aRemoved bad status for " + target.getName() + "."));
-        playSound(player);
+        sender.sendMessage(translateColors("&aRemoved bad status for " + target.getName() + "."));
+        if (sender instanceof Player) {
+            playSound((Player) sender);
+        }
     }
 
     /**
@@ -161,58 +196,68 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
     /**
      * Handles the reload command to reload plugin configurations.
      *
-     * @param player The player executing the command.
+     * @param sender The sender executing the command.
      */
-    private void handleReloadCommand(Player player) {
+    private void handleReloadCommand(CommandSender sender) {
         try {
             SuddenDeath plugin = SuddenDeath.getInstance();
             plugin.reloadConfigFiles();
             for (Feature feature : Feature.values()) {
                 feature.updateConfig();
             }
-            player.sendMessage(translateColors("&e" + plugin.getName() + " " + plugin.getDescription().getVersion() + " reloaded."));
-            playSound(player);
+            sender.sendMessage(translateColors("&e" + plugin.getName() + " " + plugin.getDescription().getVersion() + " reloaded."));
+            if (sender instanceof Player) {
+                playSound((Player) sender);
+            }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error reloading plugin for player: " + player.getName(), e);
-            player.sendMessage(translateColors("&cAn error occurred while reloading the plugin."));
+                    "Error reloading plugin for sender: " + sender.getName(), e);
+            sender.sendMessage(translateColors("&cAn error occurred while reloading the plugin."));
         }
     }
 
     /**
-     * Sends the list of custom items to the player with clickable commands.
+     * Sends the list of custom items to the sender with clickable commands for players.
      *
-     * @param player The player to send the list to.
+     * @param sender The sender to send the list to.
      */
-    private void sendItemList(Player player) {
-        player.sendMessage(translateColors(ITEM_LIST_HEADER));
-        player.sendMessage("");
+    private void sendItemList(CommandSender sender) {
+        sender.sendMessage(translateColors(ITEM_LIST_HEADER));
+        sender.sendMessage("");
         for (CustomItem item : CustomItem.values()) {
-            player.spigot().sendMessage(new ComponentBuilder(item.getName())
-                    .color(net.md_5.bungee.api.ChatColor.WHITE)
-                    .append(" (")
-                    .color(net.md_5.bungee.api.ChatColor.GRAY)
-                    .append(item.name())
-                    .color(net.md_5.bungee.api.ChatColor.WHITE)
-                    .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/sds give " + item.name()))
-                    .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(translateColors("&fClick to obtain " + item.getName()))))
-                    .append(") ")
-                    .color(net.md_5.bungee.api.ChatColor.GRAY)
-                    .create());
+            if (sender instanceof Player player) {
+                player.spigot().sendMessage(new ComponentBuilder(item.getName())
+                        .color(net.md_5.bungee.api.ChatColor.WHITE)
+                        .append(" (")
+                        .color(net.md_5.bungee.api.ChatColor.GRAY)
+                        .append(item.name())
+                        .color(net.md_5.bungee.api.ChatColor.WHITE)
+                        .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/sds give " + item.name()))
+                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(translateColors("&fClick to obtain " + item.getName()))))
+                        .append(") ")
+                        .color(net.md_5.bungee.api.ChatColor.GRAY)
+                        .create());
+            } else {
+                sender.sendMessage(translateColors("&f" + item.getName() + " (" + item.name() + ")"));
+            }
         }
-        playSound(player);
+        if (sender instanceof Player) {
+            playSound((Player) sender);
+        }
     }
 
     /**
      * Handles the give command to provide a custom item to a player.
      *
-     * @param player The player executing the command.
+     * @param sender The sender executing the command.
      * @param args   The command arguments.
      */
-    private void handleGiveCommand(Player player, String[] args) {
+    private void handleGiveCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(translateColors("&cPlease specify an item to give."));
-            playSound(player);
+            sender.sendMessage(translateColors("&cPlease specify an item to give."));
+            if (sender instanceof Player) {
+                playSound((Player) sender);
+            }
             return;
         }
 
@@ -220,8 +265,10 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         try {
             itemStack = CustomItem.valueOf(args[1].toUpperCase().replace("-", "_")).a();
         } catch (IllegalArgumentException e) {
-            player.sendMessage(translateColors("&cCouldn't find the item called " + args[1].toUpperCase().replace("-", "_") + "."));
-            playSound(player);
+            sender.sendMessage(translateColors("&cCouldn't find the item called " + args[1].toUpperCase().replace("-", "_") + "."));
+            if (sender instanceof Player) {
+                playSound((Player) sender);
+            }
             return;
         }
 
@@ -229,29 +276,43 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
             try {
                 int amount = Integer.parseInt(args[3]);
                 if (amount <= 0) {
-                    player.sendMessage(translateColors("&c" + args[3] + " is not a valid positive number."));
-                    playSound(player);
+                    sender.sendMessage(translateColors("&c" + args[3] + " is not a valid positive number."));
+                    if (sender instanceof Player) {
+                        playSound((Player) sender);
+                    }
                     return;
                 }
                 itemStack.setAmount(amount);
             } catch (NumberFormatException e) {
-                player.sendMessage(translateColors("&c" + args[3] + " is not a valid number."));
-                playSound(player);
+                sender.sendMessage(translateColors("&c" + args[3] + " is not a valid number."));
+                if (sender instanceof Player) {
+                    playSound((Player) sender);
+                }
                 return;
             }
         }
 
-        Player target = args.length > 2 ? Bukkit.getPlayer(args[2]) : player;
-        if (target == null) {
-            player.sendMessage(translateColors("&cCouldn't find player called " + args[2] + "."));
-            playSound(player);
+        Player target;
+        if (args.length > 2) {
+            target = Bukkit.getPlayer(args[2]);
+            if (target == null) {
+                sender.sendMessage(translateColors("&cCouldn't find player called " + args[2] + "."));
+                if (sender instanceof Player) {
+                    playSound((Player) sender);
+                }
+                return;
+            }
+        } else if (sender instanceof Player player) {
+            target = player;
+        } else {
+            sender.sendMessage(translateColors("&cPlease specify a player to give the item to."));
             return;
         }
 
         String displayName = Utils.displayName(itemStack);
         String amountStr = itemStack.getAmount() > 1 ? " x" + itemStack.getAmount() : "";
-        if (player != target) {
-            player.sendMessage(translateColors("&e" + getMessage("give-item")
+        if (sender != target) {
+            sender.sendMessage(translateColors("&e" + getMessage("give-item")
                     .replace("#item#", displayName)
                     .replace("#player#", target.getName())
                     .replace("#amount#", amountStr)));
@@ -265,7 +326,9 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         } else {
             target.getInventory().addItem(itemStack);
         }
-        playSound(player);
+        if (sender instanceof Player) {
+            playSound((Player) sender);
+        }
     }
 
     /**
