@@ -155,6 +155,18 @@ public class SuddenDeath extends JavaPlugin {
         configuration.save();
     }
 
+
+    public void refreshFeatures(){
+        for(Feature feature : Feature.values()){
+            List<String> enabledWorld = getConfiguration().getConfig().getStringList(feature.getPath());
+            feature.updateConfig();
+            getLogger().info("Refreshed feature " + feature.getName() + " with eanbled worlds: " + enabledWorld);
+
+        } if ( eventManager != null){
+            eventManager.refresh();
+            getLogger().info("Refreshed EventManager.");
+        }
+    }
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new MainListener(), this);
@@ -392,7 +404,7 @@ public class SuddenDeath extends JavaPlugin {
 
             // Reinitialize config to ensure default values
             initializeConfigFiles();
-
+            refreshFeatures();
             reRegisterRecipes();
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
 

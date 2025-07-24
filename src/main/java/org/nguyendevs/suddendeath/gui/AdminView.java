@@ -211,8 +211,10 @@ public class AdminView extends PluginInventory {
                         ChatColor.YELLOW + " in " + ChatColor.GOLD + worldName + ChatColor.YELLOW + ".");
             }
 
-            SuddenDeath.getInstance().getConfig().set(feature.getPath(), enabledWorlds);
+            SuddenDeath.getInstance().getConfig().set(feature.getPath(),enabledWorlds);
             SuddenDeath.getInstance().saveConfig();
+            SuddenDeath.getInstance().getLogger().info("Updated config for " + feature.getName()+": " + enabledWorlds);
+            SuddenDeath.getInstance().reloadConfig();
             open();
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,

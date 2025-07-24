@@ -122,6 +122,51 @@ public class EventManager extends BukkitRunnable {
         }
     }
 
+public void refresh(){
+        try{
+            for(World world : Bukkit.getWorlds()){
+                if(world.getEnvironment() != Environment.NORMAL){
+                    continue;
+                }
+                StatusRetriever currentRetriever = statusMap.get(world.getName());
+                WorldStatus currentStatus = currentRetriever != null ? currentRetriever.getStatus() : WorldStatus.DAY;
+                SuddenDeath.getInstance().getLogger().info("World " + world.getName() + " current status: " + currentStatus.getName());
+
+                if(currentRetriever instanceof WorldEventHandler){
+                    Feature feature = null;
+                    if(currentStatus == WorldStatus.BLOOD_MOON){
+                        feature = Feature.BLOOD_MOON;
+                    } else if(currentStatus == WorldStatus.THUNDER_STORM){
+                        feature = Feature.THUNDERSTORM;
+                    }
+                    if (feature != null && !feature.isEnabled(world)) {
+                        ((WorldEventHandler) currentRetriever).close();
+                        applyStatus(world, WorldStatus.DAY);
+                        SuddenDeath.getInstance().getLogger().info("Closed event " + feature.getName() + " in world " + world.getName() + " due to config change");
+
+                    }
+                }
+                if(isDay(world)){
+                    applyStatus(world, WorldStatus.DAY);
+
+                } else if(currentStatus == WorldStatus.DAY){
+                    for(Feature feature : EVENT_FEATURES){
+                        if(feature.isEnabled(world) && random.nextDouble() <= feature.getDouble("chance")/100.0) {
+                            applyStatus(world, feature.generateWorldEventHandler(world));
+                            SuddenDeath.getInstance().getLogger().info("Started event " + feature.getName() + " in world " + world.getName() + " after config refresh");
+                            break;
+                        }
+                    }
+                    if (getStatus(world) == WorldStatus.DAY) {
+                        applyStatus(world, WorldStatus.NIGHT);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.SEVERE,"Error refreshing EventManager", e);
+        }
+}
+
     /**
      * Applies a simple WorldStatus to a world.
      *
