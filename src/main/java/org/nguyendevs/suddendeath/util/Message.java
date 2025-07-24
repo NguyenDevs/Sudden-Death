@@ -10,17 +10,14 @@ import java.util.stream.Collectors;
  * Messages can be either a single string or a list of strings for lore.
  */
 public enum Message {
-	NOW_BLEEDING("You are now bleeding. Quickly find a bandage or you'll die within seconds."),
-	NOW_INFECTED("You're starting to feel very weird..."),
-	PAPI_INFECTED("Infected"),
-	PAPI_NOT_INFECTED("Clean"),
-	PAPI_BLEEDING("Bleeding"),
-	PAPI_NOT_BLEEDING("Clean"),
-	USE_STRANGE_BREW("You are no longer infected."),
-	USE_BANDAGE("You cured all your wounds."),
-	FREDDY_SUMMONED("You summoned Freddy!"),
+	PREFIX("&6[&cSudden&4Death&6]"),
+	NOW_BLEEDING("&7You are now &cbleeding&7. Quickly find a &bBandage&7 or you'll die within seconds."),
+	NOW_INFECTED("&7You're starting to feel very &8Weird..."),
+	USE_STRANGE_BREW("&7You are no longer infected."),
+	USE_BANDAGE("&7You cured all your wounds."),
+	FREDDY_SUMMONED("&7You summoned &0Freddy!"),
 	LOST_EXP("You just lost #exp# EXP!"),
-	NOT_ENOUGH_PERMS("You don't have enough permissions."),
+	NOT_ENOUGH_PERMS("&cYou don't have enough permissions."),
 
 	BLOOD_MOON("The Blood Moon is rising..."),
 	THUNDERSTORM("You feel the air above you getting colder..."),
@@ -42,8 +39,12 @@ public enum Message {
 	)),
 
 	GIVE_ITEM("You gave &f#player# #item##amount#&e."),
-	RECEIVE_ITEM("You received &f#item##amount#&e.");
+	RECEIVE_ITEM("You received &f#item##amount#&e."),
 
+	PAPI_INFECTED("Infected"),
+	PAPI_NOT_INFECTED("Clean"),
+	PAPI_BLEEDING("Bleeding"),
+	PAPI_NOT_BLEEDING("Clean");
 	private final Object value;
 
 	/**

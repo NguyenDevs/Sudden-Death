@@ -23,9 +23,12 @@ import java.util.logging.Level;
  */
 public class Status extends PluginInventory {
     private static final int[] STATUS_SLOTS = {10, 11, 12, 13, 14, 15, 16};
-    private static final String GUI_TITLE = ChatColor.UNDERLINE + Utils.msg("gui-name");
+    private static final String GUI_TITLE = translateColors(Utils.msg("gui-name"));
     private final PlayerData data;
 
+    private static String translateColors(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
     /**
      * Constructs a Status GUI for the specified player.
      *

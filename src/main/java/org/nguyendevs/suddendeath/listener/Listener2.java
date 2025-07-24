@@ -454,7 +454,7 @@ public class Listener2 implements Listener {
 			}
 
 			freddy.setTarget(player);
-			player.sendMessage(ChatColor.DARK_RED + Utils.msg("freddy-summoned"));
+			player.sendMessage(translateColors(Utils.msg("prefix") + Utils.msg("freddy-summoned")));
 			player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_DEATH, 2.0f, 0.0f);
 			player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 120, 0));
 		} catch (Exception e) {
@@ -510,4 +510,8 @@ public class Listener2 implements Listener {
 					"Error handling BlockBreakEvent for player: " + player.getName(), e);
 		}
 	}
+	private String translateColors(String message) {
+		return ChatColor.translateAlternateColorCodes('&', message);
+	}
+
 }
