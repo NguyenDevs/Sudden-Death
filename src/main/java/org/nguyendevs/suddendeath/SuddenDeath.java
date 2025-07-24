@@ -19,6 +19,7 @@ import org.nguyendevs.suddendeath.comp.SuddenDeathPlaceholders;
 import org.nguyendevs.suddendeath.comp.worldguard.WGPlugin;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOff;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOn;
+import org.nguyendevs.suddendeath.gui.AdminView;
 import org.nguyendevs.suddendeath.gui.listener.GuiListener;
 import org.nguyendevs.suddendeath.listener.*;
 import org.nguyendevs.suddendeath.manager.EventManager;
@@ -160,7 +161,7 @@ public class SuddenDeath extends JavaPlugin {
         for(Feature feature : Feature.values()){
             List<String> enabledWorld = getConfiguration().getConfig().getStringList(feature.getPath());
             feature.updateConfig();
-            getLogger().info("Refreshed feature " + feature.getName() + " with eanbled worlds: " + enabledWorld);
+           // getLogger().info("Refreshed feature " + feature.getName() + " with enabled worlds: " + enabledWorld);
 
         } if ( eventManager != null){
             eventManager.refresh();
@@ -407,7 +408,6 @@ public class SuddenDeath extends JavaPlugin {
             refreshFeatures();
             reRegisterRecipes();
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
-
             getLogger().info("Reload all configuration successfully.");
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error reloading configuration file", e);
