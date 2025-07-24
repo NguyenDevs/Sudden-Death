@@ -42,7 +42,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         if (!player.hasPermission(PERMISSION_OP)) {
-            player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&c" + getMessage("not-enough-perms")));
+            player.sendMessage(translateColors(Utils.msg("prefix") + " " + getMessage("not-enough-perms")));
             playSound(player);
             return true;
         }
@@ -344,7 +344,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             return type;
         } catch (IllegalArgumentException e) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&c" + typeStr.toUpperCase().replace("-", "_") + " is not a supported mob type."));
-            player.sendMessage(translateColors(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +"&cUse /sdmob list type to see all available mob types."));
+            player.sendMessage(translateColors(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " + "&cUse /sdmob list type to see all available mob types."));
             playSound(player);
             return null;
         }

@@ -37,7 +37,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!sender.hasPermission(PERMISSION_STATUS)) {
-            sender.sendMessage(translateColors("&c" + getMessage("not-enough-perms")));
+            sender.sendMessage(translateColors(Utils.msg("prefix") + " " + getMessage("not-enough-perms")));
             if (sender instanceof Player) {
                 playSound((Player) sender);
             }
@@ -238,7 +238,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                         .color(net.md_5.bungee.api.ChatColor.GRAY)
                         .create());
             } else {
-                sender.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&f" + item.getName() + " (" + item.name() + ")"));
+                sender.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " + translateColors("&f" + item.getName() + " (" + item.name() + ")"));
             }
         }
         if (sender instanceof Player) {
@@ -254,7 +254,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
      */
     private void handleGiveCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(translateColors("&cPlease specify an item to give."));
+            sender.sendMessage(translateColors(Utils.msg("prefix") + " " + "&cPlease specify an item to give."));
             if (sender instanceof Player) {
                 playSound((Player) sender);
             }
@@ -265,7 +265,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         try {
             itemStack = CustomItem.valueOf(args[1].toUpperCase().replace("-", "_")).a();
         } catch (IllegalArgumentException e) {
-            sender.sendMessage(translateColors("&cCouldn't find the item called " + args[1].toUpperCase().replace("-", "_") + "."));
+            sender.sendMessage(translateColors(Utils.msg("prefix") + " " +"&cCouldn't find the item called " + args[1].toUpperCase().replace("-", "_") + "."));
             if (sender instanceof Player) {
                 playSound((Player) sender);
             }
@@ -276,7 +276,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
             try {
                 int amount = Integer.parseInt(args[3]);
                 if (amount <= 0) {
-                    sender.sendMessage(translateColors("&c" + args[3] + " is not a valid positive number."));
+                    sender.sendMessage(translateColors(Utils.msg("prefix") + " " +"&c" + args[3] + " is not a valid positive number."));
                     if (sender instanceof Player) {
                         playSound((Player) sender);
                     }
@@ -284,7 +284,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                 }
                 itemStack.setAmount(amount);
             } catch (NumberFormatException e) {
-                sender.sendMessage(translateColors("&c" + args[3] + " is not a valid number."));
+                sender.sendMessage(translateColors(Utils.msg("prefix") + " "  + args[3] + " is not a valid number."));
                 if (sender instanceof Player) {
                     playSound((Player) sender);
                 }
@@ -296,7 +296,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         if (args.length > 2) {
             target = Bukkit.getPlayer(args[2]);
             if (target == null) {
-                sender.sendMessage(translateColors("&cCouldn't find player called " + args[2] + "."));
+                sender.sendMessage(translateColors(Utils.msg("prefix") + " " +"&cCouldn't find player called " + args[2] + "."));
                 if (sender instanceof Player) {
                     playSound((Player) sender);
                 }
@@ -305,19 +305,19 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         } else if (sender instanceof Player player) {
             target = player;
         } else {
-            sender.sendMessage(translateColors("&cPlease specify a player to give the item to."));
+            sender.sendMessage(translateColors(Utils.msg("prefix") + " " + "&cPlease specify a player to give the item to."));
             return;
         }
 
         String displayName = Utils.displayName(itemStack);
         String amountStr = itemStack.getAmount() > 1 ? " x" + itemStack.getAmount() : "";
         if (sender != target) {
-            sender.sendMessage(translateColors("&e" + getMessage("give-item")
+            sender.sendMessage(translateColors(Utils.msg("prefix") + " " + getMessage("give-item")
                     .replace("#item#", displayName)
                     .replace("#player#", target.getName())
                     .replace("#amount#", amountStr)));
         }
-        target.sendMessage(translateColors("&e" + getMessage("receive-item")
+        target.sendMessage(translateColors(Utils.msg("prefix") + " " + getMessage("receive-item")
                 .replace("#item#", displayName)
                 .replace("#amount#", amountStr)));
 

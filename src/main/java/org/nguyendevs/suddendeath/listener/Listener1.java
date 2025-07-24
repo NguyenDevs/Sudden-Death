@@ -299,7 +299,7 @@ public class Listener1 implements Listener {
             }
             if (RANDOM.nextDouble() <= chance && !data.isBleeding()) {
                 data.setBleeding(true);
-                player.sendMessage(translateColors(Utils.msg("prefix") + Utils.msg("now-bleeding")));
+                player.sendMessage(translateColors(Utils.msg("prefix") + " " +  Utils.msg("now-bleeding")));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
             }
@@ -464,7 +464,7 @@ public class Listener1 implements Listener {
             double chance = Feature.INFECTION.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() <= chance && !data.isInfected()) {
                 data.setInfected(true);
-                player.sendMessage(translateColors(Utils.msg("prefix") + Utils.msg("now-infected")));
+                player.sendMessage(translateColors(Utils.msg("prefix") + " " +  Utils.msg("now-infected")));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
                 player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
             }
@@ -929,7 +929,7 @@ public class Listener1 implements Listener {
                 event.setCancelled(true);
                 consumeItem(player);
                 data.setBleeding(false);
-                player.sendMessage(translateColors(Utils.msg("prefix") +  Utils.msg("use-bandage")));
+                player.sendMessage(translateColors(Utils.msg("prefix") + " " +  Utils.msg("use-bandage")));
                 player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1.0f, 0.0f);
             }
 
@@ -938,7 +938,7 @@ public class Listener1 implements Listener {
                 event.setCancelled(true);
                 consumeItem(player);
                 data.setInfected(false);
-                player.sendMessage(translateColors(Utils.msg("prefix") + Utils.msg("use-strange-brew")));
+                player.sendMessage(translateColors(Utils.msg("prefix") + " " + Utils.msg("use-strange-brew")));
                 player.removePotionEffect(PotionEffectType.CONFUSION);
                 player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 1.0f, 0.0f);
             }
