@@ -20,6 +20,7 @@ import org.nguyendevs.suddendeath.comp.worldguard.WGPlugin;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOff;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOn;
 import org.nguyendevs.suddendeath.gui.AdminView;
+import org.nguyendevs.suddendeath.gui.CrafterInventory;
 import org.nguyendevs.suddendeath.gui.listener.GuiListener;
 import org.nguyendevs.suddendeath.listener.*;
 import org.nguyendevs.suddendeath.manager.EventManager;
@@ -156,24 +157,24 @@ public class SuddenDeath extends JavaPlugin {
         configuration.save();
     }
 
-
-    public void refreshFeatures(){
-        for(Feature feature : Feature.values()){
+    public void refreshFeatures() {
+        for (Feature feature : Feature.values()) {
             List<String> enabledWorld = getConfiguration().getConfig().getStringList(feature.getPath());
             feature.updateConfig();
-           // getLogger().info("Refreshed feature " + feature.getName() + " with enabled worlds: " + enabledWorld);
-
-        } if ( eventManager != null){
+        }
+        if (eventManager != null) {
             eventManager.refresh();
             getLogger().info("Refreshed EventManager.");
         }
     }
+
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new MainListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
         getServer().getPluginManager().registerEvents(new Listener1(this), this);
         getServer().getPluginManager().registerEvents(new Listener2(), this);
+       // getServer().getPluginManager().registerEvents(new CrafterInventory.Listener(), this);
     }
 
     private void hookIntoPlugins() {
@@ -255,7 +256,7 @@ public class SuddenDeath extends JavaPlugin {
             items.save();
         }
 
-        removeCustomRecipes(); // Gỡ bỏ các công thức cũ trước khi đăng ký lại
+        removeCustomRecipes(); // Remove old recipes before registering new ones
         for (CustomItem item : CustomItem.values()) {
             ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
             if (section == null) {
@@ -395,7 +396,7 @@ public class SuddenDeath extends JavaPlugin {
             messages.reload();
             items.reload();
 
-            // Tải lại các file trong /customMobs
+            // Reload custom mob configs
             for (EntityType type : EntityType.values()) {
                 if (type.isAlive()) {
                     ConfigFile mobConfig = new ConfigFile(this, "/customMobs", Utils.lowerCaseId(type.name()));

@@ -2,10 +2,12 @@ package org.nguyendevs.suddendeath.util;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.Arrays;
@@ -54,6 +56,8 @@ public enum CustomItem {
 			new String[]{"A super sharp knife.", "Hit someone to make them bleed."},
 			null
 	);
+
+	private static final NamespacedKey CUSTOM_ITEM_KEY = new NamespacedKey(SuddenDeath.getInstance(), "custom_item_id");
 
 	private final Material material;
 	private String name;
@@ -191,6 +195,8 @@ public enum CustomItem {
 						.collect(Collectors.toList());
 				meta.setLore(formattedLore);
 			}
+			// Store the CustomItem enum name in PersistentDataContainer
+			meta.getPersistentDataContainer().set(CUSTOM_ITEM_KEY, PersistentDataType.STRING, this.name());
 			item.setItemMeta(meta);
 			return item;
 		} catch (Exception e) {
@@ -207,5 +213,31 @@ public enum CustomItem {
 	 */
 	public ItemStack a() {
 		return createItem();
+	}
+
+	/**
+	 * Retrieves the CustomItem corresponding to the provided ItemStack.
+	 *
+	 * @param item The ItemStack to check.
+	 * @return The matching CustomItem, or null if no match is found.
+	 */
+	public static CustomItem fromItemStack(ItemStack item) {
+		if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) {
+			return null;
+		}
+		ItemMeta meta = item.getItemMeta();
+		if (meta == null) {
+			return null;
+		}
+		String customItemId = meta.getPersistentDataContainer().get(CUSTOM_ITEM_KEY, PersistentDataType.STRING);
+		if (customItemId != null) {
+			try {
+				return CustomItem.valueOf(customItemId);
+			} catch (IllegalArgumentException e) {
+				SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+						"Invalid CustomItem ID in PersistentDataContainer: " + customItemId, e);
+			}
+		}
+		return null;
 	}
 }
