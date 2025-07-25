@@ -27,10 +27,10 @@ public enum CustomItem {
 			new String[]{"AIR,AIR,AIR", "PAPER,STICK,PAPER", "AIR,AIR,AIR"}
 	),
 	STRANGE_BREW(
-			Material.BEETROOT_SOUP,
+			Material.SUSPICIOUS_STEW,
 			"&fStrange Brew",
 			new String[]{"Stops Infection."},
-			new String[]{"AIR,AIR,AIR", "INK_SAC,BOWL,CLAY_BALL", "AIR,AIR,AIR"}
+			new String[]{"AIR,AIR,AIR", "GLOW_INK_SAC,BOWL,TURTLE_SCUTE", "AIR,AIR,AIR"}
 	),
 	RAW_HUMAN_FLESH(
 			Material.BEEF,
