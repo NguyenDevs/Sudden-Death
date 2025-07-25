@@ -15,6 +15,7 @@ public enum Message {
 	NOW_INFECTED("&7You're starting to feel very &8Weird..."),
 	USE_STRANGE_BREW("&7You are no longer infected."),
 	USE_BANDAGE("&7You cured all your wounds."),
+	NO_LONGER_BLEEDING("&7You are no longer bleeding."),
 	FREDDY_SUMMONED("&7You summoned &0Freddy!"),
 	LOST_EXP("You just lost #exp# EXP!"),
 	NOT_ENOUGH_PERMS("&cYou don't have enough permissions."),
@@ -22,13 +23,17 @@ public enum Message {
 	BLOOD_MOON("The Blood Moon is rising..."),
 	THUNDERSTORM("You feel the air above you getting colder..."),
 
-	GUI_NAME("Your Status"),
-	GUI_BLEEDING_NAME("Bleeding"),
+	GUI_STATUS_NAME("&8Your Status"),
+	GUI_RECIPE_NAME("&8Recipes"),
+	GUI_RECIPE_CLOSE("&cClose"),
+	GUI_CRAFTER_NAME("&8Recipe:"),
+	GUI_CRAFTER_BACK("&aBack"),
+	GUI_BLEEDING_NAME("&cBleeding"),
 	GUI_BLEEDING_LORE(Arrays.asList(
 			"You are slowly losing life! Quickly",
 			"find or craft a bandage to stop bleeding!"
 	)),
-	GUI_INFECTED_NAME("Infected"),
+	GUI_INFECTED_NAME("&5Infected"),
 	GUI_INFECTED_LORE(Arrays.asList(
 			"You're feeling very weird... Find",
 			"a Strange Brew to stop that."
