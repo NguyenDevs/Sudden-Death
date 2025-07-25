@@ -9,6 +9,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.util.ConfigFile;
@@ -23,7 +24,7 @@ public class PlayerData {
 	private static final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
 	private static final String MODIFIER_PREFIX = "suddenDeath.";
 	private static final double COOLDOWN_DURATION_SECONDS = 3.0;
-
+	private BukkitRunnable bleedingTask;
 	private boolean isInfected;
 	private boolean isBleeding;
 	private final Map<Feature, Long> cooldowns = new HashMap<>();
@@ -180,6 +181,13 @@ public class PlayerData {
 		return cooldowns.getOrDefault(feature, 0L) > System.currentTimeMillis();
 	}
 
+	public void setBleedingTask(BukkitRunnable task) {
+		this.bleedingTask = task;
+	}
+
+	public BukkitRunnable getBleedingTask() {
+		return bleedingTask;
+	}
 	/**
 	 * Applies a cooldown for a specific feature.
 	 *

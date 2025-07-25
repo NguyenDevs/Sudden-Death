@@ -298,20 +298,29 @@ public class Listener1 implements Listener {
                 return;
             }
             if (RANDOM.nextDouble() <= chance && !data.isBleeding()) {
+                // Hủy runnable cũ nếu tồn tại
+                if (data.getBleedingTask() != null) {
+                    data.getBleedingTask().cancel();
+                }
                 data.setBleeding(true);
-                player.sendMessage(translateColors(Utils.msg("prefix") + " " +  Utils.msg("now-bleeding")));
+                player.sendMessage(translateColors(Utils.msg("prefix") + " " + Utils.msg("now-bleeding")));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
-            }
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (data.isBleeding()) {
-                        data.setBleeding(false);
-                        player.sendMessage(translateColors(Utils.msg("prefix") + " " + Utils.msg("no-longer-bleeding")));
+
+                // Tạo và lưu runnable mới
+                BukkitRunnable task = new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        if (data.isBleeding()) {
+                            data.setBleeding(false);
+                            player.sendMessage(translateColors(Utils.msg("prefix") + " " + Utils.msg("no-longer-bleeding")));
+                            data.setBleedingTask(null);
+                        }
                     }
-                }
-            }.runTaskLater(SuddenDeath.getInstance(), (long) (Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
+                };
+                data.setBleedingTask(task);
+                task.runTaskLater(SuddenDeath.getInstance(), (long) (Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
+            }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error applying Bleeding for player: " + player.getName(), e);
