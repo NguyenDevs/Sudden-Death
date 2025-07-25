@@ -28,7 +28,7 @@ import java.util.logging.Level;
  * Handles mob creation, editing, deletion, listing, and killing.
  */
 public class SuddenDeathMobCommand implements CommandExecutor {
-    private static final String PERMISSION_OP = "suddendeath.op";
+    private static final String PERMISSION_OP = "suddendeath.admin";
     private static final String STRIKETHROUGH = "&8&m---------------";
     private static final String HELP_HEADER = STRIKETHROUGH + "[&d Sudden Death Help Page &8&m]---------------";
     private static final String MOB_LIST_HEADER = STRIKETHROUGH + "[&d Mob List &8&m]---------------------";

@@ -12,8 +12,8 @@ commands:
     aliases: [sdm, sdmonster]
 permissions:
   suddendeath.status:
-    default: op
-  suddendeath.op:
+    default: true
+  suddendeath.admin:
     default: op
   suddendeath.update-notify:
     default: op

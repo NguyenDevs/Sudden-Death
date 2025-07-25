@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * Provides intelligent auto-completion for command arguments.
  */
 public class SuddenDeathMobCompletion implements TabCompleter {
-    private static final String PERMISSION_OP = "suddendeath.op";
+    private static final String PERMISSION_OP = "suddendeath.admin";
     private static final List<String> MAIN_COMMANDS = Arrays.asList("create", "edit", "remove", "delete", "list", "kill");
     private static final List<String> KILL_RADIUS_SUGGESTIONS = Arrays.asList("10", "20", "30", "40", "50", "60", "70", "80", "90", "100");
 
