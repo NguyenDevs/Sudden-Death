@@ -17,12 +17,14 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
- * Tab completion handler for the SuddenDeath plugin's /sdstatus command.
+ * Tab completion handler for the SuddenDeath plugin's /sds command.
  * Provides intelligent auto-completion for admin commands, recipe management, and features.
  */
 public class SuddenDeathStatusCompletion implements TabCompleter {
-	private static final String PERMISSION_OP = "suddendeath.op";
-	private static final List<String> MAIN_COMMANDS = Arrays.asList("admin", "help", "give", "itemlist", "reload", "clean", "start");
+	private static final String PERMISSION_STATUS = "suddendeath.status";
+	private static final String PERMISSION_RECIPE = "suddendeath.recipe";
+	private static final List<String> MAIN_COMMANDS = Arrays.asList("admin", "help", "give", "itemlist", "recipe", "reload", "clean", "start");
+	private static final List<String> RECIPE_COMMAND = Arrays.asList("recipe");
 	private static final List<String> QUANTITY_SUGGESTIONS = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "16", "32", "64");
 
 	@Override
@@ -30,7 +32,12 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		try {
 			switch (args.length) {
 				case 1 -> {
-					return filterCompletions(MAIN_COMMANDS, args[0]);
+					if (sender.hasPermission(PERMISSION_STATUS)) {
+						return filterCompletions(MAIN_COMMANDS, args[0]);
+					} else if (sender.hasPermission(PERMISSION_RECIPE)) {
+						return filterCompletions(RECIPE_COMMAND, args[0]);
+					}
+					return Collections.emptyList();
 				}
 				case 2 -> {
 					return handleSecondArgument(sender, args);
@@ -47,7 +54,7 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 			}
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-					"Error during tab completion for /sdstatus command", e);
+					"Error during tab completion for /sds command", e);
 			return Collections.emptyList();
 		}
 	}
@@ -60,6 +67,9 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 	 * @return List of completion suggestions.
 	 */
 	private List<String> handleSecondArgument(CommandSender sender, String[] args) {
+		if (!sender.hasPermission(PERMISSION_STATUS)) {
+			return Collections.emptyList();
+		}
 		String firstArg = args[0].toLowerCase();
 
 		switch (firstArg) {
