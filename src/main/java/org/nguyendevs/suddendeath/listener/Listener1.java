@@ -308,7 +308,7 @@ public class Listener1 implements Listener {
                 public void run() {
                     if (data.isBleeding()) {
                         data.setBleeding(false);
-                        player.sendMessage(ChatColor.GREEN + Utils.msg("no-longer-bleeding"));
+                        player.sendMessage(translateColors(Utils.msg("prefix") + " " + Utils.msg("no-longer-bleeding")));
                     }
                 }
             }.runTaskLater(SuddenDeath.getInstance(), (long) (Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
@@ -722,9 +722,25 @@ public class Listener1 implements Listener {
             }
 
             // Bleeding Effect
+            /*
             if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT) &&
                     player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
                 player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getLocation().add(0, 1, 0), 5, Material.REDSTONE_WIRE.createBlockData());
+            }
+            */
+            if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT)) {
+                if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
+                    double offsetX = (Math.random() - 0.5D) * 0.4D;
+                    double offsetY = 1.0 + ((Math.random() - 0.5D) * 0.5D);
+                    double offsetZ = (Math.random() - 0.5D) * 2.0D;
+
+                    player.getWorld().spawnParticle(
+                            Particle.BLOCK_CRACK,
+                            player.getLocation().add(offsetX, offsetY, offsetZ),
+                            30,
+                            Material.REDSTONE_BLOCK.createBlockData()
+                    );
+                }
             }
 
             // Infection Effect
