@@ -303,6 +303,15 @@ public class Listener1 implements Listener {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
             }
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (data.isBleeding()) {
+                        data.setBleeding(false);
+                        player.sendMessage(ChatColor.GREEN + Utils.msg("no-longer-bleeding"));
+                    }
+                }
+            }.runTaskLater(SuddenDeath.getInstance(), (long) (Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error applying Bleeding for player: " + player.getName(), e);

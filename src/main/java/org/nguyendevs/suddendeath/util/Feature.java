@@ -61,6 +61,7 @@ public enum Feature {
 					new Modifier("dps", 0.1),
 					new Modifier("chance-percent", 10.0),
 					new Modifier("health-min", 0),
+					new Modifier("auto-stop-bleed-time", 30),
 					new Modifier("tug", true)
 			}
 	),
