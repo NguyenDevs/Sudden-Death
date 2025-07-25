@@ -1,5 +1,5 @@
 name: SuddenDeath
-version: 2.0.9
+version: 2.1.0
 main: org.nguyendevs.suddendeath.SuddenDeath
 softdepend: [WorldGuard]
 api-version: 1.19
@@ -17,11 +17,5 @@ permissions:
     default: op
   suddendeath.update-notify:
     default: op
-  suddendeath.difficulty.*:
-    default: op
-    children:
-      suddendeath.difficulty.sandbox: true
-      suddendeath.difficulty.difficult: true
-      suddendeath.difficulty.hardcore: true
-      suddendeath.difficulty.death-wish: true
-      suddendeath.difficulty.sudden-death: true
+  suddendeath.recipe:
+    default: true
