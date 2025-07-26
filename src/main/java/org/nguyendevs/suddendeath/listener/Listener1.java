@@ -20,6 +20,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -289,7 +290,6 @@ public class Listener1 implements Listener {
         }
     }
 
-
     private void applyUnreadableFireBall(Blaze blaze) {
         if (blaze == null || blaze.getHealth() <= 0 || blaze.getTarget() == null || !(blaze.getTarget() instanceof Player target)) {
             return;
@@ -319,15 +319,15 @@ public class Listener1 implements Listener {
                             return;
                         }
 
-                        // Create fireball with parabolic trajectory
-                        createParabolicFireball(blaze, startLoc.clone(), target, damage);
+                        // Create tracking fireball with parabolic curve
+                        createTrackingParabolicFireball(blaze, startLoc.clone(), target, damage);
 
                         // Play sound
                         target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BLAZE_HURT, 1.0f, 0.5f);
 
                         currentFireball++;
                     }
-                }.runTaskTimer(SuddenDeath.getInstance(), 0, 4); // 4 ticks delay between shots
+                }.runTaskTimer(SuddenDeath.getInstance(), 0, 4);
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -335,40 +335,25 @@ public class Listener1 implements Listener {
         }
     }
 
-    private void createParabolicFireball(Blaze shooter, Location startLoc, Player target, double damage) {
-        // Calculate trajectory parameters
-        Location targetLoc = target.getLocation().add(0, 1, 0); // Aim at player's chest
-        Vector horizontal = targetLoc.clone().subtract(startLoc).toVector();
-        horizontal.setY(0); // Remove Y component for horizontal distance
-        double horizontalDistance = horizontal.length();
-        double verticalDistance = targetLoc.getY() - startLoc.getY();
-
-        // Random arc height (1.5 to 4 blocks high for good curve)
-        double arcHeight = 1.5 + RANDOM.nextDouble() * 2.5;
-
-        // Calculate initial velocity components for parabolic trajectory
-        double gravity = 0.04; // Minecraft gravity per tick
-        double timeToTarget = Math.sqrt(2 * arcHeight / gravity) + Math.sqrt(2 * (arcHeight - verticalDistance) / gravity);
-
-        Vector horizontalVel = horizontal.normalize().multiply(horizontalDistance / timeToTarget);
-        double verticalVel = Math.sqrt(2 * gravity * arcHeight);
-
-        Vector initialVelocity = horizontalVel.clone();
-        initialVelocity.setY(verticalVel);
+    private void createTrackingParabolicFireball(Blaze shooter, Location startLoc, Player target, double damage) {
+        // Generate random parabolic curve parameters (reduced intensity)
+        ParabolicCurve curve = generateRandomCurve();
 
         // Spawn fireball
         SmallFireball fireball = startLoc.getWorld().spawn(startLoc, SmallFireball.class);
         fireball.setShooter(shooter);
         fireball.setIsIncendiary(true);
         fireball.setYield(0);
-        fireball.setVelocity(initialVelocity);
 
-        // Track fireball with parabolic physics
+        // Calculate total flight time and steps
+        final int maxTicks = 80; // 4 seconds max
+        final double baseSpeed = 0.4; // Slower base speed for better control
+
         new BukkitRunnable() {
             int ticks = 0;
-            final int maxTicks = (int) (timeToTarget * 1.2); // 20% safety margin
             Location previousLoc = startLoc.clone();
-            Vector currentVelocity = initialVelocity.clone();
+            final Location originalTarget = target.getLocation().clone().add(0, 1, 0);
+            final double totalDistance = startLoc.distance(originalTarget);
 
             @Override
             public void run() {
@@ -382,28 +367,47 @@ public class Listener1 implements Listener {
                     }
 
                     Location currentLoc = fireball.getLocation();
+                    Location targetLoc = target.getLocation().add(0, 1, 0); // Always track current position
 
-                    // Apply gravity to velocity
-                    currentVelocity.setY(currentVelocity.getY() - gravity);
+                    // Calculate progress from 0.0 to 1.0 based on time
+                    double progress = (double) ticks / maxTicks;
 
-                    // Update fireball velocity for next tick
-                    fireball.setVelocity(currentVelocity);
+                    // Get base direction to target (always tracking)
+                    Vector baseDirection = targetLoc.subtract(currentLoc).toVector();
+                    double distanceToTarget = baseDirection.length();
 
-                    // Create particle trail line from previous to current position
+                    // If very close to target, go straight
+                    if (distanceToTarget < 2.0) {
+                        Vector velocity = baseDirection.normalize().multiply(baseSpeed * 2);
+                        fireball.setVelocity(velocity);
+                    } else {
+                        // Apply parabolic curve to base direction
+                        Vector parabolicOffset = getParabolicOffset(curve, progress, totalDistance);
+
+                        // Normalize base direction and apply speed
+                        Vector velocity = baseDirection.normalize().multiply(baseSpeed);
+
+                        // Add parabolic offset (much smaller now)
+                        velocity.add(parabolicOffset);
+
+                        fireball.setVelocity(velocity);
+                    }
+
+                    // Create particle trail
                     createParticleTrail(previousLoc, currentLoc);
 
                     // Check for collision with target
-                    if (currentLoc.distance(target.getLocation()) < 1.5) {
-                        // Hit detection with some tolerance
-                        for (Entity nearby : fireball.getNearbyEntities(1.0, 1.0, 1.0)) {
+                    if (distanceToTarget < 1.5) {
+                        for (Entity nearby : fireball.getNearbyEntities(1.2, 1.2, 1.2)) {
                             if (nearby.equals(target)) {
                                 // Hit the target
                                 target.damage(damage, shooter);
                                 target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
 
-                                // Explosion effect
+                                // Explosion effects
                                 target.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
-                                target.getWorld().spawnParticle(Particle.FLAME, currentLoc, 10, 0.5, 0.5, 0.5, 0.1);
+                                target.getWorld().spawnParticle(Particle.FLAME, currentLoc, 15, 0.7, 0.7, 0.7, 0.1);
+                                target.getWorld().spawnParticle(Particle.SMOKE_LARGE, currentLoc, 8, 0.5, 0.5, 0.5, 0.05);
 
                                 fireball.remove();
                                 cancel();
@@ -412,10 +416,10 @@ public class Listener1 implements Listener {
                         }
                     }
 
-                    // Check if fireball hit ground or block
-                    if (currentLoc.getBlock().getType().isSolid() || currentLoc.getY() <= startLoc.getWorld().getMinHeight()) {
-                        // Create small explosion effect
-                        currentLoc.getWorld().spawnParticle(Particle.FLAME, currentLoc, 5, 0.3, 0.3, 0.3, 0.05);
+                    // Check ground/block collision
+                    if (currentLoc.getBlock().getType().isSolid() || currentLoc.getY() <= currentLoc.getWorld().getMinHeight()) {
+                        currentLoc.getWorld().spawnParticle(Particle.FLAME, currentLoc, 8, 0.3, 0.3, 0.3, 0.05);
+                        currentLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, currentLoc, 5, 0.2, 0.2, 0.2, 0.02);
                         fireball.remove();
                         cancel();
                         return;
@@ -426,14 +430,51 @@ public class Listener1 implements Listener {
 
                 } catch (Exception e) {
                     SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                            "Error in fireball trajectory task", e);
+                            "Error in tracking fireball task", e);
                     if (!fireball.isDead()) {
                         fireball.remove();
                     }
                     cancel();
                 }
             }
-        }.runTaskTimer(SuddenDeath.getInstance(), 1, 1); // Start after 1 tick, run every tick
+        }.runTaskTimer(SuddenDeath.getInstance(), 1, 1);
+    }
+
+    private ParabolicCurve generateRandomCurve() {
+        // Reduced intensity for better control
+        double intensity = 0.8 + RANDOM.nextDouble() * 1.2; // 0.8 to 2.0 (much smaller)
+
+        // Random curve directions (also reduced)
+        double xCurve = (RANDOM.nextDouble() - 0.5) * 1.5; // -0.75 to 0.75
+        double yCurve = (RANDOM.nextDouble() - 0.5) * 1.5; // -0.75 to 0.75
+        double zCurve = (RANDOM.nextDouble() - 0.5) * 1.5; // -0.75 to 0.75
+
+        // Ensure at least one axis has some curve
+        if (Math.abs(xCurve) < 0.2 && Math.abs(yCurve) < 0.2 && Math.abs(zCurve) < 0.2) {
+            int randomAxis = RANDOM.nextInt(3);
+            double curveValue = (RANDOM.nextBoolean() ? 1.0 : -1.0) * (0.4 + RANDOM.nextDouble() * 0.4);
+            switch (randomAxis) {
+                case 0: xCurve = curveValue; break;
+                case 1: yCurve = curveValue; break;
+                case 2: zCurve = curveValue; break;
+            }
+        }
+
+        return new ParabolicCurve(intensity, xCurve, yCurve, zCurve);
+    }
+
+    private Vector getParabolicOffset(ParabolicCurve curve, double progress, double totalDistance) {
+        // Parabolic function: creates smooth arc from 0 to 1 and back to 0
+        double parabolicFactor = 4 * progress * (1 - progress);
+
+        // Much smaller scale to avoid overshooting
+        double scale = Math.min(totalDistance / 20.0, 1.5) * curve.intensity * parabolicFactor;
+
+        return new Vector(
+                curve.xCurve * scale * 0.1, // Even smaller multiplier
+                curve.yCurve * scale * 0.1,
+                curve.zCurve * scale * 0.1
+        );
     }
 
     private void createParticleTrail(Location from, Location to) {
@@ -442,24 +483,37 @@ public class Listener1 implements Listener {
         }
 
         double distance = from.distance(to);
-        if (distance < 0.1) return; // Too close, skip
+        if (distance < 0.1) return;
 
         Vector direction = to.toVector().subtract(from.toVector());
-        double stepSize = 0.2; // Particle every 0.2 blocks
-        int steps = Math.max(1, (int) (distance / stepSize));
-
+        int steps = Math.max(1, (int) (distance / 0.2));
         Vector stepVector = direction.clone().multiply(1.0 / steps);
 
         for (int i = 0; i <= steps; i++) {
             Location particleLoc = from.clone().add(stepVector.clone().multiply(i));
 
-            // Create flame trail with some randomness
-            particleLoc.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.05, 0.05, 0.05, 0);
+            // Main flame trail
+            particleLoc.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.03, 0.03, 0.03, 0);
 
-            // Add some smoke for better visual effect
-            if (i % 2 == 0) { // Every other particle
-                particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 1, 0.03, 0.03, 0.03, 0);
+            // Occasional smoke
+            if (i % 2 == 0) {
+                particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 1, 0.02, 0.02, 0.02, 0);
             }
+        }
+    }
+
+    // Helper class to store curve parameters
+    private static class ParabolicCurve {
+        final double intensity;
+        final double xCurve;
+        final double yCurve;
+        final double zCurve;
+
+        ParabolicCurve(double intensity, double xCurve, double yCurve, double zCurve) {
+            this.intensity = intensity;
+            this.xCurve = xCurve;
+            this.yCurve = yCurve;
+            this.zCurve = zCurve;
         }
     }
     /**
@@ -1387,95 +1441,119 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
             return;
         }
 
-        try {
-            // Check if it's armor slot or armor item being moved
-            boolean isArmorRelated = false;
+        // Only check armor slot interactions
+        if (event.getSlotType() == InventoryType.SlotType.ARMOR ||
+                isArmorItem(event.getCurrentItem()) ||
+                isArmorItem(event.getCursor())) {
 
-            // Check if clicking on armor slots (5-8 are helmet, chestplate, leggings, boots)
-            if (event.getSlotType() == InventoryType.SlotType.ARMOR) {
-                isArmorRelated = true;
-            }
-
-            // Check if the item being moved is armor
-            ItemStack clickedItem = event.getCurrentItem();
-            ItemStack cursorItem = event.getCursor();
-
-            if (clickedItem != null && isArmorItem(clickedItem.getType())) {
-                isArmorRelated = true;
-            }
-            if (cursorItem != null && isArmorItem(cursorItem.getType())) {
-                isArmorRelated = true;
-            }
-
-            if (isArmorRelated && Feature.ARMOR_WEIGHT.isEnabled(player)) {
-                // Delay the update by 1 tick to ensure inventory has been updated
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            PlayerData data = PlayerData.get(player);
-                            if (data != null) {
-                                data.updateMovementSpeed();
-                            }
-                        } catch (Exception e) {
-                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                                    "Error updating armor weight for player: " + player.getName(), e);
-                        }
-                    }
-                }.runTaskLater(SuddenDeath.getInstance(), 1L);
-            }
-        } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error handling InventoryClickEvent for player: " + player.getName(), e);
+            // Update armor effects after inventory change
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    updateArmorEffects(player);
+                }
+            }.runTaskLater(SuddenDeath.getInstance(), 1L);
         }
     }
 
-    /**
-     * Handles inventory drag events for armor weight updates.
-     *
-     * @param event The InventoryDragEvent.
-     */
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player player) || player.hasMetadata("NPC")) {
             return;
         }
 
-        try {
-            // Check if any armor slots are involved in the drag
-            boolean isArmorRelated = event.getRawSlots().stream()
-                    .anyMatch(slot -> slot >= 5 && slot <= 8); // Armor slots in player inventory
+        // Check if armor slots are involved (slots 5-8 in player inventory)
+        if (event.getRawSlots().stream().anyMatch(slot -> slot >= 5 && slot <= 8)) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    updateArmorEffects(player);
+                }
+            }.runTaskLater(SuddenDeath.getInstance(), 1L);
+        }
+    }
 
-            if (isArmorRelated && Feature.ARMOR_WEIGHT.isEnabled(player)) {
-                // Delay the update by 1 tick
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            PlayerData data = PlayerData.get(player);
-                            if (data != null) {
-                                data.updateMovementSpeed();
-                            }
-                        } catch (Exception e) {
-                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                                    "Error updating armor weight for player: " + player.getName(), e);
-                        }
-                    }
-                }.runTaskLater(SuddenDeath.getInstance(), 1L);
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        // Apply armor effects when player joins
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                updateArmorEffects(event.getPlayer());
             }
+        }.runTaskLater(SuddenDeath.getInstance(), 5L);
+    }
+
+    /**
+     * Updates armor slow effects based on equipped armor
+     */
+    private void updateArmorEffects(Player player) {
+        if (!Feature.ARMOR_WEIGHT.isEnabled(player)) {
+            return;
+        }
+
+        try {
+            // Remove existing slow effect
+            player.removePotionEffect(PotionEffectType.SLOW);
+
+            // Count armor pieces by type
+            int goldPieces = 0;
+            int diamondPieces = 0;
+            int netheritePieces = 0;
+
+            for (ItemStack armor : player.getInventory().getArmorContents()) {
+                if (armor != null && armor.getType() != Material.AIR) {
+                    String materialName = armor.getType().name();
+
+                    if (materialName.startsWith("GOLDEN_")) {
+                        goldPieces++;
+                    } else if (materialName.startsWith("DIAMOND_")) {
+                        diamondPieces++;
+                    } else if (materialName.startsWith("NETHERITE_")) {
+                        netheritePieces++;
+                    }
+                }
+            }
+
+            // Apply slow effect based on armor type priority (Netherite > Diamond > Gold)
+            int slowLevel = 0;
+
+            if (netheritePieces > 0) {
+                slowLevel = 3; // Slow III for any Netherite armor
+            } else if (diamondPieces > 0) {
+                slowLevel = 2; // Slow II for any Diamond armor
+            } else if (goldPieces > 0) {
+                slowLevel = 1; // Slow I for any Gold armor
+            }
+
+            // Apply the slow effect if needed
+            if (slowLevel > 0) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, slowLevel - 1, true, false));
+            }
+
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error handling InventoryDragEvent for player: " + player.getName(), e);
+                    "Error updating armor effects for player: " + player.getName(), e);
         }
     }
 
     /**
-     * Checks if the material is an armor item.
-     *
-     * @param material The material to check.
-     * @return True if the material is armor.
+     * Checks if item is armor
+     */
+    private boolean isArmorItem(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) {
+            return false;
+        }
+        return isArmorItem(item.getType());
+    }
+
+    /**
+     * Checks if material is armor
      */
     private boolean isArmorItem(Material material) {
+        if (material == null) {
+            return false;
+        }
         String name = material.name();
         return name.endsWith("_HELMET") || name.endsWith("_CHESTPLATE") ||
                 name.endsWith("_LEGGINGS") || name.endsWith("_BOOTS");
