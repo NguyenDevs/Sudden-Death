@@ -47,7 +47,7 @@ public enum Feature {
 					new Modifier("amplifier", 1.0)
 			}
 	),
-	ARMOR_WEIGHT(
+	/*ARMOR_WEIGHT(
 			"Armor Weight",
 			new String[]{
 					"Players move slower when wearing iron, gold, or diamond armor.",
@@ -56,6 +56,8 @@ public enum Feature {
 			"armor-weight",
 			new Modifier[]{new Modifier("movement-speed-malus", 3)}
 	),
+	*/
+
 	ARROW_SLOW(
 			"Arrow Slow",
 			new String[]{"Players hit by arrows are slowed for #slow-duration# seconds."},
@@ -409,6 +411,7 @@ public enum Feature {
 					new Modifier("chance-percent",30),
 					new Modifier("shoot-amount",3),
 					new Modifier("damage", 15)
+					//new Modifier("speed",4)
             }
     ),
 	WITCH_SCROLLS(

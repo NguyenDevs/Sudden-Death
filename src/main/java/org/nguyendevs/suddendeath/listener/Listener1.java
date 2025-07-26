@@ -45,7 +45,6 @@ public class Listener1 implements Listener {
     private static final long BLAZE_SHOT_INTERVAL = 50L;
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
-    private static final long BLAZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long BLOOD_EFFECT_INTERVAL = 0L;
     private static final long INITIAL_DELAY = 0L;
     private static final Set<Material> STIFFNESS_MATERIALS = Set.of(
@@ -121,7 +120,10 @@ public class Listener1 implements Listener {
                 try {
                     for (World world : Bukkit.getWorlds()) {
                         if (Feature.EVERBURNING_BLAZES.isEnabled(world)) {
-                            world.getEntitiesByClass(Blaze.class).forEach(Loops::loop3s_blaze);
+                            for(Blaze blaze : world.getEntitiesByClass(Blaze.class)) {
+                                if(blaze.getTarget() instanceof Player)
+                                    Loops.loop3s_blaze(blaze);
+                            }
                         }
                     }
                     Bukkit.getOnlinePlayers().forEach(Loops::loop3s_player);
@@ -129,7 +131,7 @@ public class Listener1 implements Listener {
                     SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Blaze/Player loop task", e);
                 }
             }
-        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BLAZE_PLAYER_LOOP_INTERVAL);
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BREEZE_PLAYER_LOOP_INTERVAL);
 
         // Spider loop
         new BukkitRunnable() {
@@ -290,232 +292,210 @@ public class Listener1 implements Listener {
         }
     }
 
+
+
+
+
+
+
     private void applyUnreadableFireBall(Blaze blaze) {
         if (blaze == null || blaze.getHealth() <= 0 || blaze.getTarget() == null || !(blaze.getTarget() instanceof Player target)) {
             return;
         }
-
         try {
             if (!target.getWorld().equals(blaze.getWorld())) {
                 return;
             }
-
             double chance = Feature.UNREADABLE_FIREBALL.getDouble("chance-percent") / 100.0;
             double damage = Feature.UNREADABLE_FIREBALL.getDouble("damage");
-            int shootAmount = (int) Feature.UNREADABLE_FIREBALL.getDouble("shoot-amount");
+            double speed = Feature.UNREADABLE_FIREBALL.getDouble("speed") * 2.0; // Tăng tốc độ lên 2.0 lần
+            double shootAmount = Feature.UNREADABLE_FIREBALL.getDouble("shoot-amount");
 
-            if (RANDOM.nextDouble() <= chance) {
-                int fireballCount = RANDOM.nextInt(Math.max(1, shootAmount)) + 1;
-
-                // Launch fireballs with delay
-                new BukkitRunnable() {
-                    int currentFireball = 0;
-                    final Location startLoc = blaze.getEyeLocation().clone();
-
-                    @Override
-                    public void run() {
-                        if (currentFireball >= fireballCount || !target.isOnline() || target.isDead()) {
-                            cancel();
-                            return;
-                        }
-
-                        // Create tracking fireball with parabolic curve
-                        createTrackingParabolicFireball(blaze, startLoc.clone(), target, damage);
-
-                        // Play sound
-                        target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BLAZE_HURT, 1.0f, 0.5f);
-
-                        currentFireball++;
-                    }
-                }.runTaskTimer(SuddenDeath.getInstance(), 0, 4);
+            // Random chance check
+            if (Math.random() > chance) {
+                return;
             }
+
+            // Play sound when shooting
+            blaze.getWorld().playSound(blaze.getLocation(), Sound.ENTITY_BLAZE_HURT, 1.0f, 0.5f);
+
+            // Get Blaze eye location
+            Location blazeEyeLocation = blaze.getEyeLocation();
+
+            // Random number of fireballs to shoot (1 to shootAmount)
+            int fireballCount = (int) (Math.random() * shootAmount) + 1;
+
+            // Shoot fireballs with 0.3s interval
+            for (int i = 0; i < fireballCount; i++) {
+                Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
+                    // Kiểm tra người chơi còn hợp lệ trước khi bắn
+                    if (target.isOnline() && !target.isDead()) {
+                        shootParabolicFireball(blaze, blazeEyeLocation, target.getLocation(), damage, speed);
+                    }
+                }, i * 6L); // 6 ticks = 0.3 seconds
+            }
+
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error applying Unreadable Fireball for blaze: " + blaze.getUniqueId(), e);
         }
     }
 
-    private void createTrackingParabolicFireball(Blaze shooter, Location startLoc, Player target, double damage) {
-        // Generate random parabolic curve parameters (reduced intensity)
-        ParabolicCurve curve = generateRandomCurve();
+    private void shootParabolicFireball(Blaze blaze, Location startLocation, Location targetLocation, double damage, double speed) {
+        // Random direction (12 clock positions)
+        int clockDirection = (int) (Math.random() * 12); // 0-11 representing 12h, 1h, 2h, etc.
+        double angle = clockDirection * 30; // 30 degrees per hour
 
-        // Spawn fireball
-        SmallFireball fireball = startLoc.getWorld().spawn(startLoc, SmallFireball.class);
-        fireball.setShooter(shooter);
-        fireball.setIsIncendiary(true);
-        fireball.setYield(0);
+        // Calculate direction vector based on clock position
+        Vector direction = getClockDirection(angle);
 
-        // Calculate total flight time and steps
-        final int maxTicks = 80; // 4 seconds max
-        final double baseSpeed = 0.4; // Slower base speed for better control
+        // Calculate parabolic curve parameters
+        double distance = startLocation.distance(targetLocation);
+        double height = 2 + Math.random() * 3; // Random curve height (2-5 blocks)
+
+        // Adjust curve direction based on clock position
+        Vector curveDirection = getCurveDirection(clockDirection);
+
+        // Create fireball trajectory
+        createParabolicTrajectory(startLocation, targetLocation, direction, curveDirection, height, damage, speed, blaze.getWorld(), blaze.getTarget());
+    }
+
+    private Vector getClockDirection(double angle) {
+        double radians = Math.toRadians(angle);
+        // 12 o'clock is north (negative Z), rotating clockwise
+        double x = Math.sin(radians);
+        double z = -Math.cos(radians);
+        return new Vector(x, 0, z).normalize();
+    }
+
+    private Vector getCurveDirection(int clockPosition) {
+        Vector curveDir = new Vector(0, 0, 0);
+
+        switch (clockPosition) {
+            case 0: // 12h - curve up
+                curveDir.setY(1);
+                break;
+            case 1: case 2: // 1h, 2h - curve up-right
+                curveDir.setX(0.7).setY(0.7);
+                break;
+            case 3: // 3h - curve right
+                curveDir.setX(1);
+                break;
+            case 4: case 5: // 4h, 5h - curve down-right
+                curveDir.setX(0.7).setY(-0.7);
+                break;
+            case 6: // 6h - curve down
+                curveDir.setY(-1);
+                break;
+            case 7: case 8: // 7h, 8h - curve down-left
+                curveDir.setX(-0.7).setY(-0.7);
+                break;
+            case 9: // 9h - curve left
+                curveDir.setX(-1);
+                break;
+            case 10: case 11: // 10h, 11h - curve up-left
+                curveDir.setX(-0.7).setY(0.7);
+                break;
+        }
+
+        return curveDir.normalize();
+    }
+
+    private void createParabolicTrajectory(Location start, Location target, Vector direction,
+                                           Vector curveDirection, double height, double damage, double speed, World world, Entity targetEntity) {
+
+        // Calculate animation speed based on speed parameter
+        long tickDelay = Math.max(1L, Math.round(5.0 / speed)); // Giữ tốc độ nhanh với tickDelay = 5.0 / speed
+
+        // Lưu trữ đường đi ban đầu và các tham số để sử dụng lại
+        final List<Location>[] trajectory = new List[]{calculateParabolicPath(start, target, direction, curveDirection, height)};
 
         new BukkitRunnable() {
-            int ticks = 0;
-            Location previousLoc = startLoc.clone();
-            final Location originalTarget = target.getLocation().clone().add(0, 1, 0);
-            final double totalDistance = startLoc.distance(originalTarget);
+            private int index = 0;
 
             @Override
             public void run() {
-                try {
-                    if (ticks >= maxTicks || fireball.isDead() || !target.isOnline() || target.isDead()) {
-                        if (!fireball.isDead()) {
-                            fireball.remove();
-                        }
-                        cancel();
-                        return;
-                    }
-
-                    Location currentLoc = fireball.getLocation();
-                    Location targetLoc = target.getLocation().add(0, 1, 0); // Always track current position
-
-                    // Calculate progress from 0.0 to 1.0 based on time
-                    double progress = (double) ticks / maxTicks;
-
-                    // Get base direction to target (always tracking)
-                    Vector baseDirection = targetLoc.subtract(currentLoc).toVector();
-                    double distanceToTarget = baseDirection.length();
-
-                    // If very close to target, go straight
-                    if (distanceToTarget < 2.0) {
-                        Vector velocity = baseDirection.normalize().multiply(baseSpeed * 2);
-                        fireball.setVelocity(velocity);
-                    } else {
-                        // Apply parabolic curve to base direction
-                        Vector parabolicOffset = getParabolicOffset(curve, progress, totalDistance);
-
-                        // Normalize base direction and apply speed
-                        Vector velocity = baseDirection.normalize().multiply(baseSpeed);
-
-                        // Add parabolic offset (much smaller now)
-                        velocity.add(parabolicOffset);
-
-                        fireball.setVelocity(velocity);
-                    }
-
-                    // Create particle trail
-                    createParticleTrail(previousLoc, currentLoc);
-
-                    // Check for collision with target
-                    if (distanceToTarget < 1.5) {
-                        for (Entity nearby : fireball.getNearbyEntities(1.2, 1.2, 1.2)) {
-                            if (nearby.equals(target)) {
-                                // Hit the target
-                                target.damage(damage, shooter);
-                                target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
-
-                                // Explosion effects
-                                target.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
-                                target.getWorld().spawnParticle(Particle.FLAME, currentLoc, 15, 0.7, 0.7, 0.7, 0.1);
-                                target.getWorld().spawnParticle(Particle.SMOKE_LARGE, currentLoc, 8, 0.5, 0.5, 0.5, 0.05);
-
-                                fireball.remove();
-                                cancel();
-                                return;
-                            }
-                        }
-                    }
-
-                    // Check ground/block collision
-                    if (currentLoc.getBlock().getType().isSolid() || currentLoc.getY() <= currentLoc.getWorld().getMinHeight()) {
-                        currentLoc.getWorld().spawnParticle(Particle.FLAME, currentLoc, 8, 0.3, 0.3, 0.3, 0.05);
-                        currentLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, currentLoc, 5, 0.2, 0.2, 0.2, 0.02);
-                        fireball.remove();
-                        cancel();
-                        return;
-                    }
-
-                    previousLoc = currentLoc.clone();
-                    ticks++;
-
-                } catch (Exception e) {
-                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                            "Error in tracking fireball task", e);
-                    if (!fireball.isDead()) {
-                        fireball.remove();
-                    }
-                    cancel();
+                // Kiểm tra xem người chơi có còn online và còn sống không
+                if (!(targetEntity instanceof Player player) || !player.isOnline() || player.isDead()) {
+                    this.cancel();
+                    return;
                 }
+
+                // Cập nhật đường đi mới dựa trên vị trí hiện tại của người chơi
+                trajectory[0] = calculateParabolicPath(start, player.getLocation(), direction, curveDirection, height);
+                int maxIndex = trajectory[0].size();
+
+                if (index >= maxIndex) {
+                    this.cancel();
+                    return;
+                }
+
+                Location currentLoc = trajectory[0].get(index);
+
+                // Create flame particle trail
+                world.spawnParticle(Particle.FLAME, currentLoc, 1, 0, 0, 0, 0);
+
+                // Check for collision with players
+                for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 1, 1, 1)) {
+                    if (entity instanceof Player hitPlayer) {
+                        // Hit player with configured damage
+                        hitPlayer.damage(damage);
+                        world.playSound(currentLoc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
+
+                        // Create explosion effect
+                        world.spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
+                        this.cancel();
+                        return;
+                    }
+                }
+
+                // Check for collision with blocks
+                if (currentLoc.getBlock().getType().isSolid()) {
+                    world.playSound(currentLoc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
+                    world.spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
+                    this.cancel();
+                    return;
+                }
+
+                index++;
             }
-        }.runTaskTimer(SuddenDeath.getInstance(), 1, 1);
+        }.runTaskTimer(SuddenDeath.getInstance(), 0L, tickDelay); // Sử dụng tickDelay đã được giảm
     }
 
-    private ParabolicCurve generateRandomCurve() {
-        // Reduced intensity for better control
-        double intensity = 0.8 + RANDOM.nextDouble() * 1.2; // 0.8 to 2.0 (much smaller)
+    private List<Location> calculateParabolicPath(Location start, Location target, Vector direction,
+                                                  Vector curveDirection, double height) {
+        List<Location> path = new ArrayList<>();
 
-        // Random curve directions (also reduced)
-        double xCurve = (RANDOM.nextDouble() - 0.5) * 1.5; // -0.75 to 0.75
-        double yCurve = (RANDOM.nextDouble() - 0.5) * 1.5; // -0.75 to 0.75
-        double zCurve = (RANDOM.nextDouble() - 0.5) * 1.5; // -0.75 to 0.75
+        double distance = start.distance(target);
+        int steps = (int) (distance * 4); // 4 points per block for smooth trajectory
 
-        // Ensure at least one axis has some curve
-        if (Math.abs(xCurve) < 0.2 && Math.abs(yCurve) < 0.2 && Math.abs(zCurve) < 0.2) {
-            int randomAxis = RANDOM.nextInt(3);
-            double curveValue = (RANDOM.nextBoolean() ? 1.0 : -1.0) * (0.4 + RANDOM.nextDouble() * 0.4);
-            switch (randomAxis) {
-                case 0: xCurve = curveValue; break;
-                case 1: yCurve = curveValue; break;
-                case 2: zCurve = curveValue; break;
-            }
-        }
-
-        return new ParabolicCurve(intensity, xCurve, yCurve, zCurve);
-    }
-
-    private Vector getParabolicOffset(ParabolicCurve curve, double progress, double totalDistance) {
-        // Parabolic function: creates smooth arc from 0 to 1 and back to 0
-        double parabolicFactor = 4 * progress * (1 - progress);
-
-        // Much smaller scale to avoid overshooting
-        double scale = Math.min(totalDistance / 20.0, 1.5) * curve.intensity * parabolicFactor;
-
-        return new Vector(
-                curve.xCurve * scale * 0.1, // Even smaller multiplier
-                curve.yCurve * scale * 0.1,
-                curve.zCurve * scale * 0.1
-        );
-    }
-
-    private void createParticleTrail(Location from, Location to) {
-        if (from.getWorld() == null || to.getWorld() == null || !from.getWorld().equals(to.getWorld())) {
-            return;
-        }
-
-        double distance = from.distance(to);
-        if (distance < 0.1) return;
-
-        Vector direction = to.toVector().subtract(from.toVector());
-        int steps = Math.max(1, (int) (distance / 0.2));
-        Vector stepVector = direction.clone().multiply(1.0 / steps);
+        Vector startToTarget = target.toVector().subtract(start.toVector());
 
         for (int i = 0; i <= steps; i++) {
-            Location particleLoc = from.clone().add(stepVector.clone().multiply(i));
+            double t = (double) i / steps; // 0 to 1
 
-            // Main flame trail
-            particleLoc.getWorld().spawnParticle(Particle.FLAME, particleLoc, 1, 0.03, 0.03, 0.03, 0);
+            // Linear interpolation for base path
+            Vector basePos = start.toVector().add(startToTarget.clone().multiply(t));
 
-            // Occasional smoke
-            if (i % 2 == 0) {
-                particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 1, 0.02, 0.02, 0.02, 0);
-            }
+            // Parabolic curve offset
+            double curveOffset = height * 4 * t * (1 - t); // Parabolic function
+            Vector curvePos = curveDirection.clone().multiply(curveOffset);
+
+            // Combine base position with curve
+            Vector finalPos = basePos.add(curvePos);
+
+            path.add(finalPos.toLocation(start.getWorld()));
         }
+
+        return path;
     }
 
-    // Helper class to store curve parameters
-    private static class ParabolicCurve {
-        final double intensity;
-        final double xCurve;
-        final double yCurve;
-        final double zCurve;
 
-        ParabolicCurve(double intensity, double xCurve, double yCurve, double zCurve) {
-            this.intensity = intensity;
-            this.xCurve = xCurve;
-            this.yCurve = yCurve;
-            this.zCurve = zCurve;
-        }
-    }
+
+
+
+
+
     /**
      * Applies the cave spider web shooting
      */
@@ -1429,134 +1409,6 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling PlayerMoveEvent for player: " + player.getName(), e);
         }
-    }
-    /**
-     * Handles inventory clicks to update armor weight when armor changes.
-     *
-     * @param event The InventoryClickEvent.
-     */
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || player.hasMetadata("NPC")) {
-            return;
-        }
-
-        // Only check armor slot interactions
-        if (event.getSlotType() == InventoryType.SlotType.ARMOR ||
-                isArmorItem(event.getCurrentItem()) ||
-                isArmorItem(event.getCursor())) {
-
-            // Update armor effects after inventory change
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    updateArmorEffects(player);
-                }
-            }.runTaskLater(SuddenDeath.getInstance(), 1L);
-        }
-    }
-
-    @EventHandler
-    public void onInventoryDrag(InventoryDragEvent event) {
-        if (!(event.getWhoClicked() instanceof Player player) || player.hasMetadata("NPC")) {
-            return;
-        }
-
-        // Check if armor slots are involved (slots 5-8 in player inventory)
-        if (event.getRawSlots().stream().anyMatch(slot -> slot >= 5 && slot <= 8)) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    updateArmorEffects(player);
-                }
-            }.runTaskLater(SuddenDeath.getInstance(), 1L);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        // Apply armor effects when player joins
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                updateArmorEffects(event.getPlayer());
-            }
-        }.runTaskLater(SuddenDeath.getInstance(), 5L);
-    }
-
-    /**
-     * Updates armor slow effects based on equipped armor
-     */
-    private void updateArmorEffects(Player player) {
-        if (!Feature.ARMOR_WEIGHT.isEnabled(player)) {
-            return;
-        }
-
-        try {
-            // Remove existing slow effect
-            player.removePotionEffect(PotionEffectType.SLOW);
-
-            // Count armor pieces by type
-            int goldPieces = 0;
-            int diamondPieces = 0;
-            int netheritePieces = 0;
-
-            for (ItemStack armor : player.getInventory().getArmorContents()) {
-                if (armor != null && armor.getType() != Material.AIR) {
-                    String materialName = armor.getType().name();
-
-                    if (materialName.startsWith("GOLDEN_")) {
-                        goldPieces++;
-                    } else if (materialName.startsWith("DIAMOND_")) {
-                        diamondPieces++;
-                    } else if (materialName.startsWith("NETHERITE_")) {
-                        netheritePieces++;
-                    }
-                }
-            }
-
-            // Apply slow effect based on armor type priority (Netherite > Diamond > Gold)
-            int slowLevel = 0;
-
-            if (netheritePieces > 0) {
-                slowLevel = 3; // Slow III for any Netherite armor
-            } else if (diamondPieces > 0) {
-                slowLevel = 2; // Slow II for any Diamond armor
-            } else if (goldPieces > 0) {
-                slowLevel = 1; // Slow I for any Gold armor
-            }
-
-            // Apply the slow effect if needed
-            if (slowLevel > 0) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, Integer.MAX_VALUE, slowLevel - 1, true, false));
-            }
-
-        } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error updating armor effects for player: " + player.getName(), e);
-        }
-    }
-
-    /**
-     * Checks if item is armor
-     */
-    private boolean isArmorItem(ItemStack item) {
-        if (item == null || item.getType() == Material.AIR) {
-            return false;
-        }
-        return isArmorItem(item.getType());
-    }
-
-    /**
-     * Checks if material is armor
-     */
-    private boolean isArmorItem(Material material) {
-        if (material == null) {
-            return false;
-        }
-        String name = material.name();
-        return name.endsWith("_HELMET") || name.endsWith("_CHESTPLATE") ||
-                name.endsWith("_LEGGINGS") || name.endsWith("_BOOTS");
     }
     /**
      * Checks if the player has moved to a different block.
