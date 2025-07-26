@@ -284,7 +284,10 @@ public class PlayerData {
 				return;
 			}
 
-			cleanAttributeModifiers(attributeInstance);
+			// Luôn xóa modifier cũ trước khi áp dụng modifier mới
+			removeSpecificModifier(attributeInstance, MODIFIER_PREFIX + "armorSlow");
+
+			// Chỉ thêm modifier mới nếu có armor nặng
 			if (totalMalus > 0) {
 				attributeInstance.addModifier(new AttributeModifier(
 						UUID.randomUUID(),
@@ -293,6 +296,9 @@ public class PlayerData {
 						Operation.ADD_SCALAR
 				));
 			}
+			// Nếu totalMalus = 0 (không mặc giáp nặng), tốc độ sẽ tự động khôi phục về bình thường
+			// vì đã xóa modifier ở trên
+
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error updating movement speed for player: " + player.getName(), e);
