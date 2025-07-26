@@ -1,4 +1,4 @@
-![image]([https://i.ibb.co/Fkjc8QQh/sds.png](https://github.com/user-attachments/assets/ee708002-7190-4818-ba89-347770d689ad))
+![image](https://github.com/user-attachments/assets/ee708002-7190-4818-ba89-347770d689ad)
 
 Done with predictable, easy survival worlds? Brace yourself for Sudden Death! This plugin cranks up the challenge, pushing your survival skills to the limit with intense hardcore features and thrilling new mechanics. Watch out—monsters now wield unique, powerful abilities that’ll keep you on edge. Transform your Minecraft server with a fresh, heart-pounding experience!
 
