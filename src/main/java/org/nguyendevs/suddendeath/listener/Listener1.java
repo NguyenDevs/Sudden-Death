@@ -1,3 +1,5 @@
+
+
 package org.nguyendevs.suddendeath.listener;
 
 import org.bukkit.*;
@@ -22,13 +24,10 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.nguyendevs.suddendeath.util.FadingType;
-import org.nguyendevs.suddendeath.util.Feature;
+import org.nguyendevs.suddendeath.util.*;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import org.nguyendevs.suddendeath.player.PlayerData;
-import org.nguyendevs.suddendeath.util.CustomItem;
-import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.Map;
 import java.util.Random;
@@ -41,9 +40,9 @@ import java.util.logging.Level;
 public class Listener1 implements Listener {
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
-    private static final long BLAZE_PLAYER_LOOP_INTERVAL = 60L;
+    private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
-    private static final long BLOOD_EFFECT_INTERVAL = 0L; // Adjust interval as needed
+    private static final long BLOOD_EFFECT_INTERVAL = 0L;
     private static final long INITIAL_DELAY = 0L;
     private static final Set<Material> STIFFNESS_MATERIALS = Set.of(
             Material.STONE, Material.COAL_ORE, Material.IRON_ORE, Material.NETHER_QUARTZ_ORE,
@@ -73,6 +72,26 @@ public class Listener1 implements Listener {
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, WITCH_LOOP_INTERVAL);
 
+        // Breeze dash
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.BREEZE_DASH.isEnabled(world)) {
+                            for(Breeze breeze : world.getEntitiesByClass(Breeze.class)) {
+                                if(breeze.getTarget() instanceof Player)
+                                    applyBreezeDash(breeze);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Blaze/Player loop task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BREEZE_PLAYER_LOOP_INTERVAL);
+
+
         // Blaze and Player loop
         new BukkitRunnable() {
             @Override
@@ -80,15 +99,17 @@ public class Listener1 implements Listener {
                 try {
                     for (World world : Bukkit.getWorlds()) {
                         if (Feature.EVERBURNING_BLAZES.isEnabled(world)) {
-                            world.getEntitiesByClass(Blaze.class).forEach(Loops::loop3s_blaze);
+                            for(Blaze blaze : world.getEntitiesByClass(Blaze.class)) {
+                                if(blaze.getTarget() instanceof Player)
+                                    Loops.loop3s_blaze(blaze);
+                            }
                         }
                     }
-                    Bukkit.getOnlinePlayers().forEach(Loops::loop3s_player);
                 } catch (Exception e) {
                     SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Blaze/Player loop task", e);
                 }
             }
-        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BLAZE_PLAYER_LOOP_INTERVAL);
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BREEZE_PLAYER_LOOP_INTERVAL);
 
         // Spider loop
         new BukkitRunnable() {
@@ -106,6 +127,26 @@ public class Listener1 implements Listener {
                     }
                 } catch (Exception e) {
                     SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Spider loop task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, SPIDER_LOOP_INTERVAL);
+
+        // Spider loop
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.SPIDER_WEB.isEnabled(world)) {
+                            for (CaveSpider caveSpider : world.getEntitiesByClass(CaveSpider.class)) {
+                                if (caveSpider.getTarget() instanceof Player) {
+                                    applyCaveSpiderWeb(caveSpider);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in CaveSpider loop task", e);
                 }
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, SPIDER_LOOP_INTERVAL);
@@ -229,6 +270,209 @@ public class Listener1 implements Listener {
         }
     }
 
+
+    /**
+     * Applies the cave spider web shooting
+     */
+    private void applyCaveSpiderWeb(CaveSpider spider) {
+        if (spider == null || spider.getHealth() <= 0 || spider.getTarget() == null || !(spider.getTarget() instanceof Player target)) {
+            return;
+        }
+        try {
+            if (!target.getWorld().equals(spider.getWorld())) {
+                return;
+            }
+            double chance = Feature.SPIDER_WEB.getDouble("chance-percent") / 100.0;
+            int shootAmount = (int) Feature.SPIDER_WEB.getDouble("amount-per-shoot");
+
+            if (RANDOM.nextDouble() <= chance) {
+                // If shootAmount <= 2, shoot and place all at once
+                if (shootAmount <= 2) {
+                    shootSingleWeb(spider, target, shootAmount);
+                } else {
+                    // For shootAmount > 2, shoot one at a time with delay
+                    shootContinuousWebs(spider, target, shootAmount);
+                }
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying SpiderWeb for spider: " + spider.getUniqueId(), e);
+        }
+    }
+
+    /**
+     * Shoots a single web projectile and places cobwebs upon hitting
+     */
+    private void shootSingleWeb(CaveSpider spider, Player target, int amount) {
+        try {
+            spider.getWorld().playSound(spider.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1, 0);
+            NoInteractItemEntity item = new NoInteractItemEntity(
+                    spider.getLocation().add(0, 1, 0),
+                    new ItemStack(Material.COBWEB)
+            );
+            item.getEntity().setVelocity(
+                    target.getLocation().add(0, 1, 0)
+                            .subtract(spider.getLocation().add(0, 1, 0))
+                            .toVector().normalize().multiply(1.0)
+            );
+
+            new BukkitRunnable() {
+                int ti = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        ti++;
+                        if (ti > 20 || item.getEntity().isDead()) {
+                            item.close();
+                            cancel();
+                            return;
+                        }
+
+                        item.getEntity().getWorld().spawnParticle(Particle.CRIT, item.getEntity().getLocation(), 0);
+                        for (Entity entity : item.getEntity().getNearbyEntities(1, 1, 1)) {
+                            if (entity instanceof Player hitPlayer) {
+                                item.close();
+                                placeCobwebsAroundPlayer(hitPlayer, amount);
+                                cancel();
+                                return;
+                            }
+                        }
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in SpiderWebSingle projectile task for spider: " + spider.getUniqueId(), e);
+                        item.close();
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error in shooting single web for spider: " + spider.getUniqueId(), e);
+        }
+    }
+
+    /**
+     * Shoots webs sequentially with a delay for continuous placement
+     */
+    private void shootContinuousWebs(CaveSpider spider, Player target, int totalAmount) {
+        try {
+            new BukkitRunnable() {
+                int shotsFired = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        if (shotsFired >= totalAmount || spider.isDead() || spider.getTarget() != target || !target.isOnline()) {
+                            cancel();
+                            return;
+                        }
+
+                        spider.getWorld().playSound(spider.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1, 0);
+                        NoInteractItemEntity item = new NoInteractItemEntity(
+                                spider.getLocation().add(0, 1, 0),
+                                new ItemStack(Material.COBWEB)
+                        );
+                        item.getEntity().setVelocity(
+                                target.getLocation().add(0, 1, 0)
+                                        .subtract(spider.getLocation().add(0, 1, 0))
+                                        .toVector().normalize().multiply(1.0)
+                        );
+
+                        new BukkitRunnable() {
+                            int ti = 0;
+
+                            @Override
+                            public void run() {
+                                try {
+                                    ti++;
+                                    if (ti > 20 || item.getEntity().isDead()) {
+                                        item.close();
+                                        cancel();
+                                        return;
+                                    }
+
+                                    item.getEntity().getWorld().spawnParticle(Particle.CRIT, item.getEntity().getLocation(), 0);
+                                    for (Entity entity : item.getEntity().getNearbyEntities(1, 1, 1)) {
+                                        if (entity instanceof Player hitPlayer) {
+                                            item.close();
+                                            placeCobwebsAroundPlayer(hitPlayer, 1);
+                                            shotsFired++;
+                                            cancel();
+                                            return;
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                            "Error in SpiderWebContinuous projectile task for spider: " + spider.getUniqueId(), e);
+                                    item.close();
+                                    cancel();
+                                }
+                            }
+                        }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in shooting continuous web for spider: " + spider.getUniqueId(), e);
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 3); // 3-tick delay (0.15 seconds) between shots
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error initiating continuous web shooting for spider: " + spider.getUniqueId(), e);
+        }
+    }
+
+/**
+ * Places cobwebs randomly around the player in a 3x3x3 cube
+ */
+private void placeCobwebsAroundPlayer(Player player, int amount) {
+    try {
+        Location center = player.getLocation();
+        int placed = 0;
+
+        // Define the 3x3x3 cube offsets (excluding the center where player stands)
+        int[][] offsets = {
+                {-1, -1, -1}, {-1, -1, 0}, {-1, -1, 1},
+                {-1, 0, -1},  {-1, 0, 0},  {-1, 0, 1},
+                {-1, 1, -1},  {-1, 1, 0},  {-1, 1, 1},
+                {0, -1, -1},  {0, -1, 0},  {0, -1, 1},
+                {0, 0, -1},              {0, 0, 1},
+                {0, 1, -1},   {0, 1, 0},   {0, 1, 1},
+                {1, -1, -1},  {1, -1, 0},  {1, -1, 1},
+                {1, 0, -1},   {1, 0, 0},   {1, 0, 1},
+                {1, 1, -1},   {1, 1, 0},   {1, 1, 1}
+        };
+
+        // Shuffle offsets to randomize placement
+        for (int i = offsets.length - 1; i > 0; i--) {
+            int index = RANDOM.nextInt(i + 1);
+            int[] temp = offsets[index];
+            offsets[index] = offsets[i];
+            offsets[i] = temp;
+        }
+
+        for (int[] offset : offsets) {
+            if (placed >= amount) {
+                break;
+            }
+            Location loc = center.clone().add(offset[0], offset[1], offset[2]);
+            if (loc.getBlock().getType() == Material.AIR) {
+                loc.getBlock().setType(Material.COBWEB);
+                loc.getWorld().playSound(loc, Sound.ENTITY_SPIDER_AMBIENT, 1.0f, 2.0f);
+                placed++;
+            }
+        }
+
+        // Visual and sound effects
+        player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, Material.COBWEB.createBlockData());
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1.0f, 2.0f);
+    } catch (Exception e) {
+        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                "Error placing cobwebs around player: " + player.getName(), e);
+    }
+}
+
+
     /**
      * Checks if the damage cause should be excluded from triggering bleeding.
      *
@@ -282,6 +526,127 @@ public class Listener1 implements Listener {
                     "Error applying Fall Stun for player: " + player.getName(), e);
         }
     }
+
+    /**
+     * Applies the cave spider web shooting
+     */
+    private void applyCaveSpiderWeb(){
+
+    }
+    /**
+     * Applies the breeze dash to breeze
+     */
+    private void applyBreezeDash(Breeze breeze) {
+        if (breeze == null || breeze.getHealth() <= 0 || breeze.getTarget() == null || !(breeze.getTarget() instanceof Player target)) {
+            return;
+        }
+        try {
+            if (!target.getWorld().equals(breeze.getWorld())) {
+                return;
+            }
+            double chance = Feature.BREEZE_DASH.getDouble("chance-percent") / 100.0;
+
+            if (RANDOM.nextDouble() <= chance) {
+                double duration = Feature.BREEZE_DASH.getDouble("duration");
+                int coefficient = (int) Feature.BREEZE_DASH.getDouble("amplifier");
+
+                breeze.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, (int) (duration * 20), coefficient - 1));
+                breeze.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, (int) (duration * 20), coefficient - 1));
+                breeze.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, (int) (duration * 20), coefficient - 1));
+                breeze.getWorld().playSound(breeze.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 1.0f, 0.5f);
+                breeze.getWorld().playSound(breeze.getLocation(), Sound.ENTITY_VEX_CHARGE, 1.0f, 0.1f);
+
+                breeze.setVelocity(breeze.getVelocity().setY(0));
+                breeze.setGravity(true);
+
+                final double[] previousY = {breeze.getLocation().getY()};
+
+                new BukkitRunnable() {
+                    int shots = 0;
+
+                    @Override
+                    public void run() {
+                        try {
+                            if (shots < Feature.BREEZE_DASH.getDouble("shoot-amount")) {
+                                Location breezeLoc = breeze.getLocation();
+                                Vector direction = target.getLocation().subtract(breezeLoc).toVector().normalize();
+                                WindCharge windCharge = (WindCharge) breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), EntityType.WIND_CHARGE);
+                                windCharge.setVelocity(direction.multiply(1.5));
+                                new BukkitRunnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            if (windCharge.isValid()) {
+                                                Location chargeLoc = windCharge.getLocation();
+                                                Vector velocity = windCharge.getVelocity().normalize();
+                                                Location particleLoc = chargeLoc.clone().subtract(velocity.multiply(0.5));
+                                                breeze.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, particleLoc, 1, 0, 0, 0, 0);
+                                            } else {
+                                                cancel();
+                                            }
+                                        } catch (Exception e) {
+                                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                                    "Error in WindCharge trail task for breeze: " + breeze.getUniqueId(), e);
+                                            cancel();
+                                        }
+                                    }
+                                }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+
+                                shots++;
+                            } else {
+                                cancel();
+                            }
+                        } catch (Exception e) {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "Error in Wind Charge shooting task for breeze: " + breeze.getUniqueId(), e);
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(SuddenDeath.getInstance(), 0, 10);
+                new BukkitRunnable() {
+                    int ticks = 0;
+
+                    @Override
+                    public void run() {
+                        try {
+                            if (breeze.isValid() && breeze.getHealth() > 0) {
+                                Location loc = breeze.getLocation().add(0, 0.5, 0);
+                                Vector velocity = breeze.getVelocity().normalize();
+                                double currentY = breeze.getLocation().getY();
+
+                                if (currentY > previousY[0] + 0.1) {
+                                    breeze.setVelocity(breeze.getVelocity().setY(-0.2));
+                                }
+                                previousY[0] = currentY;
+
+                                if (velocity.lengthSquared() > 0.1 && ticks < duration * 20) {
+                                    Location trailLoc = loc.subtract(velocity.multiply(0.5));
+                                    Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(189, 235, 255), 1.0f);
+                                    breeze.getWorld().spawnParticle(Particle.REDSTONE, trailLoc, 2, 0.1, 0.1, 0.1, 0, dustOptions);
+                                }
+
+                                ticks++;
+                                if (ticks >= duration * 20) {
+                                    breeze.setVelocity(breeze.getVelocity().setY(0.1));
+                                    breeze.setGravity(true);
+                                    cancel();
+                                }
+                            } else {
+                                cancel();
+                            }
+                        } catch (Exception e) {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "Error in TRON trail particle task for breeze: " + breeze.getUniqueId(), e);
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Breeze dash effect for breeze: " + breeze.getUniqueId(), e);
+        }
+    }
+
 
     /**
      * Applies the bleeding effect to a player.
@@ -412,7 +777,11 @@ public class Listener1 implements Listener {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
                         (int) (Feature.ARROW_SLOW.getDouble("slow-duration") * 20), 2));
             }
-
+            // Stray Frost
+            if(event.getEntity() instanceof Player player && event.getDamager() instanceof Arrow arrow &&
+                    Feature.STRAY_FROST.isEnabled(player) && arrow.getShooter() instanceof Stray){
+                applyStrayFrost(player);
+            }
             // Shocking Skeleton Arrows
             if (event.getEntity() instanceof Player player && event.getDamager() instanceof Arrow arrow &&
                     Feature.SHOCKING_SKELETON_ARROWS.isEnabled(player) && arrow.getShooter() instanceof Skeleton) {
@@ -492,6 +861,47 @@ public class Listener1 implements Listener {
         }
     }
 
+    private void applyStrayFrost(Player player) {
+        try {
+            double duration = Feature.STRAY_FROST.getDouble("duration");
+            double chance = Feature.STRAY_FROST.getDouble("chance-percent") / 100.0;
+            Location loc = player.getLocation();
+
+            if (RANDOM.nextDouble() <= chance) {
+                player.setFreezeTicks((int) (duration * 20 + 140));
+                player.getWorld().playSound(loc, Sound.BLOCK_POWDER_SNOW_STEP, 1.0f, 1.0f);
+
+                new BukkitRunnable() {
+                    double ticks = 0;
+
+                    @Override
+                    public void run() {
+                        try {
+                            if (ticks < 10) {
+                                for (double i = 0; i < Math.PI * 2; i += Math.PI / 8) {
+                                    Location particleLoc = loc.clone().add(
+                                            Math.cos(i) * 0.5,
+                                            1.0 + (Math.sin(ticks * 0.1) * 0.2),
+                                            Math.sin(i) * 0.5);
+                                    particleLoc.getWorld().spawnParticle(Particle.SNOWFLAKE, particleLoc, 1, 0, 0, 0, 0);
+                                }
+                                ticks++;
+                            } else {
+                                cancel();
+                            }
+                        } catch (Exception e) {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "Error in Stray Frost particle task for player: " + player.getName(), e);
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Stray Frost for player: " + player.getName(), e);
+        }
+    }
     /**
      * Applies the shocking skeleton arrows effect to a player.
      *

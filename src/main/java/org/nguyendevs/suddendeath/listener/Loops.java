@@ -95,6 +95,8 @@ public final class Loops {
 		}
 	}
 
+
+
 	/**
 	 * Periodic task for Zombie entities to launch explosive projectiles.
 	 *

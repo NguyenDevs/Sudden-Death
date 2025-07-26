@@ -34,15 +34,24 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		try {
 			switch (args.length) {
 				case 1 -> {
+					List<String> availableCommands = MAIN_COMMANDS;
+
 					if (sender.hasPermission(PERMISSION_STATUS)) {
-						return filterCompletions(MAIN_COMMANDS, args[0]);
-					} else if (sender.hasPermission(PERMISSION_RECIPE)) {
-						return filterCompletions(RECIPE_COMMAND, args[0]);
-					} else if (sender.hasPermission(PERMISSION_STATUS_VIEW)) {
-						return filterCompletions(STATUS_COMMAND, args[0]);
+						availableCommands = MAIN_COMMANDS;
+					} else {
+						availableCommands = new java.util.ArrayList<>();
+
+						if (sender.hasPermission(PERMISSION_RECIPE)) {
+							availableCommands.addAll(RECIPE_COMMAND);
+						}
+						if (sender.hasPermission(PERMISSION_STATUS_VIEW)) {
+							availableCommands.addAll(STATUS_COMMAND);
+						}
 					}
-					return Collections.emptyList();
+
+					return filterCompletions(availableCommands, args[0]);
 				}
+
 				case 2 -> {
 					return handleSecondArgument(sender, args);
 				}
