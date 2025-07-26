@@ -37,7 +37,6 @@ public class MainListener implements Listener {
             Player player = event.getPlayer();
             if (player != null) {
                 PlayerData.setup(player);
-                LOGGER.info("Setup player data for: " + player.getName());
             }
         } catch (Exception e) {
             LOGGER.severe("Error setting up player data for " +
@@ -60,7 +59,6 @@ public class MainListener implements Listener {
                 UUID playerId = player.getUniqueId();
                 // Cleanup để tránh memory leak
                 noDropPlayers.remove(playerId);
-                LOGGER.fine("Cleaned up data for player: " + player.getName());
             }
         } catch (Exception e) {
             LOGGER.warning("Error cleaning up player data: " + e.getMessage());
@@ -84,8 +82,6 @@ public class MainListener implements Listener {
                     // Remove player từ set và hủy event
                     noDropPlayers.remove(playerId);
                     event.setCancelled(true);
-
-                    LOGGER.fine("Cancelled item drop for player: " + player.getName());
                 }
             }
         } catch (Exception e) {
@@ -114,7 +110,6 @@ public class MainListener implements Listener {
         try {
             UUID playerId = player.getUniqueId();
             noDropPlayers.add(playerId);
-            LOGGER.fine("Added player to no-drop list: " + player.getName());
         } catch (Exception e) {
             LOGGER.warning("Error adding player to no-drop list: " + e.getMessage());
         }
@@ -167,7 +162,6 @@ public class MainListener implements Listener {
         try {
             int count = noDropPlayers.size();
             noDropPlayers.clear();
-            LOGGER.info("Cleared " + count + " players from no-drop list");
         } catch (Exception e) {
             LOGGER.warning("Error clearing no-drop list: " + e.getMessage());
         }

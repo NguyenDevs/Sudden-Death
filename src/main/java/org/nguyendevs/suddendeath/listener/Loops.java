@@ -15,6 +15,7 @@ import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.NoInteractItemEntity;
 import org.nguyendevs.suddendeath.util.Utils;
 
+import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -47,13 +48,25 @@ public final class Loops {
 					continue;
 				}
 
-				blaze.getWorld().playSound(blaze.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.0f, 2.0f);
+				// Play sound at player's location
+				player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.0f, 2.0f);
 				double duration = Feature.EVERBURNING_BLAZES.getDouble("burn-duration") * 20;
 				player.setFireTicks((int) duration);
 
-				Location blazeLoc = blaze.getLocation().add(0, 0.75, 0);
-				Location playerLoc = player.getLocation().add(0, 1, 0);
-				spawnParticleTrail(blaze.getWorld(), blazeLoc, playerLoc, Particle.FLAME, Particle.SMOKE_NORMAL);
+				// Define locations with slight offsets for visual effect
+				Location playerLoc = player.getLocation().add(0.0D, 0.75D, 0.0D);
+				Location blazeLoc = blaze.getLocation().add(0.0D, 1.0D, 0.0D);
+				World world = blaze.getWorld(); // Use Blaze's world for consistency
+
+				// Create particle trail from Blaze to Player
+				Vector direction = playerLoc.toVector().subtract(blazeLoc.toVector());
+				for (double j = 0.0D; j <= 1.0D; j += 0.04D) {
+					Location particleLoc = blazeLoc.clone().add(direction.clone().multiply(j));
+					if (particleLoc.getWorld() != null) {
+						particleLoc.getWorld().spawnParticle(Particle.FLAME, particleLoc, 8, 0.2D, 0.2D, 0.2D, 0.0D);
+						particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 8, 0.2D, 0.2D, 0.2D, 0.0D);
+					}
+				}
 			}
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -147,9 +160,19 @@ public final class Loops {
 						(int) (Feature.WITCH_SCROLLS.getDouble("slow-duration") * 20), 1));
 				Utils.damage(player, Feature.WITCH_SCROLLS.getDouble("damage"), true);
 
+				Location loc = entity.getLocation().add(0.0D, 1.0D, 0.0D);
+				Location loc1 = witch.getLocation().add(0.0D, 1.0D, 0.0D);
+
+				for(double j = 0.0D; j < 1.0D; j += 0.04D) {
+					Vector d = loc1.toVector().subtract(loc.toVector());
+					Location loc2 = loc.clone().add(d.multiply(j));
+					((World)Objects.requireNonNull(loc2.getWorld())).spawnParticle(Particle.SPELL_WITCH, loc2, 4, 0.1D, 0.1D, 0.1D, 0.0D);
+				}
+				/*
 				Location playerLoc = player.getLocation().add(0, 1, 0);
 				Location witchLoc = witch.getLocation().add(0, 1, 0);
 				spawnParticleTrail(witch.getWorld(), witchLoc, playerLoc, Particle.SPELL_WITCH, null);
+			*/
 			}
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -315,7 +338,7 @@ public final class Loops {
 	 * @param end       The ending location.
 	 * @param primary   The primary particle type.
 	 * @param secondary The secondary particle type (can be null).
-	 */
+
 	private static void spawnParticleTrail(World world, Location start, Location end, Particle primary, Particle secondary) {
 		try {
 			Vector direction = end.toVector().subtract(start.toVector());
@@ -331,6 +354,7 @@ public final class Loops {
 					"Error spawning particle trail", e);
 		}
 	}
+	*/
 
 	/**
 	 * Launches a projectile from an entity towards a target player.

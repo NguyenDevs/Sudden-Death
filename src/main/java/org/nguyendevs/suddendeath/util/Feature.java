@@ -64,6 +64,20 @@ public enum Feature {
 			"arrow-slow",
 			new Modifier[]{new Modifier("slow-duration", 2.0)}
 	),
+	/*BLAZE_LASER(
+			"Unreadable Fireball",
+			new String[]{
+					"Fireball shoot by blaze have a #chance-percent#% can't be read or dodge by player!"
+			},
+			"unreadble-fireball",
+			new Modifier[]{
+					new Modifier("chance-percent",30),
+					new Modifier("shoot-amount",3),
+					new Modifier("damage", 15)
+					//new Modifier("speed",4)
+			}
+	),
+	 */
 	BLEEDING(
 			"Bleeding",
 			new String[]{
@@ -123,6 +137,7 @@ public enum Feature {
 					new Modifier("damage", 6.0)
 			}
 	),
+
 	BONE_WIZARDS(
 			"Bone Wizards",
 			new String[]{
@@ -401,19 +416,7 @@ public enum Feature {
 			"undead-rage",
 			new Modifier[]{new Modifier("rage-duration", 4.0)}
 	),
-    UNREADABLE_FIREBALL(
-            "Unreadable Fireball",
-            new String[]{
-                    "Fireball shoot by blaze have a #chance-percent#% can't be read or dodge by player!"
-            },
-            "unreadble-fireball",
-            new Modifier[]{
-					new Modifier("chance-percent",30),
-					new Modifier("shoot-amount",3),
-					new Modifier("damage", 15)
-					//new Modifier("speed",4)
-            }
-    ),
+
 	WITCH_SCROLLS(
 			"Witch Scrolls",
 			new String[]{

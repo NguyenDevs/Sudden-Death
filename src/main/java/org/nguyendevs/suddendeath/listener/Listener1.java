@@ -76,15 +76,16 @@ public class Listener1 implements Listener {
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, WITCH_LOOP_INTERVAL);
 
         //Blaze Unreadable Fireball
+        /*
         new BukkitRunnable() {
             @Override
             public void run() {
                 try {
                     for (World world : Bukkit.getWorlds()) {
-                        if (Feature.UNREADABLE_FIREBALL.isEnabled(world)) {
+                        if (Feature.BLAZE_LASER.isEnabled(world)) {
                             for(Blaze blaze : world.getEntitiesByClass(Blaze.class)) {
                                 if(blaze.getTarget() instanceof Player)
-                                    applyUnreadableFireBall(blaze);
+                                    applyBlazeLaser(blaze);
                             }
                         }
                     }
@@ -93,6 +94,7 @@ public class Listener1 implements Listener {
                 }
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BLAZE_SHOT_INTERVAL);
+         */
 
         // Breeze dash
         new BukkitRunnable() {
@@ -113,7 +115,7 @@ public class Listener1 implements Listener {
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BREEZE_PLAYER_LOOP_INTERVAL);
 
-        // Blaze and Player loop
+        // Blaze  loop
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -293,12 +295,8 @@ public class Listener1 implements Listener {
     }
 
 
-
-
-
-
-
-    private void applyUnreadableFireBall(Blaze blaze) {
+/*
+    private void applyBlazeLaser(Blaze blaze) {
         if (blaze == null || blaze.getHealth() <= 0 || blaze.getTarget() == null || !(blaze.getTarget() instanceof Player target)) {
             return;
         }
@@ -306,31 +304,19 @@ public class Listener1 implements Listener {
             if (!target.getWorld().equals(blaze.getWorld())) {
                 return;
             }
-            double chance = Feature.UNREADABLE_FIREBALL.getDouble("chance-percent") / 100.0;
-            double damage = Feature.UNREADABLE_FIREBALL.getDouble("damage");
-            double speed = Feature.UNREADABLE_FIREBALL.getDouble("speed") * 2.0; // Tăng tốc độ lên 2.0 lần
-            double shootAmount = Feature.UNREADABLE_FIREBALL.getDouble("shoot-amount");
-
-            // Random chance check
+            double chance = Feature.BLAZE_LASER.getDouble("chance-percent") / 100.0;
+            double damage = Feature.BLAZE_LASER.getDouble("damage");
+            double shootAmount = Feature.BLAZE_LASER.getDouble("shoot-amount");
             if (Math.random() > chance) {
                 return;
             }
-
-            // Play sound when shooting
             blaze.getWorld().playSound(blaze.getLocation(), Sound.ENTITY_BLAZE_HURT, 1.0f, 0.5f);
-
-            // Get Blaze eye location
             Location blazeEyeLocation = blaze.getEyeLocation();
-
-            // Random number of fireballs to shoot (1 to shootAmount)
             int fireballCount = (int) (Math.random() * shootAmount) + 1;
-
-            // Shoot fireballs with 0.3s interval
             for (int i = 0; i < fireballCount; i++) {
                 Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-                    // Kiểm tra người chơi còn hợp lệ trước khi bắn
                     if (target.isOnline() && !target.isDead()) {
-                        shootParabolicFireball(blaze, blazeEyeLocation, target.getLocation(), damage, speed);
+                        shootParabolicFireball(blaze, blazeEyeLocation, target.getLocation(), damage, 500);
                     }
                 }, i * 6L); // 6 ticks = 0.3 seconds
             }
@@ -342,27 +328,18 @@ public class Listener1 implements Listener {
     }
 
     private void shootParabolicFireball(Blaze blaze, Location startLocation, Location targetLocation, double damage, double speed) {
-        // Random direction (12 clock positions)
-        int clockDirection = (int) (Math.random() * 12); // 0-11 representing 12h, 1h, 2h, etc.
-        double angle = clockDirection * 30; // 30 degrees per hour
-
-        // Calculate direction vector based on clock position
+        int clockDirection = (int) (Math.random() * 12);
+        double angle = clockDirection * 30;
         Vector direction = getClockDirection(angle);
-
-        // Calculate parabolic curve parameters
         double distance = startLocation.distance(targetLocation);
-        double height = 2 + Math.random() * 3; // Random curve height (2-5 blocks)
+        double height = 2 + Math.random() * 3;
 
-        // Adjust curve direction based on clock position
         Vector curveDirection = getCurveDirection(clockDirection);
-
-        // Create fireball trajectory
         createParabolicTrajectory(startLocation, targetLocation, direction, curveDirection, height, damage, speed, blaze.getWorld(), blaze.getTarget());
     }
 
     private Vector getClockDirection(double angle) {
         double radians = Math.toRadians(angle);
-        // 12 o'clock is north (negative Z), rotating clockwise
         double x = Math.sin(radians);
         double z = -Math.cos(radians);
         return new Vector(x, 0, z).normalize();
@@ -370,58 +347,47 @@ public class Listener1 implements Listener {
 
     private Vector getCurveDirection(int clockPosition) {
         Vector curveDir = new Vector(0, 0, 0);
-
         switch (clockPosition) {
-            case 0: // 12h - curve up
+            case 0:
                 curveDir.setY(1);
                 break;
-            case 1: case 2: // 1h, 2h - curve up-right
+            case 1: case 2:
                 curveDir.setX(0.7).setY(0.7);
                 break;
-            case 3: // 3h - curve right
+            case 3:
                 curveDir.setX(1);
                 break;
-            case 4: case 5: // 4h, 5h - curve down-right
+            case 4: case 5:
                 curveDir.setX(0.7).setY(-0.7);
                 break;
-            case 6: // 6h - curve down
+            case 6:
                 curveDir.setY(-1);
                 break;
-            case 7: case 8: // 7h, 8h - curve down-left
+            case 7: case 8:
                 curveDir.setX(-0.7).setY(-0.7);
                 break;
-            case 9: // 9h - curve left
+            case 9:
                 curveDir.setX(-1);
                 break;
-            case 10: case 11: // 10h, 11h - curve up-left
+            case 10: case 11:
                 curveDir.setX(-0.7).setY(0.7);
                 break;
         }
-
         return curveDir.normalize();
     }
-
     private void createParabolicTrajectory(Location start, Location target, Vector direction,
                                            Vector curveDirection, double height, double damage, double speed, World world, Entity targetEntity) {
 
-        // Calculate animation speed based on speed parameter
-        long tickDelay = Math.max(1L, Math.round(5.0 / speed)); // Giữ tốc độ nhanh với tickDelay = 5.0 / speed
-
-        // Lưu trữ đường đi ban đầu và các tham số để sử dụng lại
+        long tickDelay = Math.max(1L, Math.round(5.0 / speed));
         final List<Location>[] trajectory = new List[]{calculateParabolicPath(start, target, direction, curveDirection, height)};
-
         new BukkitRunnable() {
             private int index = 0;
-
             @Override
             public void run() {
-                // Kiểm tra xem người chơi có còn online và còn sống không
                 if (!(targetEntity instanceof Player player) || !player.isOnline() || player.isDead()) {
                     this.cancel();
                     return;
                 }
-
-                // Cập nhật đường đi mới dựa trên vị trí hiện tại của người chơi
                 trajectory[0] = calculateParabolicPath(start, player.getLocation(), direction, curveDirection, height);
                 int maxIndex = trajectory[0].size();
 
@@ -431,25 +397,16 @@ public class Listener1 implements Listener {
                 }
 
                 Location currentLoc = trajectory[0].get(index);
-
-                // Create flame particle trail
                 world.spawnParticle(Particle.FLAME, currentLoc, 1, 0, 0, 0, 0);
-
-                // Check for collision with players
                 for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 1, 1, 1)) {
                     if (entity instanceof Player hitPlayer) {
-                        // Hit player with configured damage
                         hitPlayer.damage(damage);
                         world.playSound(currentLoc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
-
-                        // Create explosion effect
                         world.spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
                         this.cancel();
                         return;
                     }
                 }
-
-                // Check for collision with blocks
                 if (currentLoc.getBlock().getType().isSolid()) {
                     world.playSound(currentLoc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
                     world.spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
@@ -459,41 +416,25 @@ public class Listener1 implements Listener {
 
                 index++;
             }
-        }.runTaskTimer(SuddenDeath.getInstance(), 0L, tickDelay); // Sử dụng tickDelay đã được giảm
+        }.runTaskTimer(SuddenDeath.getInstance(), 0L, tickDelay);
     }
 
-    private List<Location> calculateParabolicPath(Location start, Location target, Vector direction,
-                                                  Vector curveDirection, double height) {
+    private List<Location> calculateParabolicPath(Location start, Location target, Vector direction, Vector curveDirection, double height) {
         List<Location> path = new ArrayList<>();
-
         double distance = start.distance(target);
-        int steps = (int) (distance * 4); // 4 points per block for smooth trajectory
-
+        int steps = (int) (distance * 4);
         Vector startToTarget = target.toVector().subtract(start.toVector());
-
         for (int i = 0; i <= steps; i++) {
-            double t = (double) i / steps; // 0 to 1
-
-            // Linear interpolation for base path
+            double t = (double) i / steps;
             Vector basePos = start.toVector().add(startToTarget.clone().multiply(t));
-
-            // Parabolic curve offset
-            double curveOffset = height * 4 * t * (1 - t); // Parabolic function
+            double curveOffset = height * 4 * t * (1 - t);
             Vector curvePos = curveDirection.clone().multiply(curveOffset);
-
-            // Combine base position with curve
             Vector finalPos = basePos.add(curvePos);
-
             path.add(finalPos.toLocation(start.getWorld()));
         }
-
         return path;
     }
-
-
-
-
-
+ */
 
 
     /**
