@@ -399,6 +399,18 @@ public enum Feature {
 			"undead-rage",
 			new Modifier[]{new Modifier("rage-duration", 4.0)}
 	),
+    UNREADABLE_FIREBALL(
+            "Unreadable Fireball",
+            new String[]{
+                    "Fireball shoot by blaze have a #chance-percent#% can't be read or dodge by player!"
+            },
+            "unreadble-fireball",
+            new Modifier[]{
+					new Modifier("chance-percent",30),
+					new Modifier("shoot-amount",3),
+					new Modifier("damage", 15)
+            }
+    ),
 	WITCH_SCROLLS(
 			"Witch Scrolls",
 			new String[]{

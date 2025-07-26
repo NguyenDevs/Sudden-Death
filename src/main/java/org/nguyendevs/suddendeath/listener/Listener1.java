@@ -29,9 +29,7 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import org.nguyendevs.suddendeath.player.PlayerData;
 
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -40,6 +38,7 @@ import java.util.logging.Level;
 public class Listener1 implements Listener {
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
+    private static final long BLAZE_SHOT_INTERVAL = 50L;
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
     private static final long BLOOD_EFFECT_INTERVAL = 0L;
@@ -72,6 +71,25 @@ public class Listener1 implements Listener {
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, WITCH_LOOP_INTERVAL);
 
+        //Blaze Unreadable Fireball
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.UNREADABLE_FIREBALL.isEnabled(world)) {
+                            for(Blaze blaze : world.getEntitiesByClass(Blaze.class)) {
+                                if(blaze.getTarget() instanceof Player)
+                                    applyUnreadableFireBall(blaze);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Unreadable Fireball task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BLAZE_SHOT_INTERVAL);
+
         // Breeze dash
         new BukkitRunnable() {
             @Override
@@ -86,11 +104,10 @@ public class Listener1 implements Listener {
                         }
                     }
                 } catch (Exception e) {
-                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Blaze/Player loop task", e);
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Breeze Dash task", e);
                 }
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BREEZE_PLAYER_LOOP_INTERVAL);
-
 
         // Blaze and Player loop
         new BukkitRunnable() {
@@ -105,6 +122,7 @@ public class Listener1 implements Listener {
                             }
                         }
                     }
+                    Bukkit.getOnlinePlayers().forEach(Loops::loop3s_player);
                 } catch (Exception e) {
                     SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Blaze/Player loop task", e);
                 }
@@ -271,6 +289,125 @@ public class Listener1 implements Listener {
     }
 
 
+    private void applyUnreadableFireBall(Blaze blaze) {
+        if (blaze == null || blaze.getHealth() <= 0 || blaze.getTarget() == null || !(blaze.getTarget() instanceof Player target)) {
+            return;
+        }
+        try {
+            if (!target.getWorld().equals(blaze.getWorld())) {
+                return;
+            }
+            double chance = Feature.UNREADABLE_FIREBALL.getDouble("chance-percent") / 100.0;
+            double damage = Feature.UNREADABLE_FIREBALL.getDouble("damage");
+            int shootAmount = (int) Feature.UNREADABLE_FIREBALL.getDouble("shoot-amount");
+            if (RANDOM.nextDouble() <= chance) {
+                // Determine random number of fireballs (1 to shoot-amount)
+                int fireballCount = RANDOM.nextInt(Math.max(1, shootAmount)) + 1;
+                List<SmallFireball> fireballs = new ArrayList<>();
+
+                // Schedule sequential fireball shots with 0.2-second delay (4 ticks)
+                new BukkitRunnable() {
+                    int currentFireball = 0;
+                    Location startLoc = blaze.getEyeLocation();
+
+                    @Override
+                    public void run() {
+                        if (currentFireball >= fireballCount) {
+                            cancel();
+                            return;
+                        }
+
+                        // Spawn one fireball
+                        SmallFireball fireball = blaze.getWorld().spawn(startLoc, SmallFireball.class);
+                        fireball.setShooter(blaze);
+                        fireball.setIsIncendiary(true);
+                        fireball.setYield(0);
+                        fireballs.add(fireball);
+                        blaze.getWorld().playSound(startLoc, Sound.ENTITY_BLAZE_SHOOT, 1.0f, 0.5f);
+
+                        currentFireball++;
+                    }
+                }.runTaskTimer(SuddenDeath.getInstance(), 0, 4); // 4 ticks = 0.2 seconds
+
+                // Schedule task to control all fireballs' trajectories and particle trails
+                new BukkitRunnable() {
+                    int ticks = 0;
+                    final int maxTicks = 60; // 3 seconds max lifetime (faster due to higher speed)
+
+                    @Override
+                    public void run() {
+                        try {
+                            if (ticks >= maxTicks || !target.isOnline() || target.isDead()) {
+                                fireballs.forEach(SmallFireball::remove);
+                                fireballs.clear();
+                                cancel();
+                                return;
+                            }
+
+                            Iterator<SmallFireball> iterator = fireballs.iterator();
+                            while (iterator.hasNext()) {
+                                SmallFireball fireball = iterator.next();
+                                if (fireball.isDead()) {
+                                    iterator.remove();
+                                    continue;
+                                }
+
+                                // Calculate homing trajectory with random arc
+                                Location fireballLoc = fireball.getLocation();
+                                Location targetLoc = target.getLocation().add(0, 1, 0);
+                                Vector direction = targetLoc.subtract(fireballLoc).toVector();
+                                double distance = fireballLoc.distance(targetLoc);
+
+                                // Random arc direction (left/right/up/down)
+                                Vector arcDirection = new Vector(
+                                        (RANDOM.nextDouble() - 0.5) * 0.4, // Random left-right
+                                        (RANDOM.nextDouble() - 0.5) * 0.4, // Random up-down
+                                        (RANDOM.nextDouble() - 0.5) * 0.4  // Random forward-back
+                                );
+                                // Random arc curvature
+                                double arcCurvature = 0.2 + RANDOM.nextDouble() * 0.3; // Random between 0.2 and 0.5
+                                Vector velocity = direction.normalize().multiply(3.0) // Very high speed
+                                        .add(arcDirection.multiply(arcCurvature * Math.min(1.0, distance / 5.0))); // Scaled arc
+                                fireball.setVelocity(velocity);
+
+                                // Spawn single-point flame trail behind fireball
+                                Vector backDirection = velocity.clone().normalize().multiply(-0.2); // Small offset behind
+                                Location trailLoc = fireballLoc.clone().add(backDirection);
+                                fireball.getWorld().spawnParticle(Particle.FLAME, trailLoc, 1, 0, 0, 0, 0);
+
+                                // Check for player hit
+                                for (Entity nearby : fireball.getNearbyEntities(0.5, 0.5, 0.5)) {
+                                    if (nearby.equals(target)) {
+                                        target.damage(damage, blaze);
+                                        target.getWorld().playSound(targetLoc, Sound.ENTITY_BLAZE_AMBIENT, 1.0f, 1.0f);
+                                        fireball.remove();
+                                        iterator.remove();
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (fireballs.isEmpty()) {
+                                cancel();
+                                return;
+                            }
+
+                            ticks++;
+                        } catch (Exception e) {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "Error in Unreadable Fireball task for blaze: " + blaze.getUniqueId(), e);
+                            fireballs.forEach(SmallFireball::remove);
+                            fireballs.clear();
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(SuddenDeath.getInstance(), 0, 1); // Run every tick
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Unreadable Fireball for blaze: " + blaze.getUniqueId(), e);
+        }
+    }
     /**
      * Applies the cave spider web shooting
      */
