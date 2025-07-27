@@ -49,7 +49,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 
 ![image](https://github.com/user-attachments/assets/1fcdbad5-5c56-4335-96bd-d958248dc608)
 
-**Custom Mob System**
+**Custom Mob System** 
 Unleash your creativity with Sudden Death’s custom mob system! Craft unique monsters with fully adjustable stats and spawn rates to spice up your Minecraft server. While it’s not as intricate as comprehensive plugins like MythicMobs (for example, it doesn’t support custom drops), it’s perfect for those who want a quick, hassle-free way to design mobs without spending hours on setup. Here’s what you can customize for your mobs:
 
 - **Attack Strength**
@@ -57,11 +57,11 @@ Unleash your creativity with Sudden Death’s custom mob system! Craft unique mo
 - **Movement Speed**
 - **Main & Off-Hand Items**
 - **Gear & Equipment**
-- **Custom Name Display**
-- **Enchantments & Leather Armor Colors** for equipped items
+- **Custom Name Display** 
+- **Enchantments & Leather Armor Colors** for equipped items 
 - **Spawn Probability**
 - **Potion Effects**
-  Elevate your server’s challenge and excitement with these tailored monster-making tools!
+Elevate your server’s challenge and excitement with these tailored monster-making tools!
 
 ![image](https://github.com/user-attachments/assets/31b13b0c-d8e2-4634-813e-280ae6d081d7)
 
