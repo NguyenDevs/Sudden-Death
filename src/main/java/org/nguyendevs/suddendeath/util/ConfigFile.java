@@ -164,12 +164,12 @@ public class ConfigFile {
      */
     public void save() {
         if (config.getKeys(true).isEmpty()) {
-            plugin.getLogger().log(Level.INFO, "No changes to save for configuration file: " + name + ".yml");
+          //  plugin.getLogger().log(Level.INFO, "No changes to save for configuration file: " + name + ".yml");
             return;
         }
         try {
             config.save(configFile);
-            plugin.getLogger().log(Level.INFO, "Saved configuration file: " + name + ".yml");
+           // plugin.getLogger().log(Level.INFO, "Saved configuration file: " + name + ".yml");
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save configuration file: " + name + ".yml", e);
         }

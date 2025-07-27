@@ -130,7 +130,7 @@ public void refresh(){
                 }
                 StatusRetriever currentRetriever = statusMap.get(world.getName());
                 WorldStatus currentStatus = currentRetriever != null ? currentRetriever.getStatus() : WorldStatus.DAY;
-                SuddenDeath.getInstance().getLogger().info("World " + world.getName() + " current status: " + currentStatus.getName());
+               // SuddenDeath.getInstance().getLogger().info("World " + world.getName() + " current status: " + currentStatus.getName());
 
                 if(currentRetriever instanceof WorldEventHandler){
                     Feature feature = null;
@@ -142,7 +142,7 @@ public void refresh(){
                     if (feature != null && !feature.isEnabled(world)) {
                         ((WorldEventHandler) currentRetriever).close();
                         applyStatus(world, WorldStatus.DAY);
-                        SuddenDeath.getInstance().getLogger().info("Closed event " + feature.getName() + " in world " + world.getName() + " due to config change");
+                    //    SuddenDeath.getInstance().getLogger().info("Closed event " + feature.getName() + " in world " + world.getName() + " due to config change");
 
                     }
                 }

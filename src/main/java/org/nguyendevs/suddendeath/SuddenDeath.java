@@ -1,7 +1,12 @@
+// SuddenDeath Main Class - Complete with WorldGuard Integration
 package org.nguyendevs.suddendeath;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.flags.StateFlag;
+import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
+import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -16,6 +21,7 @@ import org.nguyendevs.suddendeath.command.SuddenDeathStatusCommand;
 import org.nguyendevs.suddendeath.command.completion.SuddenDeathMobCompletion;
 import org.nguyendevs.suddendeath.command.completion.SuddenDeathStatusCompletion;
 import org.nguyendevs.suddendeath.comp.SuddenDeathPlaceholders;
+import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import org.nguyendevs.suddendeath.comp.worldguard.WGPlugin;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOff;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOn;
@@ -35,57 +41,64 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+/**
+ * Sudden Death Plugin - Main Class
+ *
+ * Transform your Minecraft server with hardcore survival features and challenging monster abilities!
+ * This plugin pushes survival skills to the limit with intense mechanics and thrilling new experiences.
+ *
+ * Key Features:
+ * - Advanced survival mechanics (bleeding, infection, realistic pickup, etc.)
+ * - Powerful monster abilities (bone wizards, angry spiders, blood moon, etc.)
+ * - Custom mob system with adjustable stats and spawn rates
+ * - WorldGuard integration for region-based control
+ * - PlaceholderAPI support
+ * - Comprehensive configuration system
+ *
+ * @author NguyenDevs
+ * @version 2.1.3
+ */
 public class SuddenDeath extends JavaPlugin {
+
+    // ===========================================
+    // STATIC INSTANCE AND CORE FIELDS
+    // ===========================================
+
     private static SuddenDeath instance;
+
+    // Core plugin components
     private final Map<Player, Integer> players = new ConcurrentHashMap<>();
     private ConfigFile configuration;
     private PacketSender packetSender;
     private WGPlugin wgPlugin;
     private EventManager eventManager;
+    private boolean worldGuardReady = false;
+
+    // Configuration files
     public ConfigFile messages;
     public ConfigFile items;
 
-    public static SuddenDeath getInstance() {
-        return instance;
-    }
-
-    /**
-     * Prints the Sudden Death plugin logo to the console.
-     */
-    public void printLogo() {
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝████╗  ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████╗██║   ██║██║  ██║██║  ██║█████╗  ██╔██╗ ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ╚════██║██║   ██║██║  ██║██║  ██║██╔══╝  ██║╚██╗██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████║╚██████╔╝██████╔╝██████╔╝███████╗██║ ╚████║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╗ ███████╗ █████╗ ████████╗██╗  ██╗"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║█████╗  ███████║   ██║   ███████║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║██╔══╝  ██╔══██║   ██║   ██╔══██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6              Version " + getDescription().getVersion()));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&b         Development by NguyenDevs"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-    }
+    // ===========================================
+    // PLUGIN LIFECYCLE METHODS
+    // ===========================================
 
     @Override
     public void onLoad() {
         instance = this;
-        wgPlugin = getServer().getPluginManager().getPlugin("WorldGuard") != null ? new WorldGuardOn() : new WorldGuardOff();
         configuration = new ConfigFile(this, "config");
+        registerWorldGuardFlags();
+        //Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&aSuddenDeath plugin loaded. Preparing..."));
     }
 
     @Override
     public void onEnable() {
         try {
+            // Initialize main plugin components
             initializePlugin();
+
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aSuddenDeath plugin enabled successfully!"));
         } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Failed to enable SuddenDeath plugin", e);
+            getLogger().log(Level.SEVERE, "Failed to enable SuddenDeath plugin.", e);
             setEnabled(false);
         }
     }
@@ -93,31 +106,50 @@ public class SuddenDeath extends JavaPlugin {
     @Override
     public void onDisable() {
         try {
+            // Clean up resources
             removeCustomRecipes();
             savePlayerData();
+
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
         } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Error while saving player data on disable", e);
+            getLogger().log(Level.SEVERE, "Error while disabling plugin", e);
         }
     }
 
+    // ===========================================
+    // PLUGIN INITIALIZATION METHODS
+    // ===========================================
+
+    /**
+     * Initialize main plugin components in proper order
+     */
     private void initializePlugin() {
+        // Validate ProtocolLib dependency
         ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
         if (protocolManager == null) {
-            getLogger().severe("ProtocolLib is unavailable, stopping...");
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &6ProtocolLib is unavailable, stopping..."));
             throw new IllegalStateException("ProtocolLib is required but not found");
         }
         packetSender = new ProtocolLibImpl(protocolManager);
+
+        // Initialize core systems
         configuration.reload();
+        initializeWorldGuard();
         initializeConfigFiles();
         registerListeners();
-        hookIntoPlugins();
+        hookIntoPlaceholderAPI();
         initializeFeaturesAndEntities();
         initializeItemsAndRecipes();
         registerCommands();
+
+        // Show plugin information
         printLogo();
         new SpigotPlugin(119526, this).checkForUpdate();
     }
 
+    /**
+     * Initialize configuration files with default values
+     */
     private void initializeConfigFiles() {
         messages = new ConfigFile(this, "/language", "messages");
         items = new ConfigFile(this, "/language", "items");
@@ -157,36 +189,9 @@ public class SuddenDeath extends JavaPlugin {
         configuration.save();
     }
 
-    public void refreshFeatures() {
-        for (Feature feature : Feature.values()) {
-            List<String> enabledWorld = getConfiguration().getConfig().getStringList(feature.getPath());
-            feature.updateConfig();
-        }
-        if (eventManager != null) {
-            eventManager.refresh();
-            getLogger().info("Refreshed EventManager.");
-        }
-    }
-
-    private void registerListeners() {
-        getServer().getPluginManager().registerEvents(new GuiListener(), this);
-        getServer().getPluginManager().registerEvents(new MainListener(), this);
-        getServer().getPluginManager().registerEvents(new CustomMobs(), this);
-        getServer().getPluginManager().registerEvents(new Listener1(this), this);
-        getServer().getPluginManager().registerEvents(new Listener2(), this);
-       // getServer().getPluginManager().registerEvents(new CrafterInventory.Listener(), this);
-    }
-
-    private void hookIntoPlugins() {
-        if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
-            getLogger().info("Hooked onto WorldGuard");
-        }
-        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new SuddenDeathPlaceholders().register();
-            getLogger().info("Hooked onto PlaceholderAPI");
-        }
-    }
-
+    /**
+     * Initialize default message values
+     */
     private void initializeDefaultMessages() {
         boolean saveNeeded = false;
         for (Message msg : Message.values()) {
@@ -201,8 +206,13 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
+    /**
+     * Initialize features and entities configuration
+     */
     private void initializeFeaturesAndEntities() {
         eventManager = new EventManager();
+
+        // Initialize custom mob configurations
         for (EntityType type : EntityType.values()) {
             if (type.isAlive()) {
                 ConfigFile mobConfig = new ConfigFile(this, "/customMobs", Utils.lowerCaseId(type.name()));
@@ -210,11 +220,15 @@ public class SuddenDeath extends JavaPlugin {
             }
         }
 
+        // Setup online players
         Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
+
+        // Initialize feature configurations
         for (Feature feature : Feature.values()) {
             feature.updateConfig();
             ConfigFile modifiers = feature.getConfigFile();
             boolean saveNeeded = false;
+
             for (Modifier mod : feature.getModifiers()) {
                 if (modifiers.getConfig().contains(mod.getName())) {
                     continue;
@@ -237,8 +251,13 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
+    /**
+     * Initialize custom items and crafting recipes
+     */
     private void initializeItemsAndRecipes() {
         boolean saveNeeded = false;
+
+        // Initialize custom items configuration
         for (CustomItem item : CustomItem.values()) {
             if (!items.getConfig().contains(item.name())) {
                 items.getConfig().set(item.name() + ".name", item.getDefaultName());
@@ -256,6 +275,7 @@ public class SuddenDeath extends JavaPlugin {
             items.save();
         }
 
+        // Register crafting recipes
         removeCustomRecipes(); // Remove old recipes before registering new ones
         for (CustomItem item : CustomItem.values()) {
             ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
@@ -274,9 +294,278 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
+    // ===========================================
+    // LISTENER AND COMMAND REGISTRATION
+    // ===========================================
+
+    /**
+     * Register all event listeners
+     */
+    private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new GuiListener(), this);
+        getServer().getPluginManager().registerEvents(new MainListener(), this);
+        getServer().getPluginManager().registerEvents(new CustomMobs(), this);
+        getServer().getPluginManager().registerEvents(new Listener1(this), this);
+        getServer().getPluginManager().registerEvents(new Listener2(), this);
+        // getServer().getPluginManager().registerEvents(new CrafterInventory.Listener(), this);
+
+        //getLogger().info("Event listeners registered successfully");
+    }
+
+    /**
+     * Register plugin commands and tab completers
+     */
+    private void registerCommands() {
+        // Status command
+        Optional.ofNullable(getCommand("sdstatus")).ifPresent(cmd -> {
+            cmd.setExecutor(new SuddenDeathStatusCommand());
+            cmd.setTabCompleter(new SuddenDeathStatusCompletion());
+        });
+
+        // Mob command
+        Optional.ofNullable(getCommand("sdmob")).ifPresent(cmd -> {
+            cmd.setExecutor(new SuddenDeathMobCommand());
+            cmd.setTabCompleter(new SuddenDeathMobCompletion());
+        });
+
+       // getLogger().info("Commands registered successfully");
+    }
+
+    // ===========================================
+    // PLUGIN INTEGRATION METHODS
+    // ===========================================
+
+    /**
+     * Hook into PlaceholderAPI if available
+     */
+    private void hookIntoPlaceholderAPI() {
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new SuddenDeathPlaceholders().register();
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aHooked onto PlaceholderAPI"));
+        }
+    }
+
+    // ===========================================
+    // WORLDGUARD INTEGRATION METHODS
+    // ===========================================
+
+    private void registerWorldGuardFlags() {
+        if (getServer().getPluginManager().getPlugin("WorldGuard") == null) {
+         //   Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &6WorldGuard not detected, skipping flag registration"));
+            return;
+        }
+
+        try {
+            FlagRegistry registry = WorldGuard.getInstance().getFlagRegistry();
+            int successCount = 0;
+
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aRegistering WorldGuard custom flags..."));
+
+            for (CustomFlag customFlag : CustomFlag.values()) {
+                String flagPath = customFlag.getPath();
+                try {
+                    // Check if flag already exists
+                    if (registry.get(flagPath) != null) {
+                        //Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aFound existing WorldGuard flag: " + flagPath));
+                        successCount++;
+                        continue;
+                    }
+
+                    // Register new flag with default state: DENY for SDS_REMOVE, ALLOW for others
+                    boolean defaultState = customFlag == CustomFlag.SDS_REMOVE ? false : true;
+                    StateFlag flag = new StateFlag(flagPath, defaultState);
+                    registry.register(flag);
+                    successCount++;
+                   // Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aSuccessfully registered custom WorldGuard flag: " + flagPath + " with default state: " + (defaultState ? "ALLOW" : "DENY")));
+
+                } catch (FlagConflictException e) {
+                    getLogger().warning("Flag conflict while registering: " + flagPath + " - " + e.getMessage());
+                } catch (Exception e) {
+                    getLogger().log(Level.SEVERE, "Unexpected error while registering WorldGuard flag: " + flagPath, e);
+                }
+            }
+
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard flag registration completed."));
+
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Failed to register WorldGuard flags during onLoad", e);
+        }
+    }
+
+    /**
+     * Initialize WorldGuard integration with comprehensive error handling
+     * Updated to work with flags registered in onLoad()
+     */
+    private void initializeWorldGuard() {
+        try {
+            if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard detected, initializing integration..."));
+
+                // Log WorldGuard version for debugging
+                org.bukkit.plugin.Plugin wgPlugin = getServer().getPluginManager().getPlugin("WorldGuard");
+                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard version: " + wgPlugin.getDescription().getVersion()));
+
+                try {
+                    // Create WorldGuardOn instance - flags should already be registered from onLoad()
+                    this.wgPlugin = new WorldGuardOn();
+
+                    // Check if WorldGuardOn was created successfully and is ready
+                    if (this.wgPlugin instanceof WorldGuardOn) {
+                        WorldGuardOn wgOn = (WorldGuardOn) this.wgPlugin;
+
+                        // Immediate readiness check
+                        boolean isReady = wgOn.isReady();
+                        int flagCount = wgOn.getRegisteredFlags().size();
+
+                        if (isReady && flagCount > 0) {
+                            worldGuardReady = true;
+                            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                                    "&6[&cSudden&4Death&6] &aWorldGuard integration ready immediately with " +
+                                            flagCount + " custom flags: " + String.join(", ", wgOn.getRegisteredFlags().keySet())));
+                        } else {
+                            // Schedule a delayed check if not immediately ready
+                            getServer().getScheduler().runTaskLater(this, () -> {
+                                boolean delayedReady = wgOn.isReady();
+                                int delayedFlagCount = wgOn.getRegisteredFlags().size();
+
+                                if (delayedReady && delayedFlagCount > 0) {
+                                    worldGuardReady = true;
+                                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                                            "&6[&cSudden&4Death&6] &aWorldGuard integration read with " +
+                                                    delayedFlagCount + " custom flags"));
+                                } else {
+                                    getLogger().severe("WorldGuard integration failed - flags not loaded properly");
+                                    getLogger().severe("Ready: " + delayedReady + ", Flag count: " + delayedFlagCount);
+                                    // Keep WorldGuardOn but mark as not ready
+                                    worldGuardReady = false;
+                                }
+                            }, 40L); // 2 seconds delay
+
+                            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                                    "&6[&cSudden&4Death&6] &6WorldGuard integration created, waiting for flags to load..."));
+                        }
+                    } else {
+                        throw new IllegalStateException("WorldGuardOn instance creation failed");
+                    }
+
+                } catch (IllegalStateException e) {
+                    getLogger().severe("Failed to initialize WorldGuardOn - " + e.getMessage());
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            "&6[&cSudden&4Death&6] &cWorldGuardOn failed: " + e.getMessage()));
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            "&6[&cSudden&4Death&6] &6Falling back to WorldGuardOff mode"));
+                    this.wgPlugin = new WorldGuardOff();
+                    worldGuardReady = true;
+
+                } catch (NoClassDefFoundError e) {
+                    getLogger().severe("WorldGuard classes not found - " + e.getMessage());
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            "&6[&cSudden&4Death&6] &cMissing WorldGuard dependencies"));
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            "&6[&cSudden&4Death&6] &6Falling back to WorldGuardOff mode"));
+                    this.wgPlugin = new WorldGuardOff();
+                    worldGuardReady = true;
+
+                } catch (Exception e) {
+                    getLogger().log(Level.SEVERE, "Unexpected error initializing WorldGuardOn", e);
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            "&6[&cSudden&4Death&6] &cUnexpected error: " + e.getClass().getSimpleName()));
+                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                            "&6[&cSudden&4Death&6] &6Falling back to WorldGuardOff mode"));
+                    this.wgPlugin = new WorldGuardOff();
+                    worldGuardReady = true;
+                }
+
+            } else {
+                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                        "&6[&cSudden&4Death&6] &6WorldGuard not found, using fallback mode"));
+                this.wgPlugin = new WorldGuardOff();
+                worldGuardReady = true;
+            }
+
+            // Final status log
+           // String wgType = this.wgPlugin instanceof WorldGuardOn ? "WorldGuardOn" : "WorldGuardOff";
+            //Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                  //  "&6[&cSudden&4Death&6] &aWorldGuard integration completed using: " + wgType +
+                           // " (Ready: " + worldGuardReady + ")"));
+
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Failed to initialize WorldGuard integration", e);
+            this.wgPlugin = new WorldGuardOff();
+            worldGuardReady = true;
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                    "&6[&cSudden&4Death&6] &cForced fallback to WorldGuardOff due to initialization error"));
+        }
+    }
+
+    /**
+     * Enhanced method to check if WorldGuard integration is ready for use
+     * with additional debugging information
+     */
+    public boolean isWorldGuardReady() {
+        boolean ready = worldGuardReady && wgPlugin != null;
+
+        // Debug log for troubleshooting
+        if (!ready) {
+            getLogger().fine("WorldGuard not ready - worldGuardReady: " + worldGuardReady +
+                    ", wgPlugin: " + (wgPlugin != null ? wgPlugin.getClass().getSimpleName() : "null"));
+        }
+
+        return ready;
+    }
+
+    /**
+     * Enhanced WorldGuard getter with additional safety and debugging
+     */
+    public WGPlugin getWorldGuard() {
+        if (wgPlugin == null) {
+            getLogger().warning("WorldGuard plugin requested but not initialized, returning fallback");
+            return new WorldGuardOff();
+        }
+
+        // Log usage for debugging (can be removed in production)
+        if (getLogger().isLoggable(Level.FINE)) {
+            String wgType = wgPlugin instanceof WorldGuardOn ? "WorldGuardOn" : "WorldGuardOff";
+            getLogger().fine("WorldGuard requested, returning: " + wgType);
+        }
+
+        return wgPlugin;
+    }
+
+    /**
+     * Enhanced method to check if WorldGuard custom flags can be used
+     * with detailed status information
+     */
+    public boolean canUseWorldGuardFlags() {
+        boolean canUse = isWorldGuardReady() &&
+                wgPlugin instanceof WorldGuardOn &&
+                ((WorldGuardOn) wgPlugin).isReady();
+
+        // Debug information
+        if (!canUse && getLogger().isLoggable(Level.FINE)) {
+            if (!isWorldGuardReady()) {
+                getLogger().fine("Cannot use WG flags - WorldGuard not ready");
+            } else if (!(wgPlugin instanceof WorldGuardOn)) {
+                getLogger().fine("Cannot use WG flags - Using WorldGuardOff");
+            } else if (!((WorldGuardOn) wgPlugin).isReady()) {
+                getLogger().fine("Cannot use WG flags - WorldGuardOn not ready");
+            }
+        }
+
+        return canUse;
+    }
+
+
+    // ===========================================
+    // RECIPE MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Register a crafting recipe for a custom item
+     */
     private void registerCraftingRecipe(CustomItem item) {
         if (item.getCraft() == null || item.getCraft().isEmpty()) {
-            getLogger().log(Level.INFO, "No crafting recipe defined for " + item.name());
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &6No crafting recipe defined for " + item.name()));
             return;
         }
 
@@ -287,7 +576,7 @@ public class SuddenDeath extends JavaPlugin {
             char[] chars = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'};
 
             List<String> craftLines = item.getCraft();
-            getLogger().info("Attempting to register recipe for " + item.name() + ": " + craftLines);
+            //getLogger().info("Attempting to register recipe for " + item.name() + ": " + craftLines);
 
             if (craftLines.size() != 3) {
                 throw new IllegalArgumentException("Invalid craft format for " + item.name() +
@@ -316,35 +605,15 @@ public class SuddenDeath extends JavaPlugin {
 
             recipe.setGroup("suddendeath_items");
             getServer().addRecipe(recipe);
-            getLogger().log(Level.INFO, "Successfully registered crafting recipe for " + item.name());
+            //getLogger().log(Level.INFO, "Successfully registered crafting recipe for " + item.name());
         } catch (Exception e) {
             getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
         }
     }
 
-    private void registerCommands() {
-        Optional.ofNullable(getCommand("sdstatus")).ifPresent(cmd -> {
-            cmd.setExecutor(new SuddenDeathStatusCommand());
-            cmd.setTabCompleter(new SuddenDeathStatusCompletion());
-        });
-        Optional.ofNullable(getCommand("sdmob")).ifPresent(cmd -> {
-            cmd.setExecutor(new SuddenDeathMobCommand());
-            cmd.setTabCompleter(new SuddenDeathMobCompletion());
-        });
-    }
-
-    private void savePlayerData() {
-        PlayerData.getLoaded().forEach(data -> {
-            try {
-                ConfigFile file = new ConfigFile(this, "/userdata", data.getUniqueId().toString());
-                data.save(file.getConfig());
-                file.save();
-            } catch (Exception e) {
-                getLogger().log(Level.WARNING, "Failed to save player data for " + data.getUniqueId(), e);
-            }
-        });
-    }
-
+    /**
+     * Remove all custom recipes registered by this plugin
+     */
     private void removeCustomRecipes() {
         Iterator<Recipe> recipes = getServer().recipeIterator();
         List<NamespacedKey> toRemove = new ArrayList<>();
@@ -364,9 +633,14 @@ public class SuddenDeath extends JavaPlugin {
             getServer().removeRecipe(key);
         }
 
-        getLogger().info("Removed " + toRemove.size() + " old custom recipes");
+        if (!toRemove.isEmpty()) {
+            //getLogger().info("Removed " + toRemove.size() + " old custom recipes");
+        }
     }
 
+    /**
+     * Re-register all custom recipes
+     */
     private void reRegisterRecipes() {
         removeCustomRecipes();
         for (CustomItem item : CustomItem.values()) {
@@ -388,10 +662,33 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
+    // ===========================================
+    // CONFIGURATION MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Refresh all features configuration
+     */
+    public void refreshFeatures() {
+        for (Feature feature : Feature.values()) {
+            List<String> enabledWorld = getConfiguration().getConfig().getStringList(feature.getPath());
+            feature.updateConfig();
+        }
+        if (eventManager != null) {
+            eventManager.refresh();
+            //getLogger().info("Refreshed EventManager.");
+        }
+    }
+
+    /**
+     * Reload all configuration files and reinitialize systems
+     */
     public void reloadConfigFiles() {
         try {
+            //getLogger().info("Starting configuration reload...");
             savePlayerData();
 
+            // Reload configuration files
             configuration.reload();
             messages.reload();
             items.reload();
@@ -404,33 +701,119 @@ public class SuddenDeath extends JavaPlugin {
                 }
             }
 
-            // Reinitialize config to ensure default values
+            // Reinitialize systems
             initializeConfigFiles();
             refreshFeatures();
             reRegisterRecipes();
+
+            // Check WorldGuard status after reload
+            if (wgPlugin instanceof WorldGuardOn) {
+                WorldGuardOn wgOn = (WorldGuardOn) wgPlugin;
+                //getLogger().info("WorldGuard status after reload: " +
+                        //(wgOn.isReady() ? "Ready with " + wgOn.getRegisteredFlags().size() + " flags" : "Not Ready"));
+            }
+
+            // Setup online players
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
-            getLogger().info("Reload all configuration successfully.");
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aConfiguration reload completed successfully."));
         } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Error reloading configuration file", e);
+            getLogger().log(Level.SEVERE, "Error reloading configuration files", e);
         }
     }
 
+    // ===========================================
+    // DATA MANAGEMENT METHODS
+    // ===========================================
+
+    /**
+     * Save all player data to files
+     */
+    private void savePlayerData() {
+        PlayerData.getLoaded().forEach(data -> {
+            try {
+                ConfigFile file = new ConfigFile(this, "/userdata", data.getUniqueId().toString());
+                data.save(file.getConfig());
+                file.save();
+            } catch (Exception e) {
+                getLogger().log(Level.WARNING, "Failed to save player data for " + data.getUniqueId(), e);
+            }
+        });
+    }
+
+    // ===========================================
+    // UTILITY METHODS
+    // ===========================================
+
+    /**
+     * Print the plugin logo to console
+     */
+    public void printLogo() {
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝████╗  ██║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████╗██║   ██║██║  ██║██║  ██║█████╗  ██╔██╗ ██║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ╚════██║██║   ██║██║  ██║██║  ██║██╔══╝  ██║╚██╗██║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████║╚██████╔╝██████╔╝██████╔╝███████╗██║ ╚████║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╗ ███████╗ █████╗ ████████╗██╗  ██╗"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║█████╗  ███████║   ██║   ███████║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║██╔══╝  ██╔══██║   ██║   ██╔══██║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6              Version " + getDescription().getVersion()));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&b         Development by NguyenDevs"));
+        //Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6      Hardcore Survival Experience Activated!"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
+    }
+
+    // ===========================================
+    // GETTER METHODS
+    // ===========================================
+
+    /**
+     * Get the singleton instance of SuddenDeath plugin
+     *
+     * @return SuddenDeath instance
+     */
+    public static SuddenDeath getInstance() {
+        return instance;
+    }
+
+    /**
+     * Get the players map
+     *
+     * @return Map of players and their integer values
+     */
     public Map<Player, Integer> getPlayers() {
         return players;
     }
 
+    /**
+     * Get the main configuration file
+     *
+     * @return ConfigFile instance
+     */
     public ConfigFile getConfiguration() {
         return configuration;
     }
 
+    /**
+     * Get the packet sender instance
+     *
+     * @return PacketSender instance
+     */
     public PacketSender getPacketSender() {
         return packetSender;
     }
 
-    public WGPlugin getWorldGuard() {
-        return wgPlugin;
-    }
-
+    /**
+     * Get the event manager instance
+     *
+     * @return EventManager instance
+     */
     public EventManager getEventManager() {
         return eventManager;
     }
