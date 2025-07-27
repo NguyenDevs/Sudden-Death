@@ -53,6 +53,9 @@ public class WorldGuardOn implements WGPlugin {
 	/**
 	 * Registers custom flags with WorldGuard's flag registry.
 	 */
+	/**
+	 * Loads custom flags from WorldGuard's flag registry.
+	 */
 	private void registerCustomFlags() {
 		FlagRegistry registry = worldGuard.getFlagRegistry();
 		int successCount = 0;
@@ -60,39 +63,28 @@ public class WorldGuardOn implements WGPlugin {
 		for (CustomFlag customFlag : CustomFlag.values()) {
 			String flagPath = customFlag.getPath();
 			try {
-				// Check if flag already exists
+				// Check if flag exists
 				if (registry.get(flagPath) != null) {
 					StateFlag existingFlag = (StateFlag) registry.get(flagPath);
 					customFlags.put(flagPath, existingFlag);
-				//	SuddenDeath.getInstance().getLogger().log(Level.INFO,
-					//		"Found existing WorldGuard flag: " + flagPath);
+					//SuddenDeath.getInstance().getLogger().log(Level.INFO,
+						//	"Found existing WorldGuard flag: " + flagPath);
 					successCount++;
-					continue;
+				} else {
+					failedFlags.add(flagPath);
+					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+							"Custom flag not found in registry: " + flagPath);
 				}
-
-				// Register new flag with default state: DENY for SDS_REMOVE, ALLOW for others
-				boolean defaultState = customFlag == CustomFlag.SDS_REMOVE ? false : true;
-				StateFlag flag = new StateFlag(flagPath, defaultState);
-				registry.register(flag);
-				customFlags.put(flagPath, flag);
-				successCount++;
-				//SuddenDeath.getInstance().getLogger().log(Level.INFO,
-					//	"Successfully registered custom WorldGuard flag: " + flagPath + " with default state: " + (defaultState ? "ALLOW" : "DENY"));
-
-			} catch (FlagConflictException e) {
-				failedFlags.add(flagPath);
-				SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-						"Flag conflict while registering: " + flagPath + " - " + e.getMessage());
 			} catch (Exception e) {
 				failedFlags.add(flagPath);
 				SuddenDeath.getInstance().getLogger().log(Level.SEVERE,
-						"Unexpected error while registering WorldGuard flag: " + flagPath, e);
+						"Error loading WorldGuard flag: " + flagPath, e);
 			}
 		}
 
 		flagsRegistered = true;
 		//SuddenDeath.getInstance().getLogger().log(Level.INFO,
-				//"WorldGuard flag registration completed: " + successCount + "/" + CustomFlag.values().length + " flags registered");
+			//	"WorldGuard flag loading completed: " + successCount + "/" + CustomFlag.values().length + " flags loaded");
 	}
 
 	/**
