@@ -264,7 +264,7 @@ public class Listener1 implements Listener {
 
             // Bleeding
             if (event.getEntity() instanceof Player player && Feature.BLEEDING.isEnabled(player) &&
-                    !isExcludedDamageCause(event.getCause())) {
+                    !isExcludedDamageCause(event.getCause()) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT)) {
                 applyBleeding(player);
             }
 
@@ -933,7 +933,7 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
         try {
             // Infection from Zombie to Player
             if (event.getEntity() instanceof Player player && isZombieEntity(event.getDamager()) &&
-                    Feature.INFECTION.isEnabled(player)) {
+                    Feature.INFECTION.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT)) {
                 applyInfection(player);
             }
 
@@ -1298,7 +1298,20 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
                         "PlayerData not found for player: " + player.getName());
                 return;
             }
-
+             // Check SDS_REMOVE flag to cure Bleeding and Infection
+            if (SuddenDeath.getInstance().isWorldGuardReady() && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_REMOVE)) {
+                if (data.isBleeding()) {
+                    data.setBleeding(false);
+                    player.sendMessage(translateColors(Utils.msg("prefix") + " " + Utils.msg("no-longer-bleeding")));
+                    player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1.0f, 0.0f);
+                }
+                if (data.isInfected()) {
+                    data.setInfected(false);
+                    player.sendMessage(translateColors(Utils.msg("prefix") + " " + Utils.msg("no-longer-infected")));
+                    player.removePotionEffect(PotionEffectType.CONFUSION);
+                    player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 1.0f, 0.0f);
+                }
+            }
             // Electricity Shock
             if (Feature.ELECTRICITY_SHOCK.isEnabled(player) && isPoweredRedstoneBlock(player.getLocation().getBlock()) &&
                     !Utils.hasCreativeGameMode(player) && !data.isOnCooldown(Feature.ELECTRICITY_SHOCK)) {
@@ -1313,7 +1326,7 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
                 player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getLocation().add(0, 1, 0), 5, Material.REDSTONE_WIRE.createBlockData());
             }
             */
-            if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT)) {
+            if (Feature.BLEEDING.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT)) {
                 if (player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
                     double offsetX = (Math.random() - 0.5D) * 0.4D;
                     double offsetY = 1.0 + ((Math.random() - 0.5D) * 0.5D);
@@ -1329,7 +1342,7 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
             }
 
             // Infection Effect
-            if (Feature.INFECTION.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT) &&
+            if (Feature.INFECTION.isEnabled(player) && SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT) &&
                     player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isInfected()) {
 
                 // Option 1: Use SPELL_MOB with Color data (recommended for infection effect)

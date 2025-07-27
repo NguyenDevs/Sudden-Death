@@ -309,14 +309,14 @@ public final class Loops {
 
 			// Bleeding
 			if (Feature.BLEEDING.isEnabled(player) && data.isBleeding() &&
-					SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT) &&
+					SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT) &&
 					player.getHealth() >= Feature.BLEEDING.getDouble("health-min")) {
 				Utils.damage(player, Feature.BLEEDING.getDouble("dps") * 3, Feature.BLEEDING.getBoolean("tug"));
 			}
 
 			// Infection
 			if (Feature.INFECTION.isEnabled(player) && data.isInfected() &&
-					SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SD_EFFECT) &&
+					SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT) &&
 					player.getHealth() >= Feature.INFECTION.getDouble("health-min")) {
 				Utils.damage(player, Feature.INFECTION.getDouble("dps") * 3, Feature.INFECTION.getBoolean("tug"));
 				player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 600, 0));
