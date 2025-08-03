@@ -288,7 +288,7 @@ public class SuddenDeath extends JavaPlugin {
                                         trimmedMaterial,
                                         "&a" + trimmedMaterial.replace("_", " ")
                                 );
-                                materials.add(trimmedMaterial + ": \"" + displayName + "\"");
+                                materials.add(trimmedMaterial + ": " + displayName); // Loại bỏ dấu ngoặc kép
                                 uniqueMaterials.add(trimmedMaterial);
                             }
                         }
