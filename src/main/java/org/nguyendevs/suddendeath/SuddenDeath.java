@@ -77,6 +77,15 @@ public class SuddenDeath extends JavaPlugin {
     // Configuration files
     public ConfigFile messages;
     public ConfigFile items;
+    private static final Map<String, String> DEFAULT_MATERIAL_NAMES = new HashMap<>();
+
+    static {
+        DEFAULT_MATERIAL_NAMES.put("PAPER", "&aPaper");
+        DEFAULT_MATERIAL_NAMES.put("STICK", "&aStick");
+        DEFAULT_MATERIAL_NAMES.put("GLOW_INK_SAC", "&aGlow Ink Sac");
+        DEFAULT_MATERIAL_NAMES.put("BOWL", "&aBowl");
+        DEFAULT_MATERIAL_NAMES.put("BROWN_MUSHROOM", "&aBrown Mushroom");
+    }
 
     // ===========================================
     // PLUGIN LIFECYCLE METHODS
@@ -259,14 +268,32 @@ public class SuddenDeath extends JavaPlugin {
 
         // Initialize custom items configuration
         for (CustomItem item : CustomItem.values()) {
-            if (!items.getConfig().contains(item.name())) {
-                items.getConfig().set(item.name() + ".name", item.getDefaultName());
-                items.getConfig().set(item.name() + ".lore", item.getLore());
+            String itemKey = item.name();
+            ConfigurationSection section = items.getConfig().getConfigurationSection(itemKey);
+            if (section == null) {
+                section = items.getConfig().createSection(itemKey);
+                section.set("name", item.getDefaultName());
+                section.set("lore", item.getLore());
+                section.set("craft-enabled", item.getCraft() != null);
                 if (item.getCraft() != null) {
-                    items.getConfig().set(item.name() + ".craft-enabled", true);
-                    items.getConfig().set(item.name() + ".craft", item.getCraft());
-                } else {
-                    items.getConfig().set(item.name() + ".craft-enabled", false);
+                    section.set("craft", item.getCraft());
+                    // Initialize materials for items with crafting recipes
+                    List<String> materials = new ArrayList<>();
+                    Set<String> uniqueMaterials = new HashSet<>();
+                    for (String row : item.getCraft()) {
+                        for (String material : row.split(",")) {
+                            String trimmedMaterial = material.trim().toUpperCase();
+                            if (!trimmedMaterial.equals("AIR") && !uniqueMaterials.contains(trimmedMaterial)) {
+                                String displayName = DEFAULT_MATERIAL_NAMES.getOrDefault(
+                                        trimmedMaterial,
+                                        "&a" + trimmedMaterial.replace("_", " ")
+                                );
+                                materials.add(trimmedMaterial + ": \"" + displayName + "\"");
+                                uniqueMaterials.add(trimmedMaterial);
+                            }
+                        }
+                    }
+                    section.set("materials", materials);
                 }
                 saveNeeded = true;
             }
@@ -276,7 +303,7 @@ public class SuddenDeath extends JavaPlugin {
         }
 
         // Register crafting recipes
-        removeCustomRecipes(); // Remove old recipes before registering new ones
+        removeCustomRecipes();
         for (CustomItem item : CustomItem.values()) {
             ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
             if (section == null) {
