@@ -22,8 +22,11 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -40,6 +43,9 @@ import java.util.logging.Level;
  * Event listener for handling various entity, player, and block interactions in the SuddenDeath plugin.
  */
 public class Listener1 implements Listener {
+    private final Set<UUID> allowed = new HashSet<>();
+    private final NamespacedKey bounces;
+
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
     private static final long BLAZE_SHOT_INTERVAL = 50L;
@@ -54,11 +60,14 @@ public class Listener1 implements Listener {
             Material.BRICK_STAIRS, Material.BRICK, Material.MOSSY_COBBLESTONE);
     private final SuddenDeath plugin;
 
+
+
     /**
      * Initializes periodic tasks for Witch, Blaze, Player, Spider, and Blood Effect.
      */
     public Listener1(SuddenDeath plugin) {
         this.plugin = plugin;
+        this.bounces = new NamespacedKey(plugin, "bounces");
         // Witch loop
         new BukkitRunnable() {
             @Override
@@ -1601,6 +1610,109 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
                     "Error handling FurnaceSmeltEvent", e);
         }
     }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        try {
+            if (event.getCause() != PlayerTeleportEvent.TeleportCause.ENDER_PEARL) {
+                return;
+            }
+            Player player = event.getPlayer();
+            if (!allowed.contains(player.getUniqueId())) {
+                event.setCancelled(true);
+                return;
+            }
+            allowed.remove(player.getUniqueId());
+            Location locFrom = event.getFrom();
+            Location locTo = event.getTo();
+
+            if (Feature.PHYSIC_ENDER_PEARL.isEnabled(player.getWorld())) {
+                player.getWorld().playSound(locFrom, Sound.BLOCK_SCULK_CATALYST_BLOOM, 1.0f, 1.0f);
+                player.getWorld().playSound(locTo, Sound.BLOCK_SCULK_CATALYST_BLOOM, 1.0f, 1.0f);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling PlayerTeleportEvent for player: " + event.getPlayer().getName(), e);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onProjectileLaunch(ProjectileLaunchEvent event) {
+        try {
+            if (event.getEntityType() != EntityType.ENDER_PEARL || !(event.getEntity().getShooter() instanceof Player player)) {
+                return;
+            }
+            if (!Feature.PHYSIC_ENDER_PEARL.isEnabled(player.getWorld())) {
+                allowed.add(player.getUniqueId());
+                event.getEntity().getPersistentDataContainer().set(bounces, PersistentDataType.INTEGER, (int) Feature.PHYSIC_ENDER_PEARL.getDouble("max-bounces") + 1);
+            } else {
+                event.getEntity().getPersistentDataContainer().set(bounces, PersistentDataType.INTEGER, 0);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling ProjectileLaunchEvent for player: " + (event.getEntity().getShooter() instanceof Player ? ((Player) event.getEntity().getShooter()).getName() : "unknown"), e);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onProjectileHit(ProjectileHitEvent event) {
+        try {
+            if (event.getEntityType() != EntityType.ENDER_PEARL) {
+                return;
+            }
+            EnderPearl oldPearl = (EnderPearl) event.getEntity();
+            Vector normal;
+            if (event.getHitEntity() != null) {
+                normal = oldPearl.getLocation().toVector().subtract(event.getHitEntity().getBoundingBox().getCenter()).normalize();
+            } else if (event.getHitBlockFace() != null) {
+                normal = event.getHitBlockFace().getDirection();
+            } else {
+                normal = new Vector(0, 1, 0);
+            }
+
+            PersistentDataContainer data = oldPearl.getPersistentDataContainer();
+            int bounceCount = data.has(bounces, PersistentDataType.INTEGER) ? data.get(bounces, PersistentDataType.INTEGER) : 0;
+            double maxBounces = Feature.PHYSIC_ENDER_PEARL.getDouble("max-bounces");
+            double minVelocityThreshold = Feature.PHYSIC_ENDER_PEARL.getDouble("min-velocity-threshold");
+
+            if (bounceCount >= maxBounces || oldPearl.getVelocity().lengthSquared() < minVelocityThreshold * minVelocityThreshold) {
+                if (oldPearl.getShooter() instanceof Player player) {
+                    allowed.add(player.getUniqueId());
+                }
+                return;
+            }
+
+            Vector velocity = oldPearl.getVelocity().clone();
+            double dotProduct = velocity.dot(normal);
+            Vector reflection = velocity.subtract(normal.multiply(2.0 * dotProduct));
+            double decayFactor = Math.pow(0.95, bounceCount + 1);
+            double bounciness = Math.abs(normal.getY()) > 0.5 ? Feature.PHYSIC_ENDER_PEARL.getDouble("vertical-bounciness") : Feature.PHYSIC_ENDER_PEARL.getDouble("bounciness");
+            reflection = reflection.multiply(bounciness * Feature.PHYSIC_ENDER_PEARL.getDouble("friction") * decayFactor);
+
+            if (reflection.lengthSquared() < minVelocityThreshold * minVelocityThreshold) {
+                if (oldPearl.getShooter() instanceof Player player) {
+                    allowed.add(player.getUniqueId());
+                }
+                return;
+            }
+
+            EnderPearl newPearl = (EnderPearl) oldPearl.getWorld().spawn(oldPearl.getLocation(), EnderPearl.class);
+            newPearl.setShooter(oldPearl.getShooter());
+            ProjectileLaunchEvent launchEvent = new ProjectileLaunchEvent(newPearl);
+            Bukkit.getPluginManager().callEvent(launchEvent);
+            if (!launchEvent.isCancelled()) {
+                newPearl.setVelocity(reflection);
+                newPearl.getPersistentDataContainer().set(bounces, PersistentDataType.INTEGER, bounceCount + 1);
+                newPearl.getWorld().playSound(newPearl.getLocation(), Sound.ENTITY_ENDER_EYE_DEATH, 1.0f, 1.0f);
+            }
+            oldPearl.remove();
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error handling ProjectileHitEvent for ender pearl", e);
+        }
+    }
+
+
 
     /**
      * Checks if a block is a powered redstone block.
