@@ -234,14 +234,7 @@ public enum Feature {
 			"freddy",
 			new Modifier[]{new Modifier("chance-percent", 5.0)}
 	),
-	PHYSIC_ENDER_PEARL(
-			"Physic EnderPearl",
-			new String[]{"EnderPearl will have physical properties like bounce, friction."
-			},
-			"physic-ender-pearl",
-			new Modifier[]{new Modifier("bounciness", 0.85), new Modifier("vertical-bounciness", 0.7),
-			new Modifier("max-bounces",5), new Modifier("friction", 0.98), new Modifier("min-velocity-threshold", 0.03)}
-	),
+
 	HUNGER_NAUSEA(
 			"Hunger Nausea",
 			new String[]{"Players get permanent nausea when hungry."},
@@ -295,6 +288,14 @@ public enum Feature {
 					new Modifier("dmg-reflection-percent", 75.0),
 					new Modifier("burn-duration", 3.0)
 			}
+	),
+	PHYSIC_ENDER_PEARL(
+			"Physic EnderPearl",
+			new String[]{"EnderPearl will have physical properties like bounce, friction."
+			},
+			"physic-ender-pearl",
+			new Modifier[]{new Modifier("bounciness", 0.85), new Modifier("vertical-bounciness", 0.7),
+					new Modifier("max-bounces",5), new Modifier("friction", 0.98), new Modifier("min-velocity-threshold", 0.03)}
 	),
 	POISONED_SLIMES(
 			"Poisoned Slimes",
