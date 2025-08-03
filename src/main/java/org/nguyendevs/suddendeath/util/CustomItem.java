@@ -30,7 +30,7 @@ public enum CustomItem {
 			Material.SUSPICIOUS_STEW,
 			"&fStrange Brew",
 			new String[]{"Stops Infection."},
-			new String[]{"AIR,AIR,AIR", "GLOW_INK_SAC,BOWL,TURTLE_SCUTE", "AIR,AIR,AIR"}
+			new String[]{"AIR,AIR,AIR", "GLOW_INK_SAC,BOWL,BROWN_MUSHROOM", "AIR,AIR,AIR"}
 	),
 	RAW_HUMAN_FLESH(
 			Material.BEEF,
