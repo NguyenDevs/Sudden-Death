@@ -27,10 +27,6 @@ public class AdminView extends PluginInventory {
     private static final int[] AVAILABLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
     private static final int ITEMS_PER_PAGE = 21;
     private static final int INVENTORY_SIZE = 45;
-    private static final String TITLE_PREFIX = ChatColor.UNDERLINE + "SD Admin GUI (";
-    private static final String NEXT_BUTTON_NAME = ChatColor.GREEN + "Next";
-    private static final String PREVIOUS_BUTTON_NAME = ChatColor.GREEN + "Previous";
-
     private int page;
 
     /**
@@ -42,6 +38,9 @@ public class AdminView extends PluginInventory {
         super(player);
     }
 
+    private static String translateColors(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
     /**
      * Creates and populates the inventory for the admin GUI.
      *
@@ -50,7 +49,7 @@ public class AdminView extends PluginInventory {
     @Override
     public @NotNull Inventory getInventory() {
         int maxPage = (Feature.values().length + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
-        Inventory inventory = Bukkit.createInventory(this, INVENTORY_SIZE, TITLE_PREFIX + (page + 1) + "/" + maxPage + ")");
+        Inventory inventory = Bukkit.createInventory(this, INVENTORY_SIZE, translateColors(Utils.msg("gui-admin-name")) + " (" + (page + 1) + "/" + maxPage + ")");
 
         try {
             // Add feature items
@@ -64,10 +63,10 @@ public class AdminView extends PluginInventory {
 
             // Add navigation buttons
             if (page > 0) {
-                inventory.setItem(18, createNavigationItem(Material.ARROW, PREVIOUS_BUTTON_NAME));
+                inventory.setItem(18, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-previous"))));
             }
             if (endIndex < features.length) {
-                inventory.setItem(26, createNavigationItem(Material.ARROW, NEXT_BUTTON_NAME));
+                inventory.setItem(26, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-next"))));
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -121,15 +120,15 @@ public class AdminView extends PluginInventory {
 
         if (!enabledWorlds.isEmpty()) {
             lore.add("");
-            lore.add(ChatColor.GRAY + "This feature is enabled in:");
+            lore.add(translateColors(Utils.msg("gui-features")));
             for (String world : enabledWorlds) {
                 lore.add(ChatColor.WHITE + "► " + ChatColor.DARK_GREEN + world);
             }
         }
 
         lore.add("");
-        lore.add(isEnabledInWorld ? ChatColor.GREEN + "This feature is enabled in this world."
-                : ChatColor.RED + "This feature is disabled in this world.");
+        lore.add(isEnabledInWorld ? translateColors(Utils.msg("gui-features-enabled"))
+                : translateColors(Utils.msg("gui-features-disabled")));
         lore.add(ChatColor.YELLOW + "Click to " + (isEnabledInWorld ? "disable." : "enable."));
 
         return lore;
@@ -181,12 +180,12 @@ public class AdminView extends PluginInventory {
 
         try {
             String displayName = meta.getDisplayName();
-            if (NEXT_BUTTON_NAME.equals(displayName)) {
+            if (translateColors(Utils.msg("gui-next")).equals(displayName)) {
                 page++;
                 open();
                 return;
             }
-            if (PREVIOUS_BUTTON_NAME.equals(displayName)) {
+            if (translateColors(Utils.msg("gui-previous")).equals(displayName)) {
                 page--;
                 open();
                 return;
