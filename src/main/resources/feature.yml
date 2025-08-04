@@ -1,0 +1,240 @@
+features:
+  advanced-player-drops:
+    name: "Advanced Player Drops"
+    lore:
+      - "Players drop a skull, bones, and human"
+      - "flesh on death. Human flesh can be cooked."
+  angry-spiders:
+    name: "Angry Spiders"
+    lore:
+      - "Spiders throw cobwebs, dealing #damage# damage."
+      - "Slows players (#amplifier#) for #duration# seconds."
+  arrow-slow:
+    name: "Arrow Slow"
+    lore:
+      - "Players hit by arrows are slowed"
+      - "for #slow-duration# seconds."
+  bleeding:
+    name: "Bleeding"
+    lore:
+      - "Players have a #chance-percent#% chance"
+      - "to bleed when damaged."
+      - "Bleeding disables health saturation regen"
+      - "and deals #dps#*3 HP every 3 seconds."
+      - "Can be stopped by using a Bandage or"
+      - "it will stop on its own after #auto-stop-bleed-time# seconds."
+  blood-moon:
+    name: "Blood Moon"
+    lore:
+      - "Night has #chance#% chance to turn red."
+      - "Players take #damage-percent#% more damage"
+      - "and are slowed for #slow-duration#s."
+      - "Monsters spawn with Speed #speed#,"
+      - "Strength #increase-damage#, and Resistance #damage-resistance#."
+  blood-screen:
+    name: "Blood Screen"
+    lore:
+      - "Players will have bleeding and red"
+      - "screen effects when taking damage"
+  bone-grenades:
+    name: "Bone Grenades"
+    lore:
+      - "Skeletons have #chance-percent#% chance"
+      - "to throw bone grenades."
+      - "Grenades explode, dealing #damage# damage"
+      - "and knocking back players."
+  bone-wizards:
+    name: "Bone Wizards"
+    lore:
+      - "Skeletons named 'Bone Wizards' cast spells:"
+      - "Fireball: #fireball-damage# damage,"
+      - "#fireball-duration# sec. burn"
+      - "Frost Curse: #frost-curse-damage# damage,"
+      - "#frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
+  breeze-dash:
+    name: "Breeze Dash"
+    lore:
+      - "Breeze has a #chance-percent#% chance to accelerate,"
+      - "very quickly, continuously firing #shoot-amount#"
+      - "WindCharges at enemies but in return"
+      - "the ability to jump is greatly reduced."
+  creeper-revenge:
+    name: "Creeper Revenge"
+    lore:
+      - "Creepers have #chance-percent#% chance"
+      - "to explode on death."
+  dangerous-coal:
+    name: "Dangerous Coal"
+    lore:
+      - "Mining coal has #chance-percent#% chance"
+      - "to trigger a gas pocket explosion."
+      - "Explosion radius: #radius# blocks."
+  electricity-shock:
+    name: "Electricity Shock"
+    lore:
+      - "Powered redstone (wires, torches,"
+      - "repeaters, comparators) deals #damage# damage."
+      - "Can occur every 3 seconds."
+  ender-power:
+    name: "Ender Power"
+    lore:
+      - "Players have #chance-percent#% chance"
+      - "to be blinded for #duration# seconds."
+      - "Triggered when hitting endermen, endermites,"
+      - "shulkers, or dragons."
+  everburning-blazes:
+    name: "Everburning Blazes"
+    lore:
+      - "Blazes summon fire beams that ignite"
+      - "players for #burn-duration# seconds."
+  fall-stun:
+    name: "Fall Stun"
+    lore:
+      - "High falls cause players to be slowed (III)"
+      - "for a duration. Duration scales with fall height."
+  force-of-the-undead:
+    name: "Force of the Undead"
+    lore:
+      - "Monsters deal increased attack damage."
+      - "&cConfigurable for each monster."
+  freddy:
+    name: "Freddy"
+    lore:
+      - "Players have #chance-percent#% chance"
+      - "to summon Freddy upon waking."
+  hunger-nausea:
+    name: "Hunger Nausea"
+    lore:
+      - "Players get permanent nausea when hungry."
+  immortal-evoker:
+    name: "Immortal Evoker"
+    lore:
+      - "Evoker has a #chance-percent#% chance to use Totem to"
+      - "avoid death and gain level #resistance-amplifier# resistance."
+      - "After that, every 5 seconds, summon Fangs"
+      - "can pull the player into the ground 3 block."
+  infection:
+    name: "Infection"
+    lore:
+      - "Zombies have a #chance-percent#% chance"
+      - "to infect players."
+      - "Infection causes nausea and deals #dps#*3 HP every"
+      - "3 seconds. Can be stopped using a Strange Brew."
+      - "Infection spreads via bare-hand attacks"
+      - "or player-to-player contact."
+  leaping-spiders:
+    name: "Leaping Spiders"
+    lore:
+      - "Spiders can leap powerfully at players."
+  mob-critical-strikes:
+    name: "Mob Critical Strikes"
+    lore:
+      - "Monsters can deal critical strikes"
+      - "with #damage-percent#% additional damage."
+      - "&cCrit Chance configurable for each monster."
+  nether-shield:
+    name: "Nether Shield"
+    lore:
+      - "Magma cubes, pigmen, and blazes have"
+      - "#chance-percent#% chance to block attacks."
+      - "Reflects #dmg-reflection-percent#% damage"
+      - "and ignites for #burn-duration# seconds."
+  physic-ender-pearl:
+    name: "Physic EnderPearl"
+    lore:
+      - "EnderPearl will have physical properties"
+      - "like bounce, friction."
+  poisoned-slimes:
+    name: "Poisoned Slimes"
+    lore:
+      - "Slimes have #chance-percent#% chance"
+      - "to poison players for #duration# seconds."
+      - "Poison effect amplifier: #amplifier#."
+  quick-mobs:
+    name: "Quick Mobs"
+    lore:
+      - "Monsters have increased movement speed."
+      - "&cConfigurable for each monster."
+  realistic-pickup:
+    name: "Realistic Pickup"
+    lore:
+      - "Players must crouch and look down"
+      - "to pick up items."
+      - "Briefly slows players on pickup."
+  shocking-skeleton-arrows:
+    name: "Shocking Skeleton Arrows"
+    lore:
+      - "Skeletons have #chance-percent#% chance"
+      - "to shoot arrows that shock players"
+      - "for #shock-duration# seconds."
+  silverfishes-summon:
+    name: "Silverfishes Summon"
+    lore:
+      - "Zombies have #chance-percent#% chance"
+      - "to summon #min# to #max# silverfish on death."
+  snow-slow:
+    name: "Snow Slow"
+    lore:
+      - "Players without leather boots"
+      - "are slowed on snow."
+  stone-stiffness:
+    name: "Stone Stiffness"
+    lore:
+      - "Players take #damage# damage"
+      - "when punching stone."
+  stray-frost:
+    name: "Stray Frost"
+    lore:
+      - "Stray have a #chance-percent#% chance"
+      - "to shoot a Frost arrow."
+      - "The player will freeze in #duration# second."
+  spider-web:
+    name: "Spider Web"
+    lore:
+      - "Cave spider has a #chance-percent#% chance"
+      - "to shoot a web that traps the player in place."
+      - "It only disappears when the player breaks it."
+  tanky-monsters:
+    name: "Tanky Monsters"
+    lore:
+      - "Monsters take reduced damage."
+      - "&cConfigurable for each monster."
+  thief-slimes:
+    name: "Thief Slimes"
+    lore:
+      - "Slimes have #chance-percent#% chance"
+      - "to steal #exp# EXP when hitting players."
+  thunderstorm:
+    name: "Thunderstorm"
+    lore:
+      - "Storms have #chance#% chance"
+      - "to become thunderstorms."
+      - "Lightning deals #damage-percent#% more AoE damage"
+      - "and strikes more frequently."
+  undead-gunners:
+    name: "Undead Gunners"
+    lore:
+      - "Zombies named 'Undead Gunner' cast rockets"
+      - "dealing #damage# damage (AoE)."
+  undead-rage:
+    name: "Undead Rage"
+    lore:
+      - "Zombies and pigmen gain Strength and Speed II"
+      - "for #rage-duration# seconds when damaged."
+  witch-scrolls:
+    name: "Witch Scrolls"
+    lore:
+      - "Witches have a #chance-percent#% chance"
+      - "to block damage with a magic shield."
+      - "Witches cast runes dealing #damage# damage"
+      - "and slowing players (II) for #slow-duration# seconds."
+  wither-machinegun:
+    name: "Wither Machinegun"
+    lore:
+      - "Wither Skeletons throw coal,"
+      - "each dealing #damage# damage."
+  wither-rush:
+    name: "Wither Rush"
+    lore:
+      - "Wither Skeletons blink to players,"
+      - "dealing #damage# damage."

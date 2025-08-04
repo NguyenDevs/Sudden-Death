@@ -63,10 +63,10 @@ public class PlayerView extends PluginInventory {
 
             // Add navigation buttons
             if (page > 0) {
-                inventory.setItem(18, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-player-previous"))));
+                inventory.setItem(18, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-previous"))));
             }
             if (endIndex < features.length) {
-                inventory.setItem(26, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-player-next"))));
+                inventory.setItem(26, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-next"))));
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -119,15 +119,15 @@ public class PlayerView extends PluginInventory {
 
         if (!enabledWorlds.isEmpty()) {
             lore.add("");
-            lore.add(translateColors(Utils.msg("gui-player-features")));
+            lore.add(translateColors(Utils.msg("gui-features")));
             for (String world : enabledWorlds) {
-                lore.add(ChatColor.GRAY + "- " + ChatColor.WHITE + world);
+                lore.add(ChatColor.WHITE + "► " + ChatColor.DARK_GREEN + world);
             }
         }
 
         lore.add("");
-        lore.add(isEnabledInWorld ? translateColors(Utils.msg("gui-player-features-enabled"))
-                : translateColors(Utils.msg("gui-player-features-disabled")));
+        lore.add(isEnabledInWorld ? translateColors(Utils.msg("gui-features-enabled"))
+                : translateColors(Utils.msg("gui-features-disabled")));
 
         return lore;
     }
@@ -175,10 +175,10 @@ public class PlayerView extends PluginInventory {
 
         try {
             String displayName = meta.getDisplayName();
-            if (translateColors(Utils.msg("gui-player-next")).equals(displayName)) {
+            if (translateColors(Utils.msg("gui-next")).equals(displayName)) {
                 page++;
                 open();
-            } else if (translateColors(Utils.msg("gui-player-previous")).equals(displayName)) {
+            } else if (translateColors(Utils.msg("gui-previous")).equals(displayName)) {
                 page--;
                 open();
             }
@@ -201,7 +201,7 @@ public class PlayerView extends PluginInventory {
             String[] parts = lore.split("#", 3);
             if (parts.length >= 2) {
                 String stat = parts[1];
-                return statsInLore(feature, parts[0] + ChatColor.WHITE + DECIMAL_FORMAT.format(feature.getDouble(stat)) + ChatColor.GRAY + parts[2]);
+                return statsInLore(feature, parts[0] + ChatColor.GREEN + DECIMAL_FORMAT.format(feature.getDouble(stat)) + ChatColor.GRAY + parts[2]);
             }
         }
         return lore;

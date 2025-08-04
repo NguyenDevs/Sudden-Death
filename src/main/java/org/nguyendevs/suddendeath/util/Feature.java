@@ -1,6 +1,9 @@
 package org.nguyendevs.suddendeath.util;
 
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.player.Modifier;
@@ -10,6 +13,7 @@ import org.nguyendevs.suddendeath.world.StatusRetriever;
 import org.nguyendevs.suddendeath.world.Thunderstorm;
 import org.nguyendevs.suddendeath.world.WorldEventHandler;
 
+import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -87,12 +91,13 @@ public enum Feature {
 					"Players have a #chance-percent#% chance",
 					"to bleed when damaged.",
 					"Bleeding disables health saturation regen",
-					"and deals #damage# every 3 seconds.",
-					"Can be stopped by using a bandage."
+					"and deals #dps#*3 HP every 3 seconds.",
+					"Can be stopped by using a Bandage or",
+					"it will stop on its own after #auto-stop-bleed-time# seconds."
 			},
 			"bleeding",
 			new Modifier[]{
-					new Modifier("dps", 0.1),
+					new Modifier("dps", 0.3),
 					new Modifier("chance-percent", 10.0),
 					new Modifier("health-min", 0),
 					new Modifier("auto-stop-bleed-time", 30),
@@ -123,7 +128,8 @@ public enum Feature {
 	BLOOD_SCREEN(
 			"Blood Screen",
 			new String[]{
-					"Player screen turn red when get damage."
+					"Players will have bleeding and red",
+					"screen effects when taking damage"
 			},
 			"blood-screen",
 			new Modifier[]{
@@ -169,7 +175,7 @@ public enum Feature {
 			"Breeze Dash",
 			new String[]{
 					"Breeze has a #chance-percent#% chance to accelerate,",
-					"very quickly, continuously firing #shot-amount#",
+					"very quickly, continuously firing #shoot-amount#",
 					"WindCharges at enemies but in return",
 					"the ability to jump is greatly reduced."
 			}, "breeze-dash",
@@ -271,19 +277,33 @@ public enum Feature {
 			"hunger-nausea",
 			new Modifier[]{}
 	),
+	IMMORTAL_EVOKER(
+			"Immortal Evoker",
+			new String[]{
+					"Evoker has a #chance-percent#% chance to use Totem to",
+					"avoid death and gain level #resistance-amplifier# resistance.",
+					"After that, every 5 seconds, summon Fangs ",
+					"can pull the player into the ground 3 block."
+			},
+			"immortal-evoker",
+			new Modifier[]{
+					new Modifier("chance-percent", 75.0),
+					new Modifier("resistance-amplifier", 3),
+			}
+	),
 	INFECTION(
 			"Infection",
 			new String[]{
 					"Zombies have a #chance-percent#% chance",
 					"to infect players.",
-					"Infection causes nausea and deals #damage#",
-					"every 3 seconds. Can be stopped using a Strange Brew.",
+					"Infection causes nausea and deals #dps#*3 HP every ",
+					"3 seconds. Can be stopped using a Strange Brew.",
 					"Infection spreads via bare-hand attacks",
 					"or player-to-player contact."
 			},
 			"infection",
 			new Modifier[]{
-					new Modifier("dps", 0.1),
+					new Modifier("dps", 0.3),
 					new Modifier("chance-percent", 15.0),
 					new Modifier("health-min", 0),
 					new Modifier("tug", true),
@@ -397,7 +417,7 @@ public enum Feature {
 	SNOW_SLOW(
 			"Snow Slow",
 			new String[]{
-					"Players without iron, gold, or diamond boots",
+					"Players without leather boots",
 					"are slowed on snow."
 			},
 			"snow-slow",
@@ -528,65 +548,106 @@ public enum Feature {
 			new Modifier[]{new Modifier("damage", 3.0)}
 	);
 
-	private final String name;
-	private final List<String> lore;
+	private String name;
+	private List<String> lore;
 	private final String path;
 	private final List<Modifier> modifiers;
 	private final Function<World, WorldEventHandler> event;
 	private ConfigFile configFile;
+	private static FileConfiguration featureConfig;
 
 	/**
 	 * Constructor for features without world events.
 	 */
-	Feature(String name, String[] lore, String path, Modifier[] modifiers) {
-		this(name, lore, path, modifiers, null);
+	Feature(String defaultName, String[] defaultLore, String path, Modifier[] modifiers) {
+		this(defaultName, defaultLore, path, modifiers, null);
 	}
 
 	/**
 	 * Constructor for features with world events.
 	 */
-	Feature(String name, String[] lore, String path, Modifier[] modifiers, Function<World, WorldEventHandler> event) {
-		this.name = name;
-		this.lore = Collections.unmodifiableList(Arrays.asList(lore));
+	Feature(String defaultName, String[] defaultLore, String path, Modifier[] modifiers, Function<World, WorldEventHandler> event) {
 		this.path = path;
 		this.modifiers = Collections.unmodifiableList(Arrays.asList(modifiers));
 		this.event = event;
+		loadDescriptions(defaultName, defaultLore); // Tải mô tả từ file YAML
 	}
 
 	/**
-	 * Gets the display name of the feature.
+	 * Tải name và lore từ Feature.yml, sử dụng giá trị mặc định nếu không tìm thấy.
+	 */
+	private void loadDescriptions(String defaultName, String[] defaultLore) {
+		if (featureConfig == null) {
+			try {
+				File file = new File(SuddenDeath.getInstance().getDataFolder(), "language/feature.yml");
+				if (!file.exists()) {
+					SuddenDeath.getInstance().saveResource("language/feature.yml", false);
+				}
+				featureConfig = YamlConfiguration.loadConfiguration(file);
+			} catch (Exception e) {
+				SuddenDeath.getInstance().getLogger().log(Level.SEVERE, "Không thể tải Feature.yml", e);
+			}
+		}
+
+		ConfigurationSection section = featureConfig.getConfigurationSection("features." + path);
+		if (section != null) {
+			this.name = section.getString("name", defaultName);
+			this.lore = section.getStringList("lore");
+			if (this.lore.isEmpty()) {
+				this.lore = Collections.unmodifiableList(Arrays.asList(defaultLore));
+			} else {
+				this.lore = Collections.unmodifiableList(this.lore);
+			}
+		} else {
+			this.name = defaultName;
+			this.lore = Collections.unmodifiableList(Arrays.asList(defaultLore));
+		}
+	}
+
+	/**
+	 * Tải lại mô tả cho tất cả các tính năng.
+	 */
+	public static void reloadDescriptions() {
+		featureConfig = null;
+		for (Feature feature : values()) {
+			feature.loadDescriptions(feature.name, feature.lore.toArray(new String[0]));
+		}
+	}
+
+	/**
+	 * Lấy tên hiển thị của tính năng.
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * Gets the lore/description of the feature.
+	 * Lấy mô tả của tính năng.
 	 */
 	public List<String> getLore() {
 		return lore;
 	}
 
 	/**
-	 * Gets the configuration path for the feature.
+	 * Lấy đường dẫn cấu hình cho tính năng.
 	 */
 	public String getPath() {
 		return path;
 	}
 
 	/**
-	 * Initializes or updates the configuration file for this feature.
+	 * Khởi tạo hoặc cập nhật file cấu hình cho tính năng.
 	 */
 	public void updateConfig() {
 		try {
 			configFile = new ConfigFile("/modifiers", path);
 		} catch (Exception e) {
-			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Failed to initialize config for feature: " + name, e);
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Không thể khởi tạo cấu hình cho tính năng: " + name, e);
 		}
 	}
 
 	/**
-	 * Gets the configuration file for this feature.
+	 * Lấy file cấu hình cho tính năng.
 	 */
 	public ConfigFile getConfigFile() {
 		if (configFile == null) {
@@ -596,42 +657,42 @@ public enum Feature {
 	}
 
 	/**
-	 * Gets a boolean value from the feature's configuration.
+	 * Lấy giá trị boolean từ cấu hình của tính năng.
 	 */
 	public boolean getBoolean(String path) {
 		return getConfigFile().getConfig().getBoolean(path, false);
 	}
 
 	/**
-	 * Gets a double value from the feature's configuration.
+	 * Lấy giá trị double từ cấu hình của tính năng.
 	 */
 	public double getDouble(String path) {
 		return getConfigFile().getConfig().getDouble(path, 0.0);
 	}
 
 	/**
-	 * Gets a string value from the feature's configuration.
+	 * Lấy giá trị chuỗi từ cấu hình của tính năng.
 	 */
 	public String getString(String path) {
 		return getConfigFile().getConfig().getString(path, "");
 	}
 
 	/**
-	 * Gets the list of modifiers for this feature.
+	 * Lấy danh sách các modifier của tính năng.
 	 */
 	public List<Modifier> getModifiers() {
 		return modifiers;
 	}
 
 	/**
-	 * Checks if this feature is associated with a world event.
+	 * Kiểm tra xem tính năng có liên quan đến sự kiện thế giới không.
 	 */
 	public boolean isEvent() {
 		return event != null;
 	}
 
 	/**
-	 * Generates a WorldEventHandler for the given world, if applicable.
+	 * Tạo WorldEventHandler cho thế giới đã cho, nếu có.
 	 */
 	public StatusRetriever generateWorldEventHandler(World world) {
 		if (isEvent()) {
@@ -642,21 +703,21 @@ public enum Feature {
 	}
 
 	/**
-	 * Checks if the feature is enabled for the given entity.
+	 * Kiểm tra xem tính năng có được kích hoạt cho entity không.
 	 */
 	public boolean isEnabled(Entity entity) {
 		return isEnabled(entity.getWorld());
 	}
 
 	/**
-	 * Checks if the feature is enabled for the given world.
+	 * Kiểm tra xem tính năng có được kích hoạt cho thế giới không.
 	 */
 	public boolean isEnabled(World world) {
 		try {
 			List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(path);
 			return enabledWorlds.contains(world.getName());
 		} catch (Exception e) {
-			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error checking if feature " + name + " is enabled for world " + world.getName(), e);
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Lỗi khi kiểm tra tính năng " + name + " cho thế giới " + world.getName(), e);
 			return false;
 		}
 	}

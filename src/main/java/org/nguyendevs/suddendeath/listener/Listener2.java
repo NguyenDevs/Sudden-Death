@@ -336,7 +336,7 @@ public class Listener2 implements Listener {
 		try {
 			if (Feature.SNOW_SLOW.isEnabled(player) && !Utils.hasCreativeGameMode(player) &&
 					player.getLocation().getBlock().getType() == Material.SNOW &&
-					isWearingHeavyBoots(player)) {
+					isWearingLeatherBoots(player)) {
 				player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 0));
 			}
 		} catch (Exception e) {
@@ -366,13 +366,13 @@ public class Listener2 implements Listener {
 	 * @param player The player to check.
 	 * @return True if the player is wearing iron, golden, or diamond boots.
 	 */
-	private boolean isWearingHeavyBoots(Player player) {
+	private boolean isWearingLeatherBoots(Player player) {
 		ItemStack boots = player.getInventory().getBoots();
 		if (boots == null) {
 			return false;
 		}
 		Material type = boots.getType();
-		return type == Material.IRON_BOOTS || type == Material.GOLDEN_BOOTS || type == Material.DIAMOND_BOOTS;
+		return type == Material.LEATHER_BOOTS;
 	}
 
 	/**
