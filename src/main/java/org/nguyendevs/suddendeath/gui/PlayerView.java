@@ -201,7 +201,7 @@ public class PlayerView extends PluginInventory {
             String[] parts = lore.split("#", 3);
             if (parts.length >= 2) {
                 String stat = parts[1];
-                return statsInLore(feature, parts[0] + ChatColor.WHITE + DECIMAL_FORMAT.format(feature.getDouble(stat)) + ChatColor.GRAY + parts[2]);
+                return statsInLore(feature, parts[0] + ChatColor.GREEN + DECIMAL_FORMAT.format(feature.getDouble(stat)) + ChatColor.GRAY + parts[2]);
             }
         }
         return lore;
