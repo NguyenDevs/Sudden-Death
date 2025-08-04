@@ -235,20 +235,6 @@ public enum Feature {
 			"everburning-blazes",
 			new Modifier[]{new Modifier("burn-duration", 3.0)}
 	),
-	IMMORTAL_EVOKER(
-			"Immortal Evoker",
-			new String[]{
-					"Evoker has a #chance-percent#% chance to use Totem to",
-					"avoid death and gain level #resistance-amplifier# resistance.",
-			        "Also, every 5 seconds, summon #vex-amount# Vex."
-			},
-			"immortal-evoker",
-			new Modifier[]{
-					new Modifier("chance-percent", 75.0),
-					new Modifier("resistance-amplifier", 3),
-					new Modifier("vex-amount",3)
-			}
-	),
 	FALL_STUN(
 			"Fall Stun",
 			new String[]{
@@ -284,6 +270,20 @@ public enum Feature {
 			},
 			"hunger-nausea",
 			new Modifier[]{}
+	),
+	IMMORTAL_EVOKER(
+			"Immortal Evoker",
+			new String[]{
+					"Evoker has a #chance-percent#% chance to use Totem to",
+					"avoid death and gain level #resistance-amplifier# resistance.",
+					"Also, every 5 seconds, summon #vex-amount# Vex."
+			},
+			"immortal-evoker",
+			new Modifier[]{
+					new Modifier("chance-percent", 75.0),
+					new Modifier("resistance-amplifier", 3),
+					new Modifier("vex-amount",3)
+			}
 	),
 	INFECTION(
 			"Infection",
