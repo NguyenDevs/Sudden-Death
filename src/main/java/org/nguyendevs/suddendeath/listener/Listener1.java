@@ -1,5 +1,3 @@
-
-
 package org.nguyendevs.suddendeath.listener;
 
 import org.bukkit.*;
@@ -45,6 +43,8 @@ import java.util.logging.Level;
 public class Listener1 implements Listener {
     private final Set<UUID> allowed = new HashSet<>();
     private final NamespacedKey bounces;
+    private final NamespacedKey totemUsed;
+
 
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
@@ -68,6 +68,7 @@ public class Listener1 implements Listener {
     public Listener1(SuddenDeath plugin) {
         this.plugin = plugin;
         this.bounces = new NamespacedKey(plugin, "bounces");
+        this.totemUsed = new NamespacedKey(plugin, "totem_used");
         // Witch loop
         new BukkitRunnable() {
             @Override
@@ -192,7 +193,9 @@ public class Listener1 implements Listener {
                     for (World world : Bukkit.getWorlds()) {
                         if (Feature.IMMORTAL_EVOKER.isEnabled(world)) {
                             for (Evoker evoker : world.getEntitiesByClass(Evoker.class)) {
-                                if (evoker.getTarget() instanceof Player) {
+                                if (evoker.getTarget() instanceof Player &&
+                                        evoker.getPersistentDataContainer().has(totemUsed, PersistentDataType.BYTE) &&
+                                        evoker.getPersistentDataContainer().get(totemUsed, PersistentDataType.BYTE) == 1) {
                                     applyImmortalEvokerVexSummon(evoker);
                                 }
                             }
@@ -317,6 +320,7 @@ public class Listener1 implements Listener {
                         event.setCancelled(true);
                         evoker.setHealth(evoker.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue()); // Phục hồi máu
                         evoker.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 200, (int) Feature.IMMORTAL_EVOKER.getDouble("resistance-amplifier") - 1));
+                        evoker.getPersistentDataContainer().set(totemUsed, PersistentDataType.BYTE, (byte) 1); // Đánh dấu đã dùng Totem
 
                         // Hiệu ứng Totem giống người chơi
                         evoker.getWorld().playSound(evoker.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
