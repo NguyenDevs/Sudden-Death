@@ -43,12 +43,14 @@ public enum Message {
 			"You seem clean... for now."
 	)),
 
+	GUI_ADMIN_NAME("&8SD Admin GUI"),
 	GUI_PLAYER_NAME("&8SD Player GUI"),
-	GUI_PLAYER_NEXT("&aNext"),
-	GUI_PLAYER_PREVIOUS("&aPrevious"),
-	GUI_PLAYER_FEATURES("&7This feature is enabled in:"),
-	GUI_PLAYER_FEATURES_ENABLED("&aThis feature is enabled in this world."),
-	GUI_PLAYER_FEATURES_DISABLED("&cThis feature is disabled in this world."),
+
+	GUI_NEXT("&aNext"),
+	GUI_PREVIOUS("&aPrevious"),
+	GUI_FEATURES("&7This feature is enabled in:"),
+	GUI_FEATURES_ENABLED("&aThis feature is enabled in this world."),
+	GUI_FEATURES_DISABLED("&cThis feature is disabled in this world."),
 
 	GIVE_ITEM("You gave &f#player# #item##amount#&e."),
 	RECEIVE_ITEM("You received &f#item##amount#&e."),
