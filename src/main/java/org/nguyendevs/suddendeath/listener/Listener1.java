@@ -48,7 +48,7 @@ public class Listener1 implements Listener {
 
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
-    private static final long VEX_INTERVAL = 100L;
+    private static final long FANG_INTERVAL = 200L;
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
     private static final long BLOOD_EFFECT_INTERVAL = 0L;
@@ -185,7 +185,7 @@ public class Listener1 implements Listener {
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, SPIDER_LOOP_INTERVAL);
 
-        // Evoker loop for summoning Vex
+        // Evoker loop for spawning Fangs and pulling player
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -196,16 +196,16 @@ public class Listener1 implements Listener {
                                 if (evoker.getTarget() instanceof Player &&
                                         evoker.getPersistentDataContainer().has(totemUsed, PersistentDataType.BYTE) &&
                                         evoker.getPersistentDataContainer().get(totemUsed, PersistentDataType.BYTE) == 1) {
-                                    applyImmortalEvokerVexSummon(evoker);
+                                    applyImmortalEvokerFangs(evoker);
                                 }
                             }
                         }
                     }
                 } catch (Exception e) {
-                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Evoker Vex Summon loop task", e);
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Evoker Fangs loop task", e);
                 }
             }
-        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, VEX_INTERVAL);
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, FANG_INTERVAL);
 
         // Blood Effect loop
         new BukkitRunnable() {
@@ -512,6 +512,40 @@ public class Listener1 implements Listener {
     }
  */
 
+
+    /**
+     * Applies the Evoker Fangs spawning and player pulling for Immortal Evoker.
+     */
+    private void applyImmortalEvokerFangs(Evoker evoker) {
+        try {
+            if (evoker == null || evoker.getHealth() <= 0 || evoker.getTarget() == null || !(evoker.getTarget() instanceof Player player)) {
+                return;
+            }
+            Location playerLoc = player.getLocation();
+            int fangAmount = (int) Feature.IMMORTAL_EVOKER.getDouble("fang-amount"); // Sử dụng vex-amount làm số lượng Fangs
+            World world = evoker.getWorld();
+
+            // Spawn Evoker Fangs dưới chân người chơi
+            for (int i = 0; i < fangAmount; i++) {
+                Location fangLoc = playerLoc.clone().add(RANDOM.nextDouble() * 1 - 0.5, 0, RANDOM.nextDouble() * 1 - 0.5);
+                world.spawnEntity(fangLoc, EntityType.EVOKER_FANGS);
+                world.playSound(fangLoc, Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1.0f, 1.0f);
+                world.spawnParticle(Particle.SPELL_WITCH, fangLoc.add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0);
+            }
+
+            // Kéo người chơi xuống dưới 2 block để ngạt thở
+            if (!Utils.hasCreativeGameMode(player)) {
+                Location newLoc = playerLoc.clone().subtract(0, 2, 0);
+                player.teleport(newLoc);
+                world.playSound(newLoc, Sound.ENTITY_PLAYER_HURT, 1.0f, 0.8f);
+                world.spawnParticle(Particle.BLOCK_CRACK, newLoc.add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0,
+                        newLoc.getBlock().getType().createBlockData());
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Immortal Evoker Fangs for evoker: " + evoker.getUniqueId(), e);
+        }
+    }
 
     /**
      * Applies the Vex summoning for Immortal Evoker.

@@ -276,13 +276,14 @@ public enum Feature {
 			new String[]{
 					"Evoker has a #chance-percent#% chance to use Totem to",
 					"avoid death and gain level #resistance-amplifier# resistance.",
-					"Also, every 5 seconds, summon #vex-amount# Vex."
+					"After that, every 10 seconds, summon Fangs and pull the player",
+					"into the ground."
 			},
 			"immortal-evoker",
 			new Modifier[]{
 					new Modifier("chance-percent", 75.0),
 					new Modifier("resistance-amplifier", 3),
-					new Modifier("vex-amount",3)
+					new Modifier("fang-amount",3)
 			}
 	),
 	INFECTION(
