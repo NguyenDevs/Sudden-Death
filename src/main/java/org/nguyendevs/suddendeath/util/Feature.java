@@ -23,8 +23,8 @@ public enum Feature {
 	ADVANCED_PLAYER_DROPS(
 			"Advanced Player Drops",
 			new String[]{
-					"Players drop a skull, bones, and human flesh on death.",
-					"Human flesh can be cooked."
+					"Players drop a skull, bones, and human",
+					"flesh on death. Human flesh can be cooked."
 			},
 			"advanced-player-drops",
 			new Modifier[]{
