@@ -7,6 +7,7 @@ import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import org.bukkit.*;
+import org.bukkit.command.defaults.ReloadCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -42,6 +43,7 @@ public class SuddenDeath extends JavaPlugin {
     private static SuddenDeath instance;
     private final Map<Player, Integer> players = new ConcurrentHashMap<>();
     private ConfigFile configuration;
+    private ConfigFile features;
     private PacketSender packetSender;
     private WGPlugin wgPlugin;
     private EventManager eventManager;
@@ -115,8 +117,10 @@ public class SuddenDeath extends JavaPlugin {
     private void initializeConfigFiles() {
         messages = new ConfigFile(this, "/language", "messages");
         items = new ConfigFile(this, "/language", "items");
+        features = new ConfigFile(this, "feature"); // Khởi tạo ConfigFile cho Feature.yml
         initializeDefaultMessages();
         initializeDefaultItems();
+        initializeDefaultFeatures(); // Thêm hàm khởi tạo Feature.yml
         FileConfiguration defaultConfig = new YamlConfiguration();
         try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(getResource("config.yml")))) {
             defaultConfig.load(reader);
@@ -234,6 +238,37 @@ public class SuddenDeath extends JavaPlugin {
         if (saveNeeded) {
             items.save();
         }
+    }
+
+    /**
+     * Initialize default features configuration
+     */
+    private void initializeDefaultFeatures() {
+        features.setup();
+        boolean saveNeeded = false;
+        for (Feature feature : Feature.values()) {
+            String featureKey = feature.getPath();
+            ConfigurationSection section = features.getConfig().getConfigurationSection("features." + featureKey);
+            if (section == null) {
+                section = features.getConfig().createSection("features." + featureKey);
+                section.set("name", feature.getName());
+                section.set("lore", feature.getLore());
+                saveNeeded = true;
+            } else {
+                if (!section.contains("name")) {
+                    section.set("name", feature.getName());
+                    saveNeeded = true;
+                }
+                if (!section.contains("lore")) {
+                    section.set("lore", feature.getLore());
+                    saveNeeded = true;
+                }
+            }
+        }
+        if (saveNeeded) {
+            features.save();
+        }
+        Feature.reloadDescriptions(); // Tải lại mô tả sau khi khởi tạo
     }
 
     /**
@@ -407,7 +442,7 @@ public class SuddenDeath extends JavaPlugin {
                     Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
                             "&6[&cSudden&4Death&6] &cWorldGuardOn failed: " + e.getMessage()));
                     Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6[&cSudden&4Death&6] &6Falling back to WorldGuardOff mode"));
+                            "&6[&cSudden&4Death&6] &6Falling FIback to WorldGuardOff mode"));
                     this.wgPlugin = new WorldGuardOff();
                     worldGuardReady = true;
                 } catch (NoClassDefFoundError e) {
@@ -596,6 +631,7 @@ public class SuddenDeath extends JavaPlugin {
             configuration.reload();
             messages.reload();
             items.reload();
+            features.reload(); // Tải lại Feature.yml
             for (EntityType type : EntityType.values()) {
                 if (type.isAlive()) {
                     ConfigFile mobConfig = new ConfigFile(this, "/customMobs", Utils.lowerCaseId(type.name()));
@@ -609,6 +645,7 @@ public class SuddenDeath extends JavaPlugin {
                 WorldGuardOn wgOn = (WorldGuardOn) wgPlugin;
             }
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
+            Feature.reloadDescriptions(); // Tải lại mô tả của các tính năng
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aConfiguration reload completed successfully."));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error reloading configuration files", e);
@@ -673,6 +710,13 @@ public class SuddenDeath extends JavaPlugin {
      */
     public ConfigFile getConfiguration() {
         return configuration;
+    }
+
+    /**
+     * Get the features configuration file
+     */
+    public ConfigFile getFeaturesConfig() {
+        return features;
     }
 
     /**
