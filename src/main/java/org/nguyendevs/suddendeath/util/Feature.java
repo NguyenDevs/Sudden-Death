@@ -60,7 +60,10 @@ public enum Feature {
 
 	ARROW_SLOW(
 			"Arrow Slow",
-			new String[]{"Players hit by arrows are slowed for #slow-duration# seconds."},
+			new String[]{
+					"Players hit by arrows are slowed",
+					"for #slow-duration# seconds."
+			},
 			"arrow-slow",
 			new Modifier[]{new Modifier("slow-duration", 2.0)}
 	),
@@ -81,8 +84,10 @@ public enum Feature {
 	BLEEDING(
 			"Bleeding",
 			new String[]{
-					"Players have a #chance-percent#% chance to bleed when damaged.",
-					"Bleeding disables health saturation regen and deals #damage# every 3 seconds.",
+					"Players have a #chance-percent#% chance",
+					"to bleed when damaged.",
+					"Bleeding disables health saturation regen",
+					"and deals #damage# every 3 seconds.",
 					"Can be stopped by using a bandage."
 			},
 			"bleeding",
@@ -98,8 +103,10 @@ public enum Feature {
 			"Blood Moon",
 			new String[]{
 					"Night has #chance#% chance to turn red.",
-					"Players take #damage-percent#% more damage and are slowed for #slow-duration#s.",
-					"Monsters spawn with Speed #speed#, Strength #increase-damage#, and Resistance #damage-resistance#."
+					"Players take #damage-percent#% more damage",
+					"and are slowed for #slow-duration#s.",
+					"Monsters spawn with Speed #speed#,",
+					"Strength #increase-damage#, and Resistance #damage-resistance#."
 			},
 			"blood-moon",
 			new Modifier[]{
@@ -116,7 +123,7 @@ public enum Feature {
 	BLOOD_SCREEN(
 			"Blood Screen",
 			new String[]{
-					"Player screen turn red when get damage.",
+					"Player screen turn red when get damage."
 			},
 			"blood-screen",
 			new Modifier[]{
@@ -128,8 +135,10 @@ public enum Feature {
 	BONE_GRENADES(
 			"Bone Grenades",
 			new String[]{
-					"Skeletons have #chance-percent#% chance to throw bone grenades.",
-					"Grenades explode, dealing #damage# damage and knocking back players."
+					"Skeletons have #chance-percent#% chance",
+					"to throw bone grenades.",
+					"Grenades explode, dealing #damage# damage",
+					"and knocking back players."
 			},
 			"bone-grenades",
 			new Modifier[]{
@@ -142,8 +151,10 @@ public enum Feature {
 			"Bone Wizards",
 			new String[]{
 					"Skeletons named 'Bone Wizards' cast spells:",
-					"Fireball: #fireball-damage# damage, #fireball-duration# sec. burn",
-					"Frost Curse: #frost-curse-damage# damage, #frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
+					"Fireball: #fireball-damage# damage,",
+					"#fireball-duration# sec. burn",
+					"Frost Curse: #frost-curse-damage# damage,",
+					"#frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
 			},
 			"bone-wizards",
 			new Modifier[]{
@@ -158,8 +169,9 @@ public enum Feature {
 			"Breeze Dash",
 			new String[]{
 					"Breeze has a #chance-percent#% chance to accelerate,",
-					"very quickly, continuously firing #shot-amount# WindCharges at enemies",
-					"but in return the ability to jump is greatly reduced."
+					"very quickly, continuously firing #shot-amount#",
+					"WindCharges at enemies but in return",
+					"the ability to jump is greatly reduced."
 			}, "breeze-dash",
 			new Modifier[]{
 					new Modifier("chance-percent", 20),
@@ -170,14 +182,18 @@ public enum Feature {
 	),
 	CREEPER_REVENGE(
 			"Creeper Revenge",
-			new String[]{"Creepers have #chance-percent#% chance to explode on death."},
+			new String[]{
+					"Creepers have #chance-percent#% chance",
+					"to explode on death."
+			},
 			"creeper-revenge",
 			new Modifier[]{new Modifier("chance-percent", 15.0)}
 	),
 	DANGEROUS_COAL(
 			"Dangerous Coal",
 			new String[]{
-					"Mining coal has #chance-percent#% chance to trigger a gas pocket explosion.",
+					"Mining coal has #chance-percent#% chance",
+					"to trigger a gas pocket explosion.",
 					"Explosion radius: #radius# blocks."
 			},
 			"dangerous-coal",
@@ -189,7 +205,8 @@ public enum Feature {
 	ELECTRICITY_SHOCK(
 			"Electricity Shock",
 			new String[]{
-					"Powered redstone (wires, torches, repeaters, comparators) deals #damage# damage.",
+					"Powered redstone (wires, torches,",
+					"repeaters, comparators) deals #damage# damage.",
 					"Can occur every 3 seconds."
 			},
 			"electricity-shock",
@@ -198,8 +215,10 @@ public enum Feature {
 	ENDER_POWER(
 			"Ender Power",
 			new String[]{
-					"Players have #chance-percent#% chance to be blinded for #duration# seconds.",
-					"Triggered when hitting endermen, endermites, shulkers, or dragons."
+					"Players have #chance-percent#% chance",
+					"to be blinded for #duration# seconds.",
+					"Triggered when hitting endermen, endermites,",
+					"shulkers, or dragons."
 			},
 			"ender-power",
 			new Modifier[]{
@@ -209,45 +228,58 @@ public enum Feature {
 	),
 	EVERBURNING_BLAZES(
 			"Everburning Blazes",
-			new String[]{"Blazes summon fire beams that ignite players for #burn-duration# seconds."},
+			new String[]{
+					"Blazes summon fire beams that ignite",
+					"players for #burn-duration# seconds."
+			},
 			"everburning-blazes",
 			new Modifier[]{new Modifier("burn-duration", 3.0)}
 	),
 	FALL_STUN(
 			"Fall Stun",
 			new String[]{
-					"High falls cause players to be slowed (III) for a duration.",
-					"Duration scales with fall height."
+					"High falls cause players to be slowed (III)",
+					"for a duration. Duration scales with fall height."
 			},
 			"fall-stun",
 			new Modifier[]{new Modifier("duration-amplifier", 1)}
 	),
 	FORCE_OF_THE_UNDEAD(
 			"Force of the Undead",
-			new String[]{"Monsters deal increased attack damage.", "&cConfigurable for each monster."},
+			new String[]{
+					"Monsters deal increased attack damage.",
+					"&cConfigurable for each monster."
+			},
 			"force-of-the-undead",
 			new Modifier[]{new Modifier("additional-ad-percent", 25.0, Type.EACH_MOB)}
 	),
 	FREDDY(
 			"Freddy",
-			new String[]{"Players have #chance-percent#% chance to summon Freddy upon waking."},
+			new String[]{
+					"Players have #chance-percent#% chance",
+					"to summon Freddy upon waking."
+			},
 			"freddy",
 			new Modifier[]{new Modifier("chance-percent", 5.0)}
 	),
 
 	HUNGER_NAUSEA(
 			"Hunger Nausea",
-			new String[]{"Players get permanent nausea when hungry."},
+			new String[]{
+					"Players get permanent nausea when hungry."
+			},
 			"hunger-nausea",
 			new Modifier[]{}
 	),
 	INFECTION(
 			"Infection",
 			new String[]{
-					"Zombies have a #chance-percent#% chance to infect players.",
-					"Infection causes nausea and deals #damage# every 3 seconds.",
-					"Can be stopped using a Strange Brew.",
-					"Infection spreads via bare-hand attacks or player-to-player contact."
+					"Zombies have a #chance-percent#% chance",
+					"to infect players.",
+					"Infection causes nausea and deals #damage#",
+					"every 3 seconds. Can be stopped using a Strange Brew.",
+					"Infection spreads via bare-hand attacks",
+					"or player-to-player contact."
 			},
 			"infection",
 			new Modifier[]{
@@ -260,14 +292,17 @@ public enum Feature {
 	),
 	LEAPING_SPIDERS(
 			"Leaping Spiders",
-			new String[]{"Spiders can leap powerfully at players."},
+			new String[]{
+					"Spiders can leap powerfully at players."
+			},
 			"leaping-spiders",
 			new Modifier[]{}
 	),
 	MOB_CRITICAL_STRIKES(
 			"Mob Critical Strikes",
 			new String[]{
-					"Monsters can deal critical strikes with #damage-percent#% additional damage.",
+					"Monsters can deal critical strikes",
+					"with #damage-percent#% additional damage.",
 					"&cCrit Chance configurable for each monster."
 			},
 			"mob-critical-strikes",
@@ -279,8 +314,10 @@ public enum Feature {
 	NETHER_SHIELD(
 			"Nether Shield",
 			new String[]{
-					"Magma cubes, pigmen, and blazes have #chance-percent#% chance to block attacks.",
-					"Reflects #dmg-reflection-percent#% damage and ignites for #burn-duration# seconds."
+					"Magma cubes, pigmen, and blazes have",
+					"#chance-percent#% chance to block attacks.",
+					"Reflects #dmg-reflection-percent#% damage",
+					"and ignites for #burn-duration# seconds."
 			},
 			"nether-shield",
 			new Modifier[]{
@@ -291,7 +328,9 @@ public enum Feature {
 	),
 	PHYSIC_ENDER_PEARL(
 			"Physic EnderPearl",
-			new String[]{"EnderPearl will have physical properties like bounce, friction."
+			new String[]{
+					"EnderPearl will have physical properties",
+					"like bounce, friction."
 			},
 			"physic-ender-pearl",
 			new Modifier[]{new Modifier("bounciness", 0.85), new Modifier("vertical-bounciness", 0.7),
@@ -300,7 +339,8 @@ public enum Feature {
 	POISONED_SLIMES(
 			"Poisoned Slimes",
 			new String[]{
-					"Slimes have #chance-percent#% chance to poison players for #duration# seconds.",
+					"Slimes have #chance-percent#% chance",
+					"to poison players for #duration# seconds.",
 					"Poison effect amplifier: #amplifier#."
 			},
 			"poisoned-slimes",
@@ -312,14 +352,18 @@ public enum Feature {
 	),
 	QUICK_MOBS(
 			"Quick Mobs",
-			new String[]{"Monsters have increased movement speed.", "&cConfigurable for each monster."},
+			new String[]{
+					"Monsters have increased movement speed.",
+					"&cConfigurable for each monster."
+			},
 			"quick-mobs",
 			new Modifier[]{new Modifier("additional-ms-percent", 25.0, Type.EACH_MOB)}
 	),
 	REALISTIC_PICKUP(
 			"Realistic Pickup",
 			new String[]{
-					"Players must crouch and look down to pick up items.",
+					"Players must crouch and look down",
+					"to pick up items.",
 					"Briefly slows players on pickup."
 			},
 			"realistic-pickup",
@@ -327,13 +371,22 @@ public enum Feature {
 	),
 	SHOCKING_SKELETON_ARROWS(
 			"Shocking Skeleton Arrows",
-			new String[]{"Skeleton arrows shock players for #shock-duration# seconds."},
+			new String[]{
+					"Skeletons have #chance-percent#% chance",
+					"to shoot arrows that shock players",
+					"for #shock-duration# seconds."
+			},
 			"shocking-skeleton-arrows",
-			new Modifier[]{new Modifier("shock-duration", 1.0)}
+			new Modifier[]{
+					new Modifier("chance-percent", 40),
+					new Modifier("shock-duration", 1.0)}
 	),
 	SILVERFISHES_SUMMON(
 			"Silverfishes Summon",
-			new String[]{"Zombies have #chance-percent#% chance to summon #min# to #max# silverfish on death."},
+			new String[]{
+					"Zombies have #chance-percent#% chance",
+					"to summon #min# to #max# silverfish on death."
+			},
 			"silverfishes-summon",
 			new Modifier[]{
 					new Modifier("chance-percent", 35.0),
@@ -343,20 +396,27 @@ public enum Feature {
 	),
 	SNOW_SLOW(
 			"Snow Slow",
-			new String[]{"Players without iron, gold, or diamond boots are slowed on snow."},
+			new String[]{
+					"Players without iron, gold, or diamond boots",
+					"are slowed on snow."
+			},
 			"snow-slow",
 			new Modifier[]{}
 	),
 	STONE_STIFFNESS(
 			"Stone Stiffness",
-			new String[]{"Players take #damage# damage when punching stone."},
+			new String[]{
+					"Players take #damage# damage",
+					"when punching stone."
+			},
 			"stone-stiffness",
 			new Modifier[]{new Modifier("damage", 1.0)}
 	),
 	STRAY_FROST(
 			"Stray Frost",
 			new String[]{
-					"Stray have a #chance-percent#% chance to shot a Frost arrow.",
+					"Stray have a #chance-percent#% chance",
+					"to shoot a Frost arrow.",
 					"The player will freeze in #duration# second."
 			}, "stray-frost",
 			new Modifier[]{
@@ -367,8 +427,8 @@ public enum Feature {
 	SPIDER_WEB(
 			"Spider Web",
 			new String[]{
-					"Cave spider has a #chance-percent#% chance to shoot a web",
-					"that traps the player in place.",
+					"Cave spider has a #chance-percent#% chance",
+					"to shoot a web that traps the player in place.",
 					"It only disappears when the player breaks it."
 			}, "spider-web",
 			new Modifier[]{
@@ -378,14 +438,18 @@ public enum Feature {
 	),
 	TANKY_MONSTERS(
 			"Tanky Monsters",
-			new String[]{"Monsters take reduced damage.", "&cConfigurable for each monster."},
+			new String[]{
+					"Monsters take reduced damage.",
+					"&cConfigurable for each monster."
+			},
 			"tanky-monsters",
 			new Modifier[]{new Modifier("dmg-reduction-percent", 25.0, Type.EACH_MOB)}
 	),
 	THIEF_SLIMES(
 			"Thief Slimes",
 			new String[]{
-					"Slimes have #chance-percent#% chance to steal #exp# EXP when hitting players."
+					"Slimes have #chance-percent#% chance",
+					"to steal #exp# EXP when hitting players."
 			},
 			"thief-slimes",
 			new Modifier[]{
@@ -396,8 +460,10 @@ public enum Feature {
 	THUNDERSTORM(
 			"Thunderstorm",
 			new String[]{
-					"Storms have #chance#% chance to become thunderstorms.",
-					"Lightning deals #damage-percent#% more AoE damage and strikes more frequently."
+					"Storms have #chance#% chance",
+					"to become thunderstorms.",
+					"Lightning deals #damage-percent#% more AoE damage",
+					"and strikes more frequently."
 			},
 			"thunderstorm",
 			new Modifier[]{
@@ -409,7 +475,8 @@ public enum Feature {
 	UNDEAD_GUNNERS(
 			"Undead Gunners",
 			new String[]{
-					"Zombies named 'Undead Gunner' cast rockets dealing #damage# damage (AoE)."
+					"Zombies named 'Undead Gunner' cast rockets",
+					"dealing #damage# damage (AoE)."
 			},
 			"undead-gunners",
 			new Modifier[]{
@@ -420,7 +487,8 @@ public enum Feature {
 	UNDEAD_RAGE(
 			"Undead Rage",
 			new String[]{
-					"Zombies and pigmen gain Strength and Speed II for #rage-duration# seconds when damaged."
+					"Zombies and pigmen gain Strength and Speed II",
+					"for #rage-duration# seconds when damaged."
 			},
 			"undead-rage",
 			new Modifier[]{new Modifier("rage-duration", 4.0)}
@@ -429,8 +497,10 @@ public enum Feature {
 	WITCH_SCROLLS(
 			"Witch Scrolls",
 			new String[]{
-					"Witches have a #chance-percent#% chance to block damage with a magic shield.",
-					"Witches cast runes dealing #damage# damage and slowing players (II) for #slow-duration# seconds."
+					"Witches have a #chance-percent#% chance",
+					"to block damage with a magic shield.",
+					"Witches cast runes dealing #damage# damage",
+					"and slowing players (II) for #slow-duration# seconds."
 			},
 			"witch-scrolls",
 			new Modifier[]{
@@ -441,13 +511,19 @@ public enum Feature {
 	),
 	WITHER_MACHINEGUN(
 			"Wither Machinegun",
-			new String[]{"Wither Skeletons throw coal, each dealing #damage# damage."},
+			new String[]{
+					"Wither Skeletons throw coal,",
+					"each dealing #damage# damage."
+			},
 			"wither-machinegun",
 			new Modifier[]{new Modifier("damage", 2)}
 	),
 	WITHER_RUSH(
 			"Wither Rush",
-			new String[]{"Wither Skeletons blink to players, dealing #damage# damage."},
+			new String[]{
+					"Wither Skeletons blink to players,",
+					"dealing #damage# damage."
+			},
 			"wither-rush",
 			new Modifier[]{new Modifier("damage", 3.0)}
 	);
