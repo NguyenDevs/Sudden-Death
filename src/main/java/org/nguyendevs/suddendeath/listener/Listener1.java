@@ -48,7 +48,7 @@ public class Listener1 implements Listener {
 
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
-    private static final long FANG_INTERVAL = 160L;
+    private static final long FANG_INTERVAL = 100L;
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
     private static final long BLOOD_EFFECT_INTERVAL = 0L;
@@ -520,12 +520,13 @@ public class Listener1 implements Listener {
             if (evoker == null || evoker.getHealth() <= 0 || evoker.getTarget() == null || !(evoker.getTarget() instanceof Player player)) {
                 return;
             }
-            Location playerLoc = player.getLocation();
+            Location initialLoc = player.getLocation().clone(); // Lưu vị trí ban đầu của người chơi
             World world = evoker.getWorld();
 
+            // Spawn Evoker Fangs liên tục trồi lên ngẫu nhiên quanh vị trí ban đầu
             new BukkitRunnable() {
                 int ticks = 0;
-                final int duration = 20;
+                final int duration = 20; // 1 giây (20 tick) để trồi lên
 
                 @Override
                 public void run() {
@@ -534,8 +535,10 @@ public class Listener1 implements Listener {
                             cancel();
                             return;
                         }
-                        Location fangLoc = playerLoc.clone().add(RANDOM.nextDouble() * 1 - 0.5, -1 + (ticks * 0.2), RANDOM.nextDouble() * 1 - 0.5);
+                        // Spawn Fangs ngẫu nhiên quanh vị trí ban đầu
+                        Location fangLoc = initialLoc.clone().add(RANDOM.nextDouble() * 1 - 0.5, -1 + (ticks * 0.2), RANDOM.nextDouble() * 1 - 0.5);
                         world.spawnEntity(fangLoc, EntityType.EVOKER_FANGS);
+                        // Hiệu ứng màu mè: hạt ma thuật và khói
                         world.spawnParticle(Particle.SPELL_WITCH, fangLoc.add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0.05);
                         world.spawnParticle(Particle.SMOKE_NORMAL, fangLoc, 10, 0.3, 0.3, 0.3, 0.05);
                         world.playSound(fangLoc, Sound.ENTITY_EVOKER_FANGS_ATTACK, 0.8f, 1.2f);
@@ -546,12 +549,14 @@ public class Listener1 implements Listener {
                         cancel();
                     }
                 }
-            }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 2); // Spawn Fangs mỗi 0.1 giây (2 tick)
 
-            if (!Utils.hasCreativeGameMode(player)) {
+            // Kéo người chơi dần xuống dưới 3 block nếu vẫn ở gần vị trí ban đầu
+            if (!player.hasPermission("suddendeath.bypass") && !Utils.hasCreativeGameMode(player)) {
                 new BukkitRunnable() {
                     int ticks = 0;
-                    final int duration = 30;
+                    final int duration = 30; // 1.5 giây (30 tick) để kéo xuống
+                    final double maxDistance = 1.0; // Khoảng cách tối đa để kéo (1 block)
 
                     @Override
                     public void run() {
@@ -560,9 +565,15 @@ public class Listener1 implements Listener {
                                 cancel();
                                 return;
                             }
+                            // Kiểm tra xem người chơi có còn ở gần vị trí ban đầu không
+                            if (player.getLocation().distanceSquared(initialLoc) > maxDistance * maxDistance) {
+                                cancel();
+                                return;
+                            }
                             double progress = (double) ticks / duration;
-                            Location pullLoc = playerLoc.clone().subtract(0, 3 * progress, 0);
+                            Location pullLoc = initialLoc.clone().subtract(0, 3 * progress, 0);
                             player.teleport(pullLoc);
+                            // Hiệu ứng màu mè khi kéo xuống
                             world.spawnParticle(Particle.BLOCK_CRACK, pullLoc.add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0,
                                     pullLoc.getBlock().getType().createBlockData());
                             world.spawnParticle(Particle.SPELL_MOB, pullLoc, 15, 0.5, 0.5, 0.5, 0, Color.fromRGB(75, 0, 130)); // Màu tím đậm
@@ -574,7 +585,7 @@ public class Listener1 implements Listener {
                             cancel();
                         }
                     }
-                }.runTaskTimer(SuddenDeath.getInstance(), 20, 1);
+                }.runTaskTimer(SuddenDeath.getInstance(), 20, 1); // Bắt đầu kéo xuống sau 1 giây (20 tick)
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
