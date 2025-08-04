@@ -123,7 +123,7 @@ public class AdminView extends PluginInventory {
             lore.add("");
             lore.add(ChatColor.GRAY + "This feature is enabled in:");
             for (String world : enabledWorlds) {
-                lore.add(ChatColor.GRAY + "- " + ChatColor.WHITE + world);
+                lore.add(ChatColor.WHITE + "► " + ChatColor.DARK_GREEN + world);
             }
         }
 
