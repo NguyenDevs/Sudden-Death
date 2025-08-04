@@ -514,7 +514,7 @@ public class Listener1 implements Listener {
 
 
     /**
-     * Applies the Evoker Fangs spawning and player pulling for Immortal Evoker.
+     * Applies the Evoker Fangs spawning, player push up, and pull down for Immortal Evoker.
      */
     private void applyImmortalEvokerFangs(Evoker evoker) {
         try {
@@ -522,24 +522,73 @@ public class Listener1 implements Listener {
                 return;
             }
             Location playerLoc = player.getLocation();
-            int fangAmount = (int) Feature.IMMORTAL_EVOKER.getDouble("fang-amount"); // Sử dụng vex-amount làm số lượng Fangs
             World world = evoker.getWorld();
 
-            // Spawn Evoker Fangs dưới chân người chơi
-            for (int i = 0; i < fangAmount; i++) {
-                Location fangLoc = playerLoc.clone().add(RANDOM.nextDouble() * 1 - 0.5, 0, RANDOM.nextDouble() * 1 - 0.5);
-                world.spawnEntity(fangLoc, EntityType.EVOKER_FANGS);
-                world.playSound(fangLoc, Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1.0f, 1.0f);
-                world.spawnParticle(Particle.SPELL_WITCH, fangLoc.add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0);
-            }
-
-            // Kéo người chơi xuống dưới 2 block để ngạt thở
+            // Đẩy người chơi lên 4 block
             if (!Utils.hasCreativeGameMode(player)) {
-                Location newLoc = playerLoc.clone().subtract(0, 2, 0);
-                player.teleport(newLoc);
-                world.playSound(newLoc, Sound.ENTITY_PLAYER_HURT, 1.0f, 0.8f);
-                world.spawnParticle(Particle.BLOCK_CRACK, newLoc.add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0,
-                        newLoc.getBlock().getType().createBlockData());
+                Location pushLoc = playerLoc.clone().add(0, 4, 0);
+                player.setVelocity(new Vector(0, 1.5, 0)); // Đẩy lên nhanh
+                player.teleport(pushLoc);
+                world.playSound(pushLoc, Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1.0f, 0.8f);
+                world.spawnParticle(Particle.SPELL_WITCH, pushLoc, 20, 0.5, 0.5, 0.5, 0.1);
+                world.spawnParticle(Particle.ENCHANTMENT_TABLE, pushLoc, 20, 0.5, 0.5, 0.5, 0.1);
+
+                // Spawn Evoker Fangs liên tục trồi lên từ dưới đất
+                new BukkitRunnable() {
+                    int ticks = 0;
+                    final int duration = 20; // 1 giây (20 tick) để trồi lên
+
+                    @Override
+                    public void run() {
+                        try {
+                            if (ticks >= duration || !player.isValid() || player.isDead()) {
+                                cancel();
+                                return;
+                            }
+                            // Spawn Fangs ngẫu nhiên quanh chân người chơi
+                            Location fangLoc = playerLoc.clone().add(RANDOM.nextDouble() * 1 - 0.5, -1 + (ticks * 0.2), RANDOM.nextDouble() * 1 - 0.5);
+                            world.spawnEntity(fangLoc, EntityType.EVOKER_FANGS);
+                            // Hiệu ứng màu mè: hạt ma thuật và khói
+                            world.spawnParticle(Particle.SPELL_WITCH, fangLoc.add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0.05);
+                            world.spawnParticle(Particle.SMOKE_NORMAL, fangLoc, 10, 0.3, 0.3, 0.3, 0.05);
+                            world.playSound(fangLoc, Sound.ENTITY_EVOKER_FANGS_ATTACK, 0.8f, 1.2f);
+                            ticks++;
+                        } catch (Exception e) {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "Error in Evoker Fangs rising task for evoker: " + evoker.getUniqueId(), e);
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(SuddenDeath.getInstance(), 0, 2); // Spawn Fangs mỗi 0.1 giây (2 tick)
+
+                // Kéo người chơi dần xuống dưới 3 block
+                new BukkitRunnable() {
+                    int ticks = 0;
+                    final int duration = 30; // 1.5 giây (30 tick) để kéo xuống
+
+                    @Override
+                    public void run() {
+                        try {
+                            if (ticks >= duration || !player.isValid() || player.isDead()) {
+                                cancel();
+                                return;
+                            }
+                            double progress = (double) ticks / duration;
+                            Location pullLoc = playerLoc.clone().subtract(0, 3 * progress, 0);
+                            player.teleport(pullLoc);
+                            // Hiệu ứng màu mè khi kéo xuống
+                            world.spawnParticle(Particle.BLOCK_CRACK, pullLoc.add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0,
+                                    pullLoc.getBlock().getType().createBlockData());
+                            world.spawnParticle(Particle.SPELL_MOB, pullLoc, 15, 0.5, 0.5, 0.5, 0, Color.fromRGB(75, 0, 130)); // Màu tím đậm
+                            world.playSound(pullLoc, Sound.BLOCK_GRAVEL_BREAK, 1.0f, 0.9f);
+                            ticks++;
+                        } catch (Exception e) {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "Error in Evoker pull down task for evoker: " + evoker.getUniqueId(), e);
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(SuddenDeath.getInstance(), 20, 1); // Bắt đầu kéo xuống sau 1 giây (20 tick)
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
