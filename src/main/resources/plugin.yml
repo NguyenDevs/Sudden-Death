@@ -1,5 +1,5 @@
 name: SuddenDeath
-version: 2.1.5
+version: 2.1.6
 main: org.nguyendevs.suddendeath.SuddenDeath
 softdepend: [WorldGuard]
 api-version: 1.19
