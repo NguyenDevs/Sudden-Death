@@ -276,7 +276,7 @@ public enum Feature {
 			new String[]{
 					"Evoker has a #chance-percent#% chance to use Totem to",
 					"avoid death and gain level #resistance-amplifier# resistance.",
-					"After that, every 8 seconds, summon Fangs and pull the player",
+					"After that, every 5 seconds, summon Fangs can pull the player",
 					"into the ground 3 block."
 			},
 			"immortal-evoker",
@@ -411,7 +411,7 @@ public enum Feature {
 	SNOW_SLOW(
 			"Snow Slow",
 			new String[]{
-					"Players without iron, gold, or diamond boots",
+					"Players without leather boots",
 					"are slowed on snow."
 			},
 			"snow-slow",
