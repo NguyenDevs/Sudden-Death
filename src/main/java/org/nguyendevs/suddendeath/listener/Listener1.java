@@ -1084,6 +1084,14 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
      */
     private void applyShockingSkeletonArrows(Player player) {
         try {
+            // Get chance percentage from config
+            double chancePercent = Feature.SHOCKING_SKELETON_ARROWS.getDouble("chance-percent");
+
+            // Roll for chance - if fails, don't apply effect
+            if (Math.random() * 100 > chancePercent) {
+                return;
+            }
+
             double duration = Feature.SHOCKING_SKELETON_ARROWS.getDouble("shock-duration");
             Location loc = player.getLocation();
 
@@ -1151,6 +1159,7 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
                     }
                 }
             }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
+
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error applying Shocking Skeleton Arrows for player: " + player.getName(), e);
