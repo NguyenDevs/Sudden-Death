@@ -48,7 +48,7 @@ public class Listener1 implements Listener {
 
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
-    private static final long BLAZE_SHOT_INTERVAL = 50L;
+    private static final long VEX_INTERVAL = 100L;
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
     private static final long BLOOD_EFFECT_INTERVAL = 0L;
@@ -184,6 +184,26 @@ public class Listener1 implements Listener {
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, SPIDER_LOOP_INTERVAL);
 
+        // Evoker loop for summoning Vex
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.IMMORTAL_EVOKER.isEnabled(world)) {
+                            for (Evoker evoker : world.getEntitiesByClass(Evoker.class)) {
+                                if (evoker.getTarget() instanceof Player) {
+                                    applyImmortalEvokerVexSummon(evoker);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Evoker Vex Summon loop task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, VEX_INTERVAL);
+
         // Blood Effect loop
         new BukkitRunnable() {
             @Override
@@ -287,6 +307,49 @@ public class Listener1 implements Listener {
             // Undead Rage
             if (event.getEntity() instanceof Zombie zombie && Feature.UNDEAD_GUNNERS.isEnabled(zombie)) {
                 applyUndeadRage(zombie);
+            }
+
+            // Immortal Evoker
+            if (event.getEntity() instanceof Evoker evoker && Feature.IMMORTAL_EVOKER.isEnabled(evoker)) {
+                if (evoker.getHealth() - event.getFinalDamage() <= 0) { // Kiểm tra nếu Evoker sắp chết
+                    double chance = Feature.IMMORTAL_EVOKER.getDouble("chance-percent") / 100.0;
+                    if (RANDOM.nextDouble() <= chance) {
+                        event.setCancelled(true);
+                        evoker.setHealth(evoker.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue()); // Phục hồi máu
+                        evoker.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 200, (int) Feature.IMMORTAL_EVOKER.getDouble("resistance-amplifier") - 1));
+
+                        // Hiệu ứng Totem giống người chơi
+                        evoker.getWorld().playSound(evoker.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
+                        evoker.getWorld().spawnParticle(Particle.TOTEM, evoker.getLocation().add(0, 1, 0), 100, 0.7, 0.7, 0.7, 0.3);
+                        new BukkitRunnable() {
+                            int ticks = 0;
+
+                            @Override
+                            public void run() {
+                                try {
+                                    if (ticks >= 40 || !evoker.isValid()) {
+                                        cancel();
+                                        return;
+                                    }
+                                    // Tạo hiệu ứng hạt Totem xoay quanh Evoker
+                                    for (int i = 0; i < 8; i++) {
+                                        double angle = (ticks + i * Math.PI / 4) % (Math.PI * 2);
+                                        double x = Math.cos(angle) * 0.8;
+                                        double z = Math.sin(angle) * 0.8;
+                                        evoker.getWorld().spawnParticle(Particle.TOTEM,
+                                                evoker.getLocation().add(x, 1.2 + Math.sin(ticks * 0.2) * 0.3, z),
+                                                1, 0, 0, 0, 0.2);
+                                    }
+                                    ticks++;
+                                } catch (Exception e) {
+                                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                            "Error in Immortal Evoker Totem particle task for evoker: " + evoker.getUniqueId(), e);
+                                    cancel();
+                                }
+                            }
+                        }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+                    }
+                }
             }
 
             // Witch Scrolls
@@ -444,6 +507,29 @@ public class Listener1 implements Listener {
         return path;
     }
  */
+
+
+    /**
+     * Applies the Vex summoning for Immortal Evoker.
+     */
+    private void applyImmortalEvokerVexSummon(Evoker evoker) {
+        try {
+            if (evoker == null || evoker.getHealth() <= 0 || evoker.getTarget() == null || !(evoker.getTarget() instanceof Player)) {
+                return;
+            }
+            int vexAmount = (int) Feature.IMMORTAL_EVOKER.getDouble("vex-amount");
+            for (int i = 0; i < vexAmount; i++) {
+                Location spawnLoc = evoker.getLocation().add(RANDOM.nextDouble() * 2 - 1, 1, RANDOM.nextDouble() * 2 - 1);
+                Vex vex = (Vex) evoker.getWorld().spawnEntity(spawnLoc, EntityType.VEX);
+                vex.setTarget(evoker.getTarget());
+                evoker.getWorld().playSound(spawnLoc, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.0f, 1.0f);
+                evoker.getWorld().spawnParticle(Particle.SPELL_WITCH, spawnLoc, 10, 0.5, 0.5, 0.5, 0);
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error applying Immortal Evoker Vex Summon for evoker: " + evoker.getUniqueId(), e);
+        }
+    }
 
 
     /**
