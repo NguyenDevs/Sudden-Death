@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.gui.AdminView;
 import org.nguyendevs.suddendeath.gui.CrafterInventory;
+import org.nguyendevs.suddendeath.gui.PlayerView;
 import org.nguyendevs.suddendeath.gui.Status;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.CustomItem;
@@ -27,7 +28,7 @@ import java.util.logging.Level;
 
 /**
  * Command executor for the SuddenDeath plugin's /sds command.
- * Handles status viewing, admin GUI, item management, recipe viewing, and more.
+ * Handles status viewing, admin GUI, item management, recipe viewing, menu viewing, and more.
  */
 public class SuddenDeathStatusCommand implements CommandExecutor {
     private static final String PERMISSION_STATUS = "suddendeath.admin";
@@ -68,6 +69,21 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                     }
                     if (sender instanceof Player player) {
                         new Status(player).open();
+                        playSound(player);
+                    } else {
+                        sender.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cThis command is only available for players."));
+                    }
+                }
+                case "menu" -> {
+                    if (!sender.hasPermission(PERMISSION_STATUS_VIEW)) {
+                        sender.sendMessage(translateColors(Utils.msg("prefix") + " " + getMessage("not-enough-perms")));
+                        if (sender instanceof Player) {
+                            playSound((Player) sender);
+                        }
+                        return true;
+                    }
+                    if (sender instanceof Player player) {
+                        new PlayerView(player).open();
                         playSound(player);
                     } else {
                         sender.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cThis command is only available for players."));
@@ -196,14 +212,15 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         sender.sendMessage(translateColors("&d/sds &fshows your status."));
         if (sender.hasPermission(PERMISSION_STATUS)) {
             sender.sendMessage(translateColors("&d/sds admin &fopens the admin GUI."));
-            sender.sendMessage(translateColors("&d/sds help &fdisplays the help page."));
+            sender.sendMessage(translateColors("&d/sds clean &fremoves all negative effects (Bleeding...)."));
             sender.sendMessage(translateColors("&d/sds give <item> (player) (amount) &fgives a player an item."));
+            sender.sendMessage(translateColors("&d/sds help &fdisplays the help page."));
             sender.sendMessage(translateColors("&d/sds itemlist &fdisplays the item list."));
             sender.sendMessage(translateColors("&d/sds reload &freloads the config file."));
-            sender.sendMessage(translateColors("&d/sds clean &fremoves all negative effects (Bleeding...)."));
             sender.sendMessage(translateColors("&d/sds start <event> &fstarts an event."));
         }
-        if(sender.hasPermission(PERMISSION_STATUS_VIEW)) {
+        if (sender.hasPermission(PERMISSION_STATUS_VIEW)) {
+            sender.sendMessage(translateColors("&d/sds menu &fopens the feature view GUI."));
             sender.sendMessage(translateColors("&d/sds status &fshows your status."));
         }
         if (sender.hasPermission(PERMISSION_RECIPE)) {
