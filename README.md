@@ -16,6 +16,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Hunger Nausea:** Hunger causes permanent nausea.
 - **Infection:** Zombies may infect players, causing nausea and periodic damage; stopped with Strange Brew.
 - **Realistic Pickup:** Players must crouch and look down to pick up items, causing brief slowdown.
+- **Physic EnderPearl** EnderPearl will have physical properties like bounce, friction.
 - **Snow Slow:** Players without specific boots are slowed on snow.
 - **Stone Stiffness:** Punching stone deals damage to players.
 - **Thunderstorm:** Storms may become thunderstorms with stronger, more frequent lightning.
@@ -70,6 +71,7 @@ Elevate your server’s challenge and excitement with these tailored monster-mak
 - `/sds admin` opens up the Admin GUI, where operators can freely enable and disable features.
 - `/sds get <item-name>` gives you a specific plugin item.
 - `/sds itemlist` shows every custom item, and how to get them.
+- `/sds menu` opens the feature view GUI.
 - `/sds reload` reloads the configuration file (pretty useless).
 - `/sds recipe` opens the crafting recipe GUI.
 - `/sds clean` removes bleeding, infected... effects.
