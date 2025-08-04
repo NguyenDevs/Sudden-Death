@@ -48,7 +48,7 @@ public class Listener1 implements Listener {
 
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
-    private static final long FANG_INTERVAL = 200L;
+    private static final long FANG_INTERVAL = 160L;
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
     private static final long BLOOD_EFFECT_INTERVAL = 0L;
@@ -314,15 +314,15 @@ public class Listener1 implements Listener {
 
             // Immortal Evoker
             if (event.getEntity() instanceof Evoker evoker && Feature.IMMORTAL_EVOKER.isEnabled(evoker)) {
-                if (evoker.getHealth() - event.getFinalDamage() <= 0) { // Kiểm tra nếu Evoker sắp chết
+                if (evoker.getHealth() - event.getFinalDamage() <= 0) {
                     double chance = Feature.IMMORTAL_EVOKER.getDouble("chance-percent") / 100.0;
                     if (RANDOM.nextDouble() <= chance) {
                         event.setCancelled(true);
-                        evoker.setHealth(evoker.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue()); // Phục hồi máu
+                        evoker.setHealth(evoker.getAttribute(Attribute.GENERIC_MAX_HEALTH).getBaseValue());
                         evoker.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 200, (int) Feature.IMMORTAL_EVOKER.getDouble("resistance-amplifier") - 1));
-                        evoker.getPersistentDataContainer().set(totemUsed, PersistentDataType.BYTE, (byte) 1); // Đánh dấu đã dùng Totem
+                        evoker.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,60,2));
+                        evoker.getPersistentDataContainer().set(totemUsed, PersistentDataType.BYTE, (byte) 1);
 
-                        // Hiệu ứng Totem giống người chơi
                         evoker.getWorld().playSound(evoker.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
                         evoker.getWorld().spawnParticle(Particle.TOTEM, evoker.getLocation().add(0, 1, 0), 100, 0.7, 0.7, 0.7, 0.3);
                         new BukkitRunnable() {
@@ -512,9 +512,8 @@ public class Listener1 implements Listener {
     }
  */
 
-
     /**
-     * Applies the Evoker Fangs spawning, player push up, and pull down for Immortal Evoker.
+     * Applies the Evoker Fangs spawning and player pull down for Immortal Evoker.
      */
     private void applyImmortalEvokerFangs(Evoker evoker) {
         try {
@@ -524,47 +523,35 @@ public class Listener1 implements Listener {
             Location playerLoc = player.getLocation();
             World world = evoker.getWorld();
 
-            // Đẩy người chơi lên 4 block
-            if (!Utils.hasCreativeGameMode(player)) {
-                Location pushLoc = playerLoc.clone().add(0, 4, 0);
-                player.setVelocity(new Vector(0, 1.5, 0)); // Đẩy lên nhanh
-                player.teleport(pushLoc);
-                world.playSound(pushLoc, Sound.ENTITY_EVOKER_PREPARE_ATTACK, 1.0f, 0.8f);
-                world.spawnParticle(Particle.SPELL_WITCH, pushLoc, 20, 0.5, 0.5, 0.5, 0.1);
-                world.spawnParticle(Particle.ENCHANTMENT_TABLE, pushLoc, 20, 0.5, 0.5, 0.5, 0.1);
+            new BukkitRunnable() {
+                int ticks = 0;
+                final int duration = 20;
 
-                // Spawn Evoker Fangs liên tục trồi lên từ dưới đất
-                new BukkitRunnable() {
-                    int ticks = 0;
-                    final int duration = 20; // 1 giây (20 tick) để trồi lên
-
-                    @Override
-                    public void run() {
-                        try {
-                            if (ticks >= duration || !player.isValid() || player.isDead()) {
-                                cancel();
-                                return;
-                            }
-                            // Spawn Fangs ngẫu nhiên quanh chân người chơi
-                            Location fangLoc = playerLoc.clone().add(RANDOM.nextDouble() * 1 - 0.5, -1 + (ticks * 0.2), RANDOM.nextDouble() * 1 - 0.5);
-                            world.spawnEntity(fangLoc, EntityType.EVOKER_FANGS);
-                            // Hiệu ứng màu mè: hạt ma thuật và khói
-                            world.spawnParticle(Particle.SPELL_WITCH, fangLoc.add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0.05);
-                            world.spawnParticle(Particle.SMOKE_NORMAL, fangLoc, 10, 0.3, 0.3, 0.3, 0.05);
-                            world.playSound(fangLoc, Sound.ENTITY_EVOKER_FANGS_ATTACK, 0.8f, 1.2f);
-                            ticks++;
-                        } catch (Exception e) {
-                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                                    "Error in Evoker Fangs rising task for evoker: " + evoker.getUniqueId(), e);
+                @Override
+                public void run() {
+                    try {
+                        if (ticks >= duration || !player.isValid() || player.isDead()) {
                             cancel();
+                            return;
                         }
+                        Location fangLoc = playerLoc.clone().add(RANDOM.nextDouble() * 1 - 0.5, -1 + (ticks * 0.2), RANDOM.nextDouble() * 1 - 0.5);
+                        world.spawnEntity(fangLoc, EntityType.EVOKER_FANGS);
+                        world.spawnParticle(Particle.SPELL_WITCH, fangLoc.add(0, 0.5, 0), 10, 0.3, 0.3, 0.3, 0.05);
+                        world.spawnParticle(Particle.SMOKE_NORMAL, fangLoc, 10, 0.3, 0.3, 0.3, 0.05);
+                        world.playSound(fangLoc, Sound.ENTITY_EVOKER_FANGS_ATTACK, 0.8f, 1.2f);
+                        ticks++;
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Evoker Fangs rising task for evoker: " + evoker.getUniqueId(), e);
+                        cancel();
                     }
-                }.runTaskTimer(SuddenDeath.getInstance(), 0, 2); // Spawn Fangs mỗi 0.1 giây (2 tick)
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
 
-                // Kéo người chơi dần xuống dưới 3 block
+            if (!Utils.hasCreativeGameMode(player)) {
                 new BukkitRunnable() {
                     int ticks = 0;
-                    final int duration = 30; // 1.5 giây (30 tick) để kéo xuống
+                    final int duration = 30;
 
                     @Override
                     public void run() {
@@ -576,7 +563,6 @@ public class Listener1 implements Listener {
                             double progress = (double) ticks / duration;
                             Location pullLoc = playerLoc.clone().subtract(0, 3 * progress, 0);
                             player.teleport(pullLoc);
-                            // Hiệu ứng màu mè khi kéo xuống
                             world.spawnParticle(Particle.BLOCK_CRACK, pullLoc.add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0,
                                     pullLoc.getBlock().getType().createBlockData());
                             world.spawnParticle(Particle.SPELL_MOB, pullLoc, 15, 0.5, 0.5, 0.5, 0, Color.fromRGB(75, 0, 130)); // Màu tím đậm
@@ -588,36 +574,13 @@ public class Listener1 implements Listener {
                             cancel();
                         }
                     }
-                }.runTaskTimer(SuddenDeath.getInstance(), 20, 1); // Bắt đầu kéo xuống sau 1 giây (20 tick)
+                }.runTaskTimer(SuddenDeath.getInstance(), 20, 1);
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error applying Immortal Evoker Fangs for evoker: " + evoker.getUniqueId(), e);
         }
     }
-
-    /**
-     * Applies the Vex summoning for Immortal Evoker.
-     */
-    private void applyImmortalEvokerVexSummon(Evoker evoker) {
-        try {
-            if (evoker == null || evoker.getHealth() <= 0 || evoker.getTarget() == null || !(evoker.getTarget() instanceof Player)) {
-                return;
-            }
-            int vexAmount = (int) Feature.IMMORTAL_EVOKER.getDouble("vex-amount");
-            for (int i = 0; i < vexAmount; i++) {
-                Location spawnLoc = evoker.getLocation().add(RANDOM.nextDouble() * 2 - 1, 1, RANDOM.nextDouble() * 2 - 1);
-                Vex vex = (Vex) evoker.getWorld().spawnEntity(spawnLoc, EntityType.VEX);
-                vex.setTarget(evoker.getTarget());
-                evoker.getWorld().playSound(spawnLoc, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.0f, 1.0f);
-                evoker.getWorld().spawnParticle(Particle.SPELL_WITCH, spawnLoc, 10, 0.5, 0.5, 0.5, 0);
-            }
-        } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error applying Immortal Evoker Vex Summon for evoker: " + evoker.getUniqueId(), e);
-        }
-    }
-
 
     /**
      * Applies the cave spider web shooting
