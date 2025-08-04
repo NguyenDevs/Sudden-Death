@@ -579,9 +579,9 @@ public enum Feature {
 	private void loadDescriptions(String defaultName, String[] defaultLore) {
 		if (featureConfig == null) {
 			try {
-				File file = new File(SuddenDeath.getInstance().getDataFolder(), "feature.yml");
+				File file = new File(SuddenDeath.getInstance().getDataFolder(), "language/feature.yml");
 				if (!file.exists()) {
-					SuddenDeath.getInstance().saveResource("feature.yml", false);
+					SuddenDeath.getInstance().saveResource("language/feature.yml", false);
 				}
 				featureConfig = YamlConfiguration.loadConfiguration(file);
 			} catch (Exception e) {
