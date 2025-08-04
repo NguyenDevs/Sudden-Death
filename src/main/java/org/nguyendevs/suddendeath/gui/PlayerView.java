@@ -121,7 +121,7 @@ public class PlayerView extends PluginInventory {
             lore.add("");
             lore.add(translateColors(Utils.msg("gui-player-features")));
             for (String world : enabledWorlds) {
-                lore.add(ChatColor.GRAY + "- " + ChatColor.WHITE + world);
+                lore.add(ChatColor.WHITE + "► " + ChatColor.DARK_GREEN + world);
             }
         }
 
