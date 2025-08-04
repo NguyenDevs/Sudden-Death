@@ -87,12 +87,12 @@ public enum Feature {
 					"Players have a #chance-percent#% chance",
 					"to bleed when damaged.",
 					"Bleeding disables health saturation regen",
-					"and deals #damage# every 3 seconds.",
+					"and deals #dps#*3 HP every 3 seconds.",
 					"Can be stopped by using a bandage."
 			},
 			"bleeding",
 			new Modifier[]{
-					new Modifier("dps", 0.1),
+					new Modifier("dps", 0.3),
 					new Modifier("chance-percent", 10.0),
 					new Modifier("health-min", 0),
 					new Modifier("auto-stop-bleed-time", 30),
@@ -123,7 +123,8 @@ public enum Feature {
 	BLOOD_SCREEN(
 			"Blood Screen",
 			new String[]{
-					"Player screen turn red when get damage."
+					"Players will have bleeding and red",
+					"screen effects when taking damage"
 			},
 			"blood-screen",
 			new Modifier[]{
@@ -169,7 +170,7 @@ public enum Feature {
 			"Breeze Dash",
 			new String[]{
 					"Breeze has a #chance-percent#% chance to accelerate,",
-					"very quickly, continuously firing #shot-amount#",
+					"very quickly, continuously firing #shoot-amount#",
 					"WindCharges at enemies but in return",
 					"the ability to jump is greatly reduced."
 			}, "breeze-dash",
@@ -276,8 +277,8 @@ public enum Feature {
 			new String[]{
 					"Evoker has a #chance-percent#% chance to use Totem to",
 					"avoid death and gain level #resistance-amplifier# resistance.",
-					"After that, every 5 seconds, summon Fangs can pull the player",
-					"into the ground 3 block."
+					"After that, every 5 seconds, summon Fangs ",
+					"can pull the player into the ground 3 block."
 			},
 			"immortal-evoker",
 			new Modifier[]{
@@ -290,14 +291,14 @@ public enum Feature {
 			new String[]{
 					"Zombies have a #chance-percent#% chance",
 					"to infect players.",
-					"Infection causes nausea and deals #damage#",
-					"every 3 seconds. Can be stopped using a Strange Brew.",
+					"Infection causes nausea and deals #dps#*3 HP every ",
+					"3 seconds. Can be stopped using a Strange Brew.",
 					"Infection spreads via bare-hand attacks",
 					"or player-to-player contact."
 			},
 			"infection",
 			new Modifier[]{
-					new Modifier("dps", 0.1),
+					new Modifier("dps", 0.3),
 					new Modifier("chance-percent", 15.0),
 					new Modifier("health-min", 0),
 					new Modifier("tug", true),

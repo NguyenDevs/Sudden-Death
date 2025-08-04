@@ -280,13 +280,25 @@ public class Listener1 implements Listener {
                         health = Math.max(health, 1); // Ensure health is at least 1
                         fakeDistance *= health;
                     }
+                    if (player.isOnGround() && !Utils.hasCreativeGameMode(player)) {
+                        double offsetX = (Math.random() - 0.5D) * 0.4D;
+                        double offsetY = 1.0 + ((Math.random() - 0.5D) * 0.5D);
+                        double offsetZ = (Math.random() - 0.5D) * 2.0D;
 
+                        player.getWorld().spawnParticle(
+                                Particle.BLOCK_CRACK,
+                                player.getLocation().add(offsetX, offsetY, offsetZ),
+                                30,
+                                Material.REDSTONE_BLOCK.createBlockData()
+                        );
+                    }
                     // Update player's blood effect distance
                     plugin.getPlayers().put(player, Math.abs(fakeDistance));
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING,
                             "Error handling EntityDamageEvent for player: " + player.getName(), e);
                 }
+
             }
             // Fall Stun
             if (event.getEntity() instanceof Player player && Feature.FALL_STUN.isEnabled(player) &&
@@ -552,11 +564,11 @@ public class Listener1 implements Listener {
             }.runTaskTimer(SuddenDeath.getInstance(), 0, 2); // Spawn Fangs mỗi 0.1 giây (2 tick)
 
             // Kéo người chơi dần xuống dưới 3 block nếu vẫn ở gần vị trí ban đầu
-            if (!player.hasPermission("suddendeath.bypass") && !Utils.hasCreativeGameMode(player)) {
+            if (!Utils.hasCreativeGameMode(player)) {
                 new BukkitRunnable() {
                     int ticks = 0;
                     final int duration = 30; // 1.5 giây (30 tick) để kéo xuống
-                    final double maxDistance = 1.0; // Khoảng cách tối đa để kéo (1 block)
+                    final double maxDistance = 2.0; // Khoảng cách tối đa để kéo (1 block)
 
                     @Override
                     public void run() {
@@ -985,7 +997,6 @@ private void placeCobwebsAroundPlayer(Player player, int amount) {
                 return;
             }
             if (RANDOM.nextDouble() <= chance && !data.isBleeding()) {
-                // Hủy runnable cũ nếu tồn tại
                 if (data.getBleedingTask() != null) {
                     data.getBleedingTask().cancel();
                 }
