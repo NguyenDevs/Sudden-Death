@@ -117,10 +117,10 @@ public class SuddenDeath extends JavaPlugin {
     private void initializeConfigFiles() {
         messages = new ConfigFile(this, "/language", "messages");
         items = new ConfigFile(this, "/language", "items");
-        features = new ConfigFile(this, "feature"); // Khởi tạo ConfigFile cho Feature.yml
+        features = new ConfigFile(this, "/language","feature");
         initializeDefaultMessages();
         initializeDefaultItems();
-        initializeDefaultFeatures(); // Thêm hàm khởi tạo Feature.yml
+        initializeDefaultFeatures();
         FileConfiguration defaultConfig = new YamlConfiguration();
         try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(getResource("config.yml")))) {
             defaultConfig.load(reader);
@@ -268,7 +268,7 @@ public class SuddenDeath extends JavaPlugin {
         if (saveNeeded) {
             features.save();
         }
-        Feature.reloadDescriptions(); // Tải lại mô tả sau khi khởi tạo
+        Feature.reloadDescriptions();
     }
 
     /**
@@ -686,7 +686,8 @@ public class SuddenDeath extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6              Version " + getDescription().getVersion()));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4         Sudden Death"));
+        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6         Version " + getDescription().getVersion()));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&b         Development by NguyenDevs"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
     }
