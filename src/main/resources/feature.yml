@@ -102,6 +102,12 @@ features:
     lore:
       - "Players have #chance-percent#% chance"
       - "to summon Freddy upon waking."
+  homing-flame-barrage:
+    name: "Homing Flame Barrage"
+    lore:
+      - "Blaze has a chance to fire a #shoot-amount# beam of fire."
+      - "It tracks the player and deals #damage# HP each beam"
+      - "that hits, with a hit rate of almost 100%."
   hunger-nausea:
     name: "Hunger Nausea"
     lore:
