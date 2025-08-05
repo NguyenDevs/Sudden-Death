@@ -268,7 +268,19 @@ public enum Feature {
 			"freddy",
 			new Modifier[]{new Modifier("chance-percent", 5.0)}
 	),
-
+	HOMING_FLAME_BARRAGE(
+			"Homing Flame Barrage",
+			new String[]{
+					"Blaze has a chance to fire a #shoot-amount# beam of fire.",
+					"It tracks the player and deals #damage# HP each beam",
+					"that hits, with a hit rate of almost 100%."
+			},
+			"homing-flame-barrage",
+			new Modifier[]{
+					new Modifier("chance-percent", 50),
+					new Modifier("shoot-amount", 3),
+			        new Modifier("damage", 1)}
+	),
 	HUNGER_NAUSEA(
 			"Hunger Nausea",
 			new String[]{
