@@ -14,11 +14,7 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.event.inventory.FurnaceSmeltEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
@@ -48,6 +44,7 @@ public class Listener1 implements Listener {
 
     private static final Random RANDOM = new Random();
     private static final long WITCH_LOOP_INTERVAL = 80L;
+    private static final long BLAZE_SHOT_INTERVAL = 100L;
     private static final long FANG_INTERVAL = 100L;
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
@@ -85,17 +82,16 @@ public class Listener1 implements Listener {
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, WITCH_LOOP_INTERVAL);
 
-        //Blaze Unreadable Fireball
-        /*
+
         new BukkitRunnable() {
             @Override
             public void run() {
                 try {
                     for (World world : Bukkit.getWorlds()) {
-                        if (Feature.BLAZE_LASER.isEnabled(world)) {
+                        if (Feature.HOMING_FLAME_BARRAGE.isEnabled(world)) {
                             for(Blaze blaze : world.getEntitiesByClass(Blaze.class)) {
                                 if(blaze.getTarget() instanceof Player)
-                                    applyBlazeLaser(blaze);
+                                    applyHomingFlameBarrage(blaze);
                             }
                         }
                     }
@@ -104,7 +100,7 @@ public class Listener1 implements Listener {
                 }
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BLAZE_SHOT_INTERVAL);
-         */
+
 
         // Breeze dash
         new BukkitRunnable() {
@@ -383,8 +379,7 @@ public class Listener1 implements Listener {
     }
 
 
-/*
-    private void applyBlazeLaser(Blaze blaze) {
+    private void applyHomingFlameBarrage(Blaze blaze) {
         if (blaze == null || blaze.getHealth() <= 0 || blaze.getTarget() == null || !(blaze.getTarget() instanceof Player target)) {
             return;
         }
@@ -392,137 +387,105 @@ public class Listener1 implements Listener {
             if (!target.getWorld().equals(blaze.getWorld())) {
                 return;
             }
-            double chance = Feature.BLAZE_LASER.getDouble("chance-percent") / 100.0;
-            double damage = Feature.BLAZE_LASER.getDouble("damage");
-            double shootAmount = Feature.BLAZE_LASER.getDouble("shoot-amount");
-            if (Math.random() > chance) {
+            double chance = Feature.HOMING_FLAME_BARRAGE.getDouble("chance-percent") / 100.0;
+            if (new Random().nextDouble() > chance) {
                 return;
             }
-            blaze.getWorld().playSound(blaze.getLocation(), Sound.ENTITY_BLAZE_HURT, 1.0f, 0.5f);
-            Location blazeEyeLocation = blaze.getEyeLocation();
-            int fireballCount = (int) (Math.random() * shootAmount) + 1;
-            for (int i = 0; i < fireballCount; i++) {
-                Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-                    if (target.isOnline() && !target.isDead()) {
-                        shootParabolicFireball(blaze, blazeEyeLocation, target.getLocation(), damage, 500);
-                    }
-                }, i * 6L); // 6 ticks = 0.3 seconds
+            int amount = (int) Feature.HOMING_FLAME_BARRAGE.getDouble("shoot-amount");
+            double damage = Feature.HOMING_FLAME_BARRAGE.getDouble("damage");
+
+            blaze.getWorld().playSound(blaze.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1.0f, 0.8f);
+
+            Location blazeEyeLoc = blaze.getLocation().add(0, 1.2, 0);
+            Vector initialDirection = target.getLocation().add(0, 1, 0).subtract(blazeEyeLoc).toVector().normalize();
+
+            double[] angles = new double[amount];
+            for (int i = 0; i < amount; i++) {
+                angles[i] = (2 * Math.PI / amount) * i;
             }
 
+            new BukkitRunnable() {
+                int beamCount = 0;
+
+                @Override
+                public void run() {
+                    try {
+                        if (beamCount >= amount || blaze.isDead() || !target.isOnline()) {
+                            cancel();
+                            return;
+                        }
+                        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1.0f, 2.0f);
+
+                        double angle = angles[beamCount];
+                        Vector beamDirection = initialDirection.clone();
+                        double cosAngle = Math.cos(angle);
+                        double sinAngle = Math.sin(angle);
+                        double y = beamDirection.getY() * cosAngle - beamDirection.getZ() * sinAngle;
+                        double z = beamDirection.getY() * sinAngle + beamDirection.getZ() * cosAngle;
+                        beamDirection.setY(y).setZ(z);
+                        target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 1.0f, 1.5f);
+
+                        new BukkitRunnable() {
+                            int ticks = 0;
+                            Location currentLoc = blazeEyeLoc.clone();
+                            final int maxTicks = 80;
+                            Vector initialVelocity = beamDirection.clone().multiply(0.5);
+
+                            @Override
+                            public void run() {
+                                try {
+                                    if (ticks >= maxTicks || blaze.isDead() || !target.isOnline()) {
+                                        cancel();
+                                        return;
+                                    }
+
+                                    if (ticks < 10) {
+                                        currentLoc.add(initialVelocity);
+                                    } else {
+                                        Location targetLoc = target.getLocation().add(0, 1, 0);
+                                        Vector direction = targetLoc.subtract(currentLoc).toVector().normalize();
+                                        double speed = 0.8;
+                                        currentLoc.add(direction.multiply(speed));
+                                    }
+
+                                    blaze.getWorld().spawnParticle(Particle.FLAME, currentLoc, 1, 0, 0, 0, 0);
+
+                                    Location targetLoc = target.getLocation().add(0, 1, 0);
+                                    if (currentLoc.distanceSquared(targetLoc) < 1.0) {
+                                        if (!Utils.hasCreativeGameMode(target)) {
+                                            Utils.damage(target, damage, true);
+                                            target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BLAZE_HURT, 1.0f, 0.5f);
+                                            target.getWorld().spawnParticle(Particle.FLAME, target.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3, 0.05);
+                                        }
+                                        cancel();
+                                        return;
+                                    }
+
+                                    ticks++;
+                                } catch (Exception e) {
+                                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                            "Error in Homing Flame Barrage beam task for blaze: " + blaze.getUniqueId(), e);
+                                    cancel();
+                                }
+                            }
+                        }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+
+                        beamCount++;
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Homing Flame Barrage beam sequence for blaze: " + blaze.getUniqueId(), e);
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 5);
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error applying Unreadable Fireball for blaze: " + blaze.getUniqueId(), e);
+                    "Error applying Homing Flame Barrage for blaze: " + blaze.getUniqueId(), e);
         }
     }
 
-    private void shootParabolicFireball(Blaze blaze, Location startLocation, Location targetLocation, double damage, double speed) {
-        int clockDirection = (int) (Math.random() * 12);
-        double angle = clockDirection * 30;
-        Vector direction = getClockDirection(angle);
-        double distance = startLocation.distance(targetLocation);
-        double height = 2 + Math.random() * 3;
 
-        Vector curveDirection = getCurveDirection(clockDirection);
-        createParabolicTrajectory(startLocation, targetLocation, direction, curveDirection, height, damage, speed, blaze.getWorld(), blaze.getTarget());
-    }
 
-    private Vector getClockDirection(double angle) {
-        double radians = Math.toRadians(angle);
-        double x = Math.sin(radians);
-        double z = -Math.cos(radians);
-        return new Vector(x, 0, z).normalize();
-    }
-
-    private Vector getCurveDirection(int clockPosition) {
-        Vector curveDir = new Vector(0, 0, 0);
-        switch (clockPosition) {
-            case 0:
-                curveDir.setY(1);
-                break;
-            case 1: case 2:
-                curveDir.setX(0.7).setY(0.7);
-                break;
-            case 3:
-                curveDir.setX(1);
-                break;
-            case 4: case 5:
-                curveDir.setX(0.7).setY(-0.7);
-                break;
-            case 6:
-                curveDir.setY(-1);
-                break;
-            case 7: case 8:
-                curveDir.setX(-0.7).setY(-0.7);
-                break;
-            case 9:
-                curveDir.setX(-1);
-                break;
-            case 10: case 11:
-                curveDir.setX(-0.7).setY(0.7);
-                break;
-        }
-        return curveDir.normalize();
-    }
-    private void createParabolicTrajectory(Location start, Location target, Vector direction,
-                                           Vector curveDirection, double height, double damage, double speed, World world, Entity targetEntity) {
-
-        long tickDelay = Math.max(1L, Math.round(5.0 / speed));
-        final List<Location>[] trajectory = new List[]{calculateParabolicPath(start, target, direction, curveDirection, height)};
-        new BukkitRunnable() {
-            private int index = 0;
-            @Override
-            public void run() {
-                if (!(targetEntity instanceof Player player) || !player.isOnline() || player.isDead()) {
-                    this.cancel();
-                    return;
-                }
-                trajectory[0] = calculateParabolicPath(start, player.getLocation(), direction, curveDirection, height);
-                int maxIndex = trajectory[0].size();
-
-                if (index >= maxIndex) {
-                    this.cancel();
-                    return;
-                }
-
-                Location currentLoc = trajectory[0].get(index);
-                world.spawnParticle(Particle.FLAME, currentLoc, 1, 0, 0, 0, 0);
-                for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 1, 1, 1)) {
-                    if (entity instanceof Player hitPlayer) {
-                        hitPlayer.damage(damage);
-                        world.playSound(currentLoc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
-                        world.spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
-                        this.cancel();
-                        return;
-                    }
-                }
-                if (currentLoc.getBlock().getType().isSolid()) {
-                    world.playSound(currentLoc, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 1.0f);
-                    world.spawnParticle(Particle.EXPLOSION_LARGE, currentLoc, 1);
-                    this.cancel();
-                    return;
-                }
-
-                index++;
-            }
-        }.runTaskTimer(SuddenDeath.getInstance(), 0L, tickDelay);
-    }
-
-    private List<Location> calculateParabolicPath(Location start, Location target, Vector direction, Vector curveDirection, double height) {
-        List<Location> path = new ArrayList<>();
-        double distance = start.distance(target);
-        int steps = (int) (distance * 4);
-        Vector startToTarget = target.toVector().subtract(start.toVector());
-        for (int i = 0; i <= steps; i++) {
-            double t = (double) i / steps;
-            Vector basePos = start.toVector().add(startToTarget.clone().multiply(t));
-            double curveOffset = height * 4 * t * (1 - t);
-            Vector curvePos = curveDirection.clone().multiply(curveOffset);
-            Vector finalPos = basePos.add(curvePos);
-            path.add(finalPos.toLocation(start.getWorld()));
-        }
-        return path;
-    }
- */
 
     /**
      * Applies the Evoker Fangs spawning and player pull down for Immortal Evoker.
