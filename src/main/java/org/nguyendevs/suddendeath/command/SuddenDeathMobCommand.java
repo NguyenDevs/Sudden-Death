@@ -228,10 +228,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         String id = args[2].toUpperCase().replace("-", "_");
         ConfigFile mobs = new ConfigFile(type);
 
-        if (!isValidId(player, id, mobs)) {
-            return;
-        }
-
         if (!mobs.getConfig().contains(id)) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&cThere is no mob called " + id + "!"));
             playSound(player);
