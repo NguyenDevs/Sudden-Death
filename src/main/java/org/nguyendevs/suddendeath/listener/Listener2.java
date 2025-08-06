@@ -30,18 +30,12 @@ import org.nguyendevs.suddendeath.util.Utils;
 import java.util.Random;
 import java.util.logging.Level;
 
-/**
- * Event listener for various entity and player interactions in the SuddenDeath plugin.
- */
 public class Listener2 implements Listener {
 	private static final Random RANDOM = new Random();
 	private static final long WITHER_SKELETON_LOOP_INTERVAL = 120L;
 	private static final long ZOMBIE_SKELETON_LOOP_INTERVAL = 60L;
 	private static final long INITIAL_DELAY = 20L;
 
-	/**
-	 * Initializes periodic tasks for WitherSkeleton and Zombie/Skeleton entities.
-	 */
 	public Listener2() {
 		// WitherSkeleton loop
 		new BukkitRunnable() {
@@ -94,31 +88,14 @@ public class Listener2 implements Listener {
 		}.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, ZOMBIE_SKELETON_LOOP_INTERVAL);
 	}
 
-	/**
-	 * Checks if a Zombie is an "Undead Gunner" based on its custom name.
-	 *
-	 * @param zombie The Zombie entity.
-	 * @return True if the Zombie is an Undead Gunner.
-	 */
 	private boolean isUndeadGunner(Zombie zombie) {
 		return zombie.getCustomName() != null && zombie.getCustomName().equalsIgnoreCase("Undead Gunner");
 	}
 
-	/**
-	 * Checks if a Skeleton is a "Bone Wizard" based on its custom name.
-	 *
-	 * @param skeleton The Skeleton entity.
-	 * @return True if the Skeleton is a Bone Wizard.
-	 */
 	private boolean isBoneWizard(Skeleton skeleton) {
 		return skeleton.getCustomName() != null && skeleton.getCustomName().equalsIgnoreCase("Bone Wizard");
 	}
 
-	/**
-	 * Handles Skeleton shooting grenades instead of arrows.
-	 *
-	 * @param event The EntityShootBowEvent.
-	 */
 	@EventHandler
 	public void onSkeletonShoot(EntityShootBowEvent event) {
 		if (!(event.getEntity() instanceof Skeleton skeleton) || !(event.getProjectile() instanceof Arrow) ||
@@ -179,11 +156,6 @@ public class Listener2 implements Listener {
 		}
 	}
 
-	/**
-	 * Handles various entity damage events (mob crits, thief slimes, poisoned slimes, ender power).
-	 *
-	 * @param event The EntityDamageByEntityEvent.
-	 */
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
 	public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
 		if (event.getDamage() <= 0 || event.getEntity().hasMetadata("NPC") || event.getDamager().hasMetadata("NPC")) {
@@ -269,22 +241,11 @@ public class Listener2 implements Listener {
 		}
 	}
 
-	/**
-	 * Checks if an entity is an Ender-related entity.
-	 *
-	 * @param entity The entity to check.
-	 * @return True if the entity is an Enderman, Shulker, Endermite, or EnderDragon.
-	 */
 	private boolean isEnderEntity(Entity entity) {
 		return entity instanceof Enderman || entity.getType().name().equalsIgnoreCase("SHULKER") ||
 				entity instanceof Endermite || entity instanceof EnderDragon;
 	}
 
-	/**
-	 * Spawns particle effects for the Ender Power feature.
-	 *
-	 * @param player The player to spawn particles around.
-	 */
 	private void spawnEnderParticles(Player player) {
 		try {
 			new BukkitRunnable() {
@@ -321,11 +282,6 @@ public class Listener2 implements Listener {
 		}
 	}
 
-	/**
-	 * Handles player movement to apply snow slow effects.
-	 *
-	 * @param event The PlayerMoveEvent.
-	 */
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent event) {
 		Player player = event.getPlayer();
@@ -345,12 +301,6 @@ public class Listener2 implements Listener {
 		}
 	}
 
-	/**
-	 * Checks if the player has moved to a different block.
-	 *
-	 * @param event The PlayerMoveEvent.
-	 * @return True if the player moved to a new block.
-	 */
 	private boolean hasMovedBlock(PlayerMoveEvent event) {
 		Location from = event.getFrom();
 		Location to = event.getTo();
@@ -360,12 +310,6 @@ public class Listener2 implements Listener {
 						from.getBlockZ() != to.getBlockZ());
 	}
 
-	/**
-	 * Checks if the player is wearing heavy boots.
-	 *
-	 * @param player The player to check.
-	 * @return True if the player is wearing iron, golden, or diamond boots.
-	 */
 	private boolean isWearingLeatherBoots(Player player) {
 		ItemStack boots = player.getInventory().getBoots();
 		if (boots == null) {
@@ -375,11 +319,6 @@ public class Listener2 implements Listener {
 		return type == Material.LEATHER_BOOTS;
 	}
 
-	/**
-	 * Handles item pickup to enforce realistic pickup mechanics.
-	 *
-	 * @param event The EntityPickupItemEvent.
-	 */
 	@EventHandler
 	public void onEntityPickupItem(EntityPickupItemEvent event) {
 		if (!(event.getEntity() instanceof Player player) || !Feature.REALISTIC_PICKUP.isEnabled(player) ||
@@ -401,11 +340,6 @@ public class Listener2 implements Listener {
 		}
 	}
 
-	/**
-	 * Handles bed leaving to potentially spawn a "Freddy" Enderman.
-	 *
-	 * @param event The PlayerBedLeaveEvent.
-	 */
 	@EventHandler
 	public void onPlayerBedLeave(PlayerBedLeaveEvent event) {
 		Player player = event.getPlayer();
@@ -463,11 +397,6 @@ public class Listener2 implements Listener {
 		}
 	}
 
-	/**
-	 * Handles block breaking to trigger dangerous coal explosions.
-	 *
-	 * @param event The BlockBreakEvent.
-	 */
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent event) {
 		Player player = event.getPlayer();
@@ -513,5 +442,4 @@ public class Listener2 implements Listener {
 	private String translateColors(String message) {
 		return ChatColor.translateAlternateColorCodes('&', message);
 	}
-
 }
