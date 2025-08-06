@@ -29,14 +29,8 @@ public final class Loops {
 	private static final int MAX_TICKS = 20;
 
 	private Loops() {
-		// Prevent instantiation
 	}
 
-	/**
-	 * Periodic task for Blaze entities to apply a burning effect to nearby players.
-	 *
-	 * @param blaze The Blaze entity.
-	 */
 	public static void loop3s_blaze(Blaze blaze) {
 		if (blaze == null || blaze.getHealth() <= 0) {
 			return;
@@ -48,17 +42,14 @@ public final class Loops {
 					continue;
 				}
 
-				// Play sound at player's location
 				player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.0f, 2.0f);
 				double duration = Feature.EVERBURNING_BLAZES.getDouble("burn-duration") * 20;
 				player.setFireTicks((int) duration);
 
-				// Define locations with slight offsets for visual effect
 				Location playerLoc = player.getLocation().add(0.0D, 0.75D, 0.0D);
 				Location blazeLoc = blaze.getLocation().add(0.0D, 1.0D, 0.0D);
-				World world = blaze.getWorld(); // Use Blaze's world for consistency
+				World world = blaze.getWorld();
 
-				// Create particle trail from Blaze to Player
 				Vector direction = playerLoc.toVector().subtract(blazeLoc.toVector());
 				for (double j = 0.0D; j <= 1.0D; j += 0.04D) {
 					Location particleLoc = blazeLoc.clone().add(direction.clone().multiply(j));
@@ -74,11 +65,6 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Periodic task for Skeleton entities to launch fireballs or apply frost curses.
-	 *
-	 * @param skeleton The Skeleton entity.
-	 */
 	public static void loop3s_skeleton(Skeleton skeleton) {
 		if (skeleton == null || skeleton.getHealth() <= 0 || skeleton.getTarget() == null || !(skeleton.getTarget() instanceof Player target)) {
 			return;
@@ -90,13 +76,11 @@ public final class Loops {
 			}
 
 			if (random.nextDouble() < 0.5) {
-				// Fireball attack
 				double damage = Feature.BONE_WIZARDS.getDouble("fireball-damage");
 				double duration = Feature.BONE_WIZARDS.getDouble("fireball-duration");
 				skeleton.getWorld().playSound(skeleton.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 2.0f, 0.0f);
 				launchProjectile(skeleton, target, Particle.FLAME, Particle.LAVA, damage, duration, Sound.ENTITY_GENERIC_EXPLODE);
 			} else {
-				// Frost curse attack
 				double damage = Feature.BONE_WIZARDS.getDouble("frost-curse-damage");
 				double duration = Feature.BONE_WIZARDS.getDouble("frost-curse-duration");
 				double amplifier = Feature.BONE_WIZARDS.getDouble("frost-curse-amplifier");
@@ -139,11 +123,6 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Periodic task for Witch entities to apply slowing effects and damage to nearby players.
-	 *
-	 * @param witch The Witch entity.
-	 */
 	public static void loop4s_witch(Witch witch) {
 		if (witch == null || witch.getHealth() <= 0) {
 			return;
@@ -168,11 +147,6 @@ public final class Loops {
 					Location loc2 = loc.clone().add(d.multiply(j));
 					((World)Objects.requireNonNull(loc2.getWorld())).spawnParticle(Particle.SPELL_WITCH, loc2, 4, 0.1D, 0.1D, 0.1D, 0.0D);
 				}
-				/*
-				Location playerLoc = player.getLocation().add(0, 1, 0);
-				Location witchLoc = witch.getLocation().add(0, 1, 0);
-				spawnParticleTrail(witch.getWorld(), witchLoc, playerLoc, Particle.SPELL_WITCH, null);
-			*/
 			}
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -180,11 +154,6 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Periodic task for WitherSkeleton entities to perform machine gun or rush attacks.
-	 *
-	 * @param witherSkeleton The WitherSkeleton entity.
-	 */
 	public static void loop6s_wither_skeleton(Creature witherSkeleton) {
 		if (witherSkeleton == null || witherSkeleton.getHealth() <= 0 || !(witherSkeleton.getTarget() instanceof Player target)) {
 			return;
