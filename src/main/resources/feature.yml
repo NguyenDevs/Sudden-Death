@@ -254,3 +254,11 @@ features:
     lore:
       - "Wither Skeletons blink to players,"
       - "dealing #damage# damage."
+  zombie-break-block:
+    name: "Zombie Break Block"
+    lore:
+      - "Zombie can BREAK block!!!"
+  zombie-place-block:
+    name: "Zombie Place Block"
+    lore:
+      - "Zombie can PLACE block!!!"
