@@ -4,6 +4,7 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -24,6 +25,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.util.*;
 import org.nguyendevs.suddendeath.SuddenDeath;
@@ -32,6 +34,7 @@ import org.nguyendevs.suddendeath.player.PlayerData;
 
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.IntStream;
 
 /**
  * Event listener for handling various entity, player, and block interactions in the SuddenDeath plugin.
@@ -75,6 +78,25 @@ public class Listener3 implements Listener {
                 }
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, DROWNED_LOOP_INTERVAL);
+
+        //Zombie break block
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.ZOMBIE_BREAK_BLOCK.isEnabled(world)) {
+                            for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
+                                if (zombie.getTarget() instanceof Player || zombie.getTarget() instanceof Villager)
+                                    applyZombieBreakBlock(zombie);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Zombie Place Block loop task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), 0, 20);
 
         //Witch Scroll
         new BukkitRunnable() {
@@ -971,7 +993,6 @@ public class Listener3 implements Listener {
         }
     } //Done
 
-
     private void applyStrayFrost(Player player) {
         try {
             double duration = Feature.STRAY_FROST.getDouble("duration");
@@ -1200,6 +1221,335 @@ public class Listener3 implements Listener {
         }
     }
 
+
+
+    private void applyZombieBreakBlock(Zombie zombie) {
+        try {
+            // Validate zombie
+            if (zombie == null || zombie.getHealth() <= 0) {
+                return;
+            }
+
+            // Get or set target
+            Player target = null;
+            if (zombie.getTarget() instanceof Player) {
+                target = (Player) zombie.getTarget();
+            } else {
+                // Find nearest player within 40 blocks
+                for (Player player : zombie.getWorld().getPlayers()) {
+                    if (player.isOnline() && zombie.getLocation().distanceSquared(player.getLocation()) <= 1600) {
+                        target = player;
+                        zombie.setTarget(target);
+                        break;
+                    }
+                }
+            }
+
+            // Check if valid target exists and is within 40 blocks
+            if (target == null || !target.getWorld().equals(zombie.getWorld()) ||
+                    zombie.getLocation().distanceSquared(target.getLocation()) > 1600) {
+                return;
+            }
+
+            // Check if zombie is holding a valid tool
+            ItemStack itemInHand = zombie.getEquipment().getItemInMainHand();
+            Material toolType = itemInHand != null ? itemInHand.getType() : Material.AIR;
+            if (!isValidTool(toolType)) {
+                return; // Zombie must hold a valid tool
+            }
+
+            // Get block in zombie's line of sight (up to 3 blocks away)
+            Location zombieEyeLoc = zombie.getEyeLocation();
+            Vector direction = target.getLocation().toVector().subtract(zombieEyeLoc.toVector()).normalize();
+            Block targetBlock = null;
+
+            // First, try to find a solid block at eye level
+            BlockIterator iterator = new BlockIterator(zombie.getWorld(), zombieEyeLoc.toVector(), direction, 0, 3);
+            while (iterator.hasNext()) {
+                Block block = iterator.next();
+                if (block.getType().isSolid() && canBreakBlock(toolType, block.getType())) {
+                    targetBlock = block;
+                    break;
+                }
+                // If air is found, check the block directly below it
+                if (!block.getType().isSolid()) {
+                    Block blockBelow = block.getRelative(0, -1, 0);
+                    if (blockBelow.getType().isSolid() && canBreakBlock(toolType, blockBelow.getType())) {
+                        targetBlock = blockBelow;
+                        break;
+                    }
+                }
+            }
+
+            if (targetBlock == null) {
+                // Ensure zombie continues to pursue the target
+                zombie.setTarget(target);
+                return; // No valid block to break
+            }
+
+            // Calculate break time based on tool and block hardness
+            double breakTimeTicks = calculateBreakTime(toolType, targetBlock.getType());
+            if (breakTimeTicks <= 0) {
+                return; // Cannot break this block with this tool
+            }
+
+            // Schedule block breaking
+            Block finalTargetBlock = targetBlock;
+            Player finalTarget = target;
+            new BukkitRunnable() {
+                int ticksElapsed = 0;
+                int soundInterval = Math.max(4, (int) (breakTimeTicks / 5)); // Play sound every ~20% of break progress
+
+                @Override
+                public void run() {
+                    try {
+                        // Stop if zombie is invalid, target is offline, block is no longer valid, or target is too far
+                        if (!zombie.isValid() || !finalTarget.isOnline() ||
+                                zombie.getLocation().distanceSquared(finalTarget.getLocation()) > 1600 ||
+                                !finalTargetBlock.getType().isSolid() || !canBreakBlock(toolType, finalTargetBlock.getType())) {
+                            cancel();
+                            return;
+                        }
+
+                        // Ensure zombie continues targeting the player
+                        zombie.setTarget(finalTarget);
+
+                        // Simulate breaking progress
+                        ticksElapsed++;
+                        if (ticksElapsed < breakTimeTicks) {
+                            // Run effects synchronously
+                            new BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        // Show reduced crack particles
+                                        zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, finalTargetBlock.getLocation().add(0.5, 0.5, 0.5), 5, 0.2, 0.2, 0.2, 0, finalTargetBlock.getBlockData());
+                                        // Play hit sound at intervals
+                                        if (ticksElapsed % soundInterval == 0) {
+                                            Sound hitSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getHitSound();
+                                            zombie.getWorld().playSound(finalTargetBlock.getLocation(), hitSound, 0.3f, 1.0f);
+                                        }
+                                        zombie.swingMainHand(); // Attack animation
+                                    } catch (Exception e) {
+                                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                                "Error in block break effects for zombie: " + zombie.getUniqueId(), e);
+                                    }
+                                }
+                            }.runTask(SuddenDeath.getInstance());
+                            return;
+                        }
+
+                        // Break the block
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    if (finalTargetBlock.getType().isSolid()) {
+                                        Sound breakSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getBreakSound();
+                                        finalTargetBlock.breakNaturally(itemInHand); // Break block with tool
+                                        zombie.getWorld().playSound(finalTargetBlock.getLocation(), breakSound, 0.8f, 1.0f);
+                                        zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, finalTargetBlock.getLocation().add(0.5, 0.5, 0.5), 10, 0.2, 0.2, 0.2, 0, finalTargetBlock.getBlockData());
+                                    }
+                                } catch (Exception e) {
+                                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                            "Error breaking block for zombie: " + zombie.getUniqueId(), e);
+                                }
+                            }
+                        }.runTaskLater(SuddenDeath.getInstance(), 0);
+
+                        // Continue breaking another block immediately
+                        applyZombieBreakBlock(zombie); // Recursive call to keep breaking
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error in Zombie Break Block task for zombie: " + zombie.getUniqueId(), e);
+                        cancel();
+                    }
+                }
+            }.runTaskTimerAsynchronously(SuddenDeath.getInstance(), 0, 1);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error when applying Zombie Break Block to zombie: " + zombie.getUniqueId(), e);
+        }
+    }
+
+    private boolean isValidTool(Material material) {
+        return isPickaxe(material) || isShovel(material) || isAxe(material);
+    }
+
+    private boolean isPickaxe(Material material) {
+        return material == Material.WOODEN_PICKAXE ||
+                material == Material.STONE_PICKAXE ||
+                material == Material.IRON_PICKAXE ||
+                material == Material.GOLDEN_PICKAXE ||
+                material == Material.DIAMOND_PICKAXE ||
+                material == Material.NETHERITE_PICKAXE;
+    }
+
+    private boolean isShovel(Material material) {
+        return material == Material.WOODEN_SHOVEL ||
+                material == Material.STONE_SHOVEL ||
+                material == Material.IRON_SHOVEL ||
+                material == Material.GOLDEN_SHOVEL ||
+                material == Material.DIAMOND_SHOVEL ||
+                material == Material.NETHERITE_SHOVEL;
+    }
+
+    private boolean isAxe(Material material) {
+        return material == Material.WOODEN_AXE ||
+                material == Material.STONE_AXE ||
+                material == Material.IRON_AXE ||
+                material == Material.GOLDEN_AXE ||
+                material == Material.DIAMOND_AXE ||
+                material == Material.NETHERITE_AXE;
+    }
+
+    private boolean canBreakBlock(Material tool, Material block) {
+        if (block.getHardness() < 0) return false; // Unbreakable blocks
+
+        // Pickaxe-compatible blocks
+        if (isPickaxe(tool)) {
+            if (block == Material.OBSIDIAN && tool != Material.DIAMOND_PICKAXE && tool != Material.NETHERITE_PICKAXE) {
+                return false;
+            }
+            return block == Material.STONE ||
+                    block == Material.COBBLESTONE ||
+                    block == Material.ANDESITE ||
+                    block == Material.DIORITE ||
+                    block == Material.GRANITE ||
+                    block == Material.TUFF ||
+                    block == Material.DEEPSLATE ||
+                    block == Material.COBBLED_DEEPSLATE ||
+                    block == Material.COAL_ORE ||
+                    block == Material.IRON_ORE ||
+                    block == Material.GOLD_ORE ||
+                    block == Material.DIAMOND_ORE ||
+                    block == Material.EMERALD_ORE ||
+                    block == Material.LAPIS_ORE ||
+                    block == Material.REDSTONE_ORE ||
+                    block == Material.COPPER_ORE ||
+                    block == Material.NETHER_QUARTZ_ORE ||
+                    block == Material.NETHER_GOLD_ORE ||
+                    block == Material.DEEPSLATE_COAL_ORE ||
+                    block == Material.DEEPSLATE_IRON_ORE ||
+                    block == Material.DEEPSLATE_GOLD_ORE ||
+                    block == Material.DEEPSLATE_DIAMOND_ORE ||
+                    block == Material.DEEPSLATE_EMERALD_ORE ||
+                    block == Material.DEEPSLATE_LAPIS_ORE ||
+                    block == Material.DEEPSLATE_REDSTONE_ORE ||
+                    block == Material.DEEPSLATE_COPPER_ORE ||
+                    block == Material.OBSIDIAN ||
+                    block == Material.STONE_BRICKS ||
+                    block == Material.MOSSY_STONE_BRICKS ||
+                    block == Material.CRACKED_STONE_BRICKS ||
+                    block == Material.CHISELED_STONE_BRICKS ||
+                    block == Material.DEEPSLATE_BRICKS ||
+                    block == Material.CRACKED_DEEPSLATE_BRICKS ||
+                    block == Material.CHISELED_DEEPSLATE ||
+                    block == Material.POLISHED_DEEPSLATE ||
+                    block == Material.SMOOTH_STONE ||
+                    block == Material.SANDSTONE ||
+                    block == Material.RED_SANDSTONE ||
+                    block == Material.CHISELED_SANDSTONE ||
+                    block == Material.SMOOTH_SANDSTONE ||
+                    block == Material.CHISELED_RED_SANDSTONE ||
+                    block == Material.SMOOTH_RED_SANDSTONE;
+        }
+
+        // Shovel-compatible blocks
+        if (isShovel(tool)) {
+            return block == Material.DIRT ||
+                    block == Material.GRASS_BLOCK ||
+                    block == Material.PODZOL ||
+                    block == Material.MYCELIUM ||
+                    block == Material.DIRT_PATH ||
+                    block == Material.COARSE_DIRT ||
+                    block == Material.ROOTED_DIRT ||
+                    block == Material.SAND ||
+                    block == Material.RED_SAND ||
+                    block == Material.GRAVEL ||
+                    block == Material.CLAY ||
+                    block == Material.SOUL_SAND ||
+                    block == Material.SOUL_SOIL ||
+                    block == Material.SNOW ||
+                    block == Material.SNOW_BLOCK ||
+                    block == Material.FARMLAND ||
+                    block == Material.MUD ||
+                    block == Material.MUDDY_MANGROVE_ROOTS;
+        }
+
+        // Axe-compatible blocks
+        if (isAxe(tool)) {
+            return block == Material.OAK_LOG ||
+                    block == Material.BIRCH_LOG ||
+                    block == Material.SPRUCE_LOG ||
+                    block == Material.JUNGLE_LOG ||
+                    block == Material.ACACIA_LOG ||
+                    block == Material.DARK_OAK_LOG ||
+                    block == Material.MANGROVE_LOG ||
+                    block == Material.CHERRY_LOG ||
+                    block == Material.STRIPPED_OAK_LOG ||
+                    block == Material.STRIPPED_BIRCH_LOG ||
+                    block == Material.STRIPPED_SPRUCE_LOG ||
+                    block == Material.STRIPPED_JUNGLE_LOG ||
+                    block == Material.STRIPPED_ACACIA_LOG ||
+                    block == Material.STRIPPED_DARK_OAK_LOG ||
+                    block == Material.STRIPPED_MANGROVE_LOG ||
+                    block == Material.STRIPPED_CHERRY_LOG ||
+                    block == Material.OAK_WOOD ||
+                    block == Material.BIRCH_WOOD ||
+                    block == Material.SPRUCE_WOOD ||
+                    block == Material.JUNGLE_WOOD ||
+                    block == Material.ACACIA_WOOD ||
+                    block == Material.DARK_OAK_WOOD ||
+                    block == Material.MANGROVE_WOOD ||
+                    block == Material.CHERRY_WOOD ||
+                    block == Material.STRIPPED_OAK_WOOD ||
+                    block == Material.STRIPPED_BIRCH_WOOD ||
+                    block == Material.STRIPPED_SPRUCE_WOOD ||
+                    block == Material.STRIPPED_JUNGLE_WOOD ||
+                    block == Material.STRIPPED_ACACIA_WOOD ||
+                    block == Material.STRIPPED_DARK_OAK_WOOD ||
+                    block == Material.STRIPPED_MANGROVE_WOOD ||
+                    block == Material.STRIPPED_CHERRY_WOOD ||
+                    block == Material.OAK_PLANKS ||
+                    block == Material.BIRCH_PLANKS ||
+                    block == Material.SPRUCE_PLANKS ||
+                    block == Material.JUNGLE_PLANKS ||
+                    block == Material.ACACIA_PLANKS ||
+                    block == Material.DARK_OAK_PLANKS ||
+                    block == Material.MANGROVE_PLANKS ||
+                    block == Material.CHERRY_PLANKS ||
+                    block == Material.CRIMSON_STEM ||
+                    block == Material.WARPED_STEM ||
+                    block == Material.STRIPPED_CRIMSON_STEM ||
+                    block == Material.STRIPPED_WARPED_STEM ||
+                    block == Material.CRIMSON_HYPHAE ||
+                    block == Material.WARPED_HYPHAE ||
+                    block == Material.STRIPPED_CRIMSON_HYPHAE ||
+                    block == Material.STRIPPED_WARPED_HYPHAE ||
+                    block == Material.CRIMSON_PLANKS ||
+                    block == Material.WARPED_PLANKS;
+        }
+
+        return false;
+    }
+
+    private double calculateBreakTime(Material tool, Material block) {
+        float blockHardness = block.getHardness();
+        if (blockHardness < 0) return -1;
+
+        float toolMultiplier = switch (tool) {
+            case WOODEN_PICKAXE, WOODEN_SHOVEL, WOODEN_AXE -> 2.0f;
+            case GOLDEN_PICKAXE, GOLDEN_SHOVEL, GOLDEN_AXE -> 12.0f;
+            case STONE_PICKAXE, STONE_SHOVEL, STONE_AXE -> 4.0f;
+            case IRON_PICKAXE, IRON_SHOVEL, IRON_AXE -> 6.0f;
+            case DIAMOND_PICKAXE, DIAMOND_SHOVEL, DIAMOND_AXE -> 8.0f;
+            case NETHERITE_PICKAXE, NETHERITE_SHOVEL, NETHERITE_AXE -> 9.0f;
+            default -> 0.5f;
+        };
+
+        return blockHardness * 1.5f / toolMultiplier * 20.0;
+    }
 
     private String translateColors(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
