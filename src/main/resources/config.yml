@@ -1,7 +1,3 @@
 #SETTING FOR SUDDEN DEATH
 update-notify: true
-# The coefficient of speed with which the animation (fake distance) decreases at the edges.
-# The smaller the coefficient, the faster the animation (fading).
-# Accepts a value in decimal fraction from 0.1 to 0.9 inclusive.
-# Values greater than or equal to one are not accepted.
 #WORLD SETTING FOR SUDDEN DEATH
