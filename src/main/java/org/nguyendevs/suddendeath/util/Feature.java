@@ -559,6 +559,58 @@ public enum Feature {
 			},
 			"wither-rush",
 			new Modifier[]{new Modifier("damage", 3.0)}
+	),
+	ZOMBIE_BREAK_BLOCK(
+			"Zombie Break Block",
+			new String[]{"Zombie can BREAK block!!!"},
+			"zombie-break-block",
+			new Modifier[]{
+					new Modifier("breakable-pickaxe-blocks", String.join(",", new String[]{
+							// Stone and related blocks
+							"STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE", "COBBLED_DEEPSLATE",
+							// Ores
+							"COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE", "LAPIS_ORE", "REDSTONE_ORE", "COPPER_ORE",
+							"NETHER_QUARTZ_ORE", "NETHER_GOLD_ORE",
+							// Deepslate variants of ores
+							"DEEPSLATE_COAL_ORE", "DEEPSLATE_IRON_ORE", "DEEPSLATE_GOLD_ORE", "DEEPSLATE_DIAMOND_ORE",
+							"DEEPSLATE_EMERALD_ORE", "DEEPSLATE_LAPIS_ORE", "DEEPSLATE_REDSTONE_ORE", "DEEPSLATE_COPPER_ORE",
+							// Other pickaxe-breakable blocks
+							"OBSIDIAN", "STONE_BRICKS", "MOSSY_STONE_BRICKS", "CRACKED_STONE_BRICKS", "CHISELED_STONE_BRICKS",
+							"DEEPSLATE_BRICKS", "CRACKED_DEEPSLATE_BRICKS", "CHISELED_DEEPSLATE", "POLISHED_DEEPSLATE",
+							"SMOOTH_STONE", "SANDSTONE", "RED_SANDSTONE", "CHISELED_SANDSTONE", "SMOOTH_SANDSTONE",
+							"CHISELED_RED_SANDSTONE", "SMOOTH_RED_SANDSTONE"
+					})),
+					new Modifier("breakable-shovel-blocks", String.join(",", new String[]{
+							// Dirt and grass-related blocks
+							"DIRT", "GRASS_BLOCK", "PODZOL", "MYCELIUM", "DIRT_PATH", "COARSE_DIRT", "ROOTED_DIRT",
+							// Sand and related blocks
+							"SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL",
+							// Snow and related blocks
+							"SNOW", "SNOW_BLOCK",
+							// Other shovel-breakable blocks
+							"FARMLAND", "MUD", "MUDDY_MANGROVE_ROOTS"
+					})),
+					new Modifier("breakable-axe-blocks", String.join(",", new String[]{
+							// Logs
+							"OAK_LOG", "BIRCH_LOG", "SPRUCE_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG", "MANGROVE_LOG", "CHERRY_LOG",
+							// Stripped logs
+							"STRIPPED_OAK_LOG", "STRIPPED_BIRCH_LOG", "STRIPPED_SPRUCE_LOG", "STRIPPED_JUNGLE_LOG",
+							"STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG", "STRIPPED_MANGROVE_LOG", "STRIPPED_CHERRY_LOG",
+							// Wood
+							"OAK_WOOD", "BIRCH_WOOD", "SPRUCE_WOOD", "JUNGLE_WOOD", "ACACIA_WOOD", "DARK_OAK_WOOD",
+							"MANGROVE_WOOD", "CHERRY_WOOD",
+							// Stripped wood
+							"STRIPPED_OAK_WOOD", "STRIPPED_BIRCH_WOOD", "STRIPPED_SPRUCE_WOOD", "STRIPPED_JUNGLE_WOOD",
+							"STRIPPED_ACACIA_WOOD", "STRIPPED_DARK_OAK_WOOD", "STRIPPED_MANGROVE_WOOD", "STRIPPED_CHERRY_WOOD",
+							// Planks
+							"OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "JUNGLE_PLANKS", "ACACIA_PLANKS",
+							"DARK_OAK_PLANKS", "MANGROVE_PLANKS", "CHERRY_PLANKS",
+							// Other axe-breakable blocks
+							"CRIMSON_STEM", "WARPED_STEM", "STRIPPED_CRIMSON_STEM", "STRIPPED_WARPED_STEM",
+							"CRIMSON_HYPHAE", "WARPED_HYPHAE", "STRIPPED_CRIMSON_HYPHAE", "STRIPPED_WARPED_HYPHAE",
+							"CRIMSON_PLANKS", "WARPED_PLANKS"
+					}))
+			}
 	);
 
 	private String name;
