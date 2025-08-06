@@ -1,4 +1,9 @@
 features:
+  abyssal-vortex:
+    name: "Abyssal Vortex"
+    lore:
+      - "The Guardian can create a whirlpool that pulls players"
+      - "toward it, preventing them from escaping."
   advanced-player-drops:
     name: "Advanced Player Drops"
     lore:
@@ -105,7 +110,7 @@ features:
   homing-flame-barrage:
     name: "Homing Flame Barrage"
     lore:
-      - "Blaze has a chance to fire a #shoot-amount# beam of fire."
+      - "Blaze has a #chance-percent#% chance to fire a #shoot-amount# beam of fire."
       - "It tracks the player and deals #damage# HP each beam"
       - "that hits, with a hit rate of almost 100%."
   hunger-nausea:
@@ -217,6 +222,11 @@ features:
       - "to become thunderstorms."
       - "Lightning deals #damage-percent#% more AoE damage"
       - "and strikes more frequently."
+  trident-wrath:
+    name: "Trident's Wrath"
+    lore:
+      - "Drowned Tridents have a #chance-percent#% chance to use their Trident"
+      - "to launch at a player. Deals #damage# HP on hit."
   undead-gunners:
     name: "Undead Gunners"
     lore:

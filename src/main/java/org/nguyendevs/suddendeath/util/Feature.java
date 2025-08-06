@@ -23,7 +23,19 @@ import java.util.logging.Level;
  * Each feature defines gameplay modifiers and optional world events.
  */
 public enum Feature {
-
+    ABYSSAL_VORTEX(
+			"Abyssal Vortex",
+			new String[]{
+					"The Guardian have a #chance-percent#% can create a whirlpool that",
+					"pulls players toward it, preventing them from escaping."
+			},
+			"abyssal-vortex",
+			new Modifier[]{
+					new Modifier("chance-percent", 30),
+					new Modifier("duration", 2),
+					new Modifier("strength", 0.55),
+			}
+	),
 	ADVANCED_PLAYER_DROPS(
 			"Advanced Player Drops",
 			new String[]{
@@ -51,17 +63,6 @@ public enum Feature {
 					new Modifier("amplifier", 1.0)
 			}
 	),
-	/*ARMOR_WEIGHT(
-			"Armor Weight",
-			new String[]{
-					"Players move slower when wearing iron, gold, or diamond armor.",
-					"Movement Speed Malus: #movement-speed-malus#%"
-			},
-			"armor-weight",
-			new Modifier[]{new Modifier("movement-speed-malus", 3)}
-	),
-	*/
-
 	ARROW_SLOW(
 			"Arrow Slow",
 			new String[]{
@@ -71,20 +72,6 @@ public enum Feature {
 			"arrow-slow",
 			new Modifier[]{new Modifier("slow-duration", 2.0)}
 	),
-	/*BLAZE_LASER(
-			"Unreadable Fireball",
-			new String[]{
-					"Fireball shoot by blaze have a #chance-percent#% can't be read or dodge by player!"
-			},
-			"unreadble-fireball",
-			new Modifier[]{
-					new Modifier("chance-percent",30),
-					new Modifier("shoot-amount",3),
-					new Modifier("damage", 15)
-					//new Modifier("speed",4)
-			}
-	),
-	 */
 	BLEEDING(
 			"Bleeding",
 			new String[]{
@@ -271,7 +258,7 @@ public enum Feature {
 	HOMING_FLAME_BARRAGE(
 			"Homing Flame Barrage",
 			new String[]{
-					"Blaze has a chance to fire a #shoot-amount# beam of fire.",
+					"Blaze has a #chance-percent#% chance to fire a #shoot-amount# beam of fire.",
 					"It tracks the player and deals #damage# HP each beam",
 					"that hits, with a hit rate of almost 100%."
 			},
@@ -503,6 +490,20 @@ public enum Feature {
 					new Modifier("damage-percent", 125)
 			},
 			Thunderstorm::new
+	),
+	TRIDENT_WRATH(
+			"Trident's Wrath",
+			new String[]{
+					"Drowned Tridents have a #chance-percent#% chance to use their Trident",
+					"to launch at a player. Deals #damage# HP on hit.",
+			},
+			"trident-wrath",
+			new Modifier[]{
+					new Modifier("chance-percent", 25),
+					new Modifier("duration", 1),
+					new Modifier("damage", 4),
+					new Modifier("speed", 0.5)
+			}
 	),
 	UNDEAD_GUNNERS(
 			"Undead Gunners",
