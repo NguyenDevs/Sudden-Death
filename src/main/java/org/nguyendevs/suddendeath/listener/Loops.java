@@ -20,9 +20,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.logging.Level;
 
-/**
- * Utility class for handling periodic tasks (loops) for various entities and players in the SuddenDeath plugin.
- */
 public final class Loops {
 	private static final Random random = new Random();
 	private static final double TICK_INTERVAL = 0.5;
@@ -92,13 +89,6 @@ public final class Loops {
 		}
 	}
 
-
-
-	/**
-	 * Periodic task for Zombie entities to launch explosive projectiles.
-	 *
-	 * @param zombie The Zombie entity.
-	 */
 	public static void loop3s_zombie(Zombie zombie) {
 		if (zombie == null || zombie.getHealth() <= 0 || zombie.getTarget() == null || !(zombie.getTarget() instanceof Player target)) {
 			return;
@@ -176,11 +166,7 @@ public final class Loops {
 					"Error in WitherSkeleton loop for entity: " + witherSkeleton.getUniqueId(), e);
 		}
 	}
-	/**
-	 * Periodic task for Spider entities to apply web trap or leap attacks.
-	 *
-	 * @param spider The Spider entity.
-	 */
+
 	public static void loop3s_spider(Spider spider) {
 		if (spider == null || spider.getHealth() <= 0 || !(spider.getTarget() instanceof Player target)) {
 			return;
@@ -219,7 +205,6 @@ public final class Loops {
 								cancel();
 								return;
 							}
-
 							item.getEntity().getWorld().spawnParticle(Particle.CRIT, item.getEntity().getLocation(), 0);
 							for (Entity entity : item.getEntity().getNearbyEntities(1, 1, 1)) {
 								if (entity instanceof Player hitPlayer) {
@@ -253,11 +238,6 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Periodic task for players to apply hunger nausea, bleeding, and infection effects.
-	 *
-	 * @param player The Player to process.
-	 */
 	public static void loop3s_player(Player player) {
 		if (player == null || Utils.hasCreativeGameMode(player)) {
 			return;
@@ -299,15 +279,7 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Spawns a particle trail between two locations.
-	 *
-	 * @param world     The world to spawn particles in.
-	 * @param start     The starting location.
-	 * @param end       The ending location.
-	 * @param primary   The primary particle type.
-	 * @param secondary The secondary particle type (can be null).
-
+	/*
 	private static void spawnParticleTrail(World world, Location start, Location end, Particle primary, Particle secondary) {
 		try {
 			Vector direction = end.toVector().subtract(start.toVector());
@@ -325,19 +297,6 @@ public final class Loops {
 	}
 	*/
 
-	/**
-	 * Launches a projectile from an entity towards a target player.
-	 *
-	 * @param entity     The source entity.
-	 * @param target     The target player.
-	 * @param primary    The primary particle type.
-	 * @param secondary  The secondary particle type (can be null).
-	 * @param damage     The damage to apply on hit.
-	 * @param duration   The duration for fire ticks (if applicable).
-	 * @param hitSound   The sound to play on hit.
-	 * @param hitRadius  The radius to check for player hits.
-	 * @param onHit      Optional action to perform on hit.
-	 */
 	private static void launchProjectile(LivingEntity entity, Player target, Particle primary, Particle secondary,
 										 double damage, double duration, Sound hitSound, double hitRadius,
 										 Runnable onHit) {
@@ -392,31 +351,17 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Overloaded method for simpler projectile launches without additional on-hit actions.
-	 */
 	private static void launchProjectile(LivingEntity entity, Player target, Particle primary, Particle secondary,
 										 double damage, double duration, Sound hitSound) {
 		launchProjectile(entity, target, primary, secondary, damage, duration, hitSound, 1.7, null);
 	}
 
-	/**
-	 * Applies a frost curse effect to players near the target location.
-	 *
-	 * @param skeleton  The Skeleton entity.
-	 * @param target    The target player.
-	 * @param damage    The damage to apply.
-	 * @param duration  The duration of the slow effect.
-	 * @param amplifier The amplifier for the slow effect.
-	 */
 	private static void applyFrostCurse(Skeleton skeleton, Player target, double damage, double duration, double amplifier) {
 		try {
 			Location loc = target.getLocation();
 			double radius = 4.0;
-
 			new BukkitRunnable() {
 				double ticks = 0;
-
 				@Override
 				public void run() {
 					try {
@@ -454,13 +399,6 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Launches a machine gun-like attack from a WitherSkeleton.
-	 *
-	 * @param witherSkeleton The WitherSkeleton entity.
-	 * @param target        The target player.
-	 * @param damage        The damage to apply on hit.
-	 */
 	private static void launchWitherMachineGun(Creature witherSkeleton, Player target, double damage) {
 		try {
 			for (int delay = 0; delay < 12; delay += 3) {
@@ -526,13 +464,6 @@ public final class Loops {
 		}
 	}
 
-	/**
-	 * Applies a rush attack from a WitherSkeleton towards the target.
-	 *
-	 * @param witherSkeleton The WitherSkeleton entity.
-	 * @param target        The target player.
-	 * @param damage        The damage to apply on hit.
-	 */
 	private static void applyWitherRush(Creature witherSkeleton, Player target, double damage) {
 		try {
 			witherSkeleton.getWorld().playSound(witherSkeleton.getLocation(), Sound.ENTITY_WITHER_SPAWN, 4.0f, 2.0f);
