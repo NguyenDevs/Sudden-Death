@@ -102,14 +102,6 @@ public class AdminView extends PluginInventory {
         return item;
     }
 
-    /**
-     * Creates the lore for a feature item.
-     *
-     * @param feature         The feature.
-     * @param enabledWorlds   The list of worlds where the feature is enabled.
-     * @param isEnabledInWorld Whether the feature is enabled in the player's current world.
-     * @return The lore list.
-     */
     private List<String> createFeatureLore(Feature feature, List<String> enabledWorlds, boolean isEnabledInWorld) {
         List<String> lore = new ArrayList<>();
         lore.add("");
@@ -134,13 +126,6 @@ public class AdminView extends PluginInventory {
         return lore;
     }
 
-    /**
-     * Creates a navigation item (Next/Previous button).
-     *
-     * @param material The material for the item.
-     * @param name     The display name of the item.
-     * @return The created ItemStack.
-     */
     private ItemStack createNavigationItem(Material material, String name) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
