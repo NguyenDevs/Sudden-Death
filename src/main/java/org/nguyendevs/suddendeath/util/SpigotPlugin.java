@@ -28,9 +28,6 @@ public class SpigotPlugin {
 		this.id = id;
 	}
 
-	/**
-	 * The request is executed asynchronously as not to block the main thread.
-	 */
 	public void checkForUpdate() {
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 			try {
@@ -54,10 +51,6 @@ public class SpigotPlugin {
 						"A new build is available: " + latestVersion + " (you are running " + currentVersion + ")");
 				plugin.getLogger().log(Level.INFO, "Download it here: " + getResourceUrl());
 
-				/*
-				 * Registers the event to notify op players when they join only if
-				 * the corresponding option is enabled
-				 */
 				if (plugin.getConfig().getBoolean("update-notify")) {
 					Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().registerEvents(new Listener() {
 						@EventHandler(priority = EventPriority.MONITOR)
@@ -75,17 +68,11 @@ public class SpigotPlugin {
 		});
 	}
 
-	/**
-	 * Compare two version strings to determine if the latest version is newer.
-	 * Handles numeric version formats like "2.0.6" and "2.0.8".
-	 */
 	private boolean isVersionNewer(String currentVersion, String latestVersion) {
 		if (currentVersion.equals(latestVersion)) {
 			return false;
 		}
-
 		try {
-			// Split version strings into parts
 			String[] currentParts = currentVersion.split("\\.");
 			String[] latestParts = latestVersion.split("\\.");
 
@@ -102,10 +89,10 @@ public class SpigotPlugin {
 			}
 		} catch (NumberFormatException e) {
 			plugin.getLogger().log(Level.WARNING, "Invalid version format detected: Current=" + currentVersion + ", Latest=" + latestVersion);
-			return false; // If versions can't be parsed, assume no update
+			return false;
 		}
 
-		return false; // If versions are equal or current is newer
+		return false;
 	}
 
 	private List<String> getOutOfDateMessage() {
