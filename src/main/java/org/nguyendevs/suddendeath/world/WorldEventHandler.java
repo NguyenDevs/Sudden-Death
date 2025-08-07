@@ -11,23 +11,10 @@ import org.nguyendevs.suddendeath.manager.EventManager.WorldStatus;
 import java.util.Random;
 import java.util.logging.Level;
 
-/**
- * Abstract base class for handling world-specific events in the SuddenDeath plugin.
- * Extends BukkitRunnable for scheduled tasks and implements Listener for event handling.
- */
 public abstract class WorldEventHandler extends BukkitRunnable implements Listener, StatusRetriever {
 	private static final Random RANDOM = new Random();
 	protected final World world;
 	protected final WorldStatus status;
-
-	/**
-	 * Constructs a WorldEventHandler with the specified world, tick interval, and status.
-	 *
-	 * @param world  The world this handler operates in.
-	 * @param tick   The interval (in ticks) for the scheduled task.
-	 * @param status The WorldStatus associated with this event.
-	 * @throws IllegalArgumentException if world or status is null.
-	 */
 	protected WorldEventHandler(World world, int tick, WorldStatus status) {
 		if (world == null || status == null) {
 			throw new IllegalArgumentException("World and status cannot be null");
@@ -44,28 +31,15 @@ public abstract class WorldEventHandler extends BukkitRunnable implements Listen
 		}
 	}
 
-	/**
-	 * Gets the world associated with this event handler.
-	 *
-	 * @return The world instance.
-	 */
 	public World getWorld() {
 		return world;
 	}
 
-	/**
-	 * Gets the status of this event handler.
-	 *
-	 * @return The WorldStatus.
-	 */
 	@Override
 	public WorldStatus getStatus() {
 		return status;
 	}
 
-	/**
-	 * Closes the event handler by canceling the task and unregistering listeners.
-	 */
 	public void close() {
 		try {
 			cancel();
@@ -76,11 +50,6 @@ public abstract class WorldEventHandler extends BukkitRunnable implements Listen
 		HandlerList.unregisterAll(this);
 	}
 
-	/**
-	 * Provides access to a shared Random instance for use in subclasses.
-	 *
-	 * @return A Random instance.
-	 */
 	protected static Random getRandom() {
 		return RANDOM;
 	}
