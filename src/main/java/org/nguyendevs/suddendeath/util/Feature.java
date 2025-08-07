@@ -18,10 +18,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
 
-/**
- * Enum representing various features that can be enabled in the SuddenDeath plugin.
- * Each feature defines gameplay modifiers and optional world events.
- */
 public enum Feature {
     ABYSSAL_VORTEX(
 			"Abyssal Vortex",
@@ -621,26 +617,17 @@ public enum Feature {
 	private ConfigFile configFile;
 	private static FileConfiguration featureConfig;
 
-	/**
-	 * Constructor for features without world events.
-	 */
 	Feature(String defaultName, String[] defaultLore, String path, Modifier[] modifiers) {
 		this(defaultName, defaultLore, path, modifiers, null);
 	}
 
-	/**
-	 * Constructor for features with world events.
-	 */
 	Feature(String defaultName, String[] defaultLore, String path, Modifier[] modifiers, Function<World, WorldEventHandler> event) {
 		this.path = path;
 		this.modifiers = Collections.unmodifiableList(Arrays.asList(modifiers));
 		this.event = event;
-		loadDescriptions(defaultName, defaultLore); // Tải mô tả từ file YAML
+		loadDescriptions(defaultName, defaultLore);
 	}
 
-	/**
-	 * Tải name và lore từ Feature.yml, sử dụng giá trị mặc định nếu không tìm thấy.
-	 */
 	private void loadDescriptions(String defaultName, String[] defaultLore) {
 		if (featureConfig == null) {
 			try {
@@ -650,7 +637,7 @@ public enum Feature {
 				}
 				featureConfig = YamlConfiguration.loadConfiguration(file);
 			} catch (Exception e) {
-				SuddenDeath.getInstance().getLogger().log(Level.SEVERE, "Không thể tải Feature.yml", e);
+				SuddenDeath.getInstance().getLogger().log(Level.SEVERE, "Could not load Feature.yml", e);
 			}
 		}
 
@@ -669,9 +656,6 @@ public enum Feature {
 		}
 	}
 
-	/**
-	 * Tải lại mô tả cho tất cả các tính năng.
-	 */
 	public static void reloadDescriptions() {
 		featureConfig = null;
 		for (Feature feature : values()) {
@@ -679,41 +663,26 @@ public enum Feature {
 		}
 	}
 
-	/**
-	 * Lấy tên hiển thị của tính năng.
-	 */
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * Lấy mô tả của tính năng.
-	 */
 	public List<String> getLore() {
 		return lore;
 	}
 
-	/**
-	 * Lấy đường dẫn cấu hình cho tính năng.
-	 */
 	public String getPath() {
 		return path;
 	}
 
-	/**
-	 * Khởi tạo hoặc cập nhật file cấu hình cho tính năng.
-	 */
 	public void updateConfig() {
 		try {
 			configFile = new ConfigFile("/modifiers", path);
 		} catch (Exception e) {
-			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Không thể khởi tạo cấu hình cho tính năng: " + name, e);
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Unable to initialize configuration for feature: " + name, e);
 		}
 	}
 
-	/**
-	 * Lấy file cấu hình cho tính năng.
-	 */
 	public ConfigFile getConfigFile() {
 		if (configFile == null) {
 			updateConfig();
@@ -721,44 +690,26 @@ public enum Feature {
 		return configFile;
 	}
 
-	/**
-	 * Lấy giá trị boolean từ cấu hình của tính năng.
-	 */
 	public boolean getBoolean(String path) {
 		return getConfigFile().getConfig().getBoolean(path, false);
 	}
 
-	/**
-	 * Lấy giá trị double từ cấu hình của tính năng.
-	 */
 	public double getDouble(String path) {
 		return getConfigFile().getConfig().getDouble(path, 0.0);
 	}
 
-	/**
-	 * Lấy giá trị chuỗi từ cấu hình của tính năng.
-	 */
 	public String getString(String path) {
 		return getConfigFile().getConfig().getString(path, "");
 	}
 
-	/**
-	 * Lấy danh sách các modifier của tính năng.
-	 */
 	public List<Modifier> getModifiers() {
 		return modifiers;
 	}
 
-	/**
-	 * Kiểm tra xem tính năng có liên quan đến sự kiện thế giới không.
-	 */
 	public boolean isEvent() {
 		return event != null;
 	}
 
-	/**
-	 * Tạo WorldEventHandler cho thế giới đã cho, nếu có.
-	 */
 	public StatusRetriever generateWorldEventHandler(World world) {
 		if (isEvent()) {
 			WorldEventHandler handler = event.apply(world);
@@ -767,22 +718,16 @@ public enum Feature {
 		return null;
 	}
 
-	/**
-	 * Kiểm tra xem tính năng có được kích hoạt cho entity không.
-	 */
 	public boolean isEnabled(Entity entity) {
 		return isEnabled(entity.getWorld());
 	}
 
-	/**
-	 * Kiểm tra xem tính năng có được kích hoạt cho thế giới không.
-	 */
 	public boolean isEnabled(World world) {
 		try {
 			List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(path);
 			return enabledWorlds.contains(world.getName());
 		} catch (Exception e) {
-			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Lỗi khi kiểm tra tính năng " + name + " cho thế giới " + world.getName(), e);
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error while checking feature " + name + " the world " + world.getName(), e);
 			return false;
 		}
 	}
