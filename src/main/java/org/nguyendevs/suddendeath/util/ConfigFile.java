@@ -11,9 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 
-/**
- * Utility class for managing configuration files in the SuddenDeath plugin.
- */
 public class ConfigFile {
     private static final boolean DEFAULT_UPDATE_NOTIFY = true;
 
@@ -23,56 +20,22 @@ public class ConfigFile {
     private final FileConfiguration config;
     private final File configFile;
 
-    /**
-     * Constructs a ConfigFile with the default plugin and no path.
-     *
-     * @param name The name of the configuration file (without .yml extension).
-     * @throws IllegalArgumentException if name is null or empty.
-     */
     public ConfigFile(String name) {
         this(SuddenDeath.getInstance(), "", name);
     }
 
-    /**
-     * Constructs a ConfigFile with the specified plugin and no path.
-     *
-     * @param plugin The plugin instance.
-     * @param name   The name of the configuration file (without .yml extension).
-     * @throws IllegalArgumentException if plugin or name is null or empty.
-     */
     public ConfigFile(Plugin plugin, String name) {
         this(plugin, "", name);
     }
 
-    /**
-     * Constructs a ConfigFile for a specific mob type in the customMobs directory.
-     *
-     * @param mobType The EntityType for the mob configuration.
-     * @throws IllegalArgumentException if mobType is null.
-     */
     public ConfigFile(EntityType mobType) {
         this(SuddenDeath.getInstance(), "/customMobs", mobType != null ? Utils.lowerCaseId(mobType.name()) : null);
     }
 
-    /**
-     * Constructs a ConfigFile with the specified path and name.
-     *
-     * @param path The directory path relative to the plugin's data folder.
-     * @param name The name of the configuration file (without .yml extension).
-     * @throws IllegalArgumentException if path or name is null or empty.
-     */
     public ConfigFile(String path, String name) {
         this(SuddenDeath.getInstance(), path, name);
     }
 
-    /**
-     * Constructs a ConfigFile with the specified plugin, path, and name.
-     *
-     * @param plugin The plugin instance.
-     * @param path   The directory path relative to the plugin's data folder.
-     * @param name   The name of the configuration file (without .yml extension).
-     * @throws IllegalArgumentException if plugin, path, or name is null or empty.
-     */
     public ConfigFile(Plugin plugin, String path, String name) {
         if (plugin == null || path == null || name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Plugin, path, and name cannot be null or empty");
@@ -85,10 +48,6 @@ public class ConfigFile {
         setup();
     }
 
-    /**
-     * Sets up the configuration file by creating its directory and file if they do not exist.
-     * For config.yml, copies the file from resources if it does not exist.
-     */
     public void setup() {
         try {
             File directory = new File(plugin.getDataFolder(), path);
@@ -117,18 +76,12 @@ public class ConfigFile {
         }
     }
 
-    /**
-     * Sets default values for config.yml if it cannot be copied from resources.
-     */
     private void setDefaultConfigValues() {
         if (name.equals("config") && path.isEmpty()) {
             config.set("update-notify", DEFAULT_UPDATE_NOTIFY);
         }
     }
 
-    /**
-     * Loads the configuration from the file without overwriting in-memory changes.
-     */
     public void load() {
         try {
             if (configFile.exists()) {
@@ -142,16 +95,14 @@ public class ConfigFile {
         }
     }
 
-    /**
-     * Reloads the configuration from the file, preserving user changes on disk.
-     */
+
     public void reload() {
         try {
             if (configFile.exists()) {
                 config.load(configFile);
             } else {
                 plugin.getLogger().log(Level.WARNING, "Configuration file does not exist: " + name + ".yml");
-                setup(); // Recreate the file if it’s missing
+                setup();
             }
         } catch (IOException | org.bukkit.configuration.InvalidConfigurationException e) {
             plugin.getLogger().log(Level.WARNING,
@@ -159,9 +110,6 @@ public class ConfigFile {
         }
     }
 
-    /**
-     * Saves the configuration to its file.
-     */
     public void save() {
         if (config.getKeys(true).isEmpty()) {
           //  plugin.getLogger().log(Level.INFO, "No changes to save for configuration file: " + name + ".yml");
@@ -175,22 +123,10 @@ public class ConfigFile {
         }
     }
 
-    /**
-     * Gets the configuration object.
-     *
-     * @return The FileConfiguration instance.
-     */
     public FileConfiguration getConfig() {
         return config;
     }
 
-    /**
-     * Retrieves a colored string from the configuration with color codes translated.
-     *
-     * @param path         The configuration path.
-     * @param defaultValue The default value if the path is not found.
-     * @return The translated string with color codes applied.
-     */
     public String getColoredString(String path, String defaultValue) {
         try {
             String value = getConfig().getString(path, defaultValue);
@@ -202,12 +138,6 @@ public class ConfigFile {
         }
     }
 
-    /**
-     * Retrieves the update-notify value from the configuration.
-     * Only applicable for config.yml.
-     *
-     * @return The update-notify value, defaulting to true if invalid.
-     */
     public boolean getUpdateNotify() {
         if (!name.equals("config")) {
             plugin.getLogger().log(Level.WARNING, "getUpdateNotify is only applicable for config.yml, not " + name + ".yml");
