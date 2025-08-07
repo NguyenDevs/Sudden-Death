@@ -134,6 +134,22 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                         sender.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cThis command is only available for players."));
                     }
                 }
+                case "stop" -> {
+                    if (!sender.hasPermission(PERMISSION_STATUS)) {
+                        sender.sendMessage(translateColors(Utils.msg("prefix") + " " + getMessage("not-enough-perms")));
+                        if (sender instanceof Player) {
+                            playSound((Player) sender);
+                        }
+                        return true;
+                    }
+                    if (sender instanceof Player player) {
+                        handleStopCommand(player, args);
+                        player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cSuccessfully stopped event " + args[1].toUpperCase().replace("-", "_") + "."));
+
+                    } else {
+                        sender.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cThis command is only available for players."));
+                    }
+                }
                 case "admin" -> {
                     if (!sender.hasPermission(PERMISSION_STATUS)) {
                         sender.sendMessage(translateColors(Utils.msg("prefix") + " " + getMessage("not-enough-perms")));
@@ -209,6 +225,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
             sender.sendMessage(translateColors("&d/sds itemlist &fdisplays the item list."));
             sender.sendMessage(translateColors("&d/sds reload &freloads the config file."));
             sender.sendMessage(translateColors("&d/sds start <event> &fstarts an event."));
+            sender.sendMessage(translateColors("&d/sds stop <event> &fstop an event."));
         }
         if (sender.hasPermission(PERMISSION_STATUS_VIEW)) {
             sender.sendMessage(translateColors("&d/sds menu &fopens the feature view GUI."));
@@ -288,6 +305,23 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
+    private void handleStopCommand(Player player, String[] args) {
+        if (args.length < 2) {
+            player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cPlease specify an event to stop."));
+            playSound(player);
+            return;
+        }
+        try {
+            Feature feature = Feature.valueOf(args[1].toUpperCase().replace("-", "_"));
+            Validate.isTrue(feature.isEvent(), "Specified feature is not an event.");
+            player.getWorld().setTime(6000);
+            player.getWorld().setStorm(false);
+            player.getWorld().setThundering(false);
+        } catch (IllegalArgumentException e) {
+            player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cCould not find event called " + args[1].toUpperCase().replace("-", "_") + "."));
+            playSound(player);
+        }
+    }
     private void handleReloadCommand(CommandSender sender) {
         try {
             SuddenDeath plugin = SuddenDeath.getInstance();
