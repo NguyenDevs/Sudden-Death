@@ -144,8 +144,8 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                     }
                     if (sender instanceof Player player) {
                         handleStopCommand(player, args);
-                        player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cSuccessfully stopped event " + args[1].toUpperCase().replace("-", "_") + "."));
-
+                        String displayName = args.length > 1 ? Utils.caseOnWords(args[1].toLowerCase().replace("-", " ")) : "event";
+                        player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&aSuccessfully stopped event " + displayName + "."));
                     } else {
                         sender.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cThis command is only available for players."));
                     }
