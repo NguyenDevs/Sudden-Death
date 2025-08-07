@@ -288,8 +288,7 @@ public enum Feature {
 	INFECTION(
 			"Infection",
 			new String[]{
-					"&2Zombies &7have a #chance-percent#% chance",
-					"to infect players.",
+					"&2Zombies &7have a #chance-percent#% chance to infect players.",
 					"&8Infection &7causes nausea and deals #dps#*3 HP every",
 					"3 seconds. Can be stopped using a &fStrange Brew&7.",
 					"&8Infection &7spreads via bare-hand attacks",
@@ -437,7 +436,7 @@ public enum Feature {
 	STRAY_FROST(
 			"Stray Frost",
 			new String[]{
-					"&3Stray &5have a #chance-percent#% chance",
+					"&3Stray &7have a #chance-percent#% chance",
 					"to shoot a &bFrost &7arrow.",
 					"The player will freeze in #duration# second."
 			},
