@@ -16,10 +16,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-/**
- * Tab completion handler for the SuddenDeath plugin's /sds command.
- * Provides intelligent auto-completion for admin commands, recipe management, feature viewing, and features.
- */
 public class SuddenDeathStatusCompletion implements TabCompleter {
 	private static final String PERMISSION_STATUS = "suddendeath.admin";
 	private static final String PERMISSION_RECIPE = "suddendeath.recipe";
@@ -72,13 +68,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		}
 	}
 
-	/**
-	 * Handles tab completion for the second argument based on the first argument.
-	 *
-	 * @param sender The command sender.
-	 * @param args   The command arguments.
-	 * @return List of completion suggestions.
-	 */
 	private List<String> handleSecondArgument(CommandSender sender, String[] args) {
 		if (!sender.hasPermission(PERMISSION_STATUS)) {
 			return Collections.emptyList();
@@ -101,12 +90,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		}
 	}
 
-	/**
-	 * Handles tab completion for the third argument based on the first two arguments.
-	 *
-	 * @param args The command arguments.
-	 * @return List of completion suggestions.
-	 */
 	private List<String> handleThirdArgument(String[] args) {
 		String firstArg = args[0].toLowerCase();
 		if (firstArg.equals("give")) {
@@ -115,12 +98,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		return Collections.emptyList();
 	}
 
-	/**
-	 * Handles tab completion for the fourth argument based on the first three arguments.
-	 *
-	 * @param args The command arguments.
-	 * @return List of completion suggestions.
-	 */
 	private List<String> handleFourthArgument(String[] args) {
 		String firstArg = args[0].toLowerCase();
 		if (firstArg.equals("give")) {
@@ -129,11 +106,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		return Collections.emptyList();
 	}
 
-	/**
-	 * Gets all available event features that can be started.
-	 *
-	 * @return List of event feature names.
-	 */
 	private List<String> getAvailableEvents() {
 		try {
 			return Arrays.stream(Feature.values())
@@ -147,11 +119,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		}
 	}
 
-	/**
-	 * Gets all custom item names that can be given to players.
-	 *
-	 * @return List of custom item names.
-	 */
 	private List<String> getCustomItemNames() {
 		try {
 			return Arrays.stream(CustomItem.values())
@@ -164,11 +131,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		}
 	}
 
-	/**
-	 * Gets all online player names for player targeting commands.
-	 *
-	 * @return List of online player names.
-	 */
 	private List<String> getOnlinePlayerNames() {
 		try {
 			return Bukkit.getOnlinePlayers().stream()
@@ -181,13 +143,6 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		}
 	}
 
-	/**
-	 * Filters completion suggestions based on what the user has already typed.
-	 *
-	 * @param completions All available completions.
-	 * @param partial     What the user has typed so far.
-	 * @return Filtered list of completions that start with the partial input.
-	 */
 	private List<String> filterCompletions(List<String> completions, String partial) {
 		if (partial.isEmpty()) {
 			return completions;

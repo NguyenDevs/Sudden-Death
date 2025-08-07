@@ -15,10 +15,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-/**
- * Tab completion handler for the SuddenDeath plugin's /sdmob command.
- * Provides intelligent auto-completion for command arguments.
- */
 public class SuddenDeathMobCompletion implements TabCompleter {
     private static final String PERMISSION_OP = "suddendeath.admin";
     private static final List<String> MAIN_COMMANDS = Arrays.asList("create", "edit", "remove", "delete", "list", "kill");
@@ -30,7 +26,6 @@ public class SuddenDeathMobCompletion implements TabCompleter {
         if (!sender.hasPermission(PERMISSION_OP)) {
             return Collections.emptyList();
         }
-
         try {
             switch (args.length) {
                 case 1 -> {
@@ -53,12 +48,6 @@ public class SuddenDeathMobCompletion implements TabCompleter {
         }
     }
 
-    /**
-     * Handles tab completion for the second argument based on the first argument.
-     *
-     * @param args The command arguments.
-     * @return List of completion suggestions.
-     */
     private List<String> handleSecondArgument(String[] args) {
         String firstArg = args[0].toLowerCase();
 
@@ -80,12 +69,6 @@ public class SuddenDeathMobCompletion implements TabCompleter {
         }
     }
 
-    /**
-     * Handles tab completion for the third argument based on the first two arguments.
-     *
-     * @param args The command arguments.
-     * @return List of completion suggestions.
-     */
     private List<String> handleThirdArgument(String[] args) {
         String firstArg = args[0].toLowerCase();
 
@@ -101,11 +84,6 @@ public class SuddenDeathMobCompletion implements TabCompleter {
         return filterCompletions(getMobIdsForType(entityType), args[2]);
     }
 
-    /**
-     * Gets all valid living entity types for mob creation.
-     *
-     * @return List of valid entity type names.
-     */
     private List<String> getValidEntityTypes() {
         try {
             return Arrays.stream(EntityType.values())
@@ -119,12 +97,6 @@ public class SuddenDeathMobCompletion implements TabCompleter {
         }
     }
 
-    /**
-     * Gets all mob IDs for a specific entity type.
-     *
-     * @param entityType The entity type to get mob IDs for.
-     * @return List of mob IDs for the specified type.
-     */
     private List<String> getMobIdsForType(EntityType entityType) {
         try {
             ConfigFile configFile = new ConfigFile(entityType);
@@ -135,13 +107,6 @@ public class SuddenDeathMobCompletion implements TabCompleter {
             return Collections.emptyList();
         }
     }
-
-    /**
-     * Parses an entity type string and validates it.
-     *
-     * @param typeStr The entity type string to parse.
-     * @return The parsed EntityType, or null if invalid.
-     */
     private EntityType parseEntityType(String typeStr) {
         try {
             EntityType type = EntityType.valueOf(typeStr.toUpperCase().replace("-", "_"));
@@ -151,13 +116,6 @@ public class SuddenDeathMobCompletion implements TabCompleter {
         }
     }
 
-    /**
-     * Filters completion suggestions based on what the user has already typed.
-     *
-     * @param completions All available completions.
-     * @param partial     What the user has typed so far.
-     * @return Filtered list of completions that start with the partial input.
-     */
     private List<String> filterCompletions(List<String> completions, String partial) {
         if (partial.isEmpty()) {
             return completions;
