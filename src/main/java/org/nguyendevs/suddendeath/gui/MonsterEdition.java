@@ -33,22 +33,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
-/**
- * A GUI inventory for editing custom mob stats in the SuddenDeath plugin.
- */
 public class MonsterEdition extends PluginInventory {
     private static final int[] AVAILABLE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
-    private static final String TITLE_PREFIX = "&nMob Editor: ";
+    private static final String TITLE_PREFIX = "Mob Editor: ";
     private final EntityType type;
     private final String id;
 
-    /**
-     * Constructs a MonsterEdition GUI for editing a specific mob type and ID.
-     *
-     * @param player The player interacting with the GUI.
-     * @param type   The entity type of the mob.
-     * @param id     The ID of the mob configuration.
-     */
     public MonsterEdition(Player player, EntityType type, String id) {
         super(player);
         if (type == null || id == null) {
@@ -58,11 +48,6 @@ public class MonsterEdition extends PluginInventory {
         this.id = id;
     }
 
-    /**
-     * Creates and populates the inventory for the mob editor GUI.
-     *
-     * @return The populated inventory.
-     */
     @Override
     public @NotNull Inventory getInventory() {
         FileConfiguration config = new ConfigFile(type).getConfig();
@@ -84,13 +69,6 @@ public class MonsterEdition extends PluginInventory {
         return inventory;
     }
 
-    /**
-     * Creates an item representing a mob stat.
-     *
-     * @param stat   The mob stat to represent.
-     * @param config The configuration file for the mob.
-     * @return The created ItemStack.
-     */
     private ItemStack createMobStatItem(MobStat stat, FileConfiguration config) {
         ItemStack item = stat.getNewItem().clone();
         ItemMeta meta = item.getItemMeta();
@@ -108,13 +86,6 @@ public class MonsterEdition extends PluginInventory {
         return item;
     }
 
-    /**
-     * Creates the lore for a mob stat item based on its type and configuration.
-     *
-     * @param stat   The mob stat.
-     * @param config The configuration file.
-     * @return The lore list.
-     */
     private List<String> createMobStatLore(MobStat stat, FileConfiguration config) {
         List<String> lore = new ArrayList<>();
         for (String line : stat.getLore()) {
@@ -143,13 +114,6 @@ public class MonsterEdition extends PluginInventory {
         return lore;
     }
 
-    /**
-     * Adds lore for an ItemStack mob stat.
-     *
-     * @param lore   The lore list to modify.
-     * @param config The configuration file.
-     * @param stat   The mob stat.
-     */
     private void addItemStackLore(List<String> lore, FileConfiguration config, MobStat stat) {
         lore.add(translateColors("&7Current Value:"));
         ItemStack deserialized = ItemUtils.deserialize(config.getString(id + "." + stat.getPath()));
@@ -176,13 +140,6 @@ public class MonsterEdition extends PluginInventory {
         lore.add(translateColors("&e" + SpecialChar.listDash + " Right click to remove this value."));
     }
 
-    /**
-     * Adds lore for potion effects mob stat.
-     *
-     * @param lore   The lore list to modify.
-     * @param config The configuration file.
-     * @param stat   The mob stat.
-     */
     private void addPotionEffectsLore(List<String> lore, FileConfiguration config, MobStat stat) {
         lore.add(translateColors("&7Current Value:"));
         ConfigurationSection section = config.getConfigurationSection(id + "." + stat.getPath());
@@ -200,12 +157,6 @@ public class MonsterEdition extends PluginInventory {
         lore.add(translateColors("&e" + SpecialChar.listDash + " Right click to remove the last effect."));
     }
 
-    /**
-     * Creates the mob spawn egg item for the GUI.
-     *
-     * @param config The configuration file.
-     * @return The created ItemStack.
-     */
     private ItemStack createMobEggItem(FileConfiguration config) {
         ItemStack egg = new ItemStack(Material.CREEPER_SPAWN_EGG);
         ItemMeta meta = egg.getItemMeta();
@@ -224,11 +175,6 @@ public class MonsterEdition extends PluginInventory {
         return egg;
     }
 
-    /**
-     * Handles inventory click events for the mob editor GUI.
-     *
-     * @param event The InventoryClickEvent.
-     */
     @Override
     public void whenClicked(InventoryClickEvent event) {
         Inventory clickedInv = event.getClickedInventory();
@@ -236,24 +182,21 @@ public class MonsterEdition extends PluginInventory {
 
         if (clickedInv == null || topInv == null) return;
 
-        // Click trong GUI (top inventory)
         if (clickedInv.equals(topInv)) {
             if (!isAvailableSlot(event.getSlot()) && event.getSlot() != 4) {
                 event.setCancelled(true);
                 return;
             }
 
-            // Slot mob egg thì cancel
             if (event.getSlot() == 4) {
                 event.setCancelled(true);
                 return;
             }
         }
 
-        // Lấy item và xử lý
         ItemStack item = event.getCurrentItem();
         if (item == null || !Utils.isPluginItem(item, false)) {
-            return; // Không hủy ở đây để không ngăn người chơi tương tác với inventory của họ
+            return;
         }
 
         ItemMeta meta = item.getItemMeta();
@@ -266,7 +209,7 @@ public class MonsterEdition extends PluginInventory {
             return;
         }
 
-        event.setCancelled(true); // Chỉ hủy sau khi biết chắc đang xử lý item plugin
+        event.setCancelled(true);
 
         try {
             MobStat stat = MobStat.valueOf(tag);
@@ -287,35 +230,18 @@ public class MonsterEdition extends PluginInventory {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName() + ", mob: " + type + ", id: " + id, e);
-            player.sendMessage(translateColors("&cAn error occurred while processing your action."));
+            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &cAn error occurred while processing your action."));
         }
     }
 
-
-    /**
-     * Handles clicks for DOUBLE or STRING type stats.
-     *
-     * @param stat   The mob stat.
-     * @param config The configuration file.
-     */
     private void handleDoubleOrStringStat(MobStat stat, ConfigFile config) {
         new StatEditor(id, type, stat, config);
         player.closeInventory();
         promptChatInput();
-        player.sendMessage(translateColors("&eWrite in the chat the value you want!"));
+        player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eWrite in the chat the value you want!"));
     }
 
-    /**
-     * Handles clicks for ITEMSTACK type stats.
-     *
-     * @param event  The InventoryClickEvent.
-     * @param stat   The mob stat.
-     * @param config The configuration file.
-     */
     private void handleItemStackStat(InventoryClickEvent event, MobStat stat, ConfigFile config) {
-        // Debug: In ra hành động và trạng thái con trỏ
-        SuddenDeath.getInstance().getLogger().info("Action: " + event.getAction().name() + ", Cursor Item: " + (event.getCursor() != null ? event.getCursor().getType().name() : "null"));
-
         if (event.getAction() == InventoryAction.SWAP_WITH_CURSOR || event.getAction() == InventoryAction.PLACE_ALL || event.getAction() == InventoryAction.PLACE_SOME) {
             ItemStack cursorItem = event.getCursor();
             if (cursorItem != null && cursorItem.getType() != Material.AIR) {
@@ -324,11 +250,11 @@ public class MonsterEdition extends PluginInventory {
                 config.getConfig().set(id + "." + stat.getPath(), serialized);
                 config.save();
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-                player.sendMessage(translateColors("&e" + stat.getName() + " successfully updated."));
-                event.setCancelled(true); // Hủy sự kiện để ngăn item bị thay đổi ngoài ý muốn
+                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &e" + stat.getName() + " successfully updated."));
+                event.setCancelled(true);
                 open();
             } else {
-                player.sendMessage(translateColors("&cNo item on cursor to place."));
+                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &cNo item on cursor to place."));
             }
         } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
             ConfigurationSection section = config.getConfig().getConfigurationSection(id);
@@ -336,27 +262,20 @@ public class MonsterEdition extends PluginInventory {
                     !"[material=AIR:0]".equals(config.getConfig().getString(id + "." + stat.getPath()))) {
                 config.getConfig().set(id + "." + stat.getPath(), "[material=AIR:0]");
                 config.save();
-                player.sendMessage(translateColors("&eSuccessfully removed " + stat.getName() + "."));
+                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eSuccessfully removed " + stat.getName() + "."));
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 open();
             }
         }
     }
 
-    /**
-     * Handles clicks for POTION_EFFECTS type stats.
-     *
-     * @param event  The InventoryClickEvent.
-     * @param stat   The mob stat.
-     * @param config The configuration file.
-     */
     private void handlePotionEffectsStat(InventoryClickEvent event, MobStat stat, ConfigFile config) {
         if (event.getAction() == InventoryAction.PICKUP_ALL) {
             new StatEditor(id, type, stat, config);
             player.closeInventory();
             promptChatInput();
-            player.sendMessage(translateColors("&eWrite in the chat the permanent potion effect you want to add."));
-            player.sendMessage(translateColors("&bFormat: [POTION_EFFECT] [AMPLIFIER]"));
+            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eWrite in the chat the permanent potion effect you want to add."));
+            player.sendMessage(translateColors("&f► &bFormat: [POTION_EFFECT] [AMPLIFIER]"));
         } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
             ConfigurationSection section = config.getConfig().getConfigurationSection(id + "." + stat.getPath());
             if (section != null && !section.getKeys(false).isEmpty()) {
@@ -367,15 +286,12 @@ public class MonsterEdition extends PluginInventory {
                     config.getConfig().set(id + "." + stat.getPath(), null);
                 }
                 config.save();
-                player.sendMessage(translateColors("&eSuccessfully removed " + Utils.caseOnWords(lastEffect.toLowerCase()) + "."));
+                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eSuccessfully removed " + Utils.caseOnWords(lastEffect.toLowerCase()) + "."));
                 open();
             }
         }
     }
 
-    /**
-     * Prompts the player to input a value in chat and displays instructions.
-     */
     private void promptChatInput() {
         player.sendMessage(translateColors("&8&m-----------------------------------------------------"));
         player.sendTitle(translateColors("&6&lMob Edition"), translateColors("&fSee chat."), 10, 40, 10);
@@ -383,7 +299,7 @@ public class MonsterEdition extends PluginInventory {
             @Override
             public void run() {
                 try {
-                    player.sendMessage(translateColors("&eType 'cancel' to abort editing the mob."));
+                    player.sendMessage(translateColors("&f► &eType 'cancel' to abort editing the mob."));
                 } catch (Exception e) {
                     SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                             "Error sending chat prompt for player: " + player.getName(), e);
@@ -392,12 +308,6 @@ public class MonsterEdition extends PluginInventory {
         }.runTaskLater(SuddenDeath.getInstance(), 0);
     }
 
-    /**
-     * Finds the first available slot in the inventory from the predefined slots.
-     *
-     * @param inventory The inventory to check.
-     * @return The index of the first available slot, or -1 if none are available.
-     */
     private int getAvailableSlot(Inventory inventory) {
         for (int slot : AVAILABLE_SLOTS) {
             if (inventory.getItem(slot) == null) {
@@ -407,22 +317,10 @@ public class MonsterEdition extends PluginInventory {
         return -1;
     }
 
-    /**
-     * Checks if the clicked slot is in the list of available slots.
-     *
-     * @param slot The slot to check.
-     * @return True if the slot is available, false otherwise.
-     */
     private boolean isAvailableSlot(int slot) {
         return Arrays.stream(AVAILABLE_SLOTS).anyMatch(s -> s == slot);
     }
 
-    /**
-     * Translates color codes in a message.
-     *
-     * @param message The message containing color codes.
-     * @return The translated message with applied colors.
-     */
     private String translateColors(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
