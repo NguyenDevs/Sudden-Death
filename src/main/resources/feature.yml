@@ -52,10 +52,8 @@ features:
     name: "Bone Wizards"
     lore:
       - "&fSkeletons &7named &f'Bone Wizards' &7cast spells:"
-      - "&c► Fireball: #fireball-damage# &7damage,"
-      - "#fireball-duration# sec. burn"
-      - "&3► Frost Curse: #frost-curse-damage# &7damage,"
-      - "#frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
+      - "&c► Fireball: #fireball-damage# &7damage, #fireball-duration# sec. burn"
+      - "&3► Frost Curse: #frost-curse-damage# &7damage, #frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
   breeze-dash:
     name: "Breeze Dash"
     lore:
@@ -71,20 +69,19 @@ features:
   dangerous-coal:
     name: "Dangerous Coal"
     lore:
-      - "Mining &8coal &7has #chance-percent#% chance"
+      - "Mining &8Coal &7has #chance-percent#% chance"
       - "to trigger a gas pocket &cexplosion."
       - "&7&oExplosion radius: #radius# &7&oblocks."
   electricity-shock:
     name: "Electricity Shock"
     lore:
-      - "&cPowered redstone &7&o(wires, torches,"
+      - "&cPowered Redstone &7&o(wires, torches,"
       - "&7&orepeaters, comparators) &7deals #damage# damage."
       - "Can occur every 3 seconds."
   ender-power:
     name: "Ender Power"
     lore:
-      - "&fPlayers &7have #chance-percent#% chance"
-      - "to be blinded for #duration# seconds."
+      - "&fPlayers &7have #chance-percent#% chance to be blinded for #duration# seconds."
       - "Triggered when hitting &5Endermen&7, &5Endermites&7,"
       - "&5Shulkers &7or &5Dragons."
   everburning-blazes:
@@ -107,7 +104,7 @@ features:
     name: "Freddy"
     lore:
       - "&fPlayers &7have #chance-percent#% chance"
-      - "to summon &0Freddy &7upon waking."
+      - "to summon &8Freddy &7upon waking."
   homing-flame-barrage:
     name: "Homing Flame Barrage"
     lore:
@@ -245,18 +242,18 @@ features:
     name: "Witch Scrolls"
     lore:
       - "&5Witches &7have a #chance-percent#% chance"
-      - "to block damage with a &fmagic shield."
-      - "&5Witches &7cast runes dealing #damage# damage"
+      - "to block damage with a &fMagic shield."
+      - "Witches cast runes dealing #damage# damage"
       - "and slowing players (II) for #slow-duration# seconds."
   wither-machinegun:
     name: "Wither Machinegun"
     lore:
-      - "&0Wither Skeletons &7throw coal,"
+      - "&8Wither Skeletons &7throw coal,"
       - "each dealing #damage# damage."
   wither-rush:
     name: "Wither Rush"
     lore:
-      - "&0Wither Skeletons &7blink to players,"
+      - "&8Wither Skeletons &7blink to players,"
       - "dealing #damage# damage."
   zombie-break-block:
     name: "Zombie Break Block"
@@ -266,4 +263,5 @@ features:
       - "&7&oExample: Zombie Pickaxe can break Stone and"
       - "&7&orelated blocks."
       - " "
-      - "&e&oYou can create custom Zombie with tools by using /sdmob command."
+      - "&e&oYou can create custom Zombie with tools by using"
+      - "&6/sdmob &ecommand."
