@@ -9,16 +9,8 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.logging.Level;
 
-/**
- * Listener for handling clicks in custom plugin inventories.
- */
 public class GuiListener implements Listener {
 
-	/**
-	 * Handles inventory click events for PluginInventory instances.
-	 *
-	 * @param event The InventoryClickEvent.
-	 */
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onInventoryClick(InventoryClickEvent event) {
 		try {
