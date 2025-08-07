@@ -13,24 +13,14 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
-/**
- * Utility class for serializing and deserializing ItemStacks in the SuddenDeath plugin.
- */
 public final class ItemUtils {
 	private static final Pattern ARGUMENT_SPLITTER = Pattern.compile(",");
 	private static final Pattern ENCHANTMENT_SPLITTER = Pattern.compile(";");
 	private static final Pattern LEVEL_SPLITTER = Pattern.compile(":");
 
 	private ItemUtils() {
-		// Prevent instantiation
 	}
 
-	/**
-	 * Serializes an ItemStack into a string representation.
-	 *
-	 * @param item The ItemStack to serialize.
-	 * @return A string representation of the ItemStack, or "[material=AIR]" if null or AIR.
-	 */
 	public static String serialize(ItemStack item) {
 		if (item == null || item.getType() == Material.AIR) {
 			return "[material=AIR]";
@@ -71,12 +61,6 @@ public final class ItemUtils {
 		}
 	}
 
-	/**
-	 * Serializes a Material into a string representation.
-	 *
-	 * @param material The Material to serialize.
-	 * @return A string representation of the Material.
-	 */
 	public static String serialize(Material material) {
 		if (material == null) {
 			return "[material=AIR]";
@@ -90,12 +74,6 @@ public final class ItemUtils {
 		}
 	}
 
-	/**
-	 * Deserializes a string into an ItemStack.
-	 *
-	 * @param input The string to deserialize.
-	 * @return The deserialized ItemStack, or an AIR ItemStack if invalid.
-	 */
 	public static ItemStack deserialize(String input) {
 		if (input == null || input.length() < 3 || !input.startsWith("[") || !input.endsWith("]")) {
 			return new ItemStack(Material.AIR);
