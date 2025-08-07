@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-/**
- * Enum representing custom items in the SuddenDeath plugin.
- */
 public enum CustomItem {
 	BANDAGE(
 			Material.PAPER,
@@ -64,14 +61,6 @@ public enum CustomItem {
 	private List<String> lore;
 	private List<String> craft;
 
-	/**
-	 * Constructs a CustomItem with the specified properties.
-	 *
-	 * @param material The material of the item.
-	 * @param name The default display name with color codes.
-	 * @param lore The default lore of the item.
-	 * @param craft The crafting recipe, or null if not craftable.
-	 */
 	CustomItem(Material material, String name, String[] lore, String[] craft) {
 		if (material == null || name == null || lore == null) {
 			throw new IllegalArgumentException("Material, name, and lore cannot be null");
@@ -84,11 +73,6 @@ public enum CustomItem {
 		this.craft = craft == null ? null : Collections.unmodifiableList(Arrays.asList(craft));
 	}
 
-	/**
-	 * Updates the item properties from a configuration section.
-	 *
-	 * @param config The configuration section containing item data.
-	 */
 	public void update(ConfigurationSection config) {
 		if (config == null) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -121,29 +105,14 @@ public enum CustomItem {
 		}
 	}
 
-	/**
-	 * Gets the material of the item.
-	 *
-	 * @return The Material.
-	 */
 	public Material getMaterial() {
 		return material;
 	}
 
-	/**
-	 * Gets the default or configured name of the item.
-	 *
-	 * @return The name with color codes.
-	 */
 	public String getDefaultName() {
 		return name;
 	}
 
-	/**
-	 * Gets the formatted display name of the item.
-	 *
-	 * @return The translated name with color codes applied.
-	 */
 	public String getName() {
 		try {
 			return ChatColor.RESET + "" + ChatColor.WHITE + ChatColor.translateAlternateColorCodes('&', name);
@@ -154,29 +123,14 @@ public enum CustomItem {
 		}
 	}
 
-	/**
-	 * Gets the lore of the item.
-	 *
-	 * @return An unmodifiable list of lore strings.
-	 */
 	public List<String> getLore() {
 		return lore;
 	}
 
-	/**
-	 * Gets the crafting recipe of the item, if applicable.
-	 *
-	 * @return An unmodifiable list of crafting recipe strings, or null if not craftable.
-	 */
 	public List<String> getCraft() {
 		return craft;
 	}
 
-	/**
-	 * Creates a new ItemStack for this custom item with applied metadata.
-	 *
-	 * @return The configured ItemStack.
-	 */
 	public ItemStack createItem() {
 		try {
 			ItemStack item = new ItemStack(material);
@@ -195,7 +149,6 @@ public enum CustomItem {
 						.collect(Collectors.toList());
 				meta.setLore(formattedLore);
 			}
-			// Store the CustomItem enum name in PersistentDataContainer
 			meta.getPersistentDataContainer().set(CUSTOM_ITEM_KEY, PersistentDataType.STRING, this.name());
 			item.setItemMeta(meta);
 			return item;
@@ -206,21 +159,10 @@ public enum CustomItem {
 		}
 	}
 
-	/**
-	 * Alias method to create the custom item. Used for compatibility.
-	 *
-	 * @return The ItemStack of this CustomItem.
-	 */
 	public ItemStack a() {
 		return createItem();
 	}
 
-	/**
-	 * Retrieves the CustomItem corresponding to the provided ItemStack.
-	 *
-	 * @param item The ItemStack to check.
-	 * @return The matching CustomItem, or null if no match is found.
-	 */
 	public static CustomItem fromItemStack(ItemStack item) {
 		if (item == null || item.getType() == Material.AIR || !item.hasItemMeta()) {
 			return null;
