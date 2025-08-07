@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-/**
- * A GUI inventory for players to view enabled SuddenDeath plugin features.
- */
 public class PlayerView extends PluginInventory {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.###");
     private static final int[] AVAILABLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
@@ -28,11 +25,6 @@ public class PlayerView extends PluginInventory {
     private static final int INVENTORY_SIZE = 45;
     private int page;
 
-    /**
-     * Constructs a PlayerView GUI for the specified player.
-     *
-     * @param player The player viewing the GUI.
-     */
     public PlayerView(Player player) {
         super(player);
     }
@@ -41,11 +33,6 @@ public class PlayerView extends PluginInventory {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
 
-    /**
-     * Creates and populates the inventory for the player GUI.
-     *
-     * @return The populated inventory.
-     */
     @Override
     public @NotNull Inventory getInventory() {
         int maxPage = (Feature.values().length + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
@@ -76,12 +63,6 @@ public class PlayerView extends PluginInventory {
         return inventory;
     }
 
-    /**
-     * Creates an item representing a feature.
-     *
-     * @param feature The feature to represent.
-     * @return The created ItemStack.
-     */
     private ItemStack createFeatureItem(Feature feature) {
         List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(feature.getPath());
         boolean isEnabledInWorld = enabledWorlds.contains(player.getWorld().getName());
@@ -101,14 +82,6 @@ public class PlayerView extends PluginInventory {
         return item;
     }
 
-    /**
-     * Creates the lore for a feature item.
-     *
-     * @param feature         The feature.
-     * @param enabledWorlds   The list of worlds where the feature is enabled.
-     * @param isEnabledInWorld Whether the feature is enabled in the player's current world.
-     * @return The lore list.
-     */
     private List<String> createFeatureLore(Feature feature, List<String> enabledWorlds, boolean isEnabledInWorld) {
         List<String> lore = new ArrayList<>();
         lore.add("");
@@ -132,13 +105,6 @@ public class PlayerView extends PluginInventory {
         return lore;
     }
 
-    /**
-     * Creates a navigation item (Next/Previous button).
-     *
-     * @param material The material for the item.
-     * @param name     The display name of the item.
-     * @return The created ItemStack.
-     */
     private ItemStack createNavigationItem(Material material, String name) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
@@ -152,11 +118,6 @@ public class PlayerView extends PluginInventory {
         return item;
     }
 
-    /**
-     * Handles inventory click events for the player GUI.
-     *
-     * @param event The InventoryClickEvent.
-     */
     @Override
     public void whenClicked(InventoryClickEvent event) {
         event.setCancelled(true); // Prevent any interaction with items
@@ -189,13 +150,6 @@ public class PlayerView extends PluginInventory {
         }
     }
 
-    /**
-     * Replaces placeholders in lore with formatted stat values.
-     *
-     * @param feature The feature containing the stats.
-     * @param lore    The lore string with placeholders.
-     * @return The lore string with placeholders replaced.
-     */
     public static String statsInLore(Feature feature, String lore) {
         if (lore.contains("#")) {
             String[] parts = lore.split("#", 3);
@@ -207,12 +161,6 @@ public class PlayerView extends PluginInventory {
         return lore;
     }
 
-    /**
-     * Finds the first available slot in the inventory from the predefined slots.
-     *
-     * @param inventory The inventory to check.
-     * @return The index of the first available slot, or -1 if none are available.
-     */
     private int getAvailableSlot(Inventory inventory) {
         for (int slot : AVAILABLE_SLOTS) {
             if (inventory.getItem(slot) == null) {
