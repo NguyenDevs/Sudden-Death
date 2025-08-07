@@ -5,10 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Enum representing predefined messages used in the SuddenDeath plugin.
- * Messages can be either a single string or a list of strings for lore.
- */
 public enum Message {
 	PREFIX("&6[&cSudden&4Death&6]"),
 	NOW_BLEEDING("&7You are now &cbleeding&7. Quickly find a &bBandage&7 or you'll die within seconds."),
@@ -61,12 +57,6 @@ public enum Message {
 	PAPI_NOT_BLEEDING("Clean");
 	private final Object value;
 
-	/**
-	 * Constructs a Message with the specified value.
-	 *
-	 * @param value The message value, either a String or a List of Strings.
-	 * @throws IllegalArgumentException if value is null or not a String/List.
-	 */
 	Message(Object value) {
 		if (value == null || !(value instanceof String || value instanceof List)) {
 			throw new IllegalArgumentException("Message value must be a String or List<String>");
@@ -80,21 +70,10 @@ public enum Message {
 		}
 	}
 
-	/**
-	 * Gets the message value.
-	 *
-	 * @return The message as a String or List of Strings.
-	 */
 	public Object getValue() {
 		return value;
 	}
 
-	/**
-	 * Gets the message as a String, if applicable.
-	 *
-	 * @return The message as a String.
-	 * @throws IllegalStateException if the value is not a String.
-	 */
 	public String getString() {
 		if (!(value instanceof String)) {
 			throw new IllegalStateException("Message value is not a String for: " + name());
@@ -102,12 +81,6 @@ public enum Message {
 		return (String) value;
 	}
 
-	/**
-	 * Gets the message as a List of Strings, if applicable.
-	 *
-	 * @return The message as a List of Strings.
-	 * @throws IllegalStateException if the value is not a List.
-	 */
 	@SuppressWarnings("unchecked")
 	public List<String> getLore() {
 		if (!(value instanceof List)) {
@@ -116,11 +89,6 @@ public enum Message {
 		return (List<String>) value;
 	}
 
-	/**
-	 * Checks if the message is a lore (List of Strings).
-	 *
-	 * @return True if the value is a List.
-	 */
 	public boolean isLore() {
 		return value instanceof List;
 	}
