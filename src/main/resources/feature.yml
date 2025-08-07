@@ -2,95 +2,95 @@ features:
   abyssal-vortex:
     name: "Abyssal Vortex"
     lore:
-      - "The Guardian can create a whirlpool that pulls players"
+      - "&3The Guardian &7can create a &fwhirlpool &7that pulls players"
       - "toward it, preventing them from escaping."
   advanced-player-drops:
     name: "Advanced Player Drops"
     lore:
-      - "Players drop a skull, bones, and human"
+      - "&fPlayers &7drop a skull, bones and human"
       - "flesh on death. Human flesh can be cooked."
   angry-spiders:
     name: "Angry Spiders"
     lore:
-      - "Spiders throw cobwebs, dealing #damage# damage."
+      - "&8Spiders &7throw cobwebs, dealing #damage# damage."
       - "Slows players (#amplifier#) for #duration# seconds."
   arrow-slow:
     name: "Arrow Slow"
     lore:
-      - "Players hit by arrows are slowed"
+      - "&fPlayers &7hit by arrows are slowed"
       - "for #slow-duration# seconds."
   bleeding:
     name: "Bleeding"
     lore:
-      - "Players have a #chance-percent#% chance"
+      - "&fPlayers &7have a #chance-percent#% chance"
       - "to bleed when damaged."
-      - "Bleeding disables health saturation regen"
+      - "&cBleeding &7disables health saturation regen"
       - "and deals #dps#*3 HP every 3 seconds."
-      - "Can be stopped by using a Bandage or"
+      - "Can be stopped by using a &fBandage &7or"
       - "it will stop on its own after #auto-stop-bleed-time# seconds."
   blood-moon:
     name: "Blood Moon"
     lore:
-      - "Night has #chance#% chance to turn red."
-      - "Players take #damage-percent#% more damage"
+      - "&9Night &7has #chance#% chance to turn red."
+      - "&fPlayers &7take #damage-percent#% more damage"
       - "and are slowed for #slow-duration#s."
-      - "Monsters spawn with Speed #speed#,"
-      - "Strength #increase-damage#, and Resistance #damage-resistance#."
+      - "&cMonsters &7spawn with &3Speed #speed#&7,"
+      - "&6Strength #increase-damage# &7and &8Resistance #damage-resistance#&7."
   blood-screen:
     name: "Blood Screen"
     lore:
-      - "Players will have bleeding and red"
+      - "&fPlayers &7will have bleeding and red"
       - "screen effects when taking damage"
   bone-grenades:
     name: "Bone Grenades"
     lore:
-      - "Skeletons have #chance-percent#% chance"
+      - "&fSkeletons &7have #chance-percent#% chance"
       - "to throw bone grenades."
-      - "Grenades explode, dealing #damage# damage"
+      - "&8Grenades &7explode, dealing #damage# damage"
       - "and knocking back players."
   bone-wizards:
     name: "Bone Wizards"
     lore:
-      - "Skeletons named 'Bone Wizards' cast spells:"
-      - "Fireball: #fireball-damage# damage,"
+      - "&fSkeletons &7named &f'Bone Wizards' &7cast spells:"
+      - "&c► Fireball: #fireball-damage# &7damage,"
       - "#fireball-duration# sec. burn"
-      - "Frost Curse: #frost-curse-damage# damage,"
+      - "&3► Frost Curse: #frost-curse-damage# &7damage,"
       - "#frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
   breeze-dash:
     name: "Breeze Dash"
     lore:
-      - "Breeze has a #chance-percent#% chance to accelerate,"
+      - "&3Breeze &7has a #chance-percent#% chance to accelerate,"
       - "very quickly, continuously firing #shoot-amount#"
-      - "WindCharges at enemies but in return"
+      - "&fWindCharges &7at enemies but in return"
       - "the ability to jump is greatly reduced."
   creeper-revenge:
     name: "Creeper Revenge"
     lore:
-      - "Creepers have #chance-percent#% chance"
-      - "to explode on death."
+      - "&aCreepers &7have #chance-percent#% chance"
+      - "to &cexplode &7on death."
   dangerous-coal:
     name: "Dangerous Coal"
     lore:
-      - "Mining coal has #chance-percent#% chance"
-      - "to trigger a gas pocket explosion."
-      - "Explosion radius: #radius# blocks."
+      - "Mining &8coal &7has #chance-percent#% chance"
+      - "to trigger a gas pocket &cexplosion."
+      - "&7&oExplosion radius: #radius# &7&oblocks."
   electricity-shock:
     name: "Electricity Shock"
     lore:
-      - "Powered redstone (wires, torches,"
-      - "repeaters, comparators) deals #damage# damage."
+      - "&cPowered redstone &7&o(wires, torches,"
+      - "&7&orepeaters, comparators) &7deals #damage# damage."
       - "Can occur every 3 seconds."
   ender-power:
     name: "Ender Power"
     lore:
-      - "Players have #chance-percent#% chance"
+      - "&fPlayers &7have #chance-percent#% chance"
       - "to be blinded for #duration# seconds."
-      - "Triggered when hitting endermen, endermites,"
-      - "shulkers, or dragons."
+      - "Triggered when hitting &5Endermen&7, &5Endermites&7,"
+      - "&5Shulkers &7or &5Dragons."
   everburning-blazes:
     name: "Everburning Blazes"
     lore:
-      - "Blazes summon fire beams that ignite"
+      - "&eBlazes &7summon fire beams that ignite"
       - "players for #burn-duration# seconds."
   fall-stun:
     name: "Fall Stun"
@@ -100,165 +100,170 @@ features:
   force-of-the-undead:
     name: "Force of the Undead"
     lore:
-      - "Monsters deal increased attack damage."
+      - "&cMonsters &7deal increased attack damage."
+      - " "
       - "&cConfigurable for each monster."
   freddy:
     name: "Freddy"
     lore:
-      - "Players have #chance-percent#% chance"
-      - "to summon Freddy upon waking."
+      - "&fPlayers &7have #chance-percent#% chance"
+      - "to summon &0Freddy &7upon waking."
   homing-flame-barrage:
     name: "Homing Flame Barrage"
     lore:
-      - "Blaze has a #chance-percent#% chance to fire a #shoot-amount# beam of fire."
+      - "&eBlaze &7has a #chance-percent#% chance to fire a #shoot-amount# beam of fire."
       - "It tracks the player and deals #damage# HP each beam"
-      - "that hits, with a hit rate of almost 100%."
+      - "that hits, with a hit rate of almost &c100%&7."
   hunger-nausea:
     name: "Hunger Nausea"
     lore:
-      - "Players get permanent nausea when hungry."
+      - "&fPlayers &7get permanent nausea when hungry."
   immortal-evoker:
     name: "Immortal Evoker"
     lore:
-      - "Evoker has a #chance-percent#% chance to use Totem to"
+      - "&8Evoker &7has a #chance-percent#% chance to use &eTotem &7to"
       - "avoid death and gain level #resistance-amplifier# resistance."
-      - "After that, every 5 seconds, summon Fangs"
+      - "After that, every 5 seconds, summon &fFangs"
       - "can pull the player into the ground 3 block."
   infection:
     name: "Infection"
     lore:
-      - "Zombies have a #chance-percent#% chance"
+      - "&2Zombies &7have a #chance-percent#% chance"
       - "to infect players."
-      - "Infection causes nausea and deals #dps#*3 HP every"
-      - "3 seconds. Can be stopped using a Strange Brew."
-      - "Infection spreads via bare-hand attacks"
+      - "&8Infection &7causes nausea and deals #dps#*3 HP every"
+      - "3 seconds. Can be stopped using a &fStrange Brew&7."
+      - "&8Infection &7spreads via bare-hand attacks"
       - "or player-to-player contact."
   leaping-spiders:
     name: "Leaping Spiders"
     lore:
-      - "Spiders can leap powerfully at players."
+      - "&8Spiders &7can leap powerfully at players."
   mob-critical-strikes:
     name: "Mob Critical Strikes"
     lore:
-      - "Monsters can deal critical strikes"
+      - "&cMonsters &7can deal critical strikes"
       - "with #damage-percent#% additional damage."
+      - " "
       - "&cCrit Chance configurable for each monster."
   nether-shield:
     name: "Nether Shield"
     lore:
-      - "Magma cubes, pigmen, and blazes have"
+      - "&cMagma cubes&7, &2Zombified Piglin &7and &eBlazes &7have"
       - "#chance-percent#% chance to block attacks."
       - "Reflects #dmg-reflection-percent#% damage"
       - "and ignites for #burn-duration# seconds."
   physic-ender-pearl:
     name: "Physic EnderPearl"
     lore:
-      - "EnderPearl will have physical properties"
+      - "&2EnderPearl &7will have physical properties"
       - "like bounce, friction."
   poisoned-slimes:
     name: "Poisoned Slimes"
     lore:
-      - "Slimes have #chance-percent#% chance"
-      - "to poison players for #duration# seconds."
-      - "Poison effect amplifier: #amplifier#."
+      - "&aSlimes &7have #chance-percent#% chance"
+      - "to &apoison &7players for #duration# seconds."
+      - "&7&oPoison effect amplifier: #amplifier#&7&o."
   quick-mobs:
     name: "Quick Mobs"
     lore:
-      - "Monsters have increased movement speed."
+      - "&cMonsters &7have increased movement speed."
+      - " "
       - "&cConfigurable for each monster."
   realistic-pickup:
     name: "Realistic Pickup"
     lore:
-      - "Players must crouch and look down"
+      - "&fPlayers &7must crouch and look down"
       - "to pick up items."
-      - "Briefly slows players on pickup."
+      - "&7&oBriefly slows players on pickup."
   shocking-skeleton-arrows:
     name: "Shocking Skeleton Arrows"
     lore:
-      - "Skeletons have #chance-percent#% chance"
+      - "&fSkeletons &7have #chance-percent#% chance"
       - "to shoot arrows that shock players"
       - "for #shock-duration# seconds."
   silverfishes-summon:
     name: "Silverfishes Summon"
     lore:
-      - "Zombies have #chance-percent#% chance"
-      - "to summon #min# to #max# silverfish on death."
+      - "&2Zombies &7have #chance-percent#% chance"
+      - "to summon #min# to #max# &fSilverfish &7on death."
   snow-slow:
     name: "Snow Slow"
     lore:
-      - "Players without leather boots"
+      - "&fPlayers &7without leather boots"
       - "are slowed on snow."
   stone-stiffness:
     name: "Stone Stiffness"
     lore:
-      - "Players take #damage# damage"
+      - "&fPlayers &7take #damage# damage"
       - "when punching stone."
   stray-frost:
     name: "Stray Frost"
     lore:
-      - "Stray have a #chance-percent#% chance"
-      - "to shoot a Frost arrow."
+      - "&3Stray &5have a #chance-percent#% chance"
+      - "to shoot a &bFrost &7arrow."
       - "The player will freeze in #duration# second."
   spider-web:
     name: "Spider Web"
     lore:
-      - "Cave spider has a #chance-percent#% chance"
+      - "&2Cave spider &7has a #chance-percent#% chance"
       - "to shoot a web that traps the player in place."
       - "It only disappears when the player breaks it."
   tanky-monsters:
     name: "Tanky Monsters"
     lore:
-      - "Monsters take reduced damage."
+      - "&cMonsters&7 take reduced damage."
+      - " "
       - "&cConfigurable for each monster."
   thief-slimes:
     name: "Thief Slimes"
     lore:
-      - "Slimes have #chance-percent#% chance"
-      - "to steal #exp# EXP when hitting players."
+      - "&aSlimes &7have #chance-percent#% chance"
+      - "to steal #exp# &aEXP &7when hitting players."
   thunderstorm:
     name: "Thunderstorm"
     lore:
-      - "Storms have #chance#% chance"
-      - "to become thunderstorms."
-      - "Lightning deals #damage-percent#% more AoE damage"
+      - "&8Storms &7have #chance#% chance"
+      - "to become &8thunderstorms."
+      - "&eLightning &7deals #damage-percent#% more &fAoE&7 damage"
       - "and strikes more frequently."
   trident-wrath:
     name: "Trident's Wrath"
     lore:
-      - "Drowned Tridents have a #chance-percent#% chance to use their Trident"
+      - "&bDrowned Tridents &7have a #chance-percent#% chance to use their &3Trident"
       - "to launch at a player. Deals #damage# HP on hit."
   undead-gunners:
     name: "Undead Gunners"
     lore:
-      - "Zombies named 'Undead Gunner' cast rockets"
+      - "&2Zombies &7named &f'Undead Gunner'&7 cast rockets"
       - "dealing #damage# damage (AoE)."
   undead-rage:
     name: "Undead Rage"
     lore:
-      - "Zombies and pigmen gain Strength and Speed II"
+      - "&2Zombies &7and &2Zombified Piglin &7gain &6Strength &7and &3Speed II"
       - "for #rage-duration# seconds when damaged."
   witch-scrolls:
     name: "Witch Scrolls"
     lore:
-      - "Witches have a #chance-percent#% chance"
-      - "to block damage with a magic shield."
-      - "Witches cast runes dealing #damage# damage"
+      - "&5Witches &7have a #chance-percent#% chance"
+      - "to block damage with a &fmagic shield."
+      - "&5Witches &7cast runes dealing #damage# damage"
       - "and slowing players (II) for #slow-duration# seconds."
   wither-machinegun:
     name: "Wither Machinegun"
     lore:
-      - "Wither Skeletons throw coal,"
+      - "&0Wither Skeletons &7throw coal,"
       - "each dealing #damage# damage."
   wither-rush:
     name: "Wither Rush"
     lore:
-      - "Wither Skeletons blink to players,"
+      - "&0Wither Skeletons &7blink to players,"
       - "dealing #damage# damage."
   zombie-break-block:
     name: "Zombie Break Block"
     lore:
-      - "Zombie can BREAK block!!!"
-  zombie-place-block:
-    name: "Zombie Place Block"
-    lore:
-      - "Zombie can PLACE block!!!"
+      - "&2Zombies &7with an &bAxe&7, &bPickaxe &7or &bShovel&7 in hand"
+      - "can &cdestroy &7the corresponding block type."
+      - "&7&oExample: Zombie Pickaxe can break Stone and"
+      - "&7&orelated blocks."
+      - " "
+      - "&e&oYou can create custom Zombie with tools by using /sdmob command."
