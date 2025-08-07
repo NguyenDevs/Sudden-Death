@@ -15,20 +15,10 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-/**
- * Utility class providing helper methods for the SuddenDeath plugin.
- */
 public final class Utils {
     private Utils() {
-        // Prevent instantiation
     }
 
-    /**
-     * Checks if a string contains non-letter characters or underscores, indicating an ID-like format.
-     *
-     * @param str The string to check.
-     * @return True if the string contains digits or special characters other than underscore.
-     */
     public static boolean isIDType(String str) {
         if (str == null || str.isEmpty()) {
             return false;
@@ -41,12 +31,6 @@ public final class Utils {
         return false;
     }
 
-    /**
-     * Checks if a player is in Creative or Spectator mode.
-     *
-     * @param player The player to check.
-     * @return True if the player is in Creative or Spectator mode.
-     */
     public static boolean hasCreativeGameMode(Player player) {
         if (player == null) {
             return false;
@@ -54,13 +38,6 @@ public final class Utils {
         return player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR;
     }
 
-    /**
-     * Checks if an item is a plugin-specific item based on its metadata.
-     *
-     * @param item The item to check.
-     * @param checkLore If true, also checks for lore presence.
-     * @return True if the item has a display name and optionally lore.
-     */
     public static boolean isPluginItem(ItemStack item, boolean checkLore) {
         if (item == null || !item.hasItemMeta()) {
             return false;
@@ -69,12 +46,6 @@ public final class Utils {
         return itemMeta != null && itemMeta.hasDisplayName() && (!checkLore || itemMeta.hasLore());
     }
 
-    /**
-     * Retrieves and translates a message from the plugin's message configuration.
-     *
-     * @param path The configuration path of the message.
-     * @return The translated message with color codes applied, or an empty string if not found.
-     */
     public static String msg(String path) {
         try {
             String message = SuddenDeath.getInstance().messages.getConfig().getString(path);
@@ -85,12 +56,6 @@ public final class Utils {
         }
     }
 
-    /**
-     * Retrieves and translates a list of messages from the plugin's message configuration.
-     *
-     * @param path The configuration path of the message list.
-     * @return A list of translated messages with color codes applied.
-     */
     public static List<String> msgList(String path) {
         try {
             return SuddenDeath.getInstance().messages.getConfig().getStringList(path)
@@ -103,13 +68,6 @@ public final class Utils {
         }
     }
 
-    /**
-     * Applies damage to a living entity, optionally triggering the damage animation.
-     *
-     * @param target The entity to damage.
-     * @param value The amount of damage to apply.
-     * @param effect Whether to trigger the damage animation.
-     */
     public static void damage(LivingEntity target, double value, boolean effect) {
         if (target == null || value < 0) {
             return;
@@ -127,23 +85,12 @@ public final class Utils {
         }
     }
 
-    /**
-     * Retrieves a list of all spawnable and living entity types.
-     *
-     * @return A list of living EntityType values.
-     */
     public static List<EntityType> getLivingEntityTypes() {
         return Arrays.stream(EntityType.values())
                 .filter(type -> type.isSpawnable() && type.isAlive())
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Converts a Roman numeral string to an integer.
-     *
-     * @param number The Roman numeral string.
-     * @return The integer value, or -1 if invalid.
-     */
     public static int romanToInt(String number) {
         if (number == null || number.isEmpty()) {
             return 0;
@@ -167,12 +114,6 @@ public final class Utils {
         }
     }
 
-    /**
-     * Converts an integer to a Roman numeral string.
-     *
-     * @param input The integer to convert (1 to 499).
-     * @return The Roman numeral string, or ">499" if out of range.
-     */
     public static String intToRoman(int input) {
         if (input < 1 || input > 499) {
             return ">499";
@@ -196,12 +137,6 @@ public final class Utils {
         }
     }
 
-    /**
-     * Capitalizes the first letter of each word in a string.
-     *
-     * @param str The input string.
-     * @return The capitalized string.
-     */
     public static String caseOnWords(String str) {
         if (str == null || str.isEmpty()) {
             return str;
@@ -227,12 +162,6 @@ public final class Utils {
         }
     }
 
-    /**
-     * Creates a NamespacedKey for the plugin.
-     *
-     * @param key The key string.
-     * @return A NamespacedKey instance.
-     */
     public static NamespacedKey nsk(String key) {
         if (key == null || key.isEmpty()) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Invalid NamespacedKey: " + key);
@@ -246,12 +175,6 @@ public final class Utils {
         }
     }
 
-    /**
-     * Gets the display name of an item, falling back to a formatted material name if none exists.
-     *
-     * @param item The item to get the display name for.
-     * @return The display name or formatted material name.
-     */
     public static String displayName(ItemStack item) {
         if (item == null || !item.hasItemMeta()) {
             return "";
@@ -268,12 +191,6 @@ public final class Utils {
         }
     }
 
-    /**
-     * Converts a string to a lowercase ID format by replacing underscores with hyphens.
-     *
-     * @param str The input string.
-     * @return The formatted lowercase ID.
-     */
     public static String lowerCaseId(String str) {
         if (str == null) {
             return "";
