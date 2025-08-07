@@ -17,9 +17,6 @@ import org.nguyendevs.suddendeath.util.ConfigFile;
 import java.util.*;
 import java.util.logging.Level;
 
-/**
- * Manages persistent and transient data for a player in the SuddenDeath plugin.
- */
 public class PlayerData {
 	private static final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
 	private static final String MODIFIER_PREFIX = "suddenDeath.";
@@ -31,12 +28,6 @@ public class PlayerData {
 	private final OfflinePlayer offlinePlayer;
 	private Player player;
 
-	/**
-	 * Constructs a PlayerData instance for the specified player.
-	 *
-	 * @param player The player associated with this data.
-	 * @throws IllegalArgumentException if player is null.
-	 */
 	private PlayerData(Player player) {
 		if (player == null) {
 			throw new IllegalArgumentException("Player cannot be null");
@@ -45,12 +36,6 @@ public class PlayerData {
 		this.player = player;
 	}
 
-	/**
-	 * Loads player data from a configuration file.
-	 *
-	 * @param config The configuration file containing player data.
-	 * @return This PlayerData instance for method chaining.
-	 */
 	private PlayerData load(FileConfiguration config) {
 		if (config == null) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -68,11 +53,6 @@ public class PlayerData {
 		return this;
 	}
 
-	/**
-	 * Saves player data to a configuration file.
-	 *
-	 * @param config The configuration file to save to.
-	 */
 	public void save(FileConfiguration config) {
 		if (config == null) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -89,76 +69,35 @@ public class PlayerData {
 		}
 	}
 
-	/**
-	 * Gets the associated online player.
-	 *
-	 * @return The Player instance, or null if offline.
-	 */
 	public Player getPlayer() {
 		return player;
 	}
 
-	/**
-	 * Sets the online player instance.
-	 *
-	 * @param player The Player to set.
-	 * @return This PlayerData instance for method chaining.
-	 */
 	public PlayerData setPlayer(Player player) {
 		this.player = player;
 		return this;
 	}
 
-	/**
-	 * Gets the associated OfflinePlayer.
-	 *
-	 * @return The OfflinePlayer instance.
-	 */
 	public OfflinePlayer getOfflinePlayer() {
 		return offlinePlayer;
 	}
 
-	/**
-	 * Gets the player's UUID.
-	 *
-	 * @return The player's UUID.
-	 */
 	public UUID getUniqueId() {
 		return offlinePlayer.getUniqueId();
 	}
 
-	/**
-	 * Checks if the player is infected.
-	 *
-	 * @return True if infected.
-	 */
 	public boolean isInfected() {
 		return isInfected;
 	}
 
-	/**
-	 * Checks if the player is bleeding.
-	 *
-	 * @return True if bleeding.
-	 */
 	public boolean isBleeding() {
 		return isBleeding;
 	}
 
-	/**
-	 * Sets the player's bleeding status.
-	 *
-	 * @param value The bleeding status.
-	 */
 	public void setBleeding(boolean value) {
 		this.isBleeding = value;
 	}
 
-	/**
-	 * Sets the player's infection status and removes confusion effect if not infected.
-	 *
-	 * @param value The infection status.
-	 */
 	public void setInfected(boolean value) {
 		this.isInfected = value;
 		if (!value && player != null) {
@@ -171,12 +110,6 @@ public class PlayerData {
 		}
 	}
 
-	/**
-	 * Checks if the player is on cooldown for a specific feature.
-	 *
-	 * @param feature The feature to check.
-	 * @return True if the player is on cooldown.
-	 */
 	public boolean isOnCooldown(Feature feature) {
 		return cooldowns.getOrDefault(feature, 0L) > System.currentTimeMillis();
 	}
@@ -188,12 +121,7 @@ public class PlayerData {
 	public BukkitRunnable getBleedingTask() {
 		return bleedingTask;
 	}
-	/**
-	 * Applies a cooldown for a specific feature.
-	 *
-	 * @param feature The feature to apply the cooldown to.
-	 * @param seconds The cooldown duration in seconds.
-	 */
+
 	public void applyCooldown(Feature feature, double seconds) {
 		if (feature == null || seconds < 0) {
 			return;
@@ -206,30 +134,14 @@ public class PlayerData {
 		}
 	}
 
-	/**
-	 * Gets the PlayerData for an OfflinePlayer.
-	 *
-	 * @param player The OfflinePlayer to retrieve data for.
-	 * @return The PlayerData, or null if not found.
-	 */
 	public static PlayerData get(OfflinePlayer player) {
 		return player != null ? playerDataMap.get(player.getUniqueId()) : null;
 	}
 
-	/**
-	 * Gets all loaded PlayerData instances.
-	 *
-	 * @return A collection of loaded PlayerData.
-	 */
 	public static Collection<PlayerData> getLoaded() {
 		return Collections.unmodifiableCollection(playerDataMap.values());
 	}
 
-	/**
-	 * Sets up PlayerData for a player, loading from config if not already present.
-	 *
-	 * @param player The Player to set up data for.
-	 */
 	public static void setup(Player player) {
 		if (player == null) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Attempted to setup PlayerData for null player");
