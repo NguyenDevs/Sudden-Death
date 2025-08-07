@@ -9,9 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
-/**
- * Enum representing customizable statistics for mobs in the SuddenDeath plugin.
- */
 public enum MobStat {
     HELMET(
             new ItemStack(Material.LEATHER_HELMET),
@@ -72,10 +69,12 @@ public enum MobStat {
     DISPLAY_NAME(
             new ItemStack(Material.NAME_TAG),
             "name",
-            "My Custom Mob",
+            "None",
             Type.STRING,
             "Display Name",
-            new String[]{"Set the custom name of your monster."}
+            new String[]{"Set the custom name of your monster.",
+                         "Leave 'None' to hide the mob name."
+            }
     ),
     SPAWN_COEFFICIENT(
             new ItemStack(Material.EMERALD),
@@ -85,8 +84,7 @@ public enum MobStat {
             "Spawn Coefficient",
             new String[]{
                     "Spawn Coefficient determines the frequency",
-                    "at which your monster spawns.",
-                    "&9See Wiki for more detailed information."
+                    "at which your monster spawns."
             }
     ),
     MAXIMUM_HEALTH(
@@ -108,7 +106,7 @@ public enum MobStat {
     MOVEMENT_SPEED(
             new ItemStack(Material.LEATHER_BOOTS),
             "ms",
-            0.02,
+            0.23,
             Type.DOUBLE,
             "Movement Speed",
             new String[]{"Make your monster faster!"}
@@ -121,16 +119,6 @@ public enum MobStat {
     private final String name;
     private final List<String> lore;
 
-    /**
-     * Constructs a MobStat with the specified properties.
-     *
-     * @param item The representative ItemStack for this stat.
-     * @param path The configuration path for this stat.
-     * @param defaultValue The default value for this stat.
-     * @param type The type of the stat (STRING, DOUBLE, ITEMSTACK, POTION_EFFECTS).
-     * @param name The display name of the stat.
-     * @param lore The description of the stat.
-     */
     MobStat(ItemStack item, String path, Object defaultValue, Type type, String name, String[] lore) {
         if (item == null || path == null || type == null || name == null || lore == null) {
             SuddenDeath.getInstance().getLogger().log(Level.SEVERE,
@@ -145,38 +133,18 @@ public enum MobStat {
         this.lore = Collections.unmodifiableList(Arrays.asList(lore));
     }
 
-    /**
-     * Gets the configuration path for this stat.
-     *
-     * @return The configuration path.
-     */
     public String getPath() {
         return path;
     }
 
-    /**
-     * Gets the default value for this stat.
-     *
-     * @return The default value.
-     */
     public Object getDefaultValue() {
         return defaultValue;
     }
 
-    /**
-     * Gets the type of this stat.
-     *
-     * @return The Type enum value.
-     */
     public Type getType() {
         return type;
     }
 
-    /**
-     * Creates a new copy of the representative item.
-     *
-     * @return A cloned ItemStack.
-     */
     public ItemStack getNewItem() {
         try {
             return item.clone();
@@ -187,27 +155,14 @@ public enum MobStat {
         }
     }
 
-    /**
-     * Gets the display name of this stat.
-     *
-     * @return The display name.
-     */
     public String getName() {
         return name;
     }
 
-    /**
-     * Gets the lore/description of this stat.
-     *
-     * @return An unmodifiable list of lore strings.
-     */
     public List<String> getLore() {
         return lore;
     }
 
-    /**
-     * Enum defining the possible types for MobStat values.
-     */
     public enum Type {
         STRING,
         DOUBLE,
