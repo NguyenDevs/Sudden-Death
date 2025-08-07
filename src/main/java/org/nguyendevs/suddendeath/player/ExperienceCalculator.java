@@ -5,9 +5,6 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.logging.Level;
 
-/**
- * Utility class for calculating and setting player experience in the SuddenDeath plugin.
- */
 public class ExperienceCalculator {
     private static final int LEVEL_THRESHOLD_1 = 15;
     private static final int LEVEL_THRESHOLD_2 = 30;
@@ -16,12 +13,6 @@ public class ExperienceCalculator {
 
     private final Player player;
 
-    /**
-     * Constructs an ExperienceCalculator for the specified player.
-     *
-     * @param player The player whose experience is to be calculated or set.
-     * @throws IllegalArgumentException if player is null.
-     */
     public ExperienceCalculator(Player player) {
         if (player == null) {
             throw new IllegalArgumentException("Player cannot be null");
@@ -29,11 +20,6 @@ public class ExperienceCalculator {
         this.player = player;
     }
 
-    /**
-     * Calculates the total experience points based on the player's level and experience progress.
-     *
-     * @return The total experience points.
-     */
     public int getTotalExperience() {
         try {
             int level = player.getLevel();
@@ -61,18 +47,12 @@ public class ExperienceCalculator {
         }
     }
 
-    /**
-     * Sets the player's total experience, updating their level and experience progress.
-     *
-     * @param xp The total experience points to set.
-     */
     public void setTotalExperience(int xp) {
         if (xp < 0) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Attempted to set negative experience for player: " + player.getName());
             return;
         }
-
         try {
             int level;
             int xpForLevel;
@@ -117,13 +97,6 @@ public class ExperienceCalculator {
         }
     }
 
-    /**
-     * Rounds a float value to the specified number of decimal places.
-     *
-     * @param value       The float value to round.
-     * @param decimalPlaces The number of decimal places.
-     * @return The rounded float value.
-     */
     private float round(float value, int decimalPlaces) {
         try {
             float pow = (float) Math.pow(10, decimalPlaces);
