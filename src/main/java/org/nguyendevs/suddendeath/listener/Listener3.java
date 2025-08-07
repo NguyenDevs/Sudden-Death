@@ -2,6 +2,11 @@ package org.nguyendevs.suddendeath.listener;
 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
+import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.ProtocolManager;
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.wrappers.BlockPosition;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -1219,11 +1224,22 @@ public class Listener3 implements Listener {
 
 
 
+    // Map để track zombie đang phá block (chỉ cần đơn giản)
+    private final Map<UUID, BukkitRunnable> activeBreakingTasks = new HashMap<>();
+
     private void applyZombieBreakBlock(Zombie zombie) {
         try {
             if (zombie == null || zombie.getHealth() <= 0) {
                 return;
             }
+
+            // Kiểm tra xem zombie đã đang phá block nào chưa
+            UUID zombieUUID = zombie.getUniqueId();
+            if (activeBreakingTasks.containsKey(zombieUUID)) {
+                // Zombie đang phá block, không làm gì cả
+                return;
+            }
+
             Player target = null;
             if (zombie.getTarget() instanceof Player) {
                 target = (Player) zombie.getTarget();
@@ -1240,11 +1256,11 @@ public class Listener3 implements Listener {
                     zombie.getLocation().distanceSquared(target.getLocation()) > 1600) {
                 return;
             }
-            
+
             ItemStack itemInHand = zombie.getEquipment().getItemInMainHand();
             Material toolType = itemInHand != null ? itemInHand.getType() : Material.AIR;
             if (!isValidTool(toolType)) {
-                return; 
+                return;
             }
 
             Location zombieEyeLoc = zombie.getEyeLocation();
@@ -1277,9 +1293,21 @@ public class Listener3 implements Listener {
 
             Block finalTargetBlock = targetBlock;
             Player finalTarget = target;
-            new BukkitRunnable() {
+
+            // Tạo random offset để zombie swing bất đồng bộ
+            int randomSwingOffset = (int) (Math.random() * 10);
+            int randomSoundOffset = (int) (Math.random() * 8);
+            int randomParticleOffset = (int) (Math.random() * 12);
+
+            BukkitRunnable breakTask = new BukkitRunnable() {
                 int ticksElapsed = 0;
-                int soundInterval = Math.max(4, (int) (breakTimeTicks / 5)); // Play sound every ~20% of break progress
+                ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
+                int entityId = (int) (Math.random() * Integer.MAX_VALUE);
+
+                // Tính toán interval với một chút random để tự nhiên hơn
+                int swingInterval = Math.max(8, (int) (breakTimeTicks / 8)) + (int) (Math.random() * 4 - 2);
+                int hitSoundInterval = Math.max(10, (int) (breakTimeTicks / 6)) + (int) (Math.random() * 4 - 2);
+                int particleInterval = Math.max(15, (int) (breakTimeTicks / 5)) + (int) (Math.random() * 6 - 3);
 
                 @Override
                 public void run() {
@@ -1287,6 +1315,9 @@ public class Listener3 implements Listener {
                         if (!zombie.isValid() || !finalTarget.isOnline() ||
                                 zombie.getLocation().distanceSquared(finalTarget.getLocation()) > 1600 ||
                                 !finalTargetBlock.getType().isSolid() || !canBreakBlock(toolType, finalTargetBlock.getType())) {
+                            // Hủy session và gửi packet hủy animation
+                            activeBreakingTasks.remove(zombieUUID);
+                            sendBreakAnimationPacket(finalTarget, entityId, finalTargetBlock, -1);
                             cancel();
                             return;
                         }
@@ -1298,49 +1329,126 @@ public class Listener3 implements Listener {
                                 @Override
                                 public void run() {
                                     try {
-                                        zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, finalTargetBlock.getLocation().add(0.5, 0.5, 0.5), 5, 0.2, 0.2, 0.2, 0, finalTargetBlock.getBlockData());
-                                        if (ticksElapsed % soundInterval == 0) {
-                                            Sound hitSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getHitSound();
-                                            zombie.getWorld().playSound(finalTargetBlock.getLocation(), hitSound, 0.3f, 1.0f);
+                                        int destroyStage = Math.min(9, (int) ((ticksElapsed / breakTimeTicks) * 10));
+                                        sendBreakAnimationPacket(finalTarget, entityId, finalTargetBlock, destroyStage);
+
+                                        // Swing hand với random offset
+                                        if ((ticksElapsed + randomSwingOffset) % swingInterval == 0) {
+                                            zombie.swingMainHand();
                                         }
-                                        zombie.swingMainHand();
+
+                                        // Hit sound với random offset khác
+                                        if ((ticksElapsed + randomSoundOffset) % hitSoundInterval == 0) {
+                                            Sound hitSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getHitSound();
+                                            zombie.getWorld().playSound(finalTargetBlock.getLocation(), hitSound, 0.4f,
+                                                    0.8f + (float)(Math.random() * 0.4));
+                                        }
+
+                                        // Particle hiệu ứng khi đang đập với random offset
+                                        if ((ticksElapsed + randomParticleOffset) % particleInterval == 0 && destroyStage >= 2) {
+                                            zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK,
+                                                    finalTargetBlock.getLocation().add(0.5, 0.5, 0.5),
+                                                    2, 0.1, 0.1, 0.1, 0.02, finalTargetBlock.getBlockData());
+                                        }
+
                                     } catch (Exception e) {
                                         SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                                                "Error in block break effects for zombie: " + zombie.getUniqueId(), e);
+                                                "Error in block break animation for zombie: " + zombie.getUniqueId(), e);
                                     }
                                 }
                             }.runTask(SuddenDeath.getInstance());
                             return;
                         }
 
+                        // Block đã vỡ - xử lý cuối cùng
                         new BukkitRunnable() {
                             @Override
                             public void run() {
                                 try {
                                     if (finalTargetBlock.getType().isSolid()) {
+                                        // Swing cuối cùng khi vỡ block
+                                        zombie.swingMainHand();
+
+                                        // Âm thanh vỡ block
                                         Sound breakSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getBreakSound();
-                                        finalTargetBlock.breakNaturally(itemInHand); // Break block with tool
                                         zombie.getWorld().playSound(finalTargetBlock.getLocation(), breakSound, 0.8f, 1.0f);
-                                        zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, finalTargetBlock.getLocation().add(0.5, 0.5, 0.5), 10, 0.2, 0.2, 0.2, 0, finalTargetBlock.getBlockData());
+
+                                        // Hủy animation
+                                        sendBreakAnimationPacket(finalTarget, entityId, finalTargetBlock, -1);
+
+                                        // Particle nhiều khi block vỡ
+                                        zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK,
+                                                finalTargetBlock.getLocation().add(0.5, 0.5, 0.5),
+                                                25, 0.3, 0.3, 0.3, 0.1, finalTargetBlock.getBlockData());
+
+                                        // Phá block
+                                        finalTargetBlock.breakNaturally(itemInHand);
                                     }
+
+                                    // Xóa task khỏi map
+                                    activeBreakingTasks.remove(zombieUUID);
+
                                 } catch (Exception e) {
                                     SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                                             "Error breaking block for zombie: " + zombie.getUniqueId(), e);
+                                    activeBreakingTasks.remove(zombieUUID);
                                 }
                             }
                         }.runTaskLater(SuddenDeath.getInstance(), 0);
 
-                        applyZombieBreakBlock(zombie);
+                        // Tiếp tục tìm block khác sau khi hoàn thành
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                applyZombieBreakBlock(zombie);
+                            }
+                        }.runTaskLater(SuddenDeath.getInstance(), 10 + (int) (Math.random() * 10)); // Random delay 10-20 ticks
+
                     } catch (Exception e) {
                         SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                                 "Error in Zombie Break Block task for zombie: " + zombie.getUniqueId(), e);
+                        activeBreakingTasks.remove(zombieUUID);
+                        sendBreakAnimationPacket(finalTarget, entityId, finalTargetBlock, -1);
                         cancel();
                     }
                 }
-            }.runTaskTimerAsynchronously(SuddenDeath.getInstance(), 0, 1);
+
+                private void sendBreakAnimationPacket(Player targetPlayer, int entityId, Block block, int destroyStage) {
+                    try {
+                        PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.BLOCK_BREAK_ANIMATION);
+                        packet.getIntegers().write(0, entityId);
+                        packet.getBlockPositionModifier().write(0, new BlockPosition(block.getX(), block.getY(), block.getZ()));
+                        packet.getIntegers().write(1, destroyStage);
+                        for (Player nearbyPlayer : block.getWorld().getPlayers()) {
+                            if (nearbyPlayer.isOnline() && nearbyPlayer.getLocation().distanceSquared(block.getLocation()) <= 1024) {
+                                protocolManager.sendServerPacket(nearbyPlayer, packet);
+                            }
+                        }
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error sending block break animation packet for zombie: " + zombie.getUniqueId(), e);
+                    }
+                }
+            };
+
+            // Lưu task vào map
+            activeBreakingTasks.put(zombieUUID, breakTask);
+
+            // Bắt đầu task
+            breakTask.runTaskTimerAsynchronously(SuddenDeath.getInstance(), 0, 1);
+
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error when applying Zombie Break Block to zombie: " + zombie.getUniqueId(), e);
+        }
+    }
+
+    // Method để cleanup khi zombie chết
+    public void cleanupZombieBreaking(Zombie zombie) {
+        UUID zombieUUID = zombie.getUniqueId();
+        BukkitRunnable task = activeBreakingTasks.remove(zombieUUID);
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
         }
     }
 
@@ -1424,133 +1532,6 @@ public class Listener3 implements Listener {
         // Kiểm tra xem block có trong danh sách được phép phá hay không
         return breakableBlocks.contains(block);
     }
-   /* private boolean canBreakBlock(Material tool, Material block) {
-        if (block.getHardness() < 0) return false;
-        if (isPickaxe(tool)) {
-            if (block == Material.OBSIDIAN && tool != Material.DIAMOND_PICKAXE && tool != Material.NETHERITE_PICKAXE) {
-                return false;
-            }
-            return block == Material.STONE ||
-                    block == Material.COBBLESTONE ||
-                    block == Material.ANDESITE ||
-                    block == Material.DIORITE ||
-                    block == Material.GRANITE ||
-                    block == Material.TUFF ||
-                    block == Material.DEEPSLATE ||
-                    block == Material.COBBLED_DEEPSLATE ||
-                    block == Material.COAL_ORE ||
-                    block == Material.IRON_ORE ||
-                    block == Material.GOLD_ORE ||
-                    block == Material.DIAMOND_ORE ||
-                    block == Material.EMERALD_ORE ||
-                    block == Material.LAPIS_ORE ||
-                    block == Material.REDSTONE_ORE ||
-                    block == Material.COPPER_ORE ||
-                    block == Material.NETHER_QUARTZ_ORE ||
-                    block == Material.NETHER_GOLD_ORE ||
-                    block == Material.DEEPSLATE_COAL_ORE ||
-                    block == Material.DEEPSLATE_IRON_ORE ||
-                    block == Material.DEEPSLATE_GOLD_ORE ||
-                    block == Material.DEEPSLATE_DIAMOND_ORE ||
-                    block == Material.DEEPSLATE_EMERALD_ORE ||
-                    block == Material.DEEPSLATE_LAPIS_ORE ||
-                    block == Material.DEEPSLATE_REDSTONE_ORE ||
-                    block == Material.DEEPSLATE_COPPER_ORE ||
-                    block == Material.OBSIDIAN ||
-                    block == Material.STONE_BRICKS ||
-                    block == Material.MOSSY_STONE_BRICKS ||
-                    block == Material.CRACKED_STONE_BRICKS ||
-                    block == Material.CHISELED_STONE_BRICKS ||
-                    block == Material.DEEPSLATE_BRICKS ||
-                    block == Material.CRACKED_DEEPSLATE_BRICKS ||
-                    block == Material.CHISELED_DEEPSLATE ||
-                    block == Material.POLISHED_DEEPSLATE ||
-                    block == Material.SMOOTH_STONE ||
-                    block == Material.SANDSTONE ||
-                    block == Material.RED_SANDSTONE ||
-                    block == Material.CHISELED_SANDSTONE ||
-                    block == Material.SMOOTH_SANDSTONE ||
-                    block == Material.CHISELED_RED_SANDSTONE ||
-                    block == Material.SMOOTH_RED_SANDSTONE;
-        }
-        if (isShovel(tool)) {
-            return block == Material.DIRT ||
-                    block == Material.GRASS_BLOCK ||
-                    block == Material.PODZOL ||
-                    block == Material.MYCELIUM ||
-                    block == Material.DIRT_PATH ||
-                    block == Material.COARSE_DIRT ||
-                    block == Material.ROOTED_DIRT ||
-                    block == Material.SAND ||
-                    block == Material.RED_SAND ||
-                    block == Material.GRAVEL ||
-                    block == Material.CLAY ||
-                    block == Material.SOUL_SAND ||
-                    block == Material.SOUL_SOIL ||
-                    block == Material.SNOW ||
-                    block == Material.SNOW_BLOCK ||
-                    block == Material.FARMLAND ||
-                    block == Material.MUD ||
-                    block == Material.MUDDY_MANGROVE_ROOTS;
-        }
-
-        if (isAxe(tool)) {
-            return block == Material.OAK_LOG ||
-                    block == Material.BIRCH_LOG ||
-                    block == Material.SPRUCE_LOG ||
-                    block == Material.JUNGLE_LOG ||
-                    block == Material.ACACIA_LOG ||
-                    block == Material.DARK_OAK_LOG ||
-                    block == Material.MANGROVE_LOG ||
-                    block == Material.CHERRY_LOG ||
-                    block == Material.STRIPPED_OAK_LOG ||
-                    block == Material.STRIPPED_BIRCH_LOG ||
-                    block == Material.STRIPPED_SPRUCE_LOG ||
-                    block == Material.STRIPPED_JUNGLE_LOG ||
-                    block == Material.STRIPPED_ACACIA_LOG ||
-                    block == Material.STRIPPED_DARK_OAK_LOG ||
-                    block == Material.STRIPPED_MANGROVE_LOG ||
-                    block == Material.STRIPPED_CHERRY_LOG ||
-                    block == Material.OAK_WOOD ||
-                    block == Material.BIRCH_WOOD ||
-                    block == Material.SPRUCE_WOOD ||
-                    block == Material.JUNGLE_WOOD ||
-                    block == Material.ACACIA_WOOD ||
-                    block == Material.DARK_OAK_WOOD ||
-                    block == Material.MANGROVE_WOOD ||
-                    block == Material.CHERRY_WOOD ||
-                    block == Material.STRIPPED_OAK_WOOD ||
-                    block == Material.STRIPPED_BIRCH_WOOD ||
-                    block == Material.STRIPPED_SPRUCE_WOOD ||
-                    block == Material.STRIPPED_JUNGLE_WOOD ||
-                    block == Material.STRIPPED_ACACIA_WOOD ||
-                    block == Material.STRIPPED_DARK_OAK_WOOD ||
-                    block == Material.STRIPPED_MANGROVE_WOOD ||
-                    block == Material.STRIPPED_CHERRY_WOOD ||
-                    block == Material.OAK_PLANKS ||
-                    block == Material.BIRCH_PLANKS ||
-                    block == Material.SPRUCE_PLANKS ||
-                    block == Material.JUNGLE_PLANKS ||
-                    block == Material.ACACIA_PLANKS ||
-                    block == Material.DARK_OAK_PLANKS ||
-                    block == Material.MANGROVE_PLANKS ||
-                    block == Material.CHERRY_PLANKS ||
-                    block == Material.CRIMSON_STEM ||
-                    block == Material.WARPED_STEM ||
-                    block == Material.STRIPPED_CRIMSON_STEM ||
-                    block == Material.STRIPPED_WARPED_STEM ||
-                    block == Material.CRIMSON_HYPHAE ||
-                    block == Material.WARPED_HYPHAE ||
-                    block == Material.STRIPPED_CRIMSON_HYPHAE ||
-                    block == Material.STRIPPED_WARPED_HYPHAE ||
-                    block == Material.CRIMSON_PLANKS ||
-                    block == Material.WARPED_PLANKS;
-        }
-        return false;
-    }
-
-    */
-
 
     private double calculateBreakTime(Material tool, Material block) {
         float blockHardness = block.getHardness();
