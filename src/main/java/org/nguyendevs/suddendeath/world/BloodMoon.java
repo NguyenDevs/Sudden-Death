@@ -17,9 +17,6 @@ import org.nguyendevs.suddendeath.manager.EventManager.WorldStatus;
 
 import java.util.logging.Level;
 
-/**
- * Handles the Blood Moon world event, enhancing monster behavior and player damage.
- */
 public class BloodMoon extends WorldEventHandler {
 	private static final String BLOODMOON_METADATA = "BloodmoonMob";
 	private static final int WATER_CHECK_RADIUS = 5;
@@ -31,18 +28,10 @@ public class BloodMoon extends WorldEventHandler {
 			PotionEffectType.DAMAGE_RESISTANCE
 	};
 
-	/**
-	 * Constructs a Blood Moon event handler for the specified world.
-	 *
-	 * @param world The world where the Blood Moon event occurs.
-	 */
 	public BloodMoon(World world) {
 		super(world, 3 * 20, WorldStatus.BLOOD_MOON);
 	}
 
-	/**
-	 * Increases damage taken by players and applies a slow effect during Blood Moon.
-	 */
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageEvent event) {
 		if (!(event.getEntity() instanceof Player) || !event.getEntity().getWorld().equals(getWorld())) {
@@ -66,9 +55,6 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
-	/**
-	 * Replaces non-zombie monsters with enhanced zombies during Blood Moon.
-	 */
 	@EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
 	public void onCreatureSpawn(CreatureSpawnEvent event) {
 		LivingEntity entity = event.getEntity();
@@ -93,9 +79,6 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
-	/**
-	 * Removes potion effects from Blood Moon creepers on explosion.
-	 */
 	@EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
 	public void onEntityExplode(EntityExplodeEvent event) {
 		Entity entity = event.getEntity();
@@ -114,9 +97,6 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
-	/**
-	 * Periodically replaces non-zombie monsters with enhanced zombies.
-	 */
 	@Override
 	public void run() {
 		try {
@@ -135,9 +115,6 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
-	/**
-	 * Cleans up by removing Blood Moon effects from creepers.
-	 */
 	@Override
 	public void close() {
 		super.close();
@@ -156,11 +133,6 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
-	/**
-	 * Spawns an enhanced zombie with potion effects and particle animations.
-	 *
-	 * @param location The location to spawn the zombie.
-	 */
 	private void spawnEnhancedZombie(Location location) {
 		try {
 			Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, EntityType.ZOMBIE);
@@ -178,12 +150,6 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
-	/**
-	 * Checks if water is nearby within a specified radius.
-	 *
-	 * @param location The center location to check.
-	 * @return True if water is found, false otherwise.
-	 */
 	private boolean isWaterNearby(Location location) {
 		try {
 			for (int x = -WATER_CHECK_RADIUS; x <= WATER_CHECK_RADIUS; x++) {
@@ -203,17 +169,12 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
-	/**
-	 * Inner class to handle particle effects for spawning zombies.
-	 */
 	private static class ZombieSpawnEffectTask extends BukkitRunnable {
 		private final Location location;
 		private double time = 0.0;
-
 		ZombieSpawnEffectTask(Location location) {
 			this.location = location;
 		}
-
 		@Override
 		public void run() {
 			try {
@@ -221,13 +182,11 @@ public class BloodMoon extends WorldEventHandler {
 					cancel();
 					return;
 				}
-
 				World world = location.getWorld();
 				if (world == null) {
 					cancel();
 					return;
 				}
-
 				for (int j = 0; j < 2; j++) {
 					time += 0.12;
 					for (double angle = 0.0; angle < 2 * Math.PI; angle += Math.PI / 8) {
