@@ -26,10 +26,6 @@ import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.logging.Level;
 
-/**
- * Command executor for the SuddenDeath plugin's /sds command.
- * Handles status viewing, admin GUI, item management, recipe viewing, menu viewing, and more.
- */
 public class SuddenDeathStatusCommand implements CommandExecutor {
     private static final String PERMISSION_STATUS = "suddendeath.admin";
     private static final String PERMISSION_RECIPE = "suddendeath.recipe";
@@ -198,11 +194,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         return true;
     }
 
-    /**
-     * Sends the help message with available commands to the sender.
-     *
-     * @param sender The sender to send the message to.
-     */
     private void sendHelpMessage(CommandSender sender) {
         sender.sendMessage(translateColors(HELP_HEADER));
         sender.sendMessage(translateColors("&d<> &7= required"));
@@ -231,12 +222,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Handles the clean command to remove negative effects from a player.
-     *
-     * @param sender The sender executing the command.
-     * @param args   The command arguments.
-     */
     private void handleCleanCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
             if (sender instanceof Player player) {
@@ -277,12 +262,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Handles the start command to initiate an event in the player's world.
-     *
-     * @param player The player executing the command.
-     * @param args   The command arguments.
-     */
     private void handleStartCommand(Player player, String[] args) {
         if (args.length < 2) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED + "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD + "] " + translateColors("&cPlease specify an event to start."));
@@ -309,11 +288,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Handles the reload command to reload plugin configurations.
-     *
-     * @param sender The sender executing the command.
-     */
     private void handleReloadCommand(CommandSender sender) {
         try {
             SuddenDeath plugin = SuddenDeath.getInstance();
@@ -332,11 +306,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Sends the list of custom items to the sender with clickable commands for players.
-     *
-     * @param sender The sender to send the list to.
-     */
     private void sendItemList(CommandSender sender) {
         sender.sendMessage(translateColors(ITEM_LIST_HEADER));
         sender.sendMessage("");
@@ -362,12 +331,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Handles the give command to provide a custom item to a player.
-     *
-     * @param sender The sender executing the command.
-     * @param args   The command arguments.
-     */
     private void handleGiveCommand(CommandSender sender, String[] args) {
         if (args.length < 2) {
             sender.sendMessage(translateColors(Utils.msg("prefix") + " " + "&cPlease specify an item to give."));
@@ -447,11 +410,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Plays a sound effect for the player.
-     *
-     * @param player The player to play the sound for.
-     */
     private void playSound(Player player) {
         if (player != null) {
             try {
@@ -463,12 +421,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Retrieves a message from the plugin's messages configuration.
-     *
-     * @param key The message key.
-     * @return The message, or a default message if not found.
-     */
     private String getMessage(String key) {
         try {
             return SuddenDeath.getInstance().messages.getConfig().getString(key, "Message not found: " + key);
@@ -479,12 +431,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Translates color codes in a message.
-     *
-     * @param message The message containing color codes.
-     * @return The translated message with applied colors.
-     */
     private String translateColors(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
     }

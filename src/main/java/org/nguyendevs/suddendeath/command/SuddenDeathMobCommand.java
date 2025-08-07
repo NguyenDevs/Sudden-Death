@@ -23,10 +23,6 @@ import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.logging.Level;
 
-/**
- * Command executor for the SuddenDeath plugin's /sdmob command.
- * Handles mob creation, editing, deletion, listing, and killing.
- */
 public class SuddenDeathMobCommand implements CommandExecutor {
     private static final String PERMISSION_OP = "suddendeath.admin";
     private static final String STRIKETHROUGH = "&8&m---------------";
@@ -73,11 +69,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         return true;
     }
 
-    /**
-     * Sends the help message with available commands to the player.
-     *
-     * @param player The player to send the message to.
-     */
     private void sendHelpMessage(Player player) {
         player.sendMessage(translateColors(HELP_HEADER));
         player.sendMessage(translateColors("&d<> &7= required"));
@@ -93,12 +84,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         playSound(player);
     }
 
-    /**
-     * Handles the kill command to remove nearby custom mobs within a specified radius.
-     *
-     * @param player The player executing the command.
-     * @param args   The command arguments.
-     */
     private void handleKillCommand(Player player, String[] args) {
         if (args.length < 2) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&cUsage: /sdmob kill <radius>"));
@@ -137,12 +122,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         playSound(player);
     }
 
-    /**
-     * Handles the edit command to open the mob editor GUI for an existing mob.
-     *
-     * @param player The player executing the command.
-     * @param args   The command arguments.
-     */
     private void handleEditCommand(Player player, String[] args) {
         if (args.length < 3) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&cUsage: /sdmob edit <type> <mob-id>"));
@@ -167,12 +146,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         playSound(player);
     }
 
-    /**
-     * Handles the create command to create a new mob configuration.
-     *
-     * @param player The player executing the command.
-     * @param args   The command arguments.
-     */
     private void handleCreateCommand(Player player, String[] args) {
         if (args.length < 3) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&cUsage: /sdmob create <type> <mob-id>"));
@@ -207,12 +180,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         playSound(player);
     }
 
-    /**
-     * Handles the delete command to remove a mob configuration.
-     *
-     * @param player The player executing the command.
-     * @param args   The command arguments.
-     */
     private void handleDeleteCommand(Player player, String[] args) {
         if (args.length < 3) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&cUsage: /sdmob delete <type> <mob-id>"));
@@ -246,12 +213,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         playSound(player);
     }
 
-    /**
-     * Handles the list command to display mob types or mobs of a specific type.
-     *
-     * @param player The player executing the command.
-     * @param args   The command arguments.
-     */
     private void handleListCommand(Player player, String[] args) {
         if (args.length < 2) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&cUsage: /sdmob list <mob-type/'type'>"));
@@ -300,11 +261,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         playSound(player);
     }
 
-    /**
-     * Lists all supported mob types with clickable commands.
-     *
-     * @param player The player to send the list to.
-     */
     private void listMobTypes(Player player) {
         player.sendMessage(translateColors(MOB_TYPES_HEADER));
         player.sendMessage("");
@@ -326,13 +282,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         playSound(player);
     }
 
-    /**
-     * Parses the entity type from a string and validates it.
-     *
-     * @param player The player executing the command.
-     * @param typeStr The entity type string.
-     * @return The parsed EntityType, or null if invalid.
-     */
     private EntityType parseEntityType(Player player, String typeStr) {
         try {
             EntityType type = EntityType.valueOf(typeStr.toUpperCase().replace("-", "_"));
@@ -346,14 +295,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Validates the mob ID for create or delete commands.
-     *
-     * @param player The player executing the command.
-     * @param id     The mob ID to validate.
-     * @param mobs   The configuration file for the mob type.
-     * @return true if the ID is valid, false otherwise.
-     */
     private boolean isValidId(Player player, String id, ConfigFile mobs) {
         if (Utils.isIDType(id)) {
             player.sendMessage(ChatColor.GOLD + "[" + ChatColor.RED+ "Sudden" + ChatColor.DARK_RED + "Death" + ChatColor.GOLD+ "] " +translateColors("&c" + id + " is not a valid ID."));
@@ -377,11 +318,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         return true;
     }
 
-    /**
-     * Plays a sound effect for the player.
-     *
-     * @param player The player to play the sound for.
-     */
     private void playSound(Player player) {
         if (player != null) {
             try {
@@ -393,12 +329,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Retrieves a message from the plugin's messages configuration.
-     *
-     * @param key The message key.
-     * @return The message, or a default message if not found.
-     */
     private String getMessage(String key) {
         try {
             return Utils.msg(key);
@@ -409,12 +339,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
     }
 
-    /**
-     * Translates color codes in a message.
-     *
-     * @param message The message containing color codes.
-     * @return The translated message with applied colors.
-     */
     private String translateColors(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
