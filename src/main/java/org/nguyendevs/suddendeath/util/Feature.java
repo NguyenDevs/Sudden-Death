@@ -558,7 +558,12 @@ public enum Feature {
 	),
 	ZOMBIE_BREAK_BLOCK(
 			"Zombie Break Block",
-			new String[]{"Zombie can BREAK block!!!"},
+			new String[]{"Zombies with an Axe, Pickaxe or Shovel in hand",
+					     "can destroy the corresponding block type.",
+					     "Example: Zombie Pickaxe can break Stone and",
+					     "related blocks.",
+					     " ",
+			             "You can create custom Zombie with tools by using /sdmob command."},
 			"zombie-break-block",
 			new Modifier[]{
 					new Modifier("breakable-pickaxe-blocks", String.join(",", new String[]{
