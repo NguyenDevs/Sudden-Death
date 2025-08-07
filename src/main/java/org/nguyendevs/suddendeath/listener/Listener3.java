@@ -1377,6 +1377,55 @@ public class Listener3 implements Listener {
 
     private boolean canBreakBlock(Material tool, Material block) {
         if (block.getHardness() < 0) return false;
+
+        // Lấy danh sách block từ modifier tương ứng
+        String modifierKey;
+        if (isPickaxe(tool)) {
+            modifierKey = "breakable-pickaxe-blocks";
+        } else if (isShovel(tool)) {
+            modifierKey = "breakable-shovel-blocks";
+        } else if (isAxe(tool)) {
+            modifierKey = "breakable-axe-blocks";
+        } else {
+            return false;
+        }
+
+        // Lấy giá trị từ modifier
+        String blockListString = Feature.ZOMBIE_BREAK_BLOCK.getString(modifierKey);
+        if (blockListString == null || blockListString.isEmpty()) {
+            return false;
+        }
+
+        // Chuyển đổi chuỗi danh sách block thành Set<Material>
+        Set<Material> breakableBlocks = new HashSet<>();
+        try {
+            String[] blockNames = blockListString.split(",");
+            for (String blockName : blockNames) {
+                Material material = Material.getMaterial(blockName.trim().toUpperCase());
+                if (material != null) {
+                    breakableBlocks.add(material);
+                } else {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                            "Invalid block material in " + modifierKey + ": " + blockName);
+                }
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Error parsing block list for " + modifierKey, e);
+            return false;
+        }
+
+        // Kiểm tra đặc biệt cho OBSIDIAN với pickaxe
+        if (isPickaxe(tool) && block == Material.OBSIDIAN &&
+                tool != Material.DIAMOND_PICKAXE && tool != Material.NETHERITE_PICKAXE) {
+            return false;
+        }
+
+        // Kiểm tra xem block có trong danh sách được phép phá hay không
+        return breakableBlocks.contains(block);
+    }
+   /* private boolean canBreakBlock(Material tool, Material block) {
+        if (block.getHardness() < 0) return false;
         if (isPickaxe(tool)) {
             if (block == Material.OBSIDIAN && tool != Material.DIAMOND_PICKAXE && tool != Material.NETHERITE_PICKAXE) {
                 return false;
@@ -1499,6 +1548,8 @@ public class Listener3 implements Listener {
         }
         return false;
     }
+
+    */
 
 
     private double calculateBreakTime(Material tool, Material block) {
