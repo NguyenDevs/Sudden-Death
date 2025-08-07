@@ -89,9 +89,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Initialize main plugin components in proper order
-     */
     private void initializePlugin() {
         ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
         if (protocolManager == null) {
@@ -111,9 +108,6 @@ public class SuddenDeath extends JavaPlugin {
         new SpigotPlugin(119526, this).checkForUpdate();
     }
 
-    /**
-     * Initialize configuration files with default values
-     */
     private void initializeConfigFiles() {
         messages = new ConfigFile(this, "/language", "messages");
         items = new ConfigFile(this, "/language", "items");
@@ -146,9 +140,6 @@ public class SuddenDeath extends JavaPlugin {
         configuration.save();
     }
 
-    /**
-     * Initialize default message values
-     */
     private void initializeDefaultMessages() {
         boolean saveNeeded = false;
         for (Message msg : Message.values()) {
@@ -163,9 +154,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Initialize default items configuration
-     */
     private void initializeDefaultItems() {
         items.setup();
         boolean saveNeeded = false;
@@ -239,10 +227,7 @@ public class SuddenDeath extends JavaPlugin {
             items.save();
         }
     }
-
-    /**
-     * Initialize default features configuration
-     */
+/*
     private void initializeDefaultFeatures() {
         features.setup();
         boolean saveNeeded = false;
@@ -270,10 +255,41 @@ public class SuddenDeath extends JavaPlugin {
         }
         Feature.reloadDescriptions();
     }
+*/
+    private void initializeDefaultFeatures() {
+        features.setup();
+        boolean saveNeeded = false;
 
-    /**
-     * Initialize features and entities configuration
-     */
+        for (Feature feature : Feature.values()) {
+            String featureKey = feature.getPath();
+            ConfigurationSection section = features.getConfig().getConfigurationSection("features." + featureKey);
+
+            // Nếu section chưa tồn tại, tạo mới
+            if (section == null) {
+                section = features.getConfig().createSection("features." + featureKey);
+                section.set("name", feature.getName());
+                section.set("lore", feature.getLore()); // Ghi lore với mã màu
+                saveNeeded = true;
+            } else {
+                // Nếu section đã tồn tại, chỉ cập nhật nếu cần
+                if (!section.contains("name") || !section.getString("name").equals(feature.getName())) {
+                    section.set("name", feature.getName());
+                    saveNeeded = true;
+                }
+                // Kiểm tra lore để tránh ghi đè
+                if (!section.contains("lore") || section.getStringList("lore").isEmpty()) {
+                    section.set("lore", feature.getLore());
+                    saveNeeded = true;
+                }
+            }
+        }
+
+        if (saveNeeded) {
+            features.save();
+        }
+        Feature.reloadDescriptions();
+    }
+
     private void initializeFeaturesAndEntities() {
         eventManager = new EventManager();
         for (EntityType type : EntityType.values()) {
@@ -309,9 +325,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Initialize custom items and crafting recipes
-     */
     private void initializeItemsAndRecipes() {
         initializeDefaultItems();
         removeCustomRecipes();
@@ -332,9 +345,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Register all event listeners
-     */
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new MainListener(), this);
@@ -344,9 +354,6 @@ public class SuddenDeath extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new Listener3(this), this);
     }
 
-    /**
-     * Register plugin commands and tab completers
-     */
     private void registerCommands() {
         Optional.ofNullable(getCommand("sdstatus")).ifPresent(cmd -> {
             cmd.setExecutor(new SuddenDeathStatusCommand());
@@ -358,9 +365,6 @@ public class SuddenDeath extends JavaPlugin {
         });
     }
 
-    /**
-     * Hook into PlaceholderAPI if available
-     */
     private void hookIntoPlaceholderAPI() {
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new SuddenDeathPlaceholders().register();
@@ -368,9 +372,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Register WorldGuard custom flags
-     */
     private void registerWorldGuardFlags() {
         if (getServer().getPluginManager().getPlugin("WorldGuard") == null) {
             return;
@@ -398,9 +399,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Initialize WorldGuard integration with comprehensive error handling
-     */
     private void initializeWorldGuard() {
         try {
             if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
@@ -478,9 +476,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Check if WorldGuard integration is ready for use
-     */
     public boolean isWorldGuardReady() {
         boolean ready = worldGuardReady && wgPlugin != null;
         if (!ready) {
@@ -490,9 +485,6 @@ public class SuddenDeath extends JavaPlugin {
         return ready;
     }
 
-    /**
-     * Get WorldGuard plugin instance
-     */
     public WGPlugin getWorldGuard() {
         if (wgPlugin == null) {
             getLogger().warning("WorldGuard plugin requested but not initialized, returning fallback");
@@ -505,9 +497,6 @@ public class SuddenDeath extends JavaPlugin {
         return wgPlugin;
     }
 
-    /**
-     * Check if WorldGuard custom flags can be used
-     */
     public boolean canUseWorldGuardFlags() {
         boolean canUse = isWorldGuardReady() &&
                 wgPlugin instanceof WorldGuardOn &&
@@ -524,9 +513,6 @@ public class SuddenDeath extends JavaPlugin {
         return canUse;
     }
 
-    /**
-     * Register a crafting recipe for a custom item
-     */
     private void registerCraftingRecipe(CustomItem item) {
         if (item.getCraft() == null || item.getCraft().isEmpty()) {
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &6No crafting recipe defined for " + item.name()));
@@ -565,9 +551,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Remove all custom recipes registered by this plugin
-     */
     private void removeCustomRecipes() {
         Iterator<Recipe> recipes = getServer().recipeIterator();
         List<NamespacedKey> toRemove = new ArrayList<>();
@@ -586,9 +569,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Re-register all custom recipes
-     */
     private void reRegisterRecipes() {
         removeCustomRecipes();
         for (CustomItem item : CustomItem.values()) {
@@ -610,9 +590,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Refresh all features configuration
-     */
     public void refreshFeatures() {
         for (Feature feature : Feature.values()) {
             List<String> enabledWorld = getConfiguration().getConfig().getStringList(feature.getPath());
@@ -623,9 +600,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Reload all configuration files and reinitialize systems
-     */
     public void reloadConfigFiles() {
         try {
             savePlayerData();
@@ -653,9 +627,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Save all player data to files
-     */
     private void savePlayerData() {
         PlayerData.getLoaded().forEach(data -> {
             try {
@@ -668,9 +639,6 @@ public class SuddenDeath extends JavaPlugin {
         });
     }
 
-    /**
-     * Print the plugin logo to console
-     */
     public void printLogo() {
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
@@ -693,44 +661,26 @@ public class SuddenDeath extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
     }
 
-    /**
-     * Get the singleton instance of SuddenDeath plugin
-     */
     public static SuddenDeath getInstance() {
         return instance;
     }
 
-    /**
-     * Get the players map
-     */
     public Map<Player, Integer> getPlayers() {
         return players;
     }
 
-    /**
-     * Get the main configuration file
-     */
     public ConfigFile getConfiguration() {
         return configuration;
     }
 
-    /**
-     * Get the features configuration file
-     */
     public ConfigFile getFeaturesConfig() {
         return features;
     }
 
-    /**
-     * Get the packet sender instance
-     */
     public PacketSender getPacketSender() {
         return packetSender;
     }
 
-    /**
-     * Get the event manager instance
-     */
     public EventManager getEventManager() {
         return eventManager;
     }
