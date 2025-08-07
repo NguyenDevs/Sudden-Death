@@ -42,6 +42,9 @@ import java.util.logging.Level;
 import java.util.stream.IntStream;
 
 public class Listener3 implements Listener {
+
+    private final Map<UUID, BukkitRunnable> activeBreakingTasks = new HashMap<>();
+
     private final NamespacedKey totemUsed;
     private static final Random RANDOM = new Random();
     private static final long DROWNED_LOOP_INTERVAL = 100L;
@@ -1222,21 +1225,14 @@ public class Listener3 implements Listener {
         }
     }
 
-
-
-    // Map để track zombie đang phá block (chỉ cần đơn giản)
-    private final Map<UUID, BukkitRunnable> activeBreakingTasks = new HashMap<>();
-
     private void applyZombieBreakBlock(Zombie zombie) {
         try {
             if (zombie == null || zombie.getHealth() <= 0) {
                 return;
             }
 
-            // Kiểm tra xem zombie đã đang phá block nào chưa
             UUID zombieUUID = zombie.getUniqueId();
             if (activeBreakingTasks.containsKey(zombieUUID)) {
-                // Zombie đang phá block, không làm gì cả
                 return;
             }
 
@@ -1294,7 +1290,6 @@ public class Listener3 implements Listener {
             Block finalTargetBlock = targetBlock;
             Player finalTarget = target;
 
-            // Tạo random offset để zombie swing bất đồng bộ
             int randomSwingOffset = (int) (Math.random() * 10);
             int randomSoundOffset = (int) (Math.random() * 8);
             int randomParticleOffset = (int) (Math.random() * 12);
@@ -1304,7 +1299,6 @@ public class Listener3 implements Listener {
                 ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
                 int entityId = (int) (Math.random() * Integer.MAX_VALUE);
 
-                // Tính toán interval với một chút random để tự nhiên hơn
                 int swingInterval = Math.max(8, (int) (breakTimeTicks / 8)) + (int) (Math.random() * 4 - 2);
                 int hitSoundInterval = Math.max(10, (int) (breakTimeTicks / 6)) + (int) (Math.random() * 4 - 2);
                 int particleInterval = Math.max(15, (int) (breakTimeTicks / 5)) + (int) (Math.random() * 6 - 3);
@@ -1315,7 +1309,7 @@ public class Listener3 implements Listener {
                         if (!zombie.isValid() || !finalTarget.isOnline() ||
                                 zombie.getLocation().distanceSquared(finalTarget.getLocation()) > 1600 ||
                                 !finalTargetBlock.getType().isSolid() || !canBreakBlock(toolType, finalTargetBlock.getType())) {
-                            // Hủy session và gửi packet hủy animation
+
                             activeBreakingTasks.remove(zombieUUID);
                             sendBreakAnimationPacket(finalTarget, entityId, finalTargetBlock, -1);
                             cancel();
@@ -1332,19 +1326,16 @@ public class Listener3 implements Listener {
                                         int destroyStage = Math.min(9, (int) ((ticksElapsed / breakTimeTicks) * 10));
                                         sendBreakAnimationPacket(finalTarget, entityId, finalTargetBlock, destroyStage);
 
-                                        // Swing hand với random offset
                                         if ((ticksElapsed + randomSwingOffset) % swingInterval == 0) {
                                             zombie.swingMainHand();
                                         }
 
-                                        // Hit sound với random offset khác
                                         if ((ticksElapsed + randomSoundOffset) % hitSoundInterval == 0) {
                                             Sound hitSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getHitSound();
                                             zombie.getWorld().playSound(finalTargetBlock.getLocation(), hitSound, 0.4f,
                                                     0.8f + (float)(Math.random() * 0.4));
                                         }
 
-                                        // Particle hiệu ứng khi đang đập với random offset
                                         if ((ticksElapsed + randomParticleOffset) % particleInterval == 0 && destroyStage >= 2) {
                                             zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK,
                                                     finalTargetBlock.getLocation().add(0.5, 0.5, 0.5),
@@ -1360,32 +1351,25 @@ public class Listener3 implements Listener {
                             return;
                         }
 
-                        // Block đã vỡ - xử lý cuối cùng
                         new BukkitRunnable() {
                             @Override
                             public void run() {
                                 try {
                                     if (finalTargetBlock.getType().isSolid()) {
-                                        // Swing cuối cùng khi vỡ block
                                         zombie.swingMainHand();
 
-                                        // Âm thanh vỡ block
                                         Sound breakSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getBreakSound();
                                         zombie.getWorld().playSound(finalTargetBlock.getLocation(), breakSound, 0.8f, 1.0f);
 
-                                        // Hủy animation
                                         sendBreakAnimationPacket(finalTarget, entityId, finalTargetBlock, -1);
 
-                                        // Particle nhiều khi block vỡ
                                         zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK,
                                                 finalTargetBlock.getLocation().add(0.5, 0.5, 0.5),
                                                 25, 0.3, 0.3, 0.3, 0.1, finalTargetBlock.getBlockData());
 
-                                        // Phá block
                                         finalTargetBlock.breakNaturally(itemInHand);
                                     }
 
-                                    // Xóa task khỏi map
                                     activeBreakingTasks.remove(zombieUUID);
 
                                 } catch (Exception e) {
@@ -1396,7 +1380,6 @@ public class Listener3 implements Listener {
                             }
                         }.runTaskLater(SuddenDeath.getInstance(), 0);
 
-                        // Tiếp tục tìm block khác sau khi hoàn thành
                         new BukkitRunnable() {
                             @Override
                             public void run() {
@@ -1430,11 +1413,7 @@ public class Listener3 implements Listener {
                     }
                 }
             };
-
-            // Lưu task vào map
             activeBreakingTasks.put(zombieUUID, breakTask);
-
-            // Bắt đầu task
             breakTask.runTaskTimerAsynchronously(SuddenDeath.getInstance(), 0, 1);
 
         } catch (Exception e) {
@@ -1443,7 +1422,6 @@ public class Listener3 implements Listener {
         }
     }
 
-    // Method để cleanup khi zombie chết
     public void cleanupZombieBreaking(Zombie zombie) {
         UUID zombieUUID = zombie.getUniqueId();
         BukkitRunnable task = activeBreakingTasks.remove(zombieUUID);
@@ -1486,7 +1464,6 @@ public class Listener3 implements Listener {
     private boolean canBreakBlock(Material tool, Material block) {
         if (block.getHardness() < 0) return false;
 
-        // Lấy danh sách block từ modifier tương ứng
         String modifierKey;
         if (isPickaxe(tool)) {
             modifierKey = "breakable-pickaxe-blocks";
@@ -1498,13 +1475,11 @@ public class Listener3 implements Listener {
             return false;
         }
 
-        // Lấy giá trị từ modifier
         String blockListString = Feature.ZOMBIE_BREAK_BLOCK.getString(modifierKey);
         if (blockListString == null || blockListString.isEmpty()) {
             return false;
         }
 
-        // Chuyển đổi chuỗi danh sách block thành Set<Material>
         Set<Material> breakableBlocks = new HashSet<>();
         try {
             String[] blockNames = blockListString.split(",");
@@ -1523,13 +1498,11 @@ public class Listener3 implements Listener {
             return false;
         }
 
-        // Kiểm tra đặc biệt cho OBSIDIAN với pickaxe
         if (isPickaxe(tool) && block == Material.OBSIDIAN &&
                 tool != Material.DIAMOND_PICKAXE && tool != Material.NETHERITE_PICKAXE) {
             return false;
         }
 
-        // Kiểm tra xem block có trong danh sách được phép phá hay không
         return breakableBlocks.contains(block);
     }
 
