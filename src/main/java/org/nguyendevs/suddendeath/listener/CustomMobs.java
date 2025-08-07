@@ -23,19 +23,11 @@ import org.nguyendevs.suddendeath.util.ItemUtils;
 import java.util.*;
 import java.util.logging.Level;
 
-/**
- * Event listener for customizing mob spawns with equipment, attributes, and effects in the SuddenDeath plugin.
- */
 public class CustomMobs implements Listener {
     private static final Random RANDOM = new Random();
     private static final String METADATA_KEY = "SDCustomMob";
     private static final int EFFECT_DURATION = 9999999;
 
-    /**
-     * Handles mob spawning to apply custom configurations such as equipment, attributes, and potion effects.
-     *
-     * @param event The CreatureSpawnEvent.
-     */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity entity = event.getEntity();
@@ -80,12 +72,6 @@ public class CustomMobs implements Listener {
         }
     }
 
-    /**
-     * Selects a custom mob type based on spawn coefficients.
-     *
-     * @param spawnCoefficients Map of mob types and their cumulative spawn coefficients.
-     * @return The selected mob type ID or empty string if none selected.
-     */
     private String selectCustomMobType(Map<String, Double> spawnCoefficients) {
         double total = spawnCoefficients.values().stream().mapToDouble(Double::doubleValue).sum();
         double index = RANDOM.nextDouble() * total;
@@ -101,13 +87,6 @@ public class CustomMobs implements Listener {
         return "";
     }
 
-    /**
-     * Applies custom properties to the spawned mob, including name, equipment, attributes, and effects.
-     *
-     * @param entity The spawned entity.
-     * @param config The configuration file for the entity type.
-     * @param id     The selected custom mob type ID.
-     */
     private void applyCustomMobProperties(LivingEntity entity, FileConfiguration config, String id) {
         try {
             ConfigurationSection section = config.getConfigurationSection(id);
@@ -119,9 +98,11 @@ public class CustomMobs implements Listener {
 
             // Set custom name
             String name = ChatColor.translateAlternateColorCodes('&', section.getString("name", ""));
-            if (!name.isEmpty()) {
+            if (!name.isEmpty() && !name.equals("None") && !name.equals("none")) {
                 entity.setCustomName(name);
                 entity.setCustomNameVisible(true);
+            } else {
+                entity.setCustomNameVisible(false);
             }
 
             // Set metadata
@@ -159,13 +140,6 @@ public class CustomMobs implements Listener {
         }
     }
 
-    /**
-     * Sets an attribute value for the entity.
-     *
-     * @param entity    The entity to set the attribute for.
-     * @param attribute The attribute to set.
-     * @param value     The value to set.
-     */
     private void setAttribute(LivingEntity entity, Attribute attribute, double value) {
         try {
             AttributeInstance attributeInstance = entity.getAttribute(attribute);
@@ -181,13 +155,6 @@ public class CustomMobs implements Listener {
         }
     }
 
-    /**
-     * Applies a potion effect to the entity.
-     *
-     * @param entity      The entity to apply the effect to.
-     * @param effectName  The name of the potion effect.
-     * @param amplifier   The amplifier level of the effect.
-     */
     private void applyPotionEffect(LivingEntity entity, String effectName, int amplifier) {
         try {
             PotionEffectType type = PotionEffectType.getByName(effectName.toUpperCase().replace("-", "_"));
