@@ -66,7 +66,7 @@ public enum Feature {
 					"for #slow-duration# seconds."
 			},
 			"arrow-slow",
-			new Modifier[]{new Modifier("slow-duration", 2.0)}
+			new Modifier[]{new Modifier("slow-duration", 1.5)}
 	),
 	BLEEDING(
 			"Bleeding",
@@ -131,7 +131,7 @@ public enum Feature {
 			},
 			"bone-grenades",
 			new Modifier[]{
-					new Modifier("chance-percent", 35.0),
+					new Modifier("chance-percent", 25.0),
 					new Modifier("damage", 6.0)
 			}
 	),
@@ -139,10 +139,8 @@ public enum Feature {
 			"Bone Wizards",
 			new String[]{
 					"&fSkeletons &7named &f'Bone Wizards' &7cast spells:",
-					"&c► Fireball: #fireball-damage# &7damage,",
-					"#fireball-duration# sec. burn",
-					"&3► Frost Curse: #frost-curse-damage# &7damage,",
-					"#frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
+					"&c► Fireball: #fireball-damage# &7damage, #fireball-duration# sec. burn",
+					"&3► Frost Curse: #frost-curse-damage# &7damage, #frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
 			},
 			"bone-wizards",
 			new Modifier[]{
@@ -181,7 +179,7 @@ public enum Feature {
 	DANGEROUS_COAL(
 			"Dangerous Coal",
 			new String[]{
-					"Mining &8coal &7has #chance-percent#% chance",
+					"Mining &8Coal &7has #chance-percent#% chance",
 					"to trigger a gas pocket &cexplosion.",
 					"&7&oExplosion radius: #radius# &7&oblocks."
 			},
@@ -194,7 +192,7 @@ public enum Feature {
 	ELECTRICITY_SHOCK(
 			"Electricity Shock",
 			new String[]{
-					"&cPowered redstone &7&o(wires, torches,",
+					"&cPowered Redstone &7&o(wires, torches,",
 					"&7&orepeaters, comparators) &7deals #damage# damage.",
 					"Can occur every 3 seconds."
 			},
@@ -204,8 +202,7 @@ public enum Feature {
 	ENDER_POWER(
 			"Ender Power",
 			new String[]{
-					"&fPlayers &7have #chance-percent#% chance",
-					"to be blinded for #duration# seconds.",
+					"&fPlayers &7have #chance-percent#% chance to be blinded for #duration# seconds.",
 					"Triggered when hitting &5Endermen&7, &5Endermites&7,",
 					"&5Shulkers &7or &5Dragons."
 			},
@@ -222,7 +219,7 @@ public enum Feature {
 					"players for #burn-duration# seconds."
 			},
 			"everburning-blazes",
-			new Modifier[]{new Modifier("burn-duration", 3.0)}
+			new Modifier[]{new Modifier("burn-duration", 2.0)}
 	),
 	FALL_STUN(
 			"Fall Stun",
@@ -237,6 +234,7 @@ public enum Feature {
 			"Force of the Undead",
 			new String[]{
 					"&cMonsters &7deal increased attack damage.",
+					" ",
 					"&cConfigurable for each monster."
 			},
 			"force-of-the-undead",
@@ -246,7 +244,7 @@ public enum Feature {
 			"Freddy",
 			new String[]{
 					"&fPlayers &7have #chance-percent#% chance",
-					"to summon &0Freddy &7upon waking."
+					"to summon &8Freddy &7upon waking."
 			},
 			"freddy",
 			new Modifier[]{new Modifier("chance-percent", 5.0)}
@@ -260,7 +258,7 @@ public enum Feature {
 			},
 			"homing-flame-barrage",
 			new Modifier[]{
-					new Modifier("chance-percent", 50),
+					new Modifier("chance-percent", 45),
 					new Modifier("shoot-amount", 3),
 					new Modifier("damage", 1)
 			}
@@ -319,6 +317,7 @@ public enum Feature {
 			new String[]{
 					"&cMonsters &7can deal critical strikes",
 					"with #damage-percent#% additional damage.",
+					" ",
 					"&cCrit Chance configurable for each monster."
 			},
 			"mob-critical-strikes",
@@ -375,6 +374,7 @@ public enum Feature {
 			"Quick Mobs",
 			new String[]{
 					"&cMonsters &7have increased movement speed.",
+					" ",
 					"&cConfigurable for each monster."
 			},
 			"quick-mobs",
@@ -399,8 +399,8 @@ public enum Feature {
 			},
 			"shocking-skeleton-arrows",
 			new Modifier[]{
-					new Modifier("chance-percent", 40),
-					new Modifier("shock-duration", 1.0)
+					new Modifier("chance-percent", 35),
+					new Modifier("shock-duration", 0.75)
 			}
 	),
 	SILVERFISHES_SUMMON(
@@ -464,6 +464,7 @@ public enum Feature {
 			"Tanky Monsters",
 			new String[]{
 					"&cMonsters&7 take reduced damage.",
+					" ",
 					"&cConfigurable for each monster."
 			},
 			"tanky-monsters",
@@ -491,7 +492,7 @@ public enum Feature {
 			},
 			"thunderstorm",
 			new Modifier[]{
-					new Modifier("chance", 25),
+					new Modifier("chance", 5),
 					new Modifier("damage-percent", 125)
 			},
 			Thunderstorm::new
@@ -519,7 +520,7 @@ public enum Feature {
 			"undead-gunners",
 			new Modifier[]{
 					new Modifier("damage", 7.0),
-					new Modifier("block-damage", 0)
+					new Modifier("block-damage", 3)
 			}
 	),
 	UNDEAD_RAGE(
@@ -535,13 +536,13 @@ public enum Feature {
 			"Witch Scrolls",
 			new String[]{
 					"&5Witches &7have a #chance-percent#% chance",
-					"to block damage with a &fmagic shield.",
-					"&5Witches &7cast runes dealing #damage# damage",
+					"to block damage with a &fMagic shield.",
+					"Witches cast runes dealing #damage# damage",
 					"and slowing players (II) for #slow-duration# seconds."
 			},
 			"witch-scrolls",
 			new Modifier[]{
-					new Modifier("chance-percent", 55.0),
+					new Modifier("chance-percent", 40.0),
 					new Modifier("damage", 2.5),
 					new Modifier("slow-duration", 2.0)
 			}
@@ -549,7 +550,7 @@ public enum Feature {
 	WITHER_MACHINEGUN(
 			"Wither Machinegun",
 			new String[]{
-					"&0Wither Skeletons &7throw coal,",
+					"&8Wither Skeletons &7throw coal,",
 					"each dealing #damage# damage."
 			},
 			"wither-machinegun",
@@ -558,7 +559,7 @@ public enum Feature {
 	WITHER_RUSH(
 			"Wither Rush",
 			new String[]{
-					"&0Wither Skeletons &7blink to players,",
+					"&8Wither Skeletons &7blink to players,",
 					"dealing #damage# damage."
 			},
 			"wither-rush",
@@ -572,7 +573,8 @@ public enum Feature {
 					"&7&oExample: Zombie Pickaxe can break Stone and",
 					"&7&orelated blocks.",
 					" ",
-					"&e&oYou can create custom Zombie with tools by using /sdmob command."
+					"&e&oYou can create custom Zombie with tools by using",
+					"&6/sdmob &ecommand."
 			},
 			"zombie-break-block",
 			new Modifier[]{
