@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-/**
- * A GUI inventory for displaying player status and difficulty selection in the SuddenDeath plugin.
- */
 public class Status extends PluginInventory {
     private static final int[] STATUS_SLOTS = {10, 11, 12, 13, 14, 15, 16};
     private static final String GUI_TITLE = translateColors(Utils.msg("gui-status-name"));
@@ -29,21 +26,11 @@ public class Status extends PluginInventory {
     private static String translateColors(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
-    /**
-     * Constructs a Status GUI for the specified player.
-     *
-     * @param player The player for whom the GUI is created.
-     */
     public Status(Player player) {
         super(player);
         this.data = PlayerData.get(player);
     }
 
-    /**
-     * Creates and populates the inventory for the player's status GUI.
-     *
-     * @return The populated inventory.
-     */
     @Override
     public @NotNull Inventory getInventory() {
         Inventory inventory = Bukkit.createInventory(this, 27, GUI_TITLE);
@@ -74,14 +61,6 @@ public class Status extends PluginInventory {
         return inventory;
     }
 
-    /**
-     * Creates a status item with the specified material and message keys.
-     *
-     * @param material The material of the item.
-     * @param nameKey  The message key for the item name.
-     * @param loreKey  The message key for the item lore.
-     * @return The created ItemStack.
-     */
     private ItemStack createStatusItem(Material material, String nameKey, String loreKey) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
@@ -101,14 +80,6 @@ public class Status extends PluginInventory {
         return item;
     }
 
-
-    /**
-     * Finds the first available slot in the inventory from the provided slot list.
-     *
-     * @param inventory The inventory to check.
-     * @param slots     The array of slots to search.
-     * @return The index of the first available slot, or -1 if none are available.
-     */
     private int getAvailableSlot(Inventory inventory, int[] slots) {
         for (int slot : slots) {
             if (inventory.getItem(slot) == null) {
@@ -118,11 +89,6 @@ public class Status extends PluginInventory {
         return -1;
     }
 
-    /**
-     * Handles inventory click events to allow difficulty selection.
-     *
-     * @param event The InventoryClickEvent.
-     */
     @Override
     public void whenClicked(InventoryClickEvent event) {
         event.setCancelled(true);
