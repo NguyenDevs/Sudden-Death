@@ -36,12 +36,8 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
 
-/**
- * Event listener for handling various entity, player, and block interactions in the SuddenDeath plugin.
- */
 public class Listener3 implements Listener {
     private final NamespacedKey totemUsed;
-
     private static final Random RANDOM = new Random();
     private static final long DROWNED_LOOP_INTERVAL = 100L;
     private static final long WITCH_LOOP_INTERVAL= 80L;
@@ -1225,17 +1221,13 @@ public class Listener3 implements Listener {
 
     private void applyZombieBreakBlock(Zombie zombie) {
         try {
-            // Validate zombie
             if (zombie == null || zombie.getHealth() <= 0) {
                 return;
             }
-
-            // Get or set target
             Player target = null;
             if (zombie.getTarget() instanceof Player) {
                 target = (Player) zombie.getTarget();
             } else {
-                // Find nearest player within 40 blocks
                 for (Player player : zombie.getWorld().getPlayers()) {
                     if (player.isOnline() && zombie.getLocation().distanceSquared(player.getLocation()) <= 1600) {
                         target = player;
@@ -1244,26 +1236,21 @@ public class Listener3 implements Listener {
                     }
                 }
             }
-
-            // Check if valid target exists and is within 40 blocks
             if (target == null || !target.getWorld().equals(zombie.getWorld()) ||
                     zombie.getLocation().distanceSquared(target.getLocation()) > 1600) {
                 return;
             }
-
-            // Check if zombie is holding a valid tool
+            
             ItemStack itemInHand = zombie.getEquipment().getItemInMainHand();
             Material toolType = itemInHand != null ? itemInHand.getType() : Material.AIR;
             if (!isValidTool(toolType)) {
-                return; // Zombie must hold a valid tool
+                return; 
             }
 
-            // Get block in zombie's line of sight (up to 3 blocks away)
             Location zombieEyeLoc = zombie.getEyeLocation();
             Vector direction = target.getLocation().toVector().subtract(zombieEyeLoc.toVector()).normalize();
             Block targetBlock = null;
 
-            // First, try to find a solid block at eye level
             BlockIterator iterator = new BlockIterator(zombie.getWorld(), zombieEyeLoc.toVector(), direction, 0, 3);
             while (iterator.hasNext()) {
                 Block block = iterator.next();
@@ -1271,7 +1258,6 @@ public class Listener3 implements Listener {
                     targetBlock = block;
                     break;
                 }
-                // If air is found, check the block directly below it
                 if (!block.getType().isSolid()) {
                     Block blockBelow = block.getRelative(0, -1, 0);
                     if (blockBelow.getType().isSolid() && canBreakBlock(toolType, blockBelow.getType())) {
@@ -1280,20 +1266,15 @@ public class Listener3 implements Listener {
                     }
                 }
             }
-
             if (targetBlock == null) {
-                // Ensure zombie continues to pursue the target
                 zombie.setTarget(target);
-                return; // No valid block to break
+                return;
             }
-
-            // Calculate break time based on tool and block hardness
             double breakTimeTicks = calculateBreakTime(toolType, targetBlock.getType());
             if (breakTimeTicks <= 0) {
-                return; // Cannot break this block with this tool
+                return;
             }
 
-            // Schedule block breaking
             Block finalTargetBlock = targetBlock;
             Player finalTarget = target;
             new BukkitRunnable() {
@@ -1303,33 +1284,26 @@ public class Listener3 implements Listener {
                 @Override
                 public void run() {
                     try {
-                        // Stop if zombie is invalid, target is offline, block is no longer valid, or target is too far
                         if (!zombie.isValid() || !finalTarget.isOnline() ||
                                 zombie.getLocation().distanceSquared(finalTarget.getLocation()) > 1600 ||
                                 !finalTargetBlock.getType().isSolid() || !canBreakBlock(toolType, finalTargetBlock.getType())) {
                             cancel();
                             return;
                         }
-
-                        // Ensure zombie continues targeting the player
                         zombie.setTarget(finalTarget);
 
-                        // Simulate breaking progress
                         ticksElapsed++;
                         if (ticksElapsed < breakTimeTicks) {
-                            // Run effects synchronously
                             new BukkitRunnable() {
                                 @Override
                                 public void run() {
                                     try {
-                                        // Show reduced crack particles
                                         zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, finalTargetBlock.getLocation().add(0.5, 0.5, 0.5), 5, 0.2, 0.2, 0.2, 0, finalTargetBlock.getBlockData());
-                                        // Play hit sound at intervals
                                         if (ticksElapsed % soundInterval == 0) {
                                             Sound hitSound = finalTargetBlock.getType().createBlockData().getSoundGroup().getHitSound();
                                             zombie.getWorld().playSound(finalTargetBlock.getLocation(), hitSound, 0.3f, 1.0f);
                                         }
-                                        zombie.swingMainHand(); // Attack animation
+                                        zombie.swingMainHand();
                                     } catch (Exception e) {
                                         SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                                                 "Error in block break effects for zombie: " + zombie.getUniqueId(), e);
@@ -1339,7 +1313,6 @@ public class Listener3 implements Listener {
                             return;
                         }
 
-                        // Break the block
                         new BukkitRunnable() {
                             @Override
                             public void run() {
@@ -1357,8 +1330,7 @@ public class Listener3 implements Listener {
                             }
                         }.runTaskLater(SuddenDeath.getInstance(), 0);
 
-                        // Continue breaking another block immediately
-                        applyZombieBreakBlock(zombie); // Recursive call to keep breaking
+                        applyZombieBreakBlock(zombie);
                     } catch (Exception e) {
                         SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                                 "Error in Zombie Break Block task for zombie: " + zombie.getUniqueId(), e);
@@ -1404,9 +1376,7 @@ public class Listener3 implements Listener {
     }
 
     private boolean canBreakBlock(Material tool, Material block) {
-        if (block.getHardness() < 0) return false; // Unbreakable blocks
-
-        // Pickaxe-compatible blocks
+        if (block.getHardness() < 0) return false;
         if (isPickaxe(tool)) {
             if (block == Material.OBSIDIAN && tool != Material.DIAMOND_PICKAXE && tool != Material.NETHERITE_PICKAXE) {
                 return false;
@@ -1454,8 +1424,6 @@ public class Listener3 implements Listener {
                     block == Material.CHISELED_RED_SANDSTONE ||
                     block == Material.SMOOTH_RED_SANDSTONE;
         }
-
-        // Shovel-compatible blocks
         if (isShovel(tool)) {
             return block == Material.DIRT ||
                     block == Material.GRASS_BLOCK ||
@@ -1477,7 +1445,6 @@ public class Listener3 implements Listener {
                     block == Material.MUDDY_MANGROVE_ROOTS;
         }
 
-        // Axe-compatible blocks
         if (isAxe(tool)) {
             return block == Material.OAK_LOG ||
                     block == Material.BIRCH_LOG ||
@@ -1530,9 +1497,9 @@ public class Listener3 implements Listener {
                     block == Material.CRIMSON_PLANKS ||
                     block == Material.WARPED_PLANKS;
         }
-
         return false;
     }
+
 
     private double calculateBreakTime(Material tool, Material block) {
         float blockHardness = block.getHardness();
@@ -1547,7 +1514,6 @@ public class Listener3 implements Listener {
             case NETHERITE_PICKAXE, NETHERITE_SHOVEL, NETHERITE_AXE -> 9.0f;
             default -> 0.5f;
         };
-
         return blockHardness * 1.5f / toolMultiplier * 20.0;
     }
 
