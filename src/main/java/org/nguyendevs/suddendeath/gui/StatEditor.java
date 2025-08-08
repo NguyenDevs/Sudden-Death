@@ -20,6 +20,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 public class StatEditor implements Listener {
+    private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final Pattern SPACE_PATTERN = Pattern.compile(" ");
     private static final String CANCEL_COMMAND = "cancel";
     private static final String NULL_VALUE = "null";
@@ -78,18 +79,18 @@ public class StatEditor implements Listener {
                     handlePotionEffectInput(player, message);
                     break;
                 default:
-                    player.sendMessage(translateColors("&6[&cSudden&4Death&6] &cUnsupported stat type: " + stat.getType()));
+                    player.sendMessage(translateColors(PREFIX + " " + "&cUnsupported stat type: " + stat.getType()));
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling AsyncPlayerChatEvent for player: " + player.getName(), e);
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &cAn error occurred while processing your input."));
+            player.sendMessage(translateColors(PREFIX + " " + "&cAn error occurred while processing your input."));
         }
     }
 
     private void handleCancel(Player player) {
         close();
-        player.sendMessage(translateColors("&6[&cSudden&4Death&6] &7Mob editing canceled."));
+        player.sendMessage(translateColors(PREFIX + " " + "&7Mob editing canceled."));
         new MonsterEdition(player, type, path).open();
     }
 
@@ -98,7 +99,7 @@ public class StatEditor implements Listener {
         config.getConfig().set(path + "." + stat.getPath(), message.equalsIgnoreCase(NULL_VALUE) ? null : message);
         config.save();
         new MonsterEdition(player, type, path).open();
-        player.sendMessage(translateColors("&6[&cSudden&4Death&6] &e" + stat.getName() + " &7successfully changed to &6" + message + "&7."));
+        player.sendMessage(translateColors(PREFIX + " " + "&e" + stat.getName() + " &7successfully changed to &6" + message + "&7."));
     }
 
     private void handleDoubleInput(Player player, String message) {
@@ -108,16 +109,16 @@ public class StatEditor implements Listener {
             config.getConfig().set(path + "." + stat.getPath(), value == 0 ? null : value);
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &e" + stat.getName() + " &7successfully changed to &6" + value + "&7."));
+            player.sendMessage(translateColors(PREFIX + " " + "&e" + stat.getName() + " &7successfully changed to &6" + value + "&7."));
         } catch (NumberFormatException e) {
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &c" + message + " is not a valid number."));
+            player.sendMessage(translateColors(PREFIX + " " + "&c" + message + " is not a valid number."));
         }
     }
 
     private void handlePotionEffectInput(Player player, String message) {
         String[] split = SPACE_PATTERN.split(message);
         if (split.length != 2) {
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &c" + message + " is not a valid [POTION_EFFECT] [AMPLIFIER]."));
+            player.sendMessage(translateColors(PREFIX + " " + "&c" + message + " is not a valid [POTION_EFFECT] [AMPLIFIER]."));
             player.sendMessage(translateColors("&7" + "► Example: &e'INCREASE_DAMAGE 4'&7 stands for &6Strength 4."));
             return;
         }
@@ -125,7 +126,7 @@ public class StatEditor implements Listener {
         String effectName = split[0].replace("-", "_").toUpperCase();
         PotionEffectType effect = PotionEffectType.getByName(effectName);
         if (effect == null) {
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &c" + split[0] + " is not a valid potion effect!"));
+            player.sendMessage(translateColors(PREFIX + " " + "&c" + split[0] + " is not a valid potion effect!"));
             player.sendMessage(translateColors("&c" + "► All potion effects can be found here: &ehttps://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html"));
             return;
         }
@@ -136,9 +137,9 @@ public class StatEditor implements Listener {
             config.getConfig().set(path + "." + stat.getPath() + "." + effect.getName(), amplifier);
             config.save();
             new MonsterEdition(player, type, path).open();
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &e" + effect.getName() + " " + amplifier + " &7successfully added."));
+            player.sendMessage(translateColors(PREFIX + " " + "&e" + effect.getName() + " " + amplifier + " &7successfully added."));
         } catch (NumberFormatException e) {
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &c" + split[1] + " is not a valid number!"));
+            player.sendMessage(translateColors(PREFIX + " " + "&c" + split[1] + " is not a valid number!"));
         }
     }
 
