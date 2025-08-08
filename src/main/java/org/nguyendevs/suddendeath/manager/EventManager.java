@@ -39,7 +39,6 @@ public class EventManager extends BukkitRunnable {
                 applyStatus(world, WorldStatus.DAY);
                 return;
             }
-
             if (isDay(world) || currentStatus != WorldStatus.DAY) {
                 return;
             }
@@ -77,9 +76,7 @@ public class EventManager extends BukkitRunnable {
                     "Cannot apply status: world or retriever is null");
             return;
         }
-
         try {
-            // Close the previous event if it exists
             StatusRetriever existing = statusMap.get(world.getName());
             if (existing instanceof WorldEventHandler) {
                 try {
@@ -89,14 +86,12 @@ public class EventManager extends BukkitRunnable {
                             "Error closing previous event in world: " + world.getName(), e);
                 }
             }
-
             statusMap.put(world.getName(), retriever);
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error applying status to world: " + world.getName(), e);
         }
     }
-
 public void refresh(){
         try{
             for(World world : Bukkit.getWorlds()){
@@ -137,7 +132,6 @@ public void refresh(){
             SuddenDeath.getInstance().getLogger().log(Level.SEVERE,"Error refreshing EventManager", e);
         }
     }
-
     public void applyStatus(World world, WorldStatus status) {
         applyStatus(world, new SimpleStatusRetriever(status));
     }
