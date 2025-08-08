@@ -609,6 +609,18 @@ public enum Feature {
 							"CRIMSON_PLANKS", "WARPED_PLANKS"
 					}))
 			}
+	),
+	ZOMBIE_PLACE_BLOCK(
+			"Zombie Place Block",
+			new String[]{
+					"&2Zombie &7have a #chance-percent#% chance to grab the block beneath them,",
+					"and build a bridge or tower to approach the player."
+			},
+			"zombie-place-block",
+			new Modifier[]{
+					new Modifier("chance-percent",60),
+					new Modifier("place-speed-per-sec",2)
+			}
 	);
 
 	private String name;
