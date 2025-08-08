@@ -36,19 +36,16 @@ public class Status extends PluginInventory {
         Inventory inventory = Bukkit.createInventory(this, 27, GUI_TITLE);
 
         try {
-            // Add bleeding status item
             if (Feature.BLEEDING.isEnabled(player) && data.isBleeding()) {
                 inventory.setItem(getAvailableSlot(inventory, STATUS_SLOTS),
                         createStatusItem(Material.RED_DYE, "gui-bleeding-name", "gui-bleeding-lore"));
             }
 
-            // Add infection status item
             if (Feature.INFECTION.isEnabled(player) && data.isInfected()) {
                 inventory.setItem(getAvailableSlot(inventory, STATUS_SLOTS),
                         createStatusItem(Material.ROTTEN_FLESH, "gui-infected-name", "gui-infected-lore"));
             }
 
-            // Add no-status item if no status effects are present
             if (inventory.getItem(10) == null) {
                 inventory.setItem(4, createStatusItem(Material.RED_STAINED_GLASS,
                         "gui-no-special-status-name", "gui-no-special-status-lore"));
