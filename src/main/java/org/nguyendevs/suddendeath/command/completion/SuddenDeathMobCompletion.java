@@ -17,12 +17,11 @@ import java.util.stream.Collectors;
 
 public class SuddenDeathMobCompletion implements TabCompleter {
     private static final String PERMISSION_OP = "suddendeath.admin";
-    private static final List<String> MAIN_COMMANDS = Arrays.asList("create", "edit", "remove", "delete", "list", "kill");
-    private static final List<String> KILL_RADIUS_SUGGESTIONS = Arrays.asList("10", "20", "30", "40", "50", "60", "70", "80", "90", "100");
+    private static final List<String> MAIN_COMMANDS = Arrays.asList("create", "delete", "edit", "help", "kill", "list", "remove");
+    private static final List<String> KILL_RADIUS_SUGGESTIONS = Arrays.asList("10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "1000");
 
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-        // Permission check
         if (!sender.hasPermission(PERMISSION_OP)) {
             return Collections.emptyList();
         }
