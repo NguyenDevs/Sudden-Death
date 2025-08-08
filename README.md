@@ -77,7 +77,7 @@ Elevate your server’s challenge and excitement with these tailored monster-mak
 - `/sds get <item-name>` gives you a specific plugin item.
 - `/sds itemlist` shows every custom item, and how to get them.
 - `/sds menu` opens the feature view GUI.
-- `/sds reload` reloads the configuration file (pretty useless).
+- `/sds reload` reloads the configuration file.
 - `/sds recipe` opens the crafting recipe GUI.
 - `/sds clean` removes bleeding, infected... effects.
 - `/sds help` shows the available commands.
