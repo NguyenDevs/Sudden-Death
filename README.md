@@ -33,6 +33,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Everburning Blazes:** Blazes summon fire beams that ignite players.
 - **Force of the Undead:** Monsters deal increased attack damage, configurable per mob.
 - **Homing Flame Barrage:** Blaze has a chance to fire a beam of fire. It tracks the player and deals HP each beam with a hit rate 100%.
+- **Immortal Evoker:** Evoker has a chance to use Totem to avoid death and summon Fangs can pull the player into the ground.
 - **Leaping Spiders:** Spiders can leap powerfully at players.
 - **Mob Critical Strikes:** Monsters can deal critical strikes with extra damage, configurable per mob.
 - **Nether Shield:** Magma cubes, pigmen, and blazes may block attacks, reflecting damage and igniting players.
