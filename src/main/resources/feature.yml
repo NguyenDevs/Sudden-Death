@@ -54,6 +54,9 @@ features:
       - "&fSkeletons &7named &f'Bone Wizard' &7cast spells:"
       - "&c► Fireball: #fireball-damage# &7damage, #fireball-duration# sec. burn"
       - "&3► Frost Curse: #frost-curse-damage# &7damage, #frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
+      - " "
+      - "&e&oYou can create custom Skeleton with name by using"
+      - "&6/sdmob &ecommand."
   breeze-dash:
     name: "Breeze Dash"
     lore:
@@ -232,6 +235,9 @@ features:
     lore:
       - "&2Zombies &7named &f'Undead Gunner'&7 cast rockets"
       - "dealing #damage# damage (AoE)."
+      - " "
+      - "&e&oYou can create custom Zombie with name by using"
+      - "&6/sdmob &ecommand."
   undead-rage:
     name: "Undead Rage"
     lore:

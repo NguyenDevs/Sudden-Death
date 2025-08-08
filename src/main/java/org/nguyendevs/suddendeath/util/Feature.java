@@ -140,7 +140,10 @@ public enum Feature {
 			new String[]{
 					"&fSkeletons &7named &f'Bone Wizard' &7cast spells:",
 					"&c► Fireball: #fireball-damage# &7damage, #fireball-duration# sec. burn",
-					"&3► Frost Curse: #frost-curse-damage# &7damage, #frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
+					"&3► Frost Curse: #frost-curse-damage# &7damage, #frost-curse-duration# sec. slow (#frost-curse-amplifier#)",
+					" ",
+					"&e&oYou can create custom Skeleton with name by using",
+					"&6/sdmob &ecommand."
 			},
 			"bone-wizards",
 			new Modifier[]{
@@ -514,7 +517,10 @@ public enum Feature {
 			"Undead Gunners",
 			new String[]{
 					"&2Zombies &7named &f'Undead Gunner'&7 cast rockets",
-					"dealing #damage# damage (AoE)."
+					"dealing #damage# damage (AoE).",
+					" ",
+					"&e&oYou can create custom Zombie with name by using",
+					"&6/sdmob &ecommand."
 			},
 			"undead-gunners",
 			new Modifier[]{
@@ -726,7 +732,7 @@ public enum Feature {
 
 	public boolean isEnabled(World world) {
 		try {
-			List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(path);
+			List<String> enabledWorlds = SuddenDeath.getInstance().getConfiguration().getConfig().getStringList(path);
 			return enabledWorlds.contains(world.getName());
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error while checking feature " + name + " the world " + world.getName(), e);
