@@ -138,7 +138,7 @@ public enum Feature {
 	BONE_WIZARDS(
 			"Bone Wizards",
 			new String[]{
-					"&fSkeletons &7named &f'Bone Wizards' &7cast spells:",
+					"&fSkeletons &7named &f'Bone Wizard' &7cast spells:",
 					"&c► Fireball: #fireball-damage# &7damage, #fireball-duration# sec. burn",
 					"&3► Frost Curse: #frost-curse-damage# &7damage, #frost-curse-duration# sec. slow (#frost-curse-amplifier#)"
 			},
