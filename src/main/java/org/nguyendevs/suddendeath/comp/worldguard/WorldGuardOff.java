@@ -23,4 +23,15 @@ public class WorldGuardOff implements WGPlugin {
 		}
 		return true;
 	}
+
+	@Override
+	public boolean isFlagAllowedAtLocation(Location location, CustomFlag customFlag) {
+		if (location == null) {
+			throw new IllegalArgumentException("Location cannot be null");
+		}
+		if (customFlag == null) {
+			throw new IllegalArgumentException("CustomFlag cannot be null");
+		}
+		return true;
+	}
 }

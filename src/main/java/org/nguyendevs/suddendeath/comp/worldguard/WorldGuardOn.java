@@ -36,8 +36,6 @@ public class WorldGuardOn implements WGPlugin {
 			throw new IllegalStateException("WorldGuard plugin not found. Disabling WorldGuard integration.");
 		}
 		this.worldGuardPlugin = plugin;
-
-		// Delay flag registration to ensure WorldGuard is fully loaded
 		SuddenDeath.getInstance().getServer().getScheduler().runTaskLater(
 				SuddenDeath.getInstance(), this::registerCustomFlags, 1L);
 	}
@@ -45,11 +43,9 @@ public class WorldGuardOn implements WGPlugin {
 	private void registerCustomFlags() {
 		FlagRegistry registry = worldGuard.getFlagRegistry();
 		int successCount = 0;
-
 		for (CustomFlag customFlag : CustomFlag.values()) {
 			String flagPath = customFlag.getPath();
 			try {
-				// Check if flag exists
 				if (registry.get(flagPath) != null) {
 					StateFlag existingFlag = (StateFlag) registry.get(flagPath);
 					customFlags.put(flagPath, existingFlag);
@@ -92,14 +88,11 @@ public class WorldGuardOn implements WGPlugin {
 		if (customFlag == null) {
 			throw new IllegalArgumentException("CustomFlag cannot be null");
 		}
-
-		// If flags aren't registered yet, return DENY for SDS_REMOVE, ALLOW for others
 		if (!flagsRegistered) {
 			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
 		}
 
 		String flagPath = customFlag.getPath();
-		// If flag failed to register, return DENY for SDS_REMOVE, ALLOW for others
 		if (failedFlags.contains(flagPath)) {
 			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
 		}
@@ -108,22 +101,52 @@ public class WorldGuardOn implements WGPlugin {
 			StateFlag flag = customFlags.get(flagPath);
 
 			if (flag == null) {
-				// Only log once per flag, then add to failed flags to prevent spam
 				if (!failedFlags.contains(flagPath)) {
 					failedFlags.add(flagPath);
-					//SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-							//"Custom flag not found after registration: " + flagPath + " - Using default behavior");
 				}
 				return customFlag == CustomFlag.SDS_REMOVE ? false : true;
 			}
-
 			StateFlag.State state = regions.queryValue(worldGuardPlugin.wrapPlayer(player), flag);
-			// Respect flag's default state if null
 			return state == null ? (customFlag == CustomFlag.SDS_REMOVE ? false : true) : state == StateFlag.State.ALLOW;
 
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error checking flag " + flagPath + " for player: " + player.getName(), e);
+			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+		}
+	}
+
+	@Override
+	public boolean isFlagAllowedAtLocation(Location location, CustomFlag customFlag) {
+		if (location == null) {
+			throw new IllegalArgumentException("Location cannot be null");
+		}
+		if (customFlag == null) {
+			throw new IllegalArgumentException("CustomFlag cannot be null");
+		}
+		if (!flagsRegistered) {
+			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+		}
+		String flagPath = customFlag.getPath();
+		if (failedFlags.contains(flagPath)) {
+			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+		}
+		try {
+			ApplicableRegionSet regions = getApplicableRegion(location);
+			StateFlag flag = customFlags.get(flagPath);
+			if (flag == null) {
+				if (!failedFlags.contains(flagPath)) {
+					failedFlags.add(flagPath);
+					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+							"Custom flag not found after registration: " + flagPath + " - Using default behavior");
+				}
+				return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+			}
+			StateFlag.State state = regions.queryState(null, flag);
+			return state == null ? (customFlag == CustomFlag.SDS_REMOVE ? false : true) : state == StateFlag.State.ALLOW;
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error checking flag " + flagPath + " at location: " + location, e);
 			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
 		}
 	}
