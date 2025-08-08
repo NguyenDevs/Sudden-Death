@@ -108,17 +108,13 @@ public class Listener2 implements Listener {
 			if (RANDOM.nextDouble() >= chance) {
 				return;
 			}
-
 			event.setCancelled(true);
 			double damage = Feature.BONE_GRENADES.getDouble("damage");
 			skeleton.getWorld().playSound(skeleton.getLocation(), Sound.ENTITY_BAT_DEATH, 1.0f, 1.0f);
-
 			NoInteractItemEntity grenade = new NoInteractItemEntity(skeleton.getEyeLocation(), new ItemStack(Material.SKELETON_SKULL));
 			grenade.getEntity().setVelocity(target.getLocation().subtract(skeleton.getLocation()).toVector().multiply(0.05).setY(0.6));
-
 			new BukkitRunnable() {
 				double ticks = 0;
-
 				@Override
 				public void run() {
 					try {
@@ -129,7 +125,6 @@ public class Listener2 implements Listener {
 							cancel();
 							return;
 						}
-
 						grenadeEntity.getWorld().spawnParticle(Particle.SMOKE_NORMAL, grenadeEntity.getLocation(), 0);
 						if (grenadeEntity.isOnGround()) {
 							grenade.close();
