@@ -293,24 +293,18 @@ public class CrafterInventory implements Listener {
         String title = translateColors(RECIPE_TITLE_PREFIX + Utils.displayName(customItem.a()));
         Inventory recipeInventory = Bukkit.createInventory(null, RECIPE_INVENTORY_SIZE, title);
         trackedInventories.add(recipeInventory);
-
-        // Set GRAY_STAINED_GLASS_PANE in fixed slots
         int[] graySlots = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 37, 38, 39, 40, 41, 42, 43};
         ItemStack grayPane = createSecureItem(Material.GRAY_STAINED_GLASS_PANE, "&7 ", true);
         for (int slot : graySlots) {
             recipeInventory.setItem(slot, grayPane);
         }
-
-        // Set LIME_STAINED_GLASS_PANE in slot 44 (Back button)
         ItemStack limePane = createSecureItem(Material.LIME_STAINED_GLASS_PANE,
                 Utils.msg("gui-crafter-back") != null ? Utils.msg("gui-crafter-back") : "&aBack", true);
         recipeInventory.setItem(44, limePane);
 
-        // Define crafting grid slots
         int[] craftingSlots = {11, 12, 13, 20, 21, 22, 29, 30, 31};
         List<String> recipe = itemsConfig.getStringList(itemKey + ".craft");
 
-        // Load materials map
         Map<String, String> materialNames = new HashMap<>();
         List<String> materialsList = itemsConfig.getStringList(itemKey + ".materials");
         for (String materialEntry : materialsList) {
@@ -326,7 +320,6 @@ public class CrafterInventory implements Listener {
             return;
         }
 
-        // Parse recipe and set materials
         int slotIndex = 0;
         for (String row : recipe) {
             String[] materials = row.split(",");
@@ -363,10 +356,8 @@ public class CrafterInventory implements Listener {
             }
         }
 
-        // Set result item in slot 24 without secure lore
         ItemStack resultItem = customItem.a().clone();
         recipeInventory.setItem(24, resultItem);
-
         openInventorySafely(recipeInventory);
     }
 
