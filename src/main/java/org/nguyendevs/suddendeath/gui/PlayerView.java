@@ -136,7 +136,7 @@ public class PlayerView extends PluginInventory {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName(), e);
-            player.sendMessage(PREFIX + " " + "&eAn error occurred while navigating the GUI.");
+            player.sendMessage(translateColors(PREFIX + " " + "&eAn error occurred while navigating the GUI."));
         }
     }
 
