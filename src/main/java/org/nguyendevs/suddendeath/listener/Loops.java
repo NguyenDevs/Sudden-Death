@@ -32,7 +32,6 @@ public final class Loops {
 		if (blaze == null || blaze.getHealth() <= 0) {
 			return;
 		}
-
 		try {
 			for (Entity entity : blaze.getNearbyEntities(10, 10, 10)) {
 				if (!(entity instanceof Player player) || Utils.hasCreativeGameMode(player) || !blaze.hasLineOfSight(player)) {
@@ -42,11 +41,9 @@ public final class Loops {
 				player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.0f, 2.0f);
 				double duration = Feature.EVERBURNING_BLAZES.getDouble("burn-duration") * 20;
 				player.setFireTicks((int) duration);
-
 				Location playerLoc = player.getLocation().add(0.0D, 0.75D, 0.0D);
 				Location blazeLoc = blaze.getLocation().add(0.0D, 1.0D, 0.0D);
 				World world = blaze.getWorld();
-
 				Vector direction = playerLoc.toVector().subtract(blazeLoc.toVector());
 				for (double j = 0.0D; j <= 1.0D; j += 0.04D) {
 					Location particleLoc = blazeLoc.clone().add(direction.clone().multiply(j));
@@ -66,7 +63,6 @@ public final class Loops {
 		if (skeleton == null || skeleton.getHealth() <= 0 || skeleton.getTarget() == null || !(skeleton.getTarget() instanceof Player target)) {
 			return;
 		}
-
 		try {
 			if (!target.getWorld().equals(skeleton.getWorld())) {
 				return;
@@ -278,24 +274,6 @@ public final class Loops {
 					"Error in player loop for player: " + player.getName(), e);
 		}
 	}
-
-	/*
-	private static void spawnParticleTrail(World world, Location start, Location end, Particle primary, Particle secondary) {
-		try {
-			Vector direction = end.toVector().subtract(start.toVector());
-			for (double j = 0; j <= 1; j += 0.04) {
-				Location point = start.clone().add(direction.multiply(j));
-				world.spawnParticle(primary, point, 4, 0.1, 0.1, 0.1, 0);
-				if (secondary != null) {
-					world.spawnParticle(secondary, point, 4, 0.1, 0.1, 0.1, 0);
-				}
-			}
-		} catch (Exception e) {
-			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-					"Error spawning particle trail", e);
-		}
-	}
-	*/
 
 	private static void launchProjectile(LivingEntity entity, Player target, Particle primary, Particle secondary,
 										 double damage, double duration, Sound hitSound, double hitRadius,
