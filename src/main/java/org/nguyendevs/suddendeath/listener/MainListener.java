@@ -40,7 +40,6 @@ public class MainListener implements Listener {
             Player player = event.getPlayer();
             if (player != null) {
                 UUID playerId = player.getUniqueId();
-                // Cleanup để tránh memory leak
                 noDropPlayers.remove(playerId);
             }
         } catch (Exception e) {
