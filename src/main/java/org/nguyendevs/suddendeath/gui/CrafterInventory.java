@@ -301,10 +301,8 @@ public class CrafterInventory implements Listener {
         ItemStack limePane = createSecureItem(Material.LIME_STAINED_GLASS_PANE,
                 Utils.msg("gui-crafter-back") != null ? Utils.msg("gui-crafter-back") : "&aBack", true);
         recipeInventory.setItem(44, limePane);
-
         int[] craftingSlots = {11, 12, 13, 20, 21, 22, 29, 30, 31};
         List<String> recipe = itemsConfig.getStringList(itemKey + ".craft");
-
         Map<String, String> materialNames = new HashMap<>();
         List<String> materialsList = itemsConfig.getStringList(itemKey + ".materials");
         for (String materialEntry : materialsList) {
@@ -315,27 +313,22 @@ public class CrafterInventory implements Listener {
                 materialNames.put(materialKey, displayName);
             }
         }
-
         if (recipe.size() != 3) {
             return;
         }
-
         int slotIndex = 0;
         for (String row : recipe) {
             String[] materials = row.split(",");
             if (materials.length != 3) {
                 return;
             }
-
             for (String material : materials) {
                 if (slotIndex >= craftingSlots.length) {
                     break;
                 }
-
                 String trimmedMaterial = material.trim();
                 Material mat = Material.getMaterial(trimmedMaterial.toUpperCase());
                 ItemStack item;
-
                 if (mat != null && mat != Material.AIR) {
                     item = new ItemStack(mat);
                     ItemMeta meta = item.getItemMeta();
@@ -350,7 +343,6 @@ public class CrafterInventory implements Listener {
                 } else {
                     item = createSecureItem(Material.BLACK_STAINED_GLASS_PANE, " ", true);
                 }
-
                 recipeInventory.setItem(craftingSlots[slotIndex], item);
                 slotIndex++;
             }
