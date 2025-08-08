@@ -19,9 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-/**
- * A GUI inventory for managing SuddenDeath plugin features in the admin interface.
- */
 public class AdminView extends PluginInventory {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.###");
     private static final int[] AVAILABLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
@@ -29,11 +26,6 @@ public class AdminView extends PluginInventory {
     private static final int INVENTORY_SIZE = 45;
     private int page;
 
-    /**
-     * Constructs an AdminView GUI for the specified player.
-     *
-     * @param player The player interacting with the GUI.
-     */
     public AdminView(Player player) {
         super(player);
     }
@@ -41,18 +33,13 @@ public class AdminView extends PluginInventory {
     private static String translateColors(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
-    /**
-     * Creates and populates the inventory for the admin GUI.
-     *
-     * @return The populated inventory.
-     */
+
     @Override
     public @NotNull Inventory getInventory() {
         int maxPage = (Feature.values().length + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE;
         Inventory inventory = Bukkit.createInventory(this, INVENTORY_SIZE, translateColors(Utils.msg("gui-admin-name")) + " (" + (page + 1) + "/" + maxPage + ")");
 
         try {
-            // Add feature items
             Feature[] features = Feature.values();
             int startIndex = page * ITEMS_PER_PAGE;
             int endIndex = Math.min(features.length, (page + 1) * ITEMS_PER_PAGE);
@@ -76,12 +63,6 @@ public class AdminView extends PluginInventory {
         return inventory;
     }
 
-    /**
-     * Creates an item representing a feature.
-     *
-     * @param feature The feature to represent.
-     * @return The created ItemStack.
-     */
     private ItemStack createFeatureItem(Feature feature) {
         List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(feature.getPath());
         boolean isEnabledInWorld = enabledWorlds.contains(player.getWorld().getName());
@@ -139,11 +120,6 @@ public class AdminView extends PluginInventory {
         return item;
     }
 
-    /**
-     * Handles inventory click events for the admin GUI.
-     *
-     * @param event The InventoryClickEvent.
-     */
     @Override
     public void whenClicked(InventoryClickEvent event) {
         event.setCancelled(true);
@@ -206,14 +182,6 @@ public class AdminView extends PluginInventory {
             player.sendMessage(ChatColor.RED + "An error occurred while processing your action.");
         }
     }
-
-    /**
-     * Replaces placeholders in lore with formatted stat values.
-     *
-     * @param feature The feature containing the stats.
-     * @param lore    The lore string with placeholders.
-     * @return The lore string with placeholders replaced.
-     */
     public static String statsInLore(Feature feature, String lore) {
         if (lore.contains("#")) {
             String[] parts = lore.split("#", 3);
@@ -224,13 +192,6 @@ public class AdminView extends PluginInventory {
         }
         return lore;
     }
-
-    /**
-     * Finds the first available slot in the inventory from the predefined slots.
-     *
-     * @param inventory The inventory to check.
-     * @return The index of the first available slot, or -1 if none are available.
-     */
     private int getAvailableSlot(Inventory inventory) {
         for (int slot : AVAILABLE_SLOTS) {
             if (inventory.getItem(slot) == null) {
