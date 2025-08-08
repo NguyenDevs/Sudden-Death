@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 public class PlayerView extends PluginInventory {
+    private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.###");
     private static final int[] AVAILABLE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
     private static final int ITEMS_PER_PAGE = 21;
@@ -39,7 +40,6 @@ public class PlayerView extends PluginInventory {
         Inventory inventory = Bukkit.createInventory(this, INVENTORY_SIZE, translateColors(Utils.msg("gui-player-name")) + " ("+(page + 1) + "/" + maxPage + ")");
 
         try {
-            // Add feature items
             Feature[] features = Feature.values();
             int startIndex = page * ITEMS_PER_PAGE;
             int endIndex = Math.min(features.length, (page + 1) * ITEMS_PER_PAGE);
@@ -47,8 +47,6 @@ public class PlayerView extends PluginInventory {
             for (int i = startIndex; i < endIndex; i++) {
                 inventory.setItem(getAvailableSlot(inventory), createFeatureItem(features[i]));
             }
-
-            // Add navigation buttons
             if (page > 0) {
                 inventory.setItem(18, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-previous"))));
             }
@@ -65,11 +63,8 @@ public class PlayerView extends PluginInventory {
 
     private ItemStack createFeatureItem(Feature feature) {
         List<String> enabledWorlds = SuddenDeath.getInstance().getConfiguration().getConfig().getStringList(feature.getPath());
-
-        //List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(feature.getPath());
         boolean isEnabledInWorld = enabledWorlds.contains(player.getWorld().getName());
         Material material = isEnabledInWorld ? Material.LIME_DYE : Material.GRAY_DYE;
-
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -77,7 +72,6 @@ public class PlayerView extends PluginInventory {
                     "ItemMeta is null for feature: " + feature.getName());
             return item;
         }
-
         meta.setDisplayName(ChatColor.GOLD + feature.getName());
         meta.setLore(createFeatureLore(feature, enabledWorlds, isEnabledInWorld));
         item.setItemMeta(meta);
@@ -87,11 +81,9 @@ public class PlayerView extends PluginInventory {
     private List<String> createFeatureLore(Feature feature, List<String> enabledWorlds, boolean isEnabledInWorld) {
         List<String> lore = new ArrayList<>();
         lore.add("");
-
         for (String line : feature.getLore()) {
             lore.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', statsInLore(feature, line)));
         }
-
         if (!enabledWorlds.isEmpty()) {
             lore.add("");
             lore.add(translateColors(Utils.msg("gui-features")));
@@ -99,11 +91,9 @@ public class PlayerView extends PluginInventory {
                 lore.add(ChatColor.WHITE + "► " + ChatColor.DARK_GREEN + world);
             }
         }
-
         lore.add("");
         lore.add(isEnabledInWorld ? translateColors(Utils.msg("gui-features-enabled"))
                 : translateColors(Utils.msg("gui-features-disabled")));
-
         return lore;
     }
 
@@ -122,20 +112,18 @@ public class PlayerView extends PluginInventory {
 
     @Override
     public void whenClicked(InventoryClickEvent event) {
-        event.setCancelled(true); // Prevent any interaction with items
+        event.setCancelled(true);
 
         ItemStack item = event.getCurrentItem();
         if (item == null || !item.hasItemMeta()) {
             return;
         }
-
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "ItemMeta is null for clicked item in PlayerView for player: " + player.getName());
             return;
         }
-
         try {
             String displayName = meta.getDisplayName();
             if (translateColors(Utils.msg("gui-next")).equals(displayName)) {
@@ -148,7 +136,7 @@ public class PlayerView extends PluginInventory {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName(), e);
-            player.sendMessage(ChatColor.RED + "An error occurred while navigating the GUI.");
+            player.sendMessage(PREFIX + " " + "&eAn error occurred while navigating the GUI.");
         }
     }
 
