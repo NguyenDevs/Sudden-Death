@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 public class MonsterEdition extends PluginInventory {
+    private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final int[] AVAILABLE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
     private static final String TITLE_PREFIX = "Mob Editor: ";
     private final EntityType type;
@@ -54,12 +55,9 @@ public class MonsterEdition extends PluginInventory {
         Inventory inventory = Bukkit.createInventory(this, 54, translateColors(TITLE_PREFIX + id));
 
         try {
-            // Add mob stat items
             for (MobStat stat : MobStat.values()) {
                 inventory.setItem(getAvailableSlot(inventory), createMobStatItem(stat, config));
             }
-
-            // Add mob spawn egg
             inventory.setItem(4, createMobEggItem(config));
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -179,38 +177,30 @@ public class MonsterEdition extends PluginInventory {
     public void whenClicked(InventoryClickEvent event) {
         Inventory clickedInv = event.getClickedInventory();
         Inventory topInv = event.getView().getTopInventory();
-
         if (clickedInv == null || topInv == null) return;
-
         if (clickedInv.equals(topInv)) {
             if (!isAvailableSlot(event.getSlot()) && event.getSlot() != 4) {
                 event.setCancelled(true);
                 return;
             }
-
             if (event.getSlot() == 4) {
                 event.setCancelled(true);
                 return;
             }
         }
-
         ItemStack item = event.getCurrentItem();
         if (item == null || !Utils.isPluginItem(item, false)) {
             return;
         }
-
         ItemMeta meta = item.getItemMeta();
         if (meta == null || meta.getDisplayName().isEmpty()) {
             return;
         }
-
         String tag = meta.getPersistentDataContainer().get(Utils.nsk("mobStatId"), PersistentDataType.STRING);
         if (tag == null || tag.isEmpty()) {
             return;
         }
-
         event.setCancelled(true);
-
         try {
             MobStat stat = MobStat.valueOf(tag);
             ConfigFile config = new ConfigFile(type);
@@ -230,7 +220,7 @@ public class MonsterEdition extends PluginInventory {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName() + ", mob: " + type + ", id: " + id, e);
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &cAn error occurred while processing your action."));
+            player.sendMessage(translateColors(PREFIX + " " + "&cAn error occurred while processing your action."));
         }
     }
 
@@ -238,7 +228,7 @@ public class MonsterEdition extends PluginInventory {
         new StatEditor(id, type, stat, config);
         player.closeInventory();
         promptChatInput();
-        player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eWrite in the chat the value you want!"));
+        player.sendMessage(translateColors(PREFIX + " " + "&eWrite in the chat the value you want!"));
     }
 
     private void handleItemStackStat(InventoryClickEvent event, MobStat stat, ConfigFile config) {
@@ -250,11 +240,11 @@ public class MonsterEdition extends PluginInventory {
                 config.getConfig().set(id + "." + stat.getPath(), serialized);
                 config.save();
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &e" + stat.getName() + " successfully updated."));
+                player.sendMessage(translateColors(PREFIX + " " + "&e" + stat.getName() + " successfully updated."));
                 event.setCancelled(true);
                 open();
             } else {
-                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &cNo item on cursor to place."));
+                player.sendMessage(translateColors(PREFIX + " " + "&cNo item on cursor to place."));
             }
         } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
             ConfigurationSection section = config.getConfig().getConfigurationSection(id);
@@ -262,7 +252,7 @@ public class MonsterEdition extends PluginInventory {
                     !"[material=AIR:0]".equals(config.getConfig().getString(id + "." + stat.getPath()))) {
                 config.getConfig().set(id + "." + stat.getPath(), "[material=AIR:0]");
                 config.save();
-                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eSuccessfully removed " + stat.getName() + "."));
+                player.sendMessage(translateColors(PREFIX + " " + "&eSuccessfully removed " + stat.getName() + "."));
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 open();
             }
@@ -274,7 +264,7 @@ public class MonsterEdition extends PluginInventory {
             new StatEditor(id, type, stat, config);
             player.closeInventory();
             promptChatInput();
-            player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eWrite in the chat the permanent potion effect you want to add."));
+            player.sendMessage(translateColors(PREFIX + " " + "&eWrite in the chat the permanent potion effect you want to add."));
             player.sendMessage(translateColors("&f► &bFormat: [POTION_EFFECT] [AMPLIFIER]"));
         } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
             ConfigurationSection section = config.getConfig().getConfigurationSection(id + "." + stat.getPath());
@@ -286,7 +276,7 @@ public class MonsterEdition extends PluginInventory {
                     config.getConfig().set(id + "." + stat.getPath(), null);
                 }
                 config.save();
-                player.sendMessage(translateColors("&6[&cSudden&4Death&6] &eSuccessfully removed " + Utils.caseOnWords(lastEffect.toLowerCase()) + "."));
+                player.sendMessage(translateColors(PREFIX + " " + "&eSuccessfully removed " + Utils.caseOnWords(lastEffect.toLowerCase()) + "."));
                 open();
             }
         }
