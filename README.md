@@ -22,6 +22,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Thunderstorm:** Storms may become thunderstorms with stronger, more frequent lightning.
 
 **Monster abilities**
+- **Abyssal Vortex:** The Guardian can create a whirlpool that pulls players toward it, preventing them from escaping.
 - **Angry Spiders:** Spiders throw cobwebs, dealing damage and slowing players.
 - **Blood Moon:** Nights may turn red, increasing player damage taken and slowing them; monsters gain speed, strength, and resistance.
 - **Bone Grenades:** Skeletons may throw explosive bone grenades, causing damage and knockback.
@@ -31,6 +32,8 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Ender Power:** Hitting certain End mobs may blind players temporarily.
 - **Everburning Blazes:** Blazes summon fire beams that ignite players.
 - **Force of the Undead:** Monsters deal increased attack damage, configurable per mob.
+- **Homing Flame Barrage:** Blaze has a chance to fire a beam of fire. It tracks the player and deals HP each beam with a hit rate 100%.
+- **Immortal Evoker:** Evoker has a chance to use Totem to avoid death and summon Fangs can pull the player into the ground.
 - **Leaping Spiders:** Spiders can leap powerfully at players.
 - **Mob Critical Strikes:** Monsters can deal critical strikes with extra damage, configurable per mob.
 - **Nether Shield:** Magma cubes, pigmen, and blazes may block attacks, reflecting damage and igniting players.
@@ -42,11 +45,13 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Spider Web:** Cave spiders may shoot webs to trap players.
 - **Tanky Monsters:** Monsters take reduced damage, configurable per mob.
 - **Thief Slimes:** Slimes may steal EXP from players on hit.
+- **Trident's Wrath:** Drowned have a chance to use their Trident to launch at a player. 
 - **Undead Gunners:** Zombies named 'Undead Gunner' cast explosive rockets.
 - **Undead Rage:** Zombies and pigmen gain strength and speed when damaged.
 - **Witch Scrolls:** Witches may block damage with a shield and cast runes that damage and slow players.
 - **Wither Machinegun:** Wither Skeletons throw damaging coal projectiles.
 - **Wither Rush:** Wither Skeletons teleport to players, dealing damage.
+- **Zombie Break Block:** Zombie with tools in hand can break the corresponding block type
 
 ![image](https://github.com/user-attachments/assets/1fcdbad5-5c56-4335-96bd-d958248dc608)
 
@@ -76,8 +81,10 @@ Elevate your server’s challenge and excitement with these tailored monster-mak
 - `/sds recipe` opens the crafting recipe GUI.
 - `/sds clean` removes bleeding, infected... effects.
 - `/sds help` shows the available commands.
+- `/sds start/stop` start or stop an event.
 
 - `/sdmob create <type> <mob-id>` creates a new custom monster.
+- `/sdmob help` shows the available commands.
 - `/sdmob remove <type> <mob-id>` deletes an existing monster.
 - `/sdmob edit <type> <mob-id>` opens the Mob Editor GUI.
 - `/sdmob list type` shows supported monster types.
