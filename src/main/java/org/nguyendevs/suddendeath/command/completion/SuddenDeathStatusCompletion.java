@@ -75,13 +75,10 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 		String firstArg = args[0].toLowerCase();
 
 		switch (firstArg) {
-			case "start" -> {
+			case "start", "stop" -> {
 				return filterCompletions(getAvailableEvents(), args[1]);
 			}
-			case "stop" -> {
-				return filterCompletions(getAvailableEvents(), args[1]);
-			}
-			case "give" -> {
+            case "give" -> {
 				return filterCompletions(getCustomItemNames(), args[1]);
 			}
 			case "clean" -> {
