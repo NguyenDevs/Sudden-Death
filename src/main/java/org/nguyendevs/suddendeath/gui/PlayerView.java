@@ -64,7 +64,9 @@ public class PlayerView extends PluginInventory {
     }
 
     private ItemStack createFeatureItem(Feature feature) {
-        List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(feature.getPath());
+        List<String> enabledWorlds = SuddenDeath.getInstance().getConfiguration().getConfig().getStringList(feature.getPath());
+
+        //List<String> enabledWorlds = SuddenDeath.getInstance().getConfig().getStringList(feature.getPath());
         boolean isEnabledInWorld = enabledWorlds.contains(player.getWorld().getName());
         Material material = isEnabledInWorld ? Material.LIME_DYE : Material.GRAY_DYE;
 
