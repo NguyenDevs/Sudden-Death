@@ -227,10 +227,11 @@ public class SuddenDeath extends JavaPlugin {
             items.save();
         }
     }
-/*
+
     private void initializeDefaultFeatures() {
         features.setup();
         boolean saveNeeded = false;
+
         for (Feature feature : Feature.values()) {
             String featureKey = feature.getPath();
             ConfigurationSection section = features.getConfig().getConfigurationSection("features." + featureKey);
@@ -248,42 +249,13 @@ public class SuddenDeath extends JavaPlugin {
                     section.set("lore", feature.getLore());
                     saveNeeded = true;
                 }
-            }
-        }
-        if (saveNeeded) {
-            features.save();
-        }
-        Feature.reloadDescriptions();
-    }
-*/
-    private void initializeDefaultFeatures() {
-        features.setup();
-        boolean saveNeeded = false;
-
-        for (Feature feature : Feature.values()) {
-            String featureKey = feature.getPath();
-            ConfigurationSection section = features.getConfig().getConfigurationSection("features." + featureKey);
-
-            // Nếu section chưa tồn tại, tạo mới
-            if (section == null) {
-                section = features.getConfig().createSection("features." + featureKey);
-                section.set("name", feature.getName());
-                section.set("lore", feature.getLore()); // Ghi lore với mã màu
-                saveNeeded = true;
-            } else {
-                // Nếu section đã tồn tại, chỉ cập nhật nếu cần
-                if (!section.contains("name") || !section.getString("name").equals(feature.getName())) {
-                    section.set("name", feature.getName());
-                    saveNeeded = true;
-                }
-                // Kiểm tra lore để tránh ghi đè
-                if (!section.contains("lore") || section.getStringList("lore").isEmpty()) {
+                List<String> existingLore = section.getStringList("lore");
+                if (existingLore.isEmpty()) {
                     section.set("lore", feature.getLore());
                     saveNeeded = true;
                 }
             }
         }
-
         if (saveNeeded) {
             features.save();
         }
@@ -606,7 +578,7 @@ public class SuddenDeath extends JavaPlugin {
             configuration.reload();
             messages.reload();
             items.reload();
-            features.reload(); // Tải lại Feature.yml
+            features.reload();
             for (EntityType type : EntityType.values()) {
                 if (type.isAlive()) {
                     ConfigFile mobConfig = new ConfigFile(this, "/customMobs", Utils.lowerCaseId(type.name()));
