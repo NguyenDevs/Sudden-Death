@@ -25,6 +25,9 @@ import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import org.nguyendevs.suddendeath.comp.worldguard.WGPlugin;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOff;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOn;
+import org.nguyendevs.suddendeath.gui.AdminView;
+import org.nguyendevs.suddendeath.gui.PlayerView;
+import org.nguyendevs.suddendeath.gui.PluginInventory;
 import org.nguyendevs.suddendeath.gui.listener.GuiListener;
 import org.nguyendevs.suddendeath.listener.*;
 import org.nguyendevs.suddendeath.manager.EventManager;
@@ -592,7 +595,19 @@ public class SuddenDeath extends JavaPlugin {
                 WorldGuardOn wgOn = (WorldGuardOn) wgPlugin;
             }
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
-            Feature.reloadDescriptions(); // Tải lại mô tả của các tính năng
+            Feature.reloadDescriptions();
+            Bukkit.getScheduler().runTask(this, () -> {
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory pluginInventory) {
+                        if (pluginInventory instanceof AdminView || pluginInventory instanceof PlayerView) {
+                            player.closeInventory();
+                            Bukkit.getScheduler().runTaskLater(this, () -> {
+                                pluginInventory.open();
+                            }, 10L);
+                        }
+                    }
+                }
+            });
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aConfiguration reload completed successfully."));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error reloading configuration files", e);
