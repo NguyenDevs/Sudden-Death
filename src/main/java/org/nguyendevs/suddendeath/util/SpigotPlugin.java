@@ -47,9 +47,10 @@ public class SpigotPlugin {
 			}
 
 			if (isVersionNewer(currentVersion, latestVersion)) {
-				plugin.getLogger().log(Level.INFO,
-						"A new build is available: " + latestVersion + " (you are running " + currentVersion + ")");
-				plugin.getLogger().log(Level.INFO, "Download it here: " + getResourceUrl());
+				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+						"&6[&cSudden&4Death&6] &eA new build is available: "  + latestVersion + " &6(you are running " + currentVersion + ")"));
+
+				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &a&oDownload it here: " + getResourceUrl()));
 
 				if (plugin.getConfig().getBoolean("update-notify")) {
 					Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().registerEvents(new Listener() {
@@ -63,7 +64,7 @@ public class SpigotPlugin {
 					}, plugin));
 				}
 			} else {
-				plugin.getLogger().log(Level.INFO, "You are running the latest version: " + currentVersion);
+				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',"&6[&cSudden&4Death&6] &aYou are running the latest version: &2" + currentVersion));
 			}
 		});
 	}
