@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.util.Utils;
-import org.bukkit.scheduler.BukkitTask; // NEW
+import org.bukkit.scheduler.BukkitTask;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -28,7 +28,7 @@ public class PlayerView extends PluginInventory {
 
     private static final int FILTER_SLOT = 40;
     private static final Material FILTER_MATERIAL = Material.BOOK;
-    private int filterIndex = 0; // 0=Default,1=Survival,2=Mob
+    private int filterIndex = 0;
     private boolean visualMode = false;
     private long lastFilterClickMs = 0L;
 
@@ -47,8 +47,6 @@ public class PlayerView extends PluginInventory {
     private static final Material[] UNDEAD_RAGE_EGGS = {
             Material.ZOMBIE_SPAWN_EGG,
             Material.ZOMBIFIED_PIGLIN_SPAWN_EGG,
-            Material.PIGLIN_SPAWN_EGG,
-            Material.PIGLIN_BRUTE_SPAWN_EGG,
             Material.ZOMBIE_VILLAGER_SPAWN_EGG,
             Material.HUSK_SPAWN_EGG,
             Material.DROWNED_SPAWN_EGG
@@ -65,8 +63,8 @@ public class PlayerView extends PluginInventory {
     };
 
     private static final Material[] ANGRY_SPIDERS_EGGS = {
-            Material.ZOMBIE_SPAWN_EGG,
-            Material.ZOMBIFIED_PIGLIN_SPAWN_EGG
+            Material.SPIDER_SPAWN_EGG,
+            Material.CAVE_SPIDER_SPAWN_EGG
     };
 
     private static final Material[] LEAPING_SPIDERS_EGGS = {
@@ -80,62 +78,11 @@ public class PlayerView extends PluginInventory {
             Material.ENDERMITE_SPAWN_EGG,
             Material.ENDER_DRAGON_SPAWN_EGG
     };
-    private static final Material[] FORCE_OF_THE_UNDEAD_EGGS = {
-            Material.SKELETON_SPAWN_EGG,
-            Material.HUSK_SPAWN_EGG,
-            Material.ZOMBIE_SPAWN_EGG,
-            Material.ZOMBIE_VILLAGER_SPAWN_EGG,
-            Material.PIGLIN_SPAWN_EGG,
-            Material.ZOMBIFIED_PIGLIN_SPAWN_EGG,
-            Material.DROWNED_SPAWN_EGG,
-            Material.PHANTOM_SPAWN_EGG,
-            Material.SPIDER_SPAWN_EGG,
-            Material.CAVE_SPIDER_SPAWN_EGG,
-            Material.STRAY_SPAWN_EGG,
-            Material.WITHER_SKELETON_SPAWN_EGG
-    };
 
-    private static final Material[] GENERIC_HOSTILE_EGGS = {
-            Material.SKELETON_SPAWN_EGG,
-            Material.HUSK_SPAWN_EGG,
-            Material.ZOMBIE_SPAWN_EGG,
-            Material.ZOMBIE_VILLAGER_SPAWN_EGG,
-            Material.PIGLIN_SPAWN_EGG,
-            Material.ZOMBIFIED_PIGLIN_SPAWN_EGG,
-            Material.DROWNED_SPAWN_EGG,
-            Material.PHANTOM_SPAWN_EGG,
-            Material.SPIDER_SPAWN_EGG,
-            Material.CAVE_SPIDER_SPAWN_EGG,
-            Material.STRAY_SPAWN_EGG,
-            Material.WITHER_SKELETON_SPAWN_EGG,
-            Material.EVOKER_SPAWN_EGG,
-            Material.VINDICATOR_SPAWN_EGG,
-            Material.VEX_SPAWN_EGG,
-            Material.WITCH_SPAWN_EGG,
-            Material.WARDEN_SPAWN_EGG,
-            Material.SLIME_SPAWN_EGG,
-            Material.SILVERFISH_SPAWN_EGG,
-            Material.PILLAGER_SPAWN_EGG,
-            Material.MAGMA_CUBE_SPAWN_EGG,
-            Material.BLAZE_SPAWN_EGG,
-            Material.HOGLIN_SPAWN_EGG,
-            Material.WITHER_SKELETON_SPAWN_EGG,
-            Material.ZOGLIN_SPAWN_EGG,
-            Material.ZOMBIFIED_PIGLIN_SPAWN_EGG,
-            Material.STRIDER_SPAWN_EGG,
-            Material.PIG_SPAWN_EGG,
-            Material.PIGLIN_SPAWN_EGG,
-            Material.ENDERMAN_SPAWN_EGG,
-            Material.ENDERMITE_SPAWN_EGG,
-            Material.SPIDER_SPAWN_EGG,
-            Material.CAVE_SPIDER_SPAWN_EGG
-
-    };
-
-    private static final int ANIM_PERIOD_TICKS = 12; // ~0.6s
+    private static final int ANIM_PERIOD_TICKS = 15;
     private int animIndex = 0;
     private BukkitTask visualTask = null;
-    private Map<Integer, Feature> slotFeatureMap = new HashMap<>();
+    private final Map<Integer, Feature> slotFeatureMap = new HashMap<>();
     private Inventory lastInventory;
 
     private static final EnumSet<Feature> MOB_SET = EnumSet.of(
@@ -191,6 +138,11 @@ public class PlayerView extends PluginInventory {
 
     private int page;
 
+    private final Random rng = new Random();
+    private final Map<Integer, Material> lastSlotMaterial = new HashMap<>();
+    private Feature[] cachedSource = null;
+    private int cachedFilterIndex = -1;
+
     public PlayerView(Player player) { super(player); }
 
     private static String translateColors(String s) {
@@ -209,7 +161,9 @@ public class PlayerView extends PluginInventory {
             try { visualTask.cancel(); } catch (Throwable ignored) {}
             visualTask = null;
         }
+        lastSlotMaterial.clear();
     }
+
     private void startVisualAnimation() {
         if (!visualMode) return;
         if (visualTask != null) return;
@@ -236,13 +190,21 @@ public class PlayerView extends PluginInventory {
                     ItemStack oldItem = inv.getItem(slot);
                     if (oldItem == null) continue;
 
-                    Material newMat = getAnimatedMaterialFor(f, animIndex);
-                    if (newMat == null || newMat == oldItem.getType()) continue;
+                    Material newMat = getRandomAnimatedMaterialFor(f);
+                    if (newMat == null) continue;
+
+                    if (newMat == oldItem.getType()) {
+                        Material retry = getRandomAnimatedMaterialFor(f);
+                        if (retry != null) newMat = retry;
+                    }
+                    Material lastMat = lastSlotMaterial.get(slot);
+                    if (lastMat != null && lastMat == newMat) continue;
 
                     ItemMeta oldMeta = oldItem.getItemMeta();
                     ItemStack newItem = new ItemStack(newMat);
                     if (oldMeta != null) newItem.setItemMeta(oldMeta);
                     inv.setItem(slot, newItem);
+                    lastSlotMaterial.put(slot, newMat);
                 }
             } catch (Throwable t) {
                 SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Visual animation tick error", t);
@@ -250,7 +212,22 @@ public class PlayerView extends PluginInventory {
         }, ANIM_PERIOD_TICKS, ANIM_PERIOD_TICKS);
     }
 
-private Material getAnimatedMaterialFor(Feature f, int idx) {
+    private Material getRandomAnimatedMaterialFor(Feature f) {
+        Material[] pool;
+        switch (f) {
+            case NETHER_SHIELD:       pool = NETHER_SHIELD_EGGS; break;
+            case LEAPING_SPIDERS:     pool = LEAPING_SPIDERS_EGGS; break;
+            case ANGRY_SPIDERS:       pool = ANGRY_SPIDERS_EGGS; break;
+            case UNDEAD_RAGE:         pool = UNDEAD_RAGE_EGGS; break;
+            case ENDER_POWER:         pool = ENDER_POWER_EGGS; break;
+            default:
+                return getVisualMaterial(f);
+        }
+        if (pool.length == 0) return getVisualMaterial(f);
+        return pool[rng.nextInt(pool.length)];
+    }
+
+    private Material getAnimatedMaterialFor(Feature f, int idx) {
         Material[] pool;
         switch (f) {
             case NETHER_SHIELD:
@@ -263,12 +240,6 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
                 pool = UNDEAD_RAGE_EGGS; break;
             case ENDER_POWER:
                 pool = ENDER_POWER_EGGS; break;
-            case FORCE_OF_THE_UNDEAD:
-                pool = FORCE_OF_THE_UNDEAD_EGGS; break;
-            case QUICK_MOBS:
-            case MOB_CRITICAL_STRIKES:
-            case TANKY_MONSTERS:
-                pool = GENERIC_HOSTILE_EGGS; break;
             default:
                 return getVisualMaterial(f);
         }
@@ -317,13 +288,26 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
     }
 
     private Feature[] getFilteredFeatures() {
-        Feature[] all = Feature.values();
-        if (filterIndex == 1) {
-            return Arrays.stream(all).filter(SURVIVAL_SET::contains).toArray(Feature[]::new);
-        } else if (filterIndex == 2) {
-            return Arrays.stream(all).filter(MOB_SET::contains).toArray(Feature[]::new);
+        if (cachedSource == null || cachedFilterIndex != filterIndex) {
+            Feature[] all = Feature.values();
+            List<Feature> list;
+            if (filterIndex == 1) {
+                list = new ArrayList<>();
+                for (Feature f : all) if (SURVIVAL_SET.contains(f)) list.add(f);
+            } else if (filterIndex == 2) {
+                list = new ArrayList<>();
+                for (Feature f : all) if (MOB_SET.contains(f)) list.add(f);
+            } else {
+                list = new ArrayList<>(Arrays.asList(all));
+            }
+
+            list.sort(Comparator.comparing(Feature::getName, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(Enum::ordinal));
+
+            cachedSource = list.toArray(new Feature[0]);
+            cachedFilterIndex = filterIndex;
         }
-        return all;
+        return cachedSource;
     }
 
     private ItemStack createFeatureItem(Feature feature) {
@@ -332,7 +316,7 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
 
         Material material;
         if (visualMode && isEnabledInWorld) {
-            Material vis = getAnimatedMaterialFor(feature, animIndex);
+            Material vis = getRandomAnimatedMaterialFor(feature);
             material = (vis != null) ? vis : Material.LIME_DYE;
         } else {
             material = isEnabledInWorld ? Material.LIME_DYE : Material.GRAY_DYE;
@@ -362,19 +346,19 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
             case CREEPER_REVENGE: return Material.CREEPER_SPAWN_EGG;
             case ENDER_POWER: return Material.ENDER_DRAGON_SPAWN_EGG;
             case EVERBURNING_BLAZES: return Material.BLAZE_SPAWN_EGG;
-            case FORCE_OF_THE_UNDEAD: return Material.ZOMBIE_SPAWN_EGG;
+            case FORCE_OF_THE_UNDEAD: return Material.SPAWNER;
             case HOMING_FLAME_BARRAGE: return Material.BLAZE_SPAWN_EGG;
             case IMMORTAL_EVOKER: return Material.EVOKER_SPAWN_EGG;
             case LEAPING_SPIDERS: return Material.SPIDER_SPAWN_EGG;
-            case MOB_CRITICAL_STRIKES: return Material.ZOMBIE_SPAWN_EGG;
+            case MOB_CRITICAL_STRIKES: return Material.SPAWNER;
             case NETHER_SHIELD: return Material.NETHERRACK;
             case POISONED_SLIMES: return Material.SLIME_SPAWN_EGG;
-            case QUICK_MOBS: return Material.ZOMBIE_SPAWN_EGG;
+            case QUICK_MOBS: return Material.SPAWNER;
             case SHOCKING_SKELETON_ARROWS: return Material.SKELETON_SPAWN_EGG;
             case SILVERFISHES_SUMMON: return Material.SILVERFISH_SPAWN_EGG;
             case STRAY_FROST: return Material.STRAY_SPAWN_EGG;
             case SPIDER_WEB: return Material.CAVE_SPIDER_SPAWN_EGG;
-            case TANKY_MONSTERS: return Material.ZOMBIE_SPAWN_EGG;
+            case TANKY_MONSTERS: return Material.SPAWNER;
             case THIEF_SLIMES: return Material.SLIME_SPAWN_EGG;
             case TRIDENT_WRATH: return Material.DROWNED_SPAWN_EGG;
             case UNDEAD_GUNNERS: return Material.ZOMBIE_SPAWN_EGG;
@@ -385,7 +369,7 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
             case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
 
             case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
-            case ARROW_SLOW: return Material.ARROW;
+            case ARROW_SLOW: return Material.TIPPED_ARROW;
             case BLEEDING: return Material.PAPER;
             case BLOOD_SCREEN: return Material.FIRE_CORAL;
             case DANGEROUS_COAL: return Material.COAL;
@@ -395,9 +379,9 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
             case HUNGER_NAUSEA: return Material.COOKED_CHICKEN;
             case INFECTION: return Material.SUSPICIOUS_STEW;
             case PHYSIC_ENDER_PEARL: return Material.ENDER_PEARL;
-            case REALISTIC_PICKUP: return Material.DIAMOND_PICKAXE;
-            case SNOW_SLOW: return Material.SNOW_BLOCK;
-            case STONE_STIFFNESS: return Material.STONE;
+            case REALISTIC_PICKUP: return Material.BUNDLE;
+            case SNOW_SLOW: return Material.SNOWBALL;
+            case STONE_STIFFNESS: return Material.DEEPSLATE;
             case THUNDERSTORM: return Material.NETHER_STAR;
 
             default: return null;
@@ -455,8 +439,8 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
         lore.add(translateColors("&6► " + mobColor + Utils.msg("filter-lore-mob")));
 
         lore.add("");
-        String visColor = visualMode ? "&a" : "&f";
-        lore.add(translateColors("&6► " + visColor + Utils.msg("filter-lore-visual")));
+        String visColor = visualMode ? "&6" : "&f";
+        lore.add(translateColors("&e► " + visColor + Utils.msg("filter-lore-visual")));
 
         meta.setLore(lore);
         item.setItemMeta(meta);
@@ -465,7 +449,7 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
 
     private boolean canToggleFilter() {
         long now = System.currentTimeMillis();
-        if (now - lastFilterClickMs < 500) return false;
+        if (now - lastFilterClickMs < 250) return false;
         lastFilterClickMs = now;
         return true;
     }
@@ -473,14 +457,15 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
     private void cycleFilterLeft() {
         filterIndex = (filterIndex + 1) % 3;
         page = 0;
+        cachedSource = null;
         try { player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f); } catch (Throwable ignored) {}
-        open(); // sẽ tự restart animation
+        open();
     }
 
     private void toggleVisualRight() {
         visualMode = !visualMode;
         try { player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, visualMode ? 1.2f : 0.9f); } catch (Throwable ignored) {}
-        open(); // sẽ start/stop animation tương ứng
+        open();
     }
 
     @Override
@@ -505,6 +490,7 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
                 if (page + 1 < maxPage) {
                     page++;
                     open();
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
                 }
                 return;
             }
@@ -513,6 +499,7 @@ private Material getAnimatedMaterialFor(Feature f, int idx) {
                 if (page > 0) {
                     page--;
                     open();
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
                 }
                 return;
             }
