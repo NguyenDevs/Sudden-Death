@@ -2,8 +2,8 @@ features:
   abyssal-vortex:
     name: "Abyssal Vortex"
     lore:
-      - "&3The Guardian &7can create a &fwhirlpool &7that pulls players"
-      - "toward it, preventing them from escaping."
+      - "&3The Guardian &7have a #chance-percent#% chance create a &fWhirlpool &7that"
+      - "pulls players toward it, preventing them from escaping."
   advanced-player-drops:
     name: "Advanced Player Drops"
     lore:
@@ -147,8 +147,8 @@ features:
   nether-shield:
     name: "Nether Shield"
     lore:
-      - "&7All nether mobs &cexcept Wither Skeleton &7have"
-      - "#chance-percent#% chance to block attacks."
+      - "&7All nether mobs &cexcept &7Wither Skeleton"
+      - "&7have #chance-percent#% chance to block attacks."
       - "Reflects #dmg-reflection-percent#% damage"
       - "and ignites for #burn-duration# seconds."
   physic-ender-pearl:
@@ -242,7 +242,7 @@ features:
     name: "Undead Rage"
     lore:
       - "&2Zombies&7, &3Drowned&7, &6Husk &7and &2Zombified Piglin &7gain &6Strength"
-      - "&7and &3Speed II for #rage-duration# seconds when damaged."
+      - "&7and &3Speed II &7for #rage-duration# seconds when damaged."
   witch-scrolls:
     name: "Witch Scrolls"
     lore:
