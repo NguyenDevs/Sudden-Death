@@ -99,7 +99,7 @@ public class CrafterInventory implements Listener {
                 mainInventory.setItem(slot++, customItem.a());
             }
         }
-        ItemStack closePane = createSecureItem(Material.LIME_STAINED_GLASS_PANE,
+        ItemStack closePane = createSecureItem(Material.ARROW,
                 Utils.msg("gui-recipe-close") != null ? Utils.msg("gui-recipe-close") : "&cClose", true);
         mainInventory.setItem(8, closePane);
     }
@@ -191,7 +191,7 @@ public class CrafterInventory implements Listener {
         Player clickedPlayer = (Player) event.getWhoClicked();
         int slot = event.getSlot();
         if (slot == 8) {
-            playSound(clickedPlayer, Sound.ITEM_BOOK_PAGE_TURN);
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
             closeGUI();
             return;
         }
@@ -211,7 +211,7 @@ public class CrafterInventory implements Listener {
         Player clickedPlayer = (Player) event.getWhoClicked();
         int slot = event.getSlot();
         if (slot == 44) {
-            playSound(clickedPlayer, Sound.ITEM_BOOK_PAGE_TURN);
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
             openInventorySafely(mainInventory);
         }
     }
