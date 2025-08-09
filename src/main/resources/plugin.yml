@@ -1,15 +1,15 @@
 name: SuddenDeath
-version: 2.2.2
+version: 2.2.3
 main: org.nguyendevs.suddendeath.SuddenDeath
 softdepend: [WorldGuard, ProtocolLib]
 api-version: 1.19
 commands:
-  sdstatus:
+  sds:
     description: Shows your current status (bleeding, ...).
     aliases: [sds, suddendeath]
-  sdmob:
+  sdm:
     description: Main command from the custom monster system.
-    aliases: [sdm, sdmonster]
+    aliases: [sdmob, sdmonster]
 permissions:
   suddendeath.status:
     default: true
