@@ -335,11 +335,13 @@ public class Listener1 implements Listener {
     }
 
     private boolean isZombieEntity(Entity entity) {
-        return entity instanceof Zombie || entity instanceof PigZombie || entity instanceof ZombieVillager;
+        return entity instanceof Zombie || entity instanceof PigZombie || entity instanceof ZombieVillager || entity instanceof Husk || entity instanceof Drowned;
     }
 
     private boolean isNetherEntity(Entity entity) {
-        return entity instanceof PigZombie || entity instanceof MagmaCube || entity instanceof Blaze;
+        return entity instanceof PigZombie || entity instanceof MagmaCube || entity instanceof Blaze || entity instanceof Piglin
+                || entity instanceof Strider || entity instanceof Hoglin
+                || entity instanceof Zoglin || entity instanceof PiglinBrute;
     }
 
     private void applyInfection(Player player) {
@@ -368,7 +370,7 @@ public class Listener1 implements Listener {
             double chance = Feature.NETHER_SHIELD.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() <= chance) {
                 event.setCancelled(true);
-                entity.getWorld().playSound(entity.getLocation(), Sound.BLOCK_ANVIL_LAND, 1.0f, 2.0f);
+                entity.getWorld().playSound(entity.getLocation(), Sound.ENTITY_BLAZE_HURT, 1.0f, 0.5f);
                 int radius = entity instanceof MagmaCube && ((MagmaCube) entity).getSize() == 4 ? 2 : 1;
 
                 for (double j = 0; j < Math.PI * 2; j += 0.3) {
