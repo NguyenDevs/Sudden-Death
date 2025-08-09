@@ -3,8 +3,7 @@
 Done with predictable, easy survival worlds? Brace yourself for Sudden Death! This plugin cranks up the challenge, pushing your survival skills to the limit with intense hardcore features and thrilling new mechanics. Watch out—monsters now wield unique, powerful abilities that’ll keep you on edge. Transform your Minecraft server with a fresh, heart-pounding experience!
 
 ![image](https://github.com/user-attachments/assets/9b628bd9-f92e-4d21-bf58-3f8039309d89)
-
-**Survival features**
+## Survival features
 - **Advanced Player Drops:** Players drop a skull, bones, and human flesh on death. Flesh can be cooked.
 - **Arrow Slow:** Arrows slow players for a short duration.
 - **Bleeding:** Damage has a chance to cause bleeding, disabling health regen and dealing periodic damage. Stopped with a bandage.
@@ -21,7 +20,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Stone Stiffness:** Punching stone deals damage to players.
 - **Thunderstorm:** Storms may become thunderstorms with stronger, more frequent lightning.
 
-**Monster abilities**
+## Monster abilities
 - **Abyssal Vortex:** The Guardian can create a whirlpool that pulls players toward it, preventing them from escaping.
 - **Angry Spiders:** Spiders throw cobwebs, dealing damage and slowing players.
 - **Blood Moon:** Nights may turn red, increasing player damage taken and slowing them; monsters gain speed, strength, and resistance.
@@ -55,7 +54,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 
 ![image](https://github.com/user-attachments/assets/1fcdbad5-5c56-4335-96bd-d958248dc608)
 
-**Custom Mob System** 
+## Custom Mob System
 Unleash your creativity with Sudden Death’s custom mob system! Craft unique monsters with fully adjustable stats and spawn rates to spice up your Minecraft server. While it’s not as intricate as comprehensive plugins like MythicMobs (for example, it doesn’t support custom drops), it’s perfect for those who want a quick, hassle-free way to design mobs without spending hours on setup. Here’s what you can customize for your mobs:
 
 - **Attack Strength**
@@ -77,7 +76,7 @@ Elevate your server’s challenge and excitement with these tailored monster-mak
 - `/sds get <item-name>` gives you a specific plugin item.
 - `/sds itemlist` shows every custom item, and how to get them.
 - `/sds menu` opens the feature view GUI.
-- `/sds reload` reloads the configuration file (pretty useless).
+- `/sds reload` reloads the configuration file.
 - `/sds recipe` opens the crafting recipe GUI.
 - `/sds clean` removes bleeding, infected... effects.
 - `/sds help` shows the available commands.
