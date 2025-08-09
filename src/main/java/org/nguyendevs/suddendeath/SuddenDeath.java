@@ -330,11 +330,11 @@ public class SuddenDeath extends JavaPlugin {
     }
 
     private void registerCommands() {
-        Optional.ofNullable(getCommand("sdstatus")).ifPresent(cmd -> {
+        Optional.ofNullable(getCommand("sds")).ifPresent(cmd -> {
             cmd.setExecutor(new SuddenDeathStatusCommand());
             cmd.setTabCompleter(new SuddenDeathStatusCompletion());
         });
-        Optional.ofNullable(getCommand("sdmob")).ifPresent(cmd -> {
+        Optional.ofNullable(getCommand("sdm")).ifPresent(cmd -> {
             cmd.setExecutor(new SuddenDeathMobCommand());
             cmd.setTabCompleter(new SuddenDeathMobCompletion());
         });
