@@ -52,8 +52,8 @@ public enum Message {
     FILTER_LORE_DESC("&7Filter options"),
 	FILTER_LORE_DEFAULT("Default"),
 	FILTER_LORE_MOB("Mob abilities"),
-	FILTER_LORE_SURVIVAL("Survival feature"),
-	FILTER_LORE_VISUAL("Visual"),
+	FILTER_LORE_SURVIVAL("Survival features"),
+	FILTER_LORE_VISUAL("Visual filter"),
 	GIVE_ITEM("You gave &f#player# #item##amount#&e."),
 	RECEIVE_ITEM("You received &f#item##amount#&e."),
 
