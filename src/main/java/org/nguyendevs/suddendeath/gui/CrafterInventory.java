@@ -298,7 +298,7 @@ public class CrafterInventory implements Listener {
         for (int slot : graySlots) {
             recipeInventory.setItem(slot, grayPane);
         }
-        ItemStack limePane = createSecureItem(Material.LIME_STAINED_GLASS_PANE,
+        ItemStack limePane = createSecureItem(Material.ARROW,
                 Utils.msg("gui-crafter-back") != null ? Utils.msg("gui-crafter-back") : "&aBack", true);
         recipeInventory.setItem(44, limePane);
         int[] craftingSlots = {11, 12, 13, 20, 21, 22, 29, 30, 31};
