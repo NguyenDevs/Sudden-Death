@@ -22,8 +22,8 @@ public enum Feature {
 	ABYSSAL_VORTEX(
 			"Abyssal Vortex",
 			new String[]{
-					"&3The Guardian &7can create a &fwhirlpool &7that pulls players",
-					"toward it, preventing them from escaping."
+					"&3The Guardian &7have a #chance-percent#% chance create a &fWhirlpool &7that",
+					"pulls players toward it, preventing them from escaping."
 			},
 			"abyssal-vortex",
 			new Modifier[]{
@@ -331,8 +331,8 @@ public enum Feature {
 	NETHER_SHIELD(
 			"Nether Shield",
 			new String[]{
-					"&7All nether mobs &cexcept Wither Skeleton &7have",
-					"#chance-percent#% chance to block attacks.",
+					"&7All nether mobs &cexcept &7Wither Skeleton",
+					"&7have#chance-percent#% chance to block attacks.",
 					"Reflects #dmg-reflection-percent#% damage",
 					"and ignites for #burn-duration# seconds."
 			},
@@ -532,7 +532,7 @@ public enum Feature {
 			"Undead Rage",
 			new String[]{
 					"&2Zombies&7, &3Drowned&7, &6Husk &7and &2Zombified Piglin &7gain &6Strength",
-					"&7and &3Speed II for #rage-duration# seconds when damaged."
+					"&7and &3Speed II &7for #rage-duration# seconds when damaged."
 			},
 			"undead-rage",
 			new Modifier[]{new Modifier("rage-duration", 4.0)}
