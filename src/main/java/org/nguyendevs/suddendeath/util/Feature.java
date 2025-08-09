@@ -331,7 +331,7 @@ public enum Feature {
 	NETHER_SHIELD(
 			"Nether Shield",
 			new String[]{
-					"&cMagma cubes&7, &2Zombified Piglin &7and &eBlazes &7have",
+					"&7All nether mobs &cexcept Wither Skeleton &7have",
 					"#chance-percent#% chance to block attacks.",
 					"Reflects #dmg-reflection-percent#% damage",
 					"and ignites for #burn-duration# seconds."
@@ -531,8 +531,8 @@ public enum Feature {
 	UNDEAD_RAGE(
 			"Undead Rage",
 			new String[]{
-					"&2Zombies &7and &2Zombified Piglin &7gain &6Strength &7and &3Speed II",
-					"for #rage-duration# seconds when damaged."
+					"&2Zombies&7, &3Drowned&7, &6Husk &7and &2Zombified Piglin &7gain &6Strength",
+					"&7and &3Speed II for #rage-duration# seconds when damaged."
 			},
 			"undead-rage",
 			new Modifier[]{new Modifier("rage-duration", 4.0)}
