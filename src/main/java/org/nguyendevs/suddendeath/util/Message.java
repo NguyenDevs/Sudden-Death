@@ -48,6 +48,12 @@ public enum Message {
 	GUI_FEATURES_ENABLED("&aThis feature is enabled in this world."),
 	GUI_FEATURES_DISABLED("&cThis feature is disabled in this world."),
 
+	FILTER_NAME("&aFilters"),
+    FILTER_LORE_DESC("&7Filter options"),
+	FILTER_LORE_DEFAULT("Default"),
+	FILTER_LORE_MOB("Mob abilities"),
+	FILTER_LORE_SURVIVAL("Survival feature"),
+	FILTER_LORE_VISUAL("Visual"),
 	GIVE_ITEM("You gave &f#player# #item##amount#&e."),
 	RECEIVE_ITEM("You received &f#item##amount#&e."),
 
