@@ -3,6 +3,7 @@ package org.nguyendevs.suddendeath.gui;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -134,11 +135,13 @@ public class AdminView extends PluginInventory {
             if (translateColors(Utils.msg("gui-next")).equals(displayName)) {
                 page++;
                 open();
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
                 return;
             }
             if (translateColors(Utils.msg("gui-previous")).equals(displayName)) {
                 page--;
                 open();
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
                 return;
             }
             String featureId = meta.getPersistentDataContainer().get(Utils.nsk("featureId"), PersistentDataType.STRING);
