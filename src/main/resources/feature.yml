@@ -143,7 +143,7 @@ features:
       - "&cMonsters &7can deal critical strikes"
       - "with #damage-percent#% additional damage."
       - " "
-      - "&cCrit Chance configurable for each monster."
+      - "&cConfigurable for each monster."
   nether-shield:
     name: "Nether Shield"
     lore:

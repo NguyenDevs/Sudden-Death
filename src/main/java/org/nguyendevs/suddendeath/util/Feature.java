@@ -320,7 +320,7 @@ public enum Feature {
 					"&cMonsters &7can deal critical strikes",
 					"with #damage-percent#% additional damage.",
 					" ",
-					"&cCrit Chance configurable for each monster."
+					"&cConfigurable for each monster."
 			},
 			"mob-critical-strikes",
 			new Modifier[]{
