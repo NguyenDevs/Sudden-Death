@@ -1014,7 +1014,7 @@ public class Listener3 implements Listener {
                             cancel();
                             return;
                         }
-                        target.getWorld().playSound(target.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1.0f, 2.0f);
+                       // target.getWorld().playSound(target.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1.0f, 2.0f);
 
                         double angle = angles[beamCount];
                         Vector beamDirection = initialDirection.clone();
