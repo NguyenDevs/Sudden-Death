@@ -464,7 +464,7 @@ public class PlayerView extends PluginInventory {
     }
 
     private void cycleFilterLeft() {
-        filterIndex = (filterIndex + 1) % 3;
+        filterIndex = (filterIndex + 1) % 4;
         page = 0;
         cachedSource = null;
         try { player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f); } catch (Throwable ignored) {}
