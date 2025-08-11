@@ -14,6 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.manager.EventManager.WorldStatus;
+import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 
 import java.util.logging.Level;
 
@@ -40,6 +41,9 @@ public class BloodMoon extends WorldEventHandler {
 
 		try {
 			Player player = (Player) event.getEntity();
+             if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
+				return;
+			}
 			double damageMultiplier = 1 + (Feature.BLOOD_MOON.getDouble("damage-percent") / 100.0);
 			event.setDamage(event.getDamage() * damageMultiplier);
 
@@ -63,7 +67,10 @@ public class BloodMoon extends WorldEventHandler {
 		}
 
 		try {
-			Location loc = entity.getLocation();
+			Location loc = event.getEntity().getLocation();
+              if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
+				return;
+			}
 			if (isWaterNearby(loc) && entity instanceof Zombie) {
 				event.setCancelled(true);
 				return;
@@ -87,7 +94,7 @@ public class BloodMoon extends WorldEventHandler {
 		}
 
 		try {
-			Creeper creeper = (Creeper) entity;
+			Creeper creeper = (Creeper) event.getEntity();
 			for (PotionEffectType effectType : ENHANCED_EFFECTS) {
 				creeper.removePotionEffect(effectType);
 			}
@@ -103,6 +110,9 @@ public class BloodMoon extends WorldEventHandler {
 			for (Entity entity : getWorld().getEntities()) {
 				if (entity instanceof Monster && !(entity instanceof Zombie)) {
 					Location loc = entity.getLocation();
+                      if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
+						continue;
+					}
 					if (!isWaterNearby(loc)) {
 						entity.remove();
 						spawnEnhancedZombie(loc);
@@ -135,6 +145,9 @@ public class BloodMoon extends WorldEventHandler {
 
 	private void spawnEnhancedZombie(Location location) {
 		try {
+            if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(location, CustomFlag.SDS_EVENT)) {
+				return;
+			}
 			Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, EntityType.ZOMBIE);
 			for (PotionEffectType effectType : ENHANCED_EFFECTS) {
 				int amplifier = (int) Feature.BLOOD_MOON.getDouble(
