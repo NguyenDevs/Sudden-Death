@@ -16,9 +16,9 @@ public enum Message {
 	LOST_EXP("You just lost #exp# EXP!"),
 	NOT_ENOUGH_PERMS("&cYou don't have enough permissions."),
 
-	BLOOD_MOON("The Blood Moon is rising..."),
-	THUNDERSTORM("You feel the air above you getting colder..."),
-	METEOR_RAIN("Something just entered the atmosphere!"),
+	BLOOD_MOON("&4&lThe Blood Moon is rising..."),
+	THUNDERSTORM("&4&lYou feel the air above you getting colder..."),
+	METEOR_RAIN("&4&lSomething just entered the atmosphere!"),
 
 	GUI_STATUS_NAME("&8Your Status"),
 	GUI_RECIPE_NAME("&8Recipes"),
