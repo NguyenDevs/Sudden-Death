@@ -291,14 +291,19 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
             Validate.isTrue(feature.isEvent(), "Specified feature is not an event.");
             player.getWorld().setTime(14000);
             SuddenDeath.getInstance().getEventManager().applyStatus(player.getWorld(), feature.generateWorldEventHandler(player.getWorld()));
-            String message = translateColors("&4&l" + Utils.msg(feature.getPath()));
+            String message = translateColors(Utils.msg(feature.getPath()));
             for (Player online : player.getWorld().getPlayers()) {
-                online.sendMessage(message);
+                online.sendMessage(Utils.msg("prefix") + " " + message);
+
                 online.sendTitle("", message, 10, 40, 10);
-                online.playSound(online.getLocation(), Sound.BLOCK_FIRE_EXTINGUISH, 1.0f, 0.0f);
-                online.playSound(online.getLocation(), Sound.ENTITY_SKELETON_HORSE_DEATH, 1.0f, 0.0f);
+                if (feature == Feature.BLOOD_MOON) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_INFECT, 1.0f, 0.1f);
+                } else if (feature == Feature.THUNDERSTORM) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.1f);
+                } else {
+                    player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 0.1f);
+                }
             }
-            playSound(player);
         } catch (IllegalArgumentException e) {
             player.sendMessage(translateColors(PREFIX + " " + translateColors("&cCould not find event called " + args[1].toUpperCase().replace("-", "_") + ".")));
             playErrorSound(player);
