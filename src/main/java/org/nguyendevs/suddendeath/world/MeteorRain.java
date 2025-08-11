@@ -28,7 +28,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
     private static final int MIN_METEOR_SIZE = 3;
     private static final int MAX_METEOR_SIZE = 10;
-    private static final int SOUND_RADIUS = 120;
+    private static final int SOUND_RADIUS = 150;
     private static final int SPAWN_HEIGHT = 100;
     private static final int VIEW_RANGE = 192;
 
@@ -435,30 +435,27 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             carveCraterWithMeteorShape(impactPoint, bowlRadius);
 
-            Vector dir = flightDirection.clone().normalize();
-            double yaw = Math.atan2(-dir.getX(), dir.getZ());
-            double pitch = Math.atan2(-dir.getY(), Math.sqrt(dir.getX()*dir.getX()+dir.getZ()*dir.getZ()));
-
             int floorY = findCavityLowestFloorY(
                     impactPoint,
                     bowlRadius + meteorSize + 3,
                     meteorSize * 2 + 8
             );
 
+            Vector dir = flightDirection.clone().normalize();
+            double yaw = Math.atan2(-dir.getX(), dir.getZ());
+            double pitch = Math.atan2(-dir.getY(), Math.sqrt(dir.getX()*dir.getX()+dir.getZ()*dir.getZ()));
+
             int minYOffsetRot = minRotatedYOffset(yaw, pitch);
 
             Location finalCenter = new Location(
                     impactPoint.getWorld(),
-                    impactPoint.getBlockX() + 0.5 + dir.getX() * 0.8,
+                    impactPoint.getBlockX() + 0.5,
                     floorY - minYOffsetRot - 1,
-                    impactPoint.getBlockZ() + 0.5 + dir.getZ() * 0.8
+                    impactPoint.getBlockZ() + 0.5
             );
 
             materializeMeteorRotated(finalCenter, yaw, pitch);
-
-            smoothCraterWalls(impactPoint, bowlRadius + meteorSize + 4);
-            cleanupFloatingBlocks(impactPoint, bowlRadius + meteorSize + 6);
-            igniteCrater(impactPoint, bowlRadius);
+            scorchSurroundings(impactPoint, bowlRadius);
         }
 
         private int minRotatedYOffset(double yaw, double pitch) {
@@ -496,139 +493,25 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double yaw = Math.atan2(-dir.getX(), dir.getZ());
             double pitch = Math.atan2(-dir.getY(), Math.sqrt(dir.getX()*dir.getX()+dir.getZ()*dir.getZ()));
 
-            int steps = meteorSize + 6;
-            double forward = 0.9;
-            double sink = 0.6 + meteorSize * 0.04;
-
-            double startR = baseRadius * 0.9;
-            double endR = Math.max(1.0, baseRadius * 0.25);
+            int steps = meteorSize + 4;
+            double forward = 0.6;
+            double sink = 0.4 + meteorSize * 0.03;
 
             for (int i = 0; i <= steps; i++) {
                 double t = i / (double) steps;
-                double rx = lerp(startR, endR, t);
-                double ry = Math.max(1.0, rx * 0.65);
-                double rz = rx;
+                double scale = 1.0 - t * 0.5;
+                Location c = impactPoint.clone().add(dir.clone().multiply(i * forward));
+                c.add(0, -i * sink, 0);
 
-                Location c = impactPoint.clone()
-                        .add(dir.clone().multiply(i * forward))
-                        .add(0, -i * sink, 0);
-
-                carveRotatedEllipsoid(w, c, rx, ry, rz, yaw, pitch);
-            }
-
-            carveRotatedEllipsoid(w, impactPoint.clone().add(0, -1, 0),
-                    baseRadius * 1.05, baseRadius * 0.55, baseRadius * 1.05, yaw, pitch);
-        }
-
-        private void carveRotatedEllipsoid(World w, Location center,
-                                           double rx, double ry, double rz,
-                                           double yaw, double pitch) {
-            int maxX = (int) Math.ceil(rx) + 2;
-            int maxY = (int) Math.ceil(ry) + 2;
-            int maxZ = (int) Math.ceil(rz) + 2;
-
-            for (int x = -maxX; x <= maxX; x++) {
-                for (int y = -maxY; y <= maxY; y++) {
-                    for (int z = -maxZ; z <= maxZ; z++) {
-                        Vector o = rotateOffset(new Vector(x, y, z), yaw, pitch);
-                        double nx = o.getX() / rx;
-                        double ny = o.getY() / ry;
-                        double nz = o.getZ() / rz;
-                        double d = nx*nx + ny*ny + nz*nz;
-                        if (d <= 1.0) {
-                            Block b = w.getBlockAt(center.getBlockX() + x, center.getBlockY() + y, center.getBlockZ() + z);
-                            if (b.getType() != Material.BEDROCK) b.setType(Material.AIR, false);
-                        }
-                    }
+                for (MeteorVoxel v : meteorVoxels) {
+                    Vector o = rotateOffset(v.offset.clone().multiply(scale), yaw, pitch);
+                    Location p = c.clone().add(o);
+                    Block b = w.getBlockAt(p);
+                    if (b.getType() != Material.BEDROCK) b.setType(Material.AIR, false);
                 }
             }
         }
 
-        private void smoothCraterWalls(Location center, int radius) {
-            World w = center.getWorld();
-            int r2 = radius * radius;
-
-            for (int pass = 0; pass < 2; pass++) {
-                for (int x = -radius; x <= radius; x++) {
-                    for (int y = -radius; y <= radius; y++) {
-                        for (int z = -radius; z <= radius; z++) {
-                            if (x*x + y*y + z*z > r2) continue;
-                            Block b = w.getBlockAt(center.getBlockX() + x, center.getBlockY() + y, center.getBlockZ() + z);
-                            if (!b.getType().isSolid() || b.getType() == Material.BEDROCK) continue;
-
-                            int airN = 0;
-                            if (w.getBlockAt(b.getX()+1, b.getY(), b.getZ()).getType().isAir()) airN++;
-                            if (w.getBlockAt(b.getX()-1, b.getY(), b.getZ()).getType().isAir()) airN++;
-                            if (w.getBlockAt(b.getX(), b.getY()+1, b.getZ()).getType().isAir()) airN++;
-                            if (w.getBlockAt(b.getX(), b.getY()-1, b.getZ()).getType().isAir()) airN++;
-                            if (w.getBlockAt(b.getX(), b.getY(), b.getZ()+1).getType().isAir()) airN++;
-                            if (w.getBlockAt(b.getX(), b.getY(), b.getZ()-1).getType().isAir()) airN++;
-
-                            if (airN >= 5) b.setType(Material.AIR, false);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void cleanupFloatingBlocks(Location center, int radius) {
-            World w = center.getWorld();
-            int r2 = radius * radius;
-
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -radius; y <= radius; y++) {
-                    for (int z = -radius; z <= radius; z++) {
-                        if (x*x + y*y + z*z > r2) continue;
-                        Block b = w.getBlockAt(center.getBlockX() + x, center.getBlockY() + y, center.getBlockZ() + z);
-                        if (!b.getType().isSolid() || b.getType() == Material.BEDROCK) continue;
-
-                        Block below1 = w.getBlockAt(b.getX(), b.getY()-1, b.getZ());
-                        Block below2 = w.getBlockAt(b.getX(), b.getY()-2, b.getZ());
-                        if (below1.getType().isAir() && below2.getType().isAir()) {
-                            b.setType(Material.AIR, false);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void igniteCrater(Location center, int radius) {
-            World w = center.getWorld();
-            int rim = Math.max(2, radius - 1);
-
-            for (int x = -rim; x <= rim; x++) {
-                for (int z = -rim; z <= rim; z++) {
-                    double d = Math.sqrt(x*x + z*z);
-                    if (d > rim || d < rim * 0.75) continue;
-                    int y = w.getHighestBlockYAt(center.getBlockX()+x, center.getBlockZ()+z);
-                    Block b = w.getBlockAt(center.getBlockX()+x, y, center.getBlockZ()+z);
-                    if (b.getType().isAir()) {
-                        Block below = w.getBlockAt(b.getX(), b.getY()-1, b.getZ());
-                        if (below.getType().isSolid() && ThreadLocalRandom.current().nextDouble() < 0.35) {
-                            b.setType(Material.FIRE, false);
-                        }
-                    }
-                }
-            }
-
-            for (int x = -radius/2; x <= radius/2; x++) {
-                for (int y = -radius/2; y <= radius/6; y++) {
-                    for (int z = -radius/2; z <= radius/2; z++) {
-                        if (ThreadLocalRandom.current().nextDouble() < 0.05) {
-                            Block b = w.getBlockAt(center.getBlockX()+x, center.getBlockY()+y, center.getBlockZ()+z);
-                            if (b.getType().isAir()) {
-                                Block below = w.getBlockAt(b.getX(), b.getY()-1, b.getZ());
-                                if (below.getType().isSolid()) b.setType(Material.FIRE, false);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private double lerp(double a, double b, double t) {
-            return a + (b - a) * t;
-        }
         private Vector rotateOffset(Vector o, double yaw, double pitch) {
             double cy = Math.cos(yaw), sy = Math.sin(yaw);
             double x1 = o.getX() * cy - o.getZ() * sy;
