@@ -138,7 +138,7 @@ features:
     lore:
       - "&8Spiders &7can leap powerfully at players."
   meteor-rain:
-    name: "Reteor Rain"
+    name: "Meteor Rain"
     lore:
       - "&6Meteorite &7has a #chance-percent#% chance of falling from the sky."
       - "Creates a crater and an explosion, with a deafening sound."
