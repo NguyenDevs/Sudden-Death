@@ -129,6 +129,7 @@ public class PlayerView extends PluginInventory {
             Feature.FREDDY,
             Feature.HUNGER_NAUSEA,
             Feature.INFECTION,
+            Feature.METEOR_RAIN,
             Feature.PHYSIC_ENDER_PEARL,
             Feature.REALISTIC_PICKUP,
             Feature.SNOW_SLOW,
@@ -350,6 +351,7 @@ public class PlayerView extends PluginInventory {
             case HOMING_FLAME_BARRAGE: return Material.BLAZE_SPAWN_EGG;
             case IMMORTAL_EVOKER: return Material.EVOKER_SPAWN_EGG;
             case LEAPING_SPIDERS: return Material.SPIDER_SPAWN_EGG;
+            case METEOR_RAIN: return Material.FIRE_CHARGE;
             case MOB_CRITICAL_STRIKES: return Material.SPAWNER;
             case NETHER_SHIELD: return Material.NETHERRACK;
             case POISONED_SLIMES: return Material.SLIME_SPAWN_EGG;
