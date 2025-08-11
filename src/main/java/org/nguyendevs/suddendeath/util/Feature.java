@@ -11,6 +11,7 @@ import org.nguyendevs.suddendeath.player.Modifier.Type;
 import org.nguyendevs.suddendeath.world.BloodMoon;
 import org.nguyendevs.suddendeath.world.StatusRetriever;
 import org.nguyendevs.suddendeath.world.Thunderstorm;
+import org.nguyendevs.suddendeath.world.MeteorRain;
 import org.nguyendevs.suddendeath.world.WorldEventHandler;
 
 import java.io.File;
@@ -313,6 +314,26 @@ public enum Feature {
 			},
 			"leaping-spiders",
 			new Modifier[]{}
+	),
+	METEOR_RAIN(
+			"Meteor Rain",
+			new String[]{
+					"&6Meteorite &7has a #chance-percent#% chance of falling from the sky.",
+					"Creates a crater and an explosion, with a deafening sound.",
+					"At the center of the explosion, a meteorite can be found with",
+					"some minerals"
+			},
+			"meteor-rain",
+			new Modifier[]{
+					new Modifier("chance-percent", 15.0),
+					new Modifier("coal-ore-rate", 40),
+					new Modifier("iron-ore-rate", 30),
+					new Modifier("gold-ore-rate", 20),
+					new Modifier("diamond-ore-rate", 15),
+					new Modifier("emerald-ore-rate", 10),
+					new Modifier("ancient-debris-rate", 5)
+			},
+			MeteorRain::new
 	),
 	MOB_CRITICAL_STRIKES(
 			"Mob Critical Strikes",
