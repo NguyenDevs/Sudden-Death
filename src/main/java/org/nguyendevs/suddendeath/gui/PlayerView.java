@@ -85,10 +85,14 @@ public class PlayerView extends PluginInventory {
     private final Map<Integer, Feature> slotFeatureMap = new HashMap<>();
     private Inventory lastInventory;
 
+    private static final EnumSet<Feature> EVENT_SET = EnumSet.of(
+            Feature.BLOOD_MOON,
+            Feature.THUNDERSTORM,
+            Feature.METEOR_RAIN
+    );
     private static final EnumSet<Feature> MOB_SET = EnumSet.of(
             Feature.ABYSSAL_VORTEX,
             Feature.ANGRY_SPIDERS,
-            Feature.BLOOD_MOON,
             Feature.BONE_GRENADES,
             Feature.BONE_WIZARDS,
             Feature.BREEZE_DASH,
@@ -129,12 +133,10 @@ public class PlayerView extends PluginInventory {
             Feature.FREDDY,
             Feature.HUNGER_NAUSEA,
             Feature.INFECTION,
-            Feature.METEOR_RAIN,
             Feature.PHYSIC_ENDER_PEARL,
             Feature.REALISTIC_PICKUP,
             Feature.SNOW_SLOW,
-            Feature.STONE_STIFFNESS,
-            Feature.THUNDERSTORM
+            Feature.STONE_STIFFNESS
     );
 
     private int page;
@@ -298,7 +300,11 @@ public class PlayerView extends PluginInventory {
             } else if (filterIndex == 2) {
                 list = new ArrayList<>();
                 for (Feature f : all) if (MOB_SET.contains(f)) list.add(f);
-            } else {
+            } else if (filterIndex == 3) {
+                list = new ArrayList<>();
+                for (Feature f : all) if (EVENT_SET.contains(f)) list.add(f);
+            }
+            else {
                 list = new ArrayList<>(Arrays.asList(all));
             }
 
@@ -369,7 +375,6 @@ public class PlayerView extends PluginInventory {
             case WITHER_MACHINEGUN: return Material.WITHER_SKELETON_SPAWN_EGG;
             case WITHER_RUSH: return Material.WITHER_SKELETON_SPAWN_EGG;
             case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
-
             case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
             case ARROW_SLOW: return Material.TIPPED_ARROW;
             case BLEEDING: return Material.PAPER;
@@ -436,9 +441,11 @@ public class PlayerView extends PluginInventory {
         String defColor = (filterIndex == 0) ? "&a" : "&f";
         String srvColor = (filterIndex == 1) ? "&a" : "&f";
         String mobColor = (filterIndex == 2) ? "&a" : "&f";
+        String eventColor = (filterIndex == 3) ? "&a" : "&f";
         lore.add(translateColors("&6► " + defColor + Utils.msg("filter-lore-default")));
         lore.add(translateColors("&6► " + srvColor + Utils.msg("filter-lore-survival")));
         lore.add(translateColors("&6► " + mobColor + Utils.msg("filter-lore-mob")));
+        lore.add(translateColors("&6► " + eventColor + Utils.msg("filter-lore-event")));
 
         lore.add("");
         String visColor = visualMode ? "&6" : "&f";
