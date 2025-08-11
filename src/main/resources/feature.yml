@@ -137,6 +137,13 @@ features:
     name: "Leaping Spiders"
     lore:
       - "&8Spiders &7can leap powerfully at players."
+  meteor-rain:
+    name: "Reteor Rain"
+    lore:
+      - "&6Meteorite &7has a #chance-percent#% chance of falling from the sky."
+      - "Creates a crater and an explosion, with a deafening sound."
+      - "At the center of the explosion, a meteorite can be found with"
+      - "some minerals"
   mob-critical-strikes:
     name: "Mob Critical Strikes"
     lore:
