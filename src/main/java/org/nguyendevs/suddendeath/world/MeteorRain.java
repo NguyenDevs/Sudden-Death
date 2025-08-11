@@ -26,10 +26,10 @@ import java.util.logging.Level;
 
 public class MeteorRain extends WorldEventHandler implements Listener {
 
-    private static final int MIN_METEOR_SIZE = 5;
-    private static final int MAX_METEOR_SIZE = 15;
-    private static final int SOUND_RADIUS = 48;
-    private static final int SPAWN_HEIGHT = 80;
+    private static final int MIN_METEOR_SIZE = 3;
+    private static final int MAX_METEOR_SIZE = 8;
+    private static final int SOUND_RADIUS = 60;
+    private static final int SPAWN_HEIGHT = 100;
     private static final int VIEW_RANGE = 192;
 
     private static final Material[] METEOR_MATERIALS = {
