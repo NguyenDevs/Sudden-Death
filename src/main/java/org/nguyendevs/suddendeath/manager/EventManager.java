@@ -51,8 +51,6 @@ public class EventManager extends BukkitRunnable {
                 String messageKey = feature.name().toLowerCase().replace("_", "-");
                 String message = ChatColor.DARK_RED + "" + ChatColor.ITALIC + Utils.msg(messageKey);
 
-                // Only show notification for non-meteor rain events
-                if (feature != Feature.METEOR_RAIN) {
                     for (Player player : world.getPlayers()) {
                         try {
                             player.sendMessage(message);
@@ -63,7 +61,6 @@ public class EventManager extends BukkitRunnable {
                                     "Error sending event notification to player: " + player.getName(), e);
                         }
                     }
-                }
                 return;
             }
             applyStatus(world, WorldStatus.NIGHT);
