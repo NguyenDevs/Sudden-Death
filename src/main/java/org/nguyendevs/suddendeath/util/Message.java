@@ -18,6 +18,7 @@ public enum Message {
 
 	BLOOD_MOON("The Blood Moon is rising..."),
 	THUNDERSTORM("You feel the air above you getting colder..."),
+	METEOR_RAIN("Something just entered the atmosphere!"),
 
 	GUI_STATUS_NAME("&8Your Status"),
 	GUI_RECIPE_NAME("&8Recipes"),
