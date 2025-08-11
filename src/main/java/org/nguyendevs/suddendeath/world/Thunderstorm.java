@@ -15,6 +15,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.manager.EventManager.WorldStatus;
+import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 
 import java.util.logging.Level;
 
@@ -40,6 +41,11 @@ public class Thunderstorm extends WorldEventHandler {
 		}
 
 		try {
+			Player player = (Player) event.getEntity();
+			// Kiểm tra flag tại vị trí người chơi: Nếu flag SDS_EVENT = DENY (false), vô hiệu hóa damage multiplier
+			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
+				return;
+			}
 			double damageMultiplier = 1 + (Feature.THUNDERSTORM.getDouble("damage-percent") / 100.0);
 			event.setDamage(event.getDamage() * damageMultiplier);
 		} catch (Exception e) {
@@ -57,6 +63,10 @@ public class Thunderstorm extends WorldEventHandler {
 		try {
 			LightningStrike strike = event.getLightning();
 			Location strikeLocation = strike.getLocation();
+			// Kiểm tra flag tại vị trí sét đánh: Nếu flag SDS_EVENT = DENY (false), vô hiệu hóa particle và knockback
+			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(strikeLocation, CustomFlag.SDS_EVENT)) {
+				return;
+			}
 			World world = strike.getWorld();
 
 			world.spawnParticle(Particle.SMOKE_NORMAL, strikeLocation, PARTICLE_COUNT, 0, 0, 0, 0.6);
@@ -74,12 +84,17 @@ public class Thunderstorm extends WorldEventHandler {
 					"Error handling lightning strike in world: " + getWorld().getName(), e);
 		}
 	}
+
 	@Override
 	public void run() {
 		try {
 			getWorld().setStorm(true);
 			getWorld().setWeatherDuration(WEATHER_DURATION_TICKS);
 			for (Player player : getWorld().getPlayers()) {
+				// Kiểm tra flag tại vị trí người chơi: Nếu flag SDS_EVENT = DENY (false), không spawn sét
+				if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
+					continue;
+				}
 				if (getRandom().nextDouble() < LIGHTNING_PROBABILITY) {
 					continue;
 				}
@@ -95,6 +110,7 @@ public class Thunderstorm extends WorldEventHandler {
 					"Error running thunderstorm task in world: " + getWorld().getName(), e);
 		}
 	}
+
 	private static class LightningEffectTask extends BukkitRunnable {
 		private final Location strikeLocation;
 		private double angle = 0;
