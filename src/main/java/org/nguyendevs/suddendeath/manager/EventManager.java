@@ -49,14 +49,14 @@ public class EventManager extends BukkitRunnable {
 
                 applyStatus(world, feature.generateWorldEventHandler(world));
                 String messageKey = feature.name().toLowerCase().replace("_", "-");
-                String message = ChatColor.DARK_RED + "" + ChatColor.ITALIC + Utils.msg(messageKey);
+                String message = translateColors(Utils.msg(messageKey));
                     for (Player player : world.getPlayers()) {
                         try {
-                            player.sendMessage(message);
+                            player.sendMessage(Utils.msg("prefix") + " " + message);
                             player.sendTitle("", message, 10, 40, 10);
-                            if (feature != Feature.BLOOD_MOON) {
+                            if (feature == Feature.BLOOD_MOON) {
                                 player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_INFECT, 1.0f, 0.1f);
-                            } else if (feature != Feature.THUNDERSTORM) {
+                            } else if (feature == Feature.THUNDERSTORM) {
                                 player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.1f);
                             } else {
                                 player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 0.1f);
@@ -212,5 +212,8 @@ public class EventManager extends BukkitRunnable {
         public WorldStatus getStatus() {
             return status;
         }
+    }
+    private String translateColors(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
     }
 }
