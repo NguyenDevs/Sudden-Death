@@ -50,17 +50,23 @@ public class EventManager extends BukkitRunnable {
                 applyStatus(world, feature.generateWorldEventHandler(world));
                 String messageKey = feature.name().toLowerCase().replace("_", "-");
                 String message = ChatColor.DARK_RED + "" + ChatColor.ITALIC + Utils.msg(messageKey);
-
                     for (Player player : world.getPlayers()) {
                         try {
                             player.sendMessage(message);
                             player.sendTitle("", message, 10, 40, 10);
-                            player.playSound(player.getLocation(), Sound.ENTITY_SKELETON_HORSE_DEATH, 1.0f, 0.0f);
+                            if (feature != Feature.BLOOD_MOON) {
+                                player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_INFECT, 1.0f, 0.1f);
+                            } else if (feature != Feature.THUNDERSTORM) {
+                                player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.1f);
+                            } else {
+                                player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 0.1f);
+                            }
                         } catch (Exception e) {
                             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                                     "Error sending event notification to player: " + player.getName(), e);
                         }
                     }
+
                 return;
             }
             applyStatus(world, WorldStatus.NIGHT);
