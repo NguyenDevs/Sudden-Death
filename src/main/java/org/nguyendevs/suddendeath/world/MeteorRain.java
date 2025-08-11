@@ -27,7 +27,7 @@ import java.util.logging.Level;
 public class MeteorRain extends WorldEventHandler implements Listener {
 
     private static final int MIN_METEOR_SIZE = 3;
-    private static final int MAX_METEOR_SIZE = 8;
+    private static final int MAX_METEOR_SIZE = 10;
     private static final int SOUND_RADIUS = 60;
     private static final int SPAWN_HEIGHT = 100;
     private static final int VIEW_RANGE = 192;
@@ -72,7 +72,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
     private void startSpawning() {
         spawnMeteorShower();
-        long delay = 200 + ThreadLocalRandom.current().nextInt(800);
+        long delay = 40 + ThreadLocalRandom.current().nextInt(160);
         spawningTaskId = Bukkit.getScheduler().scheduleSyncDelayedTask(
                 SuddenDeath.getInstance(), this::startSpawning, delay);
     }
@@ -98,15 +98,27 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         }
     }
 
+    private boolean isProtected(Player p) {
+        if (p == null) return true;
+        if (!p.isOnline()) return true;
+        GameMode gm = p.getGameMode();
+        if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR) return true;
+        return false;
+    }
+
     private void spawnMeteorShower() {
         try {
             List<Player> worldPlayers = getWorld().getPlayers();
             if (worldPlayers.isEmpty()) return;
 
-            int meteorCount = ThreadLocalRandom.current().nextInt(1, 6);
+            List<Player> eligible = new ArrayList<>();
+            for (Player p : worldPlayers) if (!isProtected(p)) eligible.add(p);
+            if (eligible.isEmpty()) return;
+
+            int meteorCount = ThreadLocalRandom.current().nextInt(1, 5);
             for (int i = 0; i < meteorCount; i++) {
-                Player targetPlayer = worldPlayers.get(ThreadLocalRandom.current().nextInt(worldPlayers.size()));
-                long delay = i * ThreadLocalRandom.current().nextInt(5, 20);
+                Player targetPlayer = eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
+                long delay = i * ThreadLocalRandom.current().nextInt(3, 11);
                 Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(),
                         () -> spawnMeteorNearPlayer(targetPlayer), delay);
             }
@@ -118,9 +130,9 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
     private void spawnMeteorNearPlayer(Player targetPlayer) {
         try {
-            Location playerLoc = targetPlayer.getLocation();
+            if (isProtected(targetPlayer)) return;
 
-            // Tạo vị trí target ngẫu nhiên xung quanh player
+            Location playerLoc = targetPlayer.getLocation();
             double distance = ThreadLocalRandom.current().nextDouble(10, 60);
             double angle = ThreadLocalRandom.current().nextDouble(0, 2 * Math.PI);
             int offsetX = (int) (Math.cos(angle) * distance);
@@ -133,7 +145,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             if (!SuddenDeath.getInstance().getWorldGuard()
                     .isFlagAllowedAtLocation(targetLocation, CustomFlag.SDS_EVENT)) return;
 
-            // Tạo vị trí spawn với góc chéo ngẫu nhiên
             Vector diagonalDirection = generateRandomDiagonalDirection();
             double spawnDistance = ThreadLocalRandom.current().nextDouble(80, 120);
 
@@ -157,21 +168,13 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
     private Vector generateRandomDiagonalDirection() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
-
-        // Tạo góc chéo ngẫu nhiên (tránh góc thẳng)
-        double angle = random.nextDouble(0.3, 2 * Math.PI - 0.3); // Tránh góc 0, π/2, π, 3π/2
-
-        // Đảm bảo không phải góc thẳng bằng cách thêm offset nhỏ
+        double angle = random.nextDouble(0.3, 2 * Math.PI - 0.3);
         double[] avoidAngles = {0, Math.PI/2, Math.PI, 3*Math.PI/2};
         for (double avoidAngle : avoidAngles) {
-            if (Math.abs(angle - avoidAngle) < 0.2) {
-                angle += 0.3;
-            }
+            if (Math.abs(angle - avoidAngle) < 0.2) angle += 0.3;
         }
-
         double x = Math.cos(angle);
         double z = Math.sin(angle);
-
         return new Vector(x, 0, z).normalize();
     }
 
@@ -183,29 +186,33 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         return (dx * dx + dz * dz) <= (range * range);
     }
 
+    private enum MeteorShape {
+        SPHERICAL,
+        ARROW,
+        IRREGULAR,
+        TAILED,
+        COMPLEX
+    }
+
     private class MeteorTask extends BukkitRunnable {
         private final ProtocolManager pm = ProtocolLibrary.getProtocolManager();
-
         private final Location startLocation;
         private final Location targetLocation;
         private final int meteorSize;
         private final UUID meteorId;
         private final Vector flightDirection;
-
+        private final MeteorShape meteorShape;
         private Location currentLocation;
         private int tickCount = 0;
         private boolean hasImpacted = false;
         private final double speed;
-
         private final Map<UUID, Set<BlockPosition>> lastSentPerPlayer = new HashMap<>();
         private final List<MeteorVoxel> meteorVoxels;
-
         private final int MAX_TICKS = 20 * 40;
 
         private static class MeteorVoxel {
             final Vector offset;
             final WrappedBlockData data;
-
             MeteorVoxel(Vector offset, WrappedBlockData data) {
                 this.offset = offset;
                 this.data = data;
@@ -218,67 +225,93 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             this.meteorSize = size;
             this.meteorId = meteorId;
             this.currentLocation = start.clone();
-
-            // Tính toán hướng bay với góc chéo
+            this.meteorShape = selectRandomMeteorShape(size);
             Vector baseDirection = target.toVector().subtract(start.toVector()).normalize();
-
-            // Thêm thành phần chéo để tránh bay thẳng
             double randomOffset = ThreadLocalRandom.current().nextDouble(-0.3, 0.3);
             this.flightDirection = new Vector(
                     baseDirection.getX() + randomOffset,
-                    Math.min(baseDirection.getY(), -0.4), // Đảm bảo bay xuống
+                    Math.min(baseDirection.getY(), -0.55),
                     baseDirection.getZ() + randomOffset
             ).normalize();
-
             this.speed = ThreadLocalRandom.current().nextDouble(2.0, 3.5);
-            this.meteorVoxels = generateMeteorVoxels(size, meteorId);
+            this.meteorVoxels = generateMeteorVoxels(size, meteorId, meteorShape);
+        }
+
+        private MeteorShape selectRandomMeteorShape(int size) {
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            if (size >= 9) {
+                double rand = random.nextDouble();
+                if (rand < 0.25) return MeteorShape.COMPLEX;
+                if (rand < 0.45) return MeteorShape.IRREGULAR;
+                if (rand < 0.65) return MeteorShape.TAILED;
+                if (rand < 0.85) return MeteorShape.ARROW;
+                return MeteorShape.SPHERICAL;
+            } else if (size >= 6) {
+                double rand = random.nextDouble();
+                if (rand < 0.2) return MeteorShape.COMPLEX;
+                if (rand < 0.4) return MeteorShape.IRREGULAR;
+                if (rand < 0.6) return MeteorShape.TAILED;
+                if (rand < 0.8) return MeteorShape.ARROW;
+                return MeteorShape.SPHERICAL;
+            } else {
+                double rand = random.nextDouble();
+                if (rand < 0.1) return MeteorShape.COMPLEX;
+                if (rand < 0.3) return MeteorShape.IRREGULAR;
+                if (rand < 0.5) return MeteorShape.TAILED;
+                if (rand < 0.7) return MeteorShape.ARROW;
+                return MeteorShape.SPHERICAL;
+            }
         }
 
         @Override
         public void run() {
             try {
                 if (hasImpacted || tickCount++ > MAX_TICKS) {
-                    if (!hasImpacted) impact();
+                    if (!hasImpacted) impact(currentLocation.clone());
                     cancel();
                     return;
                 }
 
-                // Di chuyển thiên thạch theo hướng đã định
+                Location prev = currentLocation.clone();
                 Vector movement = flightDirection.clone().multiply(speed);
                 currentLocation.add(movement);
 
-                // Tạo hiệu ứng đuôi
-                createTrailEffect();
-
-                // Âm thanh bay
-                if (tickCount % 6 == 0) playMeteorFlightSound();
-
-                // Render thiên thạch ảo
-                if (tickCount % 2 == 0) renderFakeMeteor();
-
-                // Kiểm tra va chạm với mặt đất
-                if (hasReachedGround()) {
-                    hasImpacted = true;
-                    impact();
-                    cancel();
+                World w = currentLocation.getWorld();
+                if (w != null) {
+                    org.bukkit.util.RayTraceResult r = w.rayTraceBlocks(
+                            prev, movement.normalize(), movement.length(),
+                            FluidCollisionMode.NEVER, true
+                    );
+                    if (r != null && r.getHitPosition() != null) {
+                        Location hit = new Location(w,
+                                r.getHitPosition().getX(),
+                                r.getHitPosition().getY(),
+                                r.getHitPosition().getZ());
+                        hasImpacted = true;
+                        impact(hit);
+                        cancel();
+                        return;
+                    }
                 }
 
+                createTrailEffect();
+                if (tickCount % 6 == 0) playMeteorFlightSound();
+                if (tickCount % 2 == 0) renderFakeMeteor();
+
+                if (currentLocation.getBlockY() <= targetLocation.getBlockY() - 16) {
+                    hasImpacted = true;
+                    impact(currentLocation.clone());
+                    cancel();
+                }
             } catch (Exception e) {
                 SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in meteor task", e);
                 cancel();
             }
         }
 
-        private boolean hasReachedGround() {
-            Block currentBlock = currentLocation.getBlock();
-            return currentBlock.getType().isSolid() ||
-                    currentLocation.getBlockY() <= targetLocation.getBlockY() + 2;
-        }
-
         private void createTrailEffect() {
             World world = currentLocation.getWorld();
             if (world == null) return;
-
             double offset = meteorSize / 2.0;
             world.spawnParticle(Particle.FLAME, currentLocation, 20, offset, offset, offset, 0.03);
             world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, currentLocation, 15, offset, offset, offset, 0.05);
@@ -290,7 +323,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         private void playMeteorFlightSound() {
             World world = currentLocation.getWorld();
             if (world == null) return;
-
             for (Player player : world.getPlayers()) {
                 if (player.getLocation().distance(currentLocation) <= SOUND_RADIUS) {
                     player.playSound(currentLocation, Sound.ENTITY_BREEZE_SHOOT, SoundCategory.AMBIENT, 0.8f, 0.6f);
@@ -306,7 +338,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             Map<BlockPosition, WrappedBlockData> currentBlocks = new HashMap<>();
 
-            // Tạo các block giả cho thiên thạch
             for (MeteorVoxel voxel : meteorVoxels) {
                 Location blockLoc = currentLocation.clone().add(voxel.offset);
                 BlockPosition pos = new BlockPosition(
@@ -317,7 +348,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 currentBlocks.put(pos, voxel.data);
             }
 
-            // Gửi packet cho từng player
             for (Player player : world.getPlayers()) {
                 if (!inHorizontalRange(player, currentLocation, VIEW_RANGE)) continue;
 
@@ -325,13 +355,11 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                         player.getUniqueId(), k -> new HashSet<>()
                 );
 
-                // Xóa blocks cũ
                 for (BlockPosition oldPos : lastSent) {
                     sendBlockChange(player, oldPos, WrappedBlockData.createData(Material.AIR.createBlockData()));
                 }
                 lastSent.clear();
 
-                // Gửi blocks mới
                 for (Map.Entry<BlockPosition, WrappedBlockData> entry : currentBlocks.entrySet()) {
                     sendBlockChange(player, entry.getKey(), entry.getValue());
                 }
@@ -361,51 +389,40 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             }
         }
 
-        private void impact() {
+        private void impact(Location impactPoint) {
             try {
-                World world = currentLocation.getWorld();
+                World world = impactPoint.getWorld();
                 if (world == null) return;
 
                 clearAllFakeBlocks();
 
-                // Âm thanh va chạm
-                world.playSound(currentLocation, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.AMBIENT, 2.5f, 0.5f);
-                world.playSound(currentLocation, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.AMBIENT, 1.5f, 0.7f);
-                world.playSound(currentLocation, Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1.2f, 0.4f);
+                world.playSound(impactPoint, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.AMBIENT, 2.5f, 0.5f);
+                world.playSound(impactPoint, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.AMBIENT, 1.5f, 0.7f);
+                world.playSound(impactPoint, Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1.2f, 0.4f);
 
-                // Hiệu ứng nổ
-                world.spawnParticle(Particle.EXPLOSION_LARGE, currentLocation, 10, 3, 3, 3, 0);
-                world.spawnParticle(Particle.LAVA, currentLocation, 50, 4, 4, 4, 0);
-                world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, currentLocation, 30, 3, 3, 3, 0.05);
-                world.spawnParticle(Particle.FLAME, currentLocation, 40, 3, 3, 3, 0.1);
+                world.spawnParticle(Particle.EXPLOSION_LARGE, impactPoint, 10, 3, 3, 3, 0);
+                world.spawnParticle(Particle.LAVA, impactPoint, 50, 4, 4, 4, 0);
+                world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, impactPoint, 30, 3, 3, 3, 0.05);
+                world.spawnParticle(Particle.FLAME, impactPoint, 40, 3, 3, 3, 0.1);
 
-                // Sóng xung kích
-                applyShockwave();
-
-                // Tạo hố thiên thạch theo góc bay
-                createImpactCrater();
+                applyShockwaveAt(impactPoint);
+                createImpactCrater(impactPoint);
 
             } catch (Exception e) {
                 SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error creating meteor impact", e);
             }
         }
 
-        private void applyShockwave() {
-            World world = currentLocation.getWorld();
+        private void applyShockwaveAt(Location center) {
+            World world = center.getWorld();
             double knockRadius = meteorSize * 2.5;
-
             for (Player player : world.getPlayers()) {
                 if (!player.getWorld().equals(world)) continue;
-
-                double distance = player.getLocation().distance(currentLocation);
+                double distance = player.getLocation().distance(center);
                 if (distance <= knockRadius) {
-                    Vector direction = player.getLocation().toVector()
-                            .subtract(currentLocation.toVector()).normalize();
+                    Vector direction = player.getLocation().toVector().subtract(center.toVector()).normalize();
                     double strength = (1.0 - distance / knockRadius) * (meteorSize / 3.5) + 1.5;
-
-                    player.setVelocity(direction.multiply(strength)
-                            .add(new Vector(0, 0.8 + meteorSize * 0.04, 0)));
-
+                    player.setVelocity(direction.multiply(strength).add(new Vector(0, 0.8 + meteorSize * 0.04, 0)));
                     double baseDamage = 5.0 + meteorSize * 1.0;
                     double damage = Math.max(1.0, baseDamage * (1.0 - (distance / knockRadius)));
                     player.damage(damage);
@@ -413,117 +430,172 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             }
         }
 
-        private void createImpactCrater() {
-            World world = currentLocation.getWorld();
+        private void createImpactCrater(Location impactPoint) {
+            int bowlRadius = Math.max(3, meteorSize + 1);
 
-            // Tạo hố chính tại điểm va chạm
-            int craterRadius = Math.max(3, meteorSize / 2 + 3);
-            carveSphere(currentLocation, craterRadius);
+            carveCraterWithMeteorShape(impactPoint, bowlRadius);
 
-            // Tạo đường hầm theo hướng bay (ghim sâu vào đất)
-            createBurrowTunnel();
+            int floorY = findCavityLowestFloorY(
+                    impactPoint,
+                    bowlRadius + meteorSize + 3,
+                    meteorSize * 2 + 8
+            );
 
-            // Tạo lõi thiên thạch ở cuối đường hầm
-            Location coreLocation = currentLocation.clone()
-                    .add(flightDirection.clone().multiply(meteorSize + 3))
-                    .add(0, -2, 0);
-            createMeteorCore(coreLocation);
+            Vector dir = flightDirection.clone().normalize();
+            double yaw = Math.atan2(-dir.getX(), dir.getZ());
+            double pitch = Math.atan2(-dir.getY(), Math.sqrt(dir.getX()*dir.getX()+dir.getZ()*dir.getZ()));
 
-            // Thiêu đốt xung quanh
-            scorchSurroundings(currentLocation, craterRadius + 2);
+            int minYOffsetRot = minRotatedYOffset(yaw, pitch);
+
+            Location finalCenter = new Location(
+                    impactPoint.getWorld(),
+                    impactPoint.getBlockX() + 0.5,
+                    floorY - minYOffsetRot - 1,
+                    impactPoint.getBlockZ() + 0.5
+            );
+
+            materializeMeteorRotated(finalCenter, yaw, pitch);
+            scorchSurroundings(impactPoint, bowlRadius);
         }
 
-        private void createBurrowTunnel() {
-            World world = currentLocation.getWorld();
-            int tunnelLength = meteorSize + ThreadLocalRandom.current().nextInt(5, 12);
+        private int minRotatedYOffset(double yaw, double pitch) {
+            int min = Integer.MAX_VALUE;
+            for (MeteorVoxel v : meteorVoxels) {
+                Vector o = rotateOffset(v.offset.clone(), yaw, pitch);
+                int y = (int) Math.floor(o.getY());
+                if (y < min) min = y;
+            }
+            return (min == Integer.MAX_VALUE) ? 0 : min;
+        }
 
-            for (int i = 0; i < tunnelLength; i++) {
-                Vector stepMove = flightDirection.clone().multiply(i);
-                stepMove.setY(stepMove.getY() - i * 0.3); // Đi sâu hơn theo từng bước
+        private void materializeMeteorRotated(Location center, double yaw, double pitch) {
+            World w = center.getWorld();
+            double innerThreshold = Math.max(1.0, meteorSize * 0.45);
 
-                Location stepLocation = currentLocation.clone().add(stepMove);
-                int stepRadius = Math.max(1, (meteorSize / 2) - i / 3);
+            for (MeteorVoxel v : meteorVoxels) {
+                Vector o = rotateOffset(v.offset.clone(), yaw, pitch);
+                Location loc = center.clone().add(o);
+                double r = o.length();
+                Material mat;
+                if (r <= innerThreshold && ThreadLocalRandom.current().nextDouble() < 0.55) {
+                    mat = selectOreMaterial();
+                } else {
+                    mat = METEOR_MATERIALS[ThreadLocalRandom.current().nextInt(METEOR_MATERIALS.length)];
+                }
+                Block b = w.getBlockAt(loc);
+                if (b.getType() != Material.BEDROCK) b.setType(mat, false);
+            }
+        }
 
-                carveSphere(stepLocation, stepRadius);
+        private void carveCraterWithMeteorShape(Location impactPoint, int baseRadius) {
+            World w = impactPoint.getWorld();
+            Vector dir = flightDirection.clone().normalize();
+            double yaw = Math.atan2(-dir.getX(), dir.getZ());
+            double pitch = Math.atan2(-dir.getY(), Math.sqrt(dir.getX()*dir.getX()+dir.getZ()*dir.getZ()));
 
-                // Thêm lửa ngẫu nhiên trong đường hầm
-                if (ThreadLocalRandom.current().nextDouble() < 0.15) {
-                    Block airBlock = stepLocation.clone().add(0, stepRadius - 1, 0).getBlock();
-                    if (airBlock.getType().isAir()) {
-                        airBlock.setType(Material.FIRE, false);
-                    }
+            int steps = meteorSize + 4;
+            double forward = 0.6;
+            double sink = 0.4 + meteorSize * 0.03;
+
+            for (int i = 0; i <= steps; i++) {
+                double t = i / (double) steps;
+                double scale = 1.0 - t * 0.5;
+                Location c = impactPoint.clone().add(dir.clone().multiply(i * forward));
+                c.add(0, -i * sink, 0);
+
+                for (MeteorVoxel v : meteorVoxels) {
+                    Vector o = rotateOffset(v.offset.clone().multiply(scale), yaw, pitch);
+                    Location p = c.clone().add(o);
+                    Block b = w.getBlockAt(p);
+                    if (b.getType() != Material.BEDROCK) b.setType(Material.AIR, false);
                 }
             }
         }
 
-        private void carveSphere(Location center, int radius) {
-            World world = center.getWorld();
+        private Vector rotateOffset(Vector o, double yaw, double pitch) {
+            double cy = Math.cos(yaw), sy = Math.sin(yaw);
+            double x1 = o.getX() * cy - o.getZ() * sy;
+            double z1 = o.getX() * sy + o.getZ() * cy;
+            double cp = Math.cos(pitch), sp = Math.sin(pitch);
+            double y2 = o.getY() * cp - z1 * sp;
+            double z2 = o.getY() * sp + z1 * cp;
+            return new Vector(x1, y2, z2);
+        }
 
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -radius; y <= radius; y++) {
-                    for (int z = -radius; z <= radius; z++) {
-                        double distance = Math.sqrt(x * x + y * y + z * z);
-                        if (distance <= radius) {
-                            Block block = center.clone().add(x, y, z).getBlock();
-                            if (block.getType() != Material.BEDROCK) {
-                                block.setType(Material.AIR, false);
+        private int findCavityLowestFloorY(Location center, int horizontalRadius, int verticalSearchDepth) {
+            World w = center.getWorld();
+            int bestY = Integer.MAX_VALUE;
+
+            int startY = Math.min(center.getBlockY() + horizontalRadius, w.getMaxHeight() - 1);
+            int endY   = Math.max(w.getMinHeight(), center.getBlockY() - verticalSearchDepth);
+
+            int r2 = horizontalRadius * horizontalRadius;
+
+            for (int y = startY; y >= endY; y--) {
+                for (int dx = -horizontalRadius; dx <= horizontalRadius; dx++) {
+                    for (int dz = -horizontalRadius; dz <= horizontalRadius; dz++) {
+                        if (dx*dx + dz*dz > r2) continue;
+
+                        int bx = center.getBlockX() + dx;
+                        int bz = center.getBlockZ() + dz;
+
+                        Block air = w.getBlockAt(bx, y, bz);
+                        if (!air.getType().isAir()) continue;
+
+                        Block below = w.getBlockAt(bx, y - 1, bz);
+                        if (below.getType().isSolid()) {
+                            if (y < bestY) bestY = y;
+                        }
+                    }
+                }
+            }
+            if (bestY == Integer.MAX_VALUE) return endY + 1;
+            return bestY;
+        }
+
+        private void scorchSurroundings(Location center, int radius) {
+            World world = center.getWorld();
+            int surfaceRadius = Math.max(2, radius - 1);
+
+            for (int x = -surfaceRadius; x <= surfaceRadius; x++) {
+                for (int z = -surfaceRadius; z <= surfaceRadius; z++) {
+                    double distance = Math.sqrt(x * x + z * z);
+                    if (distance <= surfaceRadius) {
+                        int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
+                        Location blockLoc = new Location(world, center.getBlockX() + x, groundY, center.getBlockZ() + z);
+                        Block block = blockLoc.getBlock();
+
+                        if (block.getType().isSolid() && block.getType() != Material.BEDROCK) {
+                            if (ThreadLocalRandom.current().nextDouble() < 0.25) {
+                                Material scorchedMat = SCORCHED_MATERIALS[
+                                        ThreadLocalRandom.current().nextInt(SCORCHED_MATERIALS.length)
+                                        ];
+                                block.setType(scorchedMat, false);
+                            }
+                        } else if (block.getType().isAir() && ThreadLocalRandom.current().nextDouble() < 0.08) {
+                            Block below = blockLoc.clone().subtract(0, 1, 0).getBlock();
+                            if (below.getType().isSolid()) {
+                                block.setType(Material.FIRE, false);
                             }
                         }
                     }
                 }
             }
-        }
-
-        private void scorchSurroundings(Location center, int radius) {
-            World world = center.getWorld();
 
             for (int x = -radius; x <= radius; x++) {
-                for (int y = -radius; y <= radius; y++) {
+                for (int y = -radius/2; y <= radius/4; y++) {
                     for (int z = -radius; z <= radius; z++) {
                         double distance = Math.sqrt(x * x + y * y + z * z);
-                        if (distance <= radius) {
+                        if (distance <= radius && distance > radius * 0.6) {
                             Location blockLoc = center.clone().add(x, y, z);
                             Block block = blockLoc.getBlock();
-
                             if (block.getType().isSolid() && block.getType() != Material.BEDROCK) {
-                                if (ThreadLocalRandom.current().nextDouble() < 0.35) {
+                                if (ThreadLocalRandom.current().nextDouble() < 0.15) {
                                     Material scorchedMat = SCORCHED_MATERIALS[
                                             ThreadLocalRandom.current().nextInt(SCORCHED_MATERIALS.length)
                                             ];
                                     block.setType(scorchedMat, false);
                                 }
-                            } else if (block.getType().isAir() && ThreadLocalRandom.current().nextDouble() < 0.12) {
-                                Block below = blockLoc.clone().subtract(0, 1, 0).getBlock();
-                                if (below.getType().isSolid()) {
-                                    block.setType(Material.FIRE, false);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        private void createMeteorCore(Location center) {
-            World world = center.getWorld();
-            int coreRadius = Math.max(2, meteorSize / 2);
-
-            for (int x = -coreRadius; x <= coreRadius; x++) {
-                for (int y = -coreRadius; y <= coreRadius; y++) {
-                    for (int z = -coreRadius; z <= coreRadius; z++) {
-                        double distance = Math.sqrt(x * x + y * y + z * z);
-                        if (distance <= coreRadius) {
-                            Block block = center.clone().add(x, y, z).getBlock();
-
-                            if (distance >= coreRadius - 1) {
-                                // Lớp vỏ ngoài
-                                Material meteorMaterial = METEOR_MATERIALS[
-                                        ThreadLocalRandom.current().nextInt(METEOR_MATERIALS.length)
-                                        ];
-                                block.setType(meteorMaterial, false);
-                            } else {
-                                // Lõi bên trong chứa quặng
-                                block.setType(selectOreMaterial(), false);
                             }
                         }
                     }
@@ -557,19 +629,35 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             activeMeteors.remove(this.meteorId);
         }
 
-        private List<MeteorVoxel> generateMeteorVoxels(int size, UUID seed) {
+        private List<MeteorVoxel> generateMeteorVoxels(int size, UUID seed, MeteorShape shape) {
             List<MeteorVoxel> voxels = new ArrayList<>();
             long s = seed.getMostSignificantBits() ^ seed.getLeastSignificantBits();
             Random random = new Random(s);
 
-            double rx = size * (0.5 + random.nextDouble() * 0.3);
-            double ry = size * (0.5 + random.nextDouble() * 0.3);
-            double rz = size * (0.6 + random.nextDouble() * 0.4);
+            switch (shape) {
+                case SPHERICAL:
+                    return generateSphericalMeteor(size, random);
+                case ARROW:
+                    return generateArrowMeteor(size, random);
+                case IRREGULAR:
+                    return generateIrregularMeteor(size, random);
+                case TAILED:
+                    return generateTailedMeteor(size, random);
+                case COMPLEX:
+                    return generateComplexMeteor(size, random);
+                default:
+                    return generateSphericalMeteor(size, random);
+            }
+        }
 
+        private List<MeteorVoxel> generateSphericalMeteor(int size, Random random) {
+            List<MeteorVoxel> voxels = new ArrayList<>();
+            double rx = size * (0.55 + random.nextDouble() * 0.25);
+            double ry = size * (0.50 + random.nextDouble() * 0.25);
+            double rz = size * (0.55 + random.nextDouble() * 0.25);
             int maxX = (int) Math.ceil(rx) + 1;
             int maxY = (int) Math.ceil(ry) + 1;
             int maxZ = (int) Math.ceil(rz) + 1;
-
             for (int x = -maxX; x <= maxX; x++) {
                 for (int y = -maxY; y <= maxY; y++) {
                     for (int z = -maxZ; z <= maxZ; z++) {
@@ -577,17 +665,165 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                         double ny = y / ry;
                         double nz = z / rz;
                         double distance = nx * nx + ny * ny + nz * nz;
+                        double noise = (random.nextDouble() * 2 - 1) * 0.12;
+                        if (distance <= 1.0 + noise && random.nextDouble() < 0.85) {
+                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
+                            voxels.add(new MeteorVoxel(
+                                    new Vector(x, y, z),
+                                    WrappedBlockData.createData(material.createBlockData())
+                            ));
+                        }
+                    }
+                }
+            }
+            return voxels;
+        }
 
-                        double noise = (random.nextDouble() * 2 - 1) * 0.15;
-                        if (distance <= 1.0 + noise) {
-                            if (random.nextDouble() < 0.8) {
-                                Material material = METEOR_MATERIALS[
-                                        random.nextInt(METEOR_MATERIALS.length)
-                                        ];
+        private List<MeteorVoxel> generateArrowMeteor(int size, Random random) {
+            List<MeteorVoxel> voxels = new ArrayList<>();
+            double rx = size * (0.35 + random.nextDouble() * 0.2);
+            double ry = size * (0.35 + random.nextDouble() * 0.2);
+            double rz = size * (1.0 + random.nextDouble() * 0.5);
+            int maxX = (int) Math.ceil(rx) + 1;
+            int maxY = (int) Math.ceil(ry) + 1;
+            int maxZ = (int) Math.ceil(rz) + 1;
+            for (int x = -maxX; x <= maxX; x++) {
+                for (int y = -maxY; y <= maxY; y++) {
+                    for (int z = -maxZ; z <= maxZ; z++) {
+                        double tapering = z < 0 ? 1.0 + (z / rz) * 0.8 : 1.0;
+                        double nx = x / (rx * tapering);
+                        double ny = y / (ry * tapering);
+                        double nz = z / rz;
+                        double distance = nx * nx + ny * ny + nz * nz;
+                        double noise = (random.nextDouble() * 2 - 1) * 0.1;
+                        if (distance <= 1.0 + noise && random.nextDouble() < 0.82) {
+                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
+                            voxels.add(new MeteorVoxel(
+                                    new Vector(x, y, z),
+                                    WrappedBlockData.createData(material.createBlockData())
+                            ));
+                        }
+                    }
+                }
+            }
+            return voxels;
+        }
+
+        private List<MeteorVoxel> generateIrregularMeteor(int size, Random random) {
+            List<MeteorVoxel> voxels = new ArrayList<>();
+            int numChunks = 2 + random.nextInt(3);
+            for (int chunk = 0; chunk < numChunks; chunk++) {
+                Vector chunkCenter = new Vector(
+                        random.nextDouble(-size * 0.6, size * 0.6),
+                        random.nextDouble(-size * 0.6, size * 0.6),
+                        random.nextDouble(-size * 0.6, size * 0.6)
+                );
+                double chunkSize = size * (0.3 + random.nextDouble() * 0.4);
+                double rx = chunkSize * (0.5 + random.nextDouble() * 0.5);
+                double ry = chunkSize * (0.5 + random.nextDouble() * 0.5);
+                double rz = chunkSize * (0.5 + random.nextDouble() * 0.5);
+                int maxX = (int) Math.ceil(rx + Math.abs(chunkCenter.getX())) + 1;
+                int maxY = (int) Math.ceil(ry + Math.abs(chunkCenter.getY())) + 1;
+                int maxZ = (int) Math.ceil(rz + Math.abs(chunkCenter.getZ())) + 1;
+                for (int x = -maxX; x <= maxX; x++) {
+                    for (int y = -maxY; y <= maxY; y++) {
+                        for (int z = -maxZ; z <= maxZ; z++) {
+                            Vector pos = new Vector(x, y, z).subtract(chunkCenter);
+                            double nx = pos.getX() / rx;
+                            double ny = pos.getY() / ry;
+                            double nz = pos.getZ() / rz;
+                            double distance = nx * nx + ny * ny + nz * nz;
+                            double noise = (random.nextDouble() * 2 - 1) * 0.25;
+                            if (distance <= 1.0 + noise && random.nextDouble() < 0.75) {
+                                Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
                                 voxels.add(new MeteorVoxel(
                                         new Vector(x, y, z),
                                         WrappedBlockData.createData(material.createBlockData())
                                 ));
+                            }
+                        }
+                    }
+                }
+            }
+            return voxels;
+        }
+
+        private List<MeteorVoxel> generateTailedMeteor(int size, Random random) {
+            List<MeteorVoxel> voxels = new ArrayList<>();
+            double headSize = size * 0.8;
+            double rx = headSize * (0.55 + random.nextDouble() * 0.25);
+            double ry = headSize * (0.50 + random.nextDouble() * 0.25);
+            double rz = headSize * (0.35 + random.nextDouble() * 0.25);
+            int maxX = (int) Math.ceil(rx) + 1;
+            int maxY = (int) Math.ceil(ry) + 1;
+            int maxZ = (int) Math.ceil(rz) + 1;
+            for (int x = -maxX; x <= maxX; x++) {
+                for (int y = -maxY; y <= maxY; y++) {
+                    for (int z = -maxZ; z <= maxZ; z++) {
+                        double nx = x / rx;
+                        double ny = y / ry;
+                        double nz = z / rz;
+                        double distance = nx * nx + ny * ny + nz * nz;
+                        if (distance <= 1.0 && random.nextDouble() < 0.88) {
+                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
+                            voxels.add(new MeteorVoxel(
+                                    new Vector(x, y, z),
+                                    WrappedBlockData.createData(material.createBlockData())
+                            ));
+                        }
+                    }
+                }
+            }
+            int tailLength = Math.max(3, size + random.nextInt(size));
+            for (int t = 1; t <= tailLength; t++) {
+                double tailFactor = 1.0 - (double) t / tailLength;
+                double tailRadius = Math.max(1, rx * tailFactor * 0.6);
+                for (int x = (int) -tailRadius; x <= tailRadius; x++) {
+                    for (int y = (int) -tailRadius; y <= tailRadius; y++) {
+                        double distance = Math.sqrt(x * x + y * y);
+                        if (distance <= tailRadius && random.nextDouble() < 0.4 * tailFactor) {
+                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
+                            voxels.add(new MeteorVoxel(
+                                    new Vector(x, y, maxZ + t),
+                                    WrappedBlockData.createData(material.createBlockData())
+                            ));
+                        }
+                    }
+                }
+            }
+            return voxels;
+        }
+
+        private List<MeteorVoxel> generateComplexMeteor(int size, Random random) {
+            List<MeteorVoxel> voxels = new ArrayList<>();
+            voxels.addAll(generateSphericalMeteor(size, random));
+            int numProtrusions = 2 + random.nextInt(3);
+            for (int i = 0; i < numProtrusions; i++) {
+                double angle1 = random.nextDouble() * 2 * Math.PI;
+                double angle2 = random.nextDouble() * Math.PI;
+                Vector direction = new Vector(
+                        Math.cos(angle1) * Math.sin(angle2),
+                        Math.cos(angle2),
+                        Math.sin(angle1) * Math.sin(angle2)
+                ).normalize();
+                double protrusionSize = size * (0.3 + random.nextDouble() * 0.4);
+                int protrusionLength = (int) (protrusionSize * (1.0 + random.nextDouble()));
+                for (int j = 1; j <= protrusionLength; j++) {
+                    double shrinkFactor = 1.0 - (double) j / protrusionLength * 0.8;
+                    double radius = Math.max(1, protrusionSize * 0.3 * shrinkFactor);
+                    Vector basePos = direction.clone().multiply(size * 0.7 + j);
+                    for (int x = (int) -radius; x <= radius; x++) {
+                        for (int y = (int) -radius; y <= radius; y++) {
+                            for (int z = (int) -radius; z <= radius; z++) {
+                                double distance = Math.sqrt(x * x + y * y + z * z);
+                                if (distance <= radius && random.nextDouble() < 0.7) {
+                                    Vector finalPos = basePos.clone().add(new Vector(x, y, z));
+                                    Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
+                                    voxels.add(new MeteorVoxel(
+                                            finalPos,
+                                            WrappedBlockData.createData(material.createBlockData())
+                                    ));
+                                }
                             }
                         }
                     }
