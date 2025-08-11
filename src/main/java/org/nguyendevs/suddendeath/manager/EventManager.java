@@ -23,7 +23,7 @@ public class EventManager extends BukkitRunnable {
     private static final Random random = new Random();
     private static final long TICK_INTERVAL = 80L;
     private static final long INITIAL_DELAY = 20L;
-    private static final Feature[] EVENT_FEATURES = {Feature.THUNDERSTORM, Feature.BLOOD_MOON};
+    private static final Feature[] EVENT_FEATURES = {Feature.THUNDERSTORM, Feature.BLOOD_MOON, Feature.METEOR_RAIN};
 
     public EventManager() {
         runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, TICK_INTERVAL);
@@ -51,14 +51,17 @@ public class EventManager extends BukkitRunnable {
                 String messageKey = feature.name().toLowerCase().replace("_", "-");
                 String message = ChatColor.DARK_RED + "" + ChatColor.ITALIC + Utils.msg(messageKey);
 
-                for (Player player : world.getPlayers()) {
-                    try {
-                        player.sendMessage(message);
-                        player.sendTitle("", message, 10, 40, 10);
-                        player.playSound(player.getLocation(), Sound.ENTITY_SKELETON_HORSE_DEATH, 1.0f, 0.0f);
-                    } catch (Exception e) {
-                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                                "Error sending event notification to player: " + player.getName(), e);
+                // Only show notification for non-meteor rain events
+                if (feature != Feature.METEOR_RAIN) {
+                    for (Player player : world.getPlayers()) {
+                        try {
+                            player.sendMessage(message);
+                            player.sendTitle("", message, 10, 40, 10);
+                            player.playSound(player.getLocation(), Sound.ENTITY_SKELETON_HORSE_DEATH, 1.0f, 0.0f);
+                        } catch (Exception e) {
+                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                    "Error sending event notification to player: " + player.getName(), e);
+                        }
                     }
                 }
                 return;
@@ -92,7 +95,8 @@ public class EventManager extends BukkitRunnable {
                     "Error applying status to world: " + world.getName(), e);
         }
     }
-public void refresh(){
+
+    public void refresh(){
         try{
             for(World world : Bukkit.getWorlds()){
                 if(world.getEnvironment() != Environment.NORMAL){
@@ -106,6 +110,8 @@ public void refresh(){
                         feature = Feature.BLOOD_MOON;
                     } else if(currentStatus == WorldStatus.THUNDER_STORM){
                         feature = Feature.THUNDERSTORM;
+                    } else if(currentStatus == WorldStatus.METEOR_RAIN){
+                        feature = Feature.METEOR_RAIN;
                     }
                     if (feature != null && !feature.isEnabled(world)) {
                         ((WorldEventHandler) currentRetriever).close();
@@ -132,6 +138,7 @@ public void refresh(){
             SuddenDeath.getInstance().getLogger().log(Level.SEVERE,"Error refreshing EventManager", e);
         }
     }
+
     public void applyStatus(World world, WorldStatus status) {
         applyStatus(world, new SimpleStatusRetriever(status));
     }
@@ -174,6 +181,7 @@ public void refresh(){
         NIGHT,
         BLOOD_MOON,
         THUNDER_STORM,
+        METEOR_RAIN,
         DAY;
 
         public String getName() {
