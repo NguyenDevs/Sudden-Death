@@ -318,20 +318,21 @@ public enum Feature {
 	METEOR_RAIN(
 			"Meteor Rain",
 			new String[]{
-					"&6Meteorite &7has a #chance-percent#% chance of falling from the sky.",
-					"Creates a crater and an explosion, with a deafening sound.",
-					"At the center of the explosion, a meteorite can be found with",
-					"some minerals"
+
+					"&9At night&7, there is a #chance-percent#% chance you will see a &6Meteor &7streaking",
+					"rapidly as it enters the atmosphere. It will devastate the terrain,",
+					"creating a crater at the impact point. At the center of the crater,",
+					"you can find the meteorite remains along with rare minerals."
 			},
 			"meteor-rain",
 			new Modifier[]{
-					new Modifier("chance-percent", 15.0),
-					new Modifier("coal-ore-rate", 40),
-					new Modifier("iron-ore-rate", 30),
-					new Modifier("gold-ore-rate", 20),
-					new Modifier("diamond-ore-rate", 15),
-					new Modifier("emerald-ore-rate", 10),
-					new Modifier("ancient-debris-rate", 5)
+					new Modifier("chance-percent", 1.0),
+					new Modifier("coal-ore-rate", 10),
+					new Modifier("iron-ore-rate", 20),
+					new Modifier("gold-ore-rate", 30),
+					new Modifier("diamond-ore-rate", 70),
+					new Modifier("emerald-ore-rate", 60),
+					new Modifier("ancient-debris-rate", 80)
 			},
 			MeteorRain::new
 	),
