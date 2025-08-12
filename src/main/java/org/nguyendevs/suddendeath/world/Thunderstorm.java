@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.world;
 
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -40,9 +41,15 @@ public class Thunderstorm extends WorldEventHandler {
 			return;
 		}
 
+		Player player = (Player) event.getEntity();
+		// Không áp dụng damage multiplier cho creative/spectator/sds.admin
+		if (player.getGameMode() == GameMode.CREATIVE ||
+				player.getGameMode() == GameMode.SPECTATOR ||
+				player.hasPermission("sds.admin")) {
+			return;
+		}
+
 		try {
-			Player player = (Player) event.getEntity();
-			// Kiểm tra flag tại vị trí người chơi: Nếu flag SDS_EVENT = DENY (false), vô hiệu hóa damage multiplier
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
 				return;
 			}
@@ -63,16 +70,25 @@ public class Thunderstorm extends WorldEventHandler {
 		try {
 			LightningStrike strike = event.getLightning();
 			Location strikeLocation = strike.getLocation();
-			// Kiểm tra flag tại vị trí sét đánh: Nếu flag SDS_EVENT = DENY (false), vô hiệu hóa particle và knockback
+
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(strikeLocation, CustomFlag.SDS_EVENT)) {
 				return;
 			}
-			World world = strike.getWorld();
 
+			World world = strike.getWorld();
 			world.spawnParticle(Particle.SMOKE_NORMAL, strikeLocation, PARTICLE_COUNT, 0, 0, 0, 0.6);
 			world.spawnParticle(Particle.SMOKE_NORMAL, strikeLocation, SECONDARY_PARTICLE_COUNT, 2, 1, 2, 0);
 
 			for (Entity entity : strike.getNearbyEntities(6, 3, 6)) {
+				if (entity instanceof Player) {
+					Player player = (Player) entity;
+					// Bỏ qua knockback nếu creative/spectator/sds.admin
+					if (player.getGameMode() == GameMode.CREATIVE ||
+							player.getGameMode() == GameMode.SPECTATOR ||
+							player.hasPermission("sds.admin")) {
+						continue;
+					}
+				}
 				entity.setVelocity(entity.getLocation().toVector()
 						.subtract(strikeLocation.toVector())
 						.normalize()
@@ -90,20 +106,27 @@ public class Thunderstorm extends WorldEventHandler {
 		try {
 			getWorld().setStorm(true);
 			getWorld().setWeatherDuration(WEATHER_DURATION_TICKS);
+
 			for (Player player : getWorld().getPlayers()) {
-				// Kiểm tra flag tại vị trí người chơi: Nếu flag SDS_EVENT = DENY (false), không spawn sét
+				// Bỏ qua spawn sét gần creative/spectator/sds.admin
+				if (player.getGameMode() == GameMode.CREATIVE ||
+						player.getGameMode() == GameMode.SPECTATOR ||
+						player.hasPermission("sds.admin")) {
+					continue;
+				}
+
 				if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
 					continue;
 				}
-				if (getRandom().nextDouble() < LIGHTNING_PROBABILITY) {
-					continue;
+
+				if (getRandom().nextDouble() >= LIGHTNING_PROBABILITY) {
+					Location playerLoc = player.getLocation();
+					double offsetX = getRandom().nextDouble() * 10 - 5;
+					double offsetZ = getRandom().nextDouble() * 10 - 5;
+					Location strikeLoc = getWorld().getHighestBlockAt(
+							playerLoc.clone().add(offsetX, 0, offsetZ)).getLocation();
+					new LightningEffectTask(strikeLoc).runTaskTimer(SuddenDeath.getInstance(), 0, 1);
 				}
-				Location playerLoc = player.getLocation();
-				double offsetX = getRandom().nextDouble() * 10 - 5;
-				double offsetZ = getRandom().nextDouble() * 10 - 5;
-				Location strikeLoc = getWorld().getHighestBlockAt(
-						playerLoc.clone().add(offsetX, 0, offsetZ)).getLocation();
-				new LightningEffectTask(strikeLoc).runTaskTimer(SuddenDeath.getInstance(), 0, 1);
 			}
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.SEVERE,
@@ -114,9 +137,11 @@ public class Thunderstorm extends WorldEventHandler {
 	private static class LightningEffectTask extends BukkitRunnable {
 		private final Location strikeLocation;
 		private double angle = 0;
+
 		LightningEffectTask(Location strikeLocation) {
 			this.strikeLocation = strikeLocation.clone();
 		}
+
 		@Override
 		public void run() {
 			try {
@@ -129,6 +154,7 @@ public class Thunderstorm extends WorldEventHandler {
 					cancel();
 					return;
 				}
+
 				world.spawnParticle(Particle.SMOKE_NORMAL, effectLoc, 0, 0, 0, 0, 0);
 				world.spawnParticle(Particle.FIREWORKS_SPARK, effectLoc, 0, 0, 0, 0, 0);
 				world.playSound(effectLoc, Sound.BLOCK_GLASS_BREAK, 2, 2);
