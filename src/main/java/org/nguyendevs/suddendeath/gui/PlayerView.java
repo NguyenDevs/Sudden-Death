@@ -346,7 +346,7 @@ public class PlayerView extends PluginInventory {
         switch (f) {
             case ABYSSAL_VORTEX: return Material.GUARDIAN_SPAWN_EGG;
             case ANGRY_SPIDERS: return Material.SPIDER_SPAWN_EGG;
-            case BLOOD_MOON: return Material.ZOMBIE_SPAWN_EGG;
+            case BLOOD_MOON: return Material.ZOMBIE_HEAD;
             case BONE_GRENADES: return Material.SKELETON_SPAWN_EGG;
             case BONE_WIZARDS: return Material.SKELETON_SPAWN_EGG;
             case BREEZE_DASH: return Material.BREEZE_SPAWN_EGG;
