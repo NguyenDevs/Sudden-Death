@@ -140,10 +140,10 @@ features:
   meteor-rain:
     name: "Meteor Rain"
     lore:
-      - "&6Meteorite &7has a #chance-percent#% chance of falling from the sky."
-      - "Creates a crater and an explosion, with a deafening sound."
-      - "At the center of the explosion, a meteorite can be found with"
-      - "some minerals"
+      - "&9At night&7, there is a #chance-percent#% chance you will see a &6Meteor &7streaking"
+      - "rapidly as it enters the atmosphere. It will devastate the terrain,"
+      - "creating a crater at the impact point. At the center of the crater,"
+      - "you can find the meteorite remains along with rare minerals."
   mob-critical-strikes:
     name: "Mob Critical Strikes"
     lore:
