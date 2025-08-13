@@ -18,12 +18,15 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Physic EnderPearl** EnderPearl will have physical properties like bounce, friction.
 - **Snow Slow:** Players without specific boots are slowed on snow.
 - **Stone Stiffness:** Punching stone deals damage to players.
+  
+## Events
+- **Blood Moon:** Nights may turn red, increasing player damage taken and slowing them; monsters gain speed, strength, and resistance.
+- **Meteor Rain:** At night, a meteor may strike, leaving a crater with rare minerals at its center. New!
 - **Thunderstorm:** Storms may become thunderstorms with stronger, more frequent lightning.
-
+  
 ## Monster abilities
 - **Abyssal Vortex:** The Guardian can create a whirlpool that pulls players toward it, preventing them from escaping.
 - **Angry Spiders:** Spiders throw cobwebs, dealing damage and slowing players.
-- **Blood Moon:** Nights may turn red, increasing player damage taken and slowing them; monsters gain speed, strength, and resistance.
 - **Bone Grenades:** Skeletons may throw explosive bone grenades, causing damage and knockback.
 - **Bone Wizards:** Skeletons named 'Bone Wizards' cast fireball or frost curse spells, dealing damage and slowing players.
 - **Breeze Dash:** Breeze may accelerate and fire multiple WindCharges, but with reduced jump ability.
