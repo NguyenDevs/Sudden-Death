@@ -41,7 +41,7 @@ public class BloodMoon extends WorldEventHandler {
 
 		try {
 			Player player = (Player) event.getEntity();
-             if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
+			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
 				return;
 			}
 			double damageMultiplier = 1 + (Feature.BLOOD_MOON.getDouble("damage-percent") / 100.0);
@@ -66,9 +66,14 @@ public class BloodMoon extends WorldEventHandler {
 			return;
 		}
 
+		// Skip if entity is an NPC
+		if (isNPC(entity)) {
+			return;
+		}
+
 		try {
 			Location loc = event.getEntity().getLocation();
-              if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
+			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
 				return;
 			}
 			if (isWaterNearby(loc) && entity instanceof Zombie) {
@@ -109,8 +114,13 @@ public class BloodMoon extends WorldEventHandler {
 		try {
 			for (Entity entity : getWorld().getEntities()) {
 				if (entity instanceof Monster && !(entity instanceof Zombie)) {
+					// Skip if entity is an NPC
+					if (isNPC(entity)) {
+						continue;
+					}
+
 					Location loc = entity.getLocation();
-                      if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
+					if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
 						continue;
 					}
 					if (!isWaterNearby(loc)) {
@@ -141,6 +151,71 @@ public class BloodMoon extends WorldEventHandler {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error cleaning up Blood Moon effects in world: " + getWorld().getName(), e);
 		}
+	}
+
+	/**
+	 * Check if an entity is an NPC from various NPC plugins
+	 */
+	private boolean isNPC(Entity entity) {
+		try {
+			// Citizens NPC check
+			if (entity.hasMetadata("NPC")) {
+				return true;
+			}
+
+			// Citizens API check (if available)
+			try {
+				Class.forName("net.citizensnpcs.api.CitizensAPI");
+				Object citizensAPI = Class.forName("net.citizensnpcs.api.CitizensAPI").getMethod("getNPCRegistry").invoke(null);
+				boolean isNPC = (boolean) citizensAPI.getClass().getMethod("isNPC", Entity.class).invoke(citizensAPI, entity);
+				if (isNPC) return true;
+			} catch (Exception ignored) {
+				// Citizens not available, continue with other checks
+			}
+
+			// Check for common NPC metadata keys
+			String[] npcMetadataKeys = {
+					"npc", "NPC", "citizens-npc", "znpcs", "fancynpcs",
+					"simplenpc", "npclib", "custom-npc", "denizen-npc"
+			};
+
+			for (String key : npcMetadataKeys) {
+				if (entity.hasMetadata(key)) {
+					return true;
+				}
+			}
+
+			// Check entity name patterns (many NPC plugins use specific naming)
+			String customName = entity.getCustomName();
+			if (customName != null && !customName.isEmpty()) {
+				// Check if entity has custom name but no AI (typical NPC behavior)
+				if (entity instanceof Creature) {
+					Creature creature = (Creature) entity;
+					if (creature.getTarget() == null && !creature.isAware()) {
+						return true;
+					}
+				}
+			}
+
+			// Check for persistent entity that doesn't despawn (common NPC trait)
+			if (entity.isPersistent() && entity.getCustomName() != null) {
+				return true;
+			}
+
+			// Additional check for entities with disabled AI
+			if (entity instanceof Mob) {
+				Mob mob = (Mob) entity;
+				if (!mob.isAware()) {
+					return true;
+				}
+			}
+
+		} catch (Exception e) {
+			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+					"Error checking if entity is NPC: " + entity.getType(), e);
+		}
+
+		return false;
 	}
 
 	private void spawnEnhancedZombie(Location location) {
