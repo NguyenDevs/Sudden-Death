@@ -19,10 +19,6 @@ public class LegacyProtocolLibImpl implements PacketSender {
         PacketContainer fakeDistance = new PacketContainer(PacketType.Play.Server.WORLD_BORDER);
         fakeDistance.getWorldBorderActions().write(0, EnumWrappers.WorldBorderAction.SET_WARNING_BLOCKS);
         fakeDistance.getIntegers().write(2, Integer.valueOf(distance));
-        try {
-            this.protocolManager.sendServerPacket(player, fakeDistance);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException("Cannot send packet " + fakeDistance, e);
-        }
+        this.protocolManager.sendServerPacket(player, fakeDistance);
     }
 }
