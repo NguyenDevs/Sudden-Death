@@ -43,6 +43,19 @@ public enum Feature {
 					new Modifier("dropped-bones", 2)
 			}
 	),
+	AIM_BOT(
+			"Aim Bot",
+			new String[]{
+					"Arrows shot by &fSkeleton&7 have #aim-bot-chance#% always hit the target.",
+					"Arrows have a #crit-chance#% chance to critically strike. Deal #crit-damage# armor-piercing damage."
+			},
+			"aim-bot",
+			new Modifier[]{
+					new Modifier("aim-bot-chance", 50),
+					new Modifier("crit-chance", 100),
+					new Modifier("crit-damage", 5),
+			}
+	),
 	ANGRY_SPIDERS(
 			"Angry Spiders",
 			new String[]{
