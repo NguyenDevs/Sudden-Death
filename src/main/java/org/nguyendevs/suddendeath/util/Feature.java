@@ -43,6 +43,7 @@ public enum Feature {
 					new Modifier("dropped-bones", 2)
 			}
 	),
+	/*
 	AIM_BOT(
 			"Aim Bot",
 			new String[]{
@@ -56,6 +57,8 @@ public enum Feature {
 					new Modifier("crit-damage", 5),
 			}
 	),
+
+	 */
 	ANGRY_SPIDERS(
 			"Angry Spiders",
 			new String[]{
