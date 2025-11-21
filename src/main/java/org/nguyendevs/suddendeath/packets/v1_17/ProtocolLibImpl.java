@@ -18,10 +18,6 @@ public class ProtocolLibImpl implements PacketSender {
     public void fading(Player player, int distance) {
         PacketContainer fakeDistance = new PacketContainer(PacketType.Play.Server.SET_BORDER_WARNING_DISTANCE);
         fakeDistance.getIntegers().write(0, Integer.valueOf(distance));
-        try {
-            this.protocolManager.sendServerPacket(player, fakeDistance);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException("Cannot send packet " + fakeDistance, e);
-        }
+        this.protocolManager.sendServerPacket(player, fakeDistance);
     }
 }
