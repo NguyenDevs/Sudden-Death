@@ -321,6 +321,7 @@ public class SuddenDeath extends JavaPlugin {
     }
 
     private void registerListeners() {
+
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new MainListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
