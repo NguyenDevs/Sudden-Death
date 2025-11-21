@@ -9,6 +9,11 @@ features:
     lore:
       - "&fPlayers &7drop a skull, bones and human"
       - "flesh on death. Human flesh can be cooked."
+  aim-bot:
+    name: "Aim Bot"
+    lore:
+      - "Arrows shot by &fSkeleton&7 have #aim-bot-chance#% always hit the target."
+      - "Arrows have a #crit-chance#% chance to critically strike. Deal #crit-damage# armor-piercing damage."
   angry-spiders:
     name: "Angry Spiders"
     lore:
