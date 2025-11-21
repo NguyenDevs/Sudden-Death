@@ -92,7 +92,7 @@ public class PlayerView extends PluginInventory {
     );
     private static final EnumSet<Feature> MOB_SET = EnumSet.of(
             Feature.ABYSSAL_VORTEX,
-            Feature.AIM_BOT,
+            //Feature.AIM_BOT,
             Feature.ANGRY_SPIDERS,
             Feature.BONE_GRENADES,
             Feature.BONE_WIZARDS,
@@ -346,7 +346,7 @@ public class PlayerView extends PluginInventory {
     private Material getVisualMaterial(Feature f) {
         switch (f) {
             case ABYSSAL_VORTEX: return Material.GUARDIAN_SPAWN_EGG;
-            case AIM_BOT: return Material.SPECTRAL_ARROW;
+            //case AIM_BOT: return Material.SPECTRAL_ARROW;
             case ANGRY_SPIDERS: return Material.SPIDER_SPAWN_EGG;
             case BLOOD_MOON: return Material.ZOMBIE_HEAD;
             case BONE_GRENADES: return Material.SKELETON_SPAWN_EGG;
