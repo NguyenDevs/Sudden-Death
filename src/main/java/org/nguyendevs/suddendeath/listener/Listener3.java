@@ -48,6 +48,7 @@ public class Listener3 implements Listener {
     private final Map<UUID, BukkitRunnable> activeBreakingTasks = new HashMap<>();
 
     private final NamespacedKey totemUsed;
+    private final NamespacedKey phantomVanishKey;
     private static final Random RANDOM = new Random();
     private static final long DROWNED_LOOP_INTERVAL = 100L;
     private static final long WITCH_LOOP_INTERVAL= 80L;
@@ -57,6 +58,7 @@ public class Listener3 implements Listener {
     private static final long BREEZE_PLAYER_LOOP_INTERVAL = 60L;
     private static final long SPIDER_LOOP_INTERVAL = 40L;
     private static final long INITIAL_DELAY = 0L;
+    private static final long PHANTOM_LOOP_INTERVAL = 20L;
 
     private static final Set<Material> STIFFNESS_MATERIALS = Set.of(
             Material.STONE, Material.COAL_ORE, Material.IRON_ORE, Material.NETHER_QUARTZ_ORE,
@@ -68,6 +70,7 @@ public class Listener3 implements Listener {
 
     public Listener3(SuddenDeath plugin) {
         this.totemUsed = new NamespacedKey(plugin, "totem_used");
+        this.phantomVanishKey = new NamespacedKey(plugin, "phantom_vanish_time");
 
         //Trident Wrath
         new BukkitRunnable(){
@@ -181,6 +184,46 @@ public class Listener3 implements Listener {
                 }
             }
         }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, BREEZE_PLAYER_LOOP_INTERVAL);
+
+        // Phantom Blade
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.PHANTOM_BLADE.isEnabled(world)) {
+                            for (Phantom phantom : world.getEntitiesByClass(Phantom.class)) {
+                                if (phantom.getTarget() instanceof Player) {
+                                    applyPhantomBlade(phantom);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in Phantom Blade task", e);
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, PHANTOM_LOOP_INTERVAL);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : Bukkit.getWorlds()) {
+                        if (Feature.PHANTOM_BLADE.isEnabled(world)) {
+                            for (Phantom phantom : world.getEntitiesByClass(Phantom.class)) {
+                                // Chỉ can thiệp khi Phantom đang tàng hình (trạng thái bắn)
+                                if (phantom.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                                    handlePhantomHover(phantom);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // Ignore errors
+                }
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), 0, 2);
 
         //Spider Web
         new BukkitRunnable() {
@@ -370,6 +413,167 @@ public class Listener3 implements Listener {
     public void onEntityDeath(EntityDeathEvent event) {
         if (event.getEntity() instanceof Zombie zombie) {
             cleanupZombieBreaking(zombie);
+        }
+    }
+
+    // ======== PHANTOM LOGIC ========
+
+    private void handlePhantomHover(Phantom phantom) {
+        if (phantom.getTarget() instanceof Player target) {
+            Location ghostLoc = phantom.getLocation();
+            Location targetLoc = target.getLocation();
+
+            double desiredY = targetLoc.getY() + 12;
+
+            Vector velocity = phantom.getVelocity();
+
+            velocity.setX(velocity.getX() * 0.05);
+            velocity.setZ(velocity.getZ() * 0.05);
+
+            if (ghostLoc.getY() < desiredY) {
+                velocity.setY(0.25);
+            } else {
+                velocity.setY(0.04);
+            }
+
+            phantom.setVelocity(velocity);
+        }
+    }
+
+    private void applyPhantomBlade(Phantom phantom) {
+        if (phantom == null || phantom.getHealth() <= 0 || !(phantom.getTarget() instanceof Player target)) {
+            return;
+        }
+
+        try {
+            if (!target.getWorld().equals(phantom.getWorld())) return;
+
+            PersistentDataContainer data = phantom.getPersistentDataContainer();
+            long now = System.currentTimeMillis();
+
+            double intervalMillis = Feature.PHANTOM_BLADE.getDouble("invisibility-interval") * 1000;
+            double durationTicks = Feature.PHANTOM_BLADE.getDouble("invisibility-duration") * 20;
+
+            long lastVanish = data.has(phantomVanishKey, PersistentDataType.LONG)
+                    ? data.get(phantomVanishKey, PersistentDataType.LONG)
+                    : 0L;
+
+            if (now - lastVanish > intervalMillis + (durationTicks * 50)) {
+                phantom.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, (int) durationTicks, 0, false, false));
+                phantom.getWorld().playSound(phantom.getLocation(), Sound.ENTITY_PHANTOM_SWOOP, 2.0f, 0.5f);
+                phantom.getWorld().spawnParticle(Particle.CLOUD, phantom.getLocation(), 20, 0.5, 0.5, 0.5, 0.05);
+                data.set(phantomVanishKey, PersistentDataType.LONG, now);
+            }
+
+            if (phantom.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                double chance = Feature.PHANTOM_BLADE.getDouble("shoot-chance") / 100.0;
+                if (RANDOM.nextDouble() <= chance) {
+                    shootWindBlade(phantom, target);
+                }
+            }
+
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error applying Phantom Blade", e);
+        }
+    }
+
+    private void shootWindBlade(Phantom phantom, Player target) {
+        try {
+            Location startLoc = phantom.getLocation().add(0, 0.5, 0);
+
+            Vector direction = target.getLocation().add(0, 1.2, 0).subtract(startLoc).toVector().normalize();
+
+            double damage = Feature.PHANTOM_BLADE.getDouble("damage");
+            int weaknessDuration = (int) (Feature.PHANTOM_BLADE.getDouble("weakness-duration") * 20);
+            int amplifier = (int) Feature.PHANTOM_BLADE.getDouble("weakness-amplifier");
+            double speed = 1.5;
+
+            phantom.getWorld().playSound(startLoc, Sound.ENTITY_BREEZE_IDLE_AIR, 2.0f, 0.8f);
+            phantom.getWorld().playSound(startLoc, Sound.ITEM_TRIDENT_RIPTIDE_1, 2.0f, 1.5f);
+
+
+            Vector forward = direction.clone();
+            Vector up = new Vector(0, 1, 0);
+            Vector right = forward.clone().crossProduct(up).normalize();
+            if (right.lengthSquared() < 0.01) right = new Vector(1, 0, 0);
+
+            List<Vector> shapeOffsets = new ArrayList<>();
+
+            for (double i = 0; i <= 1.0; i += 0.1) {
+
+                double back = -0.5 * i;
+                double side = 0.9 * i;
+
+                // Cánh phải
+                shapeOffsets.add(forward.clone().multiply(back).add(right.clone().multiply(side)));
+                // Cánh trái
+                shapeOffsets.add(forward.clone().multiply(back).add(right.clone().multiply(-side)));
+
+                if (i < 0.5) {
+                    shapeOffsets.add(forward.clone().multiply(back + 0.1).add(right.clone().multiply(side * 0.5)));
+                    shapeOffsets.add(forward.clone().multiply(back + 0.1).add(right.clone().multiply(-side * 0.5)));
+                }
+            }
+
+            new BukkitRunnable() {
+                int ticks = 0;
+                final Location currentLoc = startLoc.clone();
+                final Vector velocity = direction.multiply(speed);
+
+                @Override
+                public void run() {
+                    try {
+                        if (ticks > 30 || currentLoc.getWorld() == null) {
+                            cancel();
+                            return;
+                        }
+
+                        currentLoc.add(velocity);
+
+                        for (Vector offset : shapeOffsets) {
+                            Location pLoc = currentLoc.clone().add(offset);
+                            if (RANDOM.nextBoolean()) {
+                                currentLoc.getWorld().spawnParticle(Particle.CRIT, pLoc, 0, 0, 0, 0);
+                            } else {
+                                currentLoc.getWorld().spawnParticle(Particle.SWEEP_ATTACK, pLoc, 0, 0, 0, 0);
+                            }
+                        }
+
+                        currentLoc.getWorld().spawnParticle(Particle.FLASH, currentLoc, 1, 0, 0, 0, 0);
+
+                        currentLoc.getWorld().spawnParticle(Particle.CLOUD, currentLoc.clone().subtract(velocity.clone().multiply(0.5)), 3, 0.2, 0.2, 0.2, 0.05);
+
+                        for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 1.8, 1.8, 1.8)) { // Tăng hitbox lên 1 chút vì đạn to hơn
+                            if (entity instanceof Player hitPlayer) {
+                                if (Utils.hasCreativeGameMode(hitPlayer)) continue;
+                                if (hitPlayer.getUniqueId().equals(phantom.getUniqueId())) continue;
+
+                                Utils.damage(hitPlayer, damage, true);
+                                hitPlayer.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, weaknessDuration, amplifier));
+
+                                hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f); // Tiếng va chạm trầm hơn
+                                hitPlayer.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, hitPlayer.getLocation().add(0, 1, 0), 1);
+
+                                cancel();
+                                return;
+                            }
+                        }
+
+                        if (currentLoc.getBlock().getType().isSolid()) {
+                            currentLoc.getWorld().spawnParticle(Particle.BLOCK_CRACK, currentLoc, 15, 0.3, 0.3, 0.3, currentLoc.getBlock().getBlockData());
+                            currentLoc.getWorld().playSound(currentLoc, Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 1.0f, 1.0f);
+                            cancel();
+                        }
+
+                        ticks++;
+                    } catch (Exception e) {
+                        cancel();
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 0, 1);
+
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error shooting Wind Blade", e);
         }
     }
 

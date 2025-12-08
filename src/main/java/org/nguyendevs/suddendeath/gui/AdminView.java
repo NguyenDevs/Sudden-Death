@@ -38,7 +38,7 @@ public class AdminView extends PluginInventory {
             Feature.BLOOD_MOON, Feature.THUNDERSTORM, Feature.METEOR_RAIN
     );
     private static final EnumSet<Feature> MOB_SET = EnumSet.of(
-            Feature.ABYSSAL_VORTEX, Feature.ANGRY_SPIDERS, Feature.BONE_GRENADES, Feature.BONE_WIZARDS,
+            Feature.ABYSSAL_VORTEX, Feature.ANGRY_SPIDERS, Feature.BONE_GRENADES, Feature.BONE_WIZARDS, Feature.PHANTOM_BLADE,
             Feature.BREEZE_DASH, Feature.CREEPER_REVENGE, Feature.ENDER_POWER, Feature.EVERBURNING_BLAZES,
             Feature.FORCE_OF_THE_UNDEAD, Feature.HOMING_FLAME_BARRAGE, Feature.IMMORTAL_EVOKER,
             Feature.LEAPING_SPIDERS, Feature.MOB_CRITICAL_STRIKES, Feature.NETHER_SHIELD,
@@ -182,6 +182,7 @@ public class AdminView extends PluginInventory {
             case MOB_CRITICAL_STRIKES: return Material.SPAWNER;
             case NETHER_SHIELD: return Material.NETHERRACK;
             case POISONED_SLIMES: return Material.SLIME_SPAWN_EGG;
+            case PHANTOM_BLADE: return Material.PHANTOM_SPAWN_EGG;
             case QUICK_MOBS: return Material.SPAWNER;
             case SHOCKING_SKELETON_ARROWS: return Material.SKELETON_SPAWN_EGG;
             case SILVERFISHES_SUMMON: return Material.SILVERFISH_SPAWN_EGG;

@@ -377,6 +377,24 @@ public enum Feature {
 					new Modifier("burn-duration", 3.0)
 			}
 	),
+	PHANTOM_BLADE(
+			"Phantom Blade",
+			new String[]{
+					"&bPhantoms &7enter invisible state every #invisibility-interval#s for #invisibility-duration#s.",
+					"While invisible, they have #shoot-chance#% chance to shoot",
+					"&fWind Blades &7dealing #damage# damage and applying",
+					"&7weakness for #weakness-duration#s."
+			},
+			"phantom-blade",
+			new Modifier[]{
+					new Modifier("invisibility-interval", 30.0),
+					new Modifier("invisibility-duration", 25.0),
+					new Modifier("shoot-chance", 40.0),
+					new Modifier("damage", 6.0),
+					new Modifier("weakness-duration", 3.0),
+					new Modifier("weakness-amplifier", 1)
+			}
+	),
 	PHYSIC_ENDER_PEARL(
 			"Physic EnderPearl",
 			new String[]{
@@ -611,7 +629,8 @@ public enum Feature {
 					"random tools (Axe, Shovel, Pickaxe).",
 					"Tools have varied materials, enchantments,",
 					"and a #drop-chance-percent#% chance to drop with random durability.",
-					"&5&o(Optional) Recommended to enable together with the Zombie-Break-Block feature."
+					"&5&o(Optional) Recommended to enable together with the",
+					"Zombie-Break-Block feature."
 			},
 			"zombie-tools",
 			new Modifier[]{

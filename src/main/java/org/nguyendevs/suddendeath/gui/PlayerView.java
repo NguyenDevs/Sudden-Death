@@ -107,6 +107,7 @@ public class PlayerView extends PluginInventory {
             Feature.MOB_CRITICAL_STRIKES,
             Feature.NETHER_SHIELD,
             Feature.POISONED_SLIMES,
+            Feature.PHANTOM_BLADE,
             Feature.QUICK_MOBS,
             Feature.SHOCKING_SKELETON_ARROWS,
             Feature.SILVERFISHES_SUMMON,
@@ -121,7 +122,7 @@ public class PlayerView extends PluginInventory {
             Feature.WITHER_MACHINEGUN,
             Feature.WITHER_RUSH,
             Feature.ZOMBIE_BREAK_BLOCK,
-            Feature.ZOMBIE_TOOLS // Đảm bảo đã có trong set này
+            Feature.ZOMBIE_TOOLS
     );
 
     private static final EnumSet<Feature> SURVIVAL_SET = EnumSet.of(
@@ -364,6 +365,7 @@ public class PlayerView extends PluginInventory {
             case MOB_CRITICAL_STRIKES: return Material.SPAWNER;
             case NETHER_SHIELD: return Material.NETHERRACK;
             case POISONED_SLIMES: return Material.SLIME_SPAWN_EGG;
+            case PHANTOM_BLADE: return Material.PHANTOM_SPAWN_EGG;
             case QUICK_MOBS: return Material.SPAWNER;
             case SHOCKING_SKELETON_ARROWS: return Material.SKELETON_SPAWN_EGG;
             case SILVERFISHES_SUMMON: return Material.SILVERFISH_SPAWN_EGG;
