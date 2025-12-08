@@ -604,6 +604,28 @@ public enum Feature {
 			"wither-rush",
 			new Modifier[]{new Modifier("damage", 3.0)}
 	),
+	ZOMBIE_TOOLS(
+			"Zombie Tools",
+			new String[]{
+					"&2Zombies &7have a #chance-percent#% chance to spawn with",
+					"random tools (Axe, Shovel, Pickaxe).",
+					"Tools have varied materials, enchantments,",
+					"and a #drop-chance-percent#% chance to drop with random durability.",
+					"&5&o(Optional) Recommended to enable together with the Zombie-Break-Block feature."
+			},
+			"zombie-tools",
+			new Modifier[]{
+					new Modifier("chance-percent", 20.0),
+					new Modifier("drop-chance-percent", 15.0),
+					new Modifier("netherite-chance", 5.0),
+					new Modifier("diamond-chance", 2.0),
+					new Modifier("gold-chance", 35.0),
+					new Modifier("iron-chance", 50.0),
+					new Modifier("wood-chance", 70.0),
+					new Modifier("enchantment-chance", 40.0),
+					new Modifier("max-enchantments", 3)
+			}
+	),
 	ZOMBIE_BREAK_BLOCK(
 			"Zombie Break Block",
 			new String[]{

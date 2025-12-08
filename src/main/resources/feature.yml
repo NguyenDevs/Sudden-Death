@@ -267,6 +267,14 @@ features:
     lore:
       - "&8Wither Skeletons &7blink to players,"
       - "dealing #damage# damage."
+  zombie-tools:
+    name: "Zombie Tools"
+    lore:
+      - "&2Zombies &7have a #chance-percent#% chance to spawn with"
+      - "random tools (Axe, Shovel, Pickaxe)."
+      - "Tools have varied materials, enchantments,"
+      - "and a #drop-chance-percent#% chance to drop with random durability."
+      - "&5&o(Optional) Recommended to enable together with the Zombie-Break-Block feature."
   zombie-break-block:
     name: "Zombie Break Block"
     lore:

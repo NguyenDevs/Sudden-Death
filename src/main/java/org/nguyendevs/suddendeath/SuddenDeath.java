@@ -321,13 +321,14 @@ public class SuddenDeath extends JavaPlugin {
     }
 
     private void registerListeners() {
-
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new MainListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
-        getServer().getPluginManager().registerEvents(new Listener1(this), this);
-        getServer().getPluginManager().registerEvents(new Listener2(), this);
-        getServer().getPluginManager().registerEvents(new Listener3(this), this);
+
+        getServer().getPluginManager().registerEvents(new PlayerFeaturesListener(), this);
+        getServer().getPluginManager().registerEvents(new UndeadFeaturesListener(), this);
+        getServer().getPluginManager().registerEvents(new MobAbilityListener(this), this);
+        getServer().getPluginManager().registerEvents(new GeneralEntityListener(this), this);
     }
 
     private void registerCommands() {
