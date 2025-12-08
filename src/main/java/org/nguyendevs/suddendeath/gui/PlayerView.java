@@ -120,7 +120,8 @@ public class PlayerView extends PluginInventory {
             Feature.WITCH_SCROLLS,
             Feature.WITHER_MACHINEGUN,
             Feature.WITHER_RUSH,
-            Feature.ZOMBIE_BREAK_BLOCK
+            Feature.ZOMBIE_BREAK_BLOCK,
+            Feature.ZOMBIE_TOOLS // Đảm bảo đã có trong set này
     );
 
     private static final EnumSet<Feature> SURVIVAL_SET = EnumSet.of(
@@ -377,6 +378,7 @@ public class PlayerView extends PluginInventory {
             case WITHER_MACHINEGUN: return Material.WITHER_SKELETON_SPAWN_EGG;
             case WITHER_RUSH: return Material.WITHER_SKELETON_SPAWN_EGG;
             case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
+            case ZOMBIE_TOOLS: return Material.IRON_SHOVEL; // Đã thêm icon ở đây
             case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
             case ARROW_SLOW: return Material.TIPPED_ARROW;
             case BLEEDING: return Material.PAPER;
