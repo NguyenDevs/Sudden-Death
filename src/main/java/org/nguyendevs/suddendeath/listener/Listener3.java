@@ -480,8 +480,10 @@ public class Listener3 implements Listener {
     private void shootWindBlade(Phantom phantom, Player target) {
         try {
             Location startLoc = phantom.getLocation().add(0, 0.5, 0);
+            Location targetLoc = target.getLocation().add(0, 1.2, 0);
 
-            Vector direction = target.getLocation().add(0, 1.2, 0).subtract(startLoc).toVector().normalize();
+            final Vector fixedTarget = targetLoc.toVector();
+            Vector direction = fixedTarget.subtract(startLoc.toVector()).normalize();
 
             double damage = Feature.PHANTOM_BLADE.getDouble("damage");
             int weaknessDuration = (int) (Feature.PHANTOM_BLADE.getDouble("weakness-duration") * 20);
@@ -491,28 +493,58 @@ public class Listener3 implements Listener {
             phantom.getWorld().playSound(startLoc, Sound.ENTITY_BREEZE_IDLE_AIR, 2.0f, 0.8f);
             phantom.getWorld().playSound(startLoc, Sound.ITEM_TRIDENT_RIPTIDE_1, 2.0f, 1.5f);
 
-
             Vector forward = direction.clone();
             Vector up = new Vector(0, 1, 0);
             Vector right = forward.clone().crossProduct(up).normalize();
             if (right.lengthSquared() < 0.01) right = new Vector(1, 0, 0);
+            Vector actualUp = right.clone().crossProduct(forward).normalize();
 
-            List<Vector> shapeOffsets = new ArrayList<>();
+            List<Vector> bladeShape = new ArrayList<>();
 
-            for (double i = 0; i <= 1.0; i += 0.1) {
+            for (double t = 0; t <= 1.0; t += 0.05) {
+                double x = (1 - t) * 0.15;
+                double z = t * 0.3;
+                bladeShape.add(right.clone().multiply(x).add(forward.clone().multiply(z)));
+                bladeShape.add(right.clone().multiply(-x).add(forward.clone().multiply(z)));
+            }
 
-                double back = -0.5 * i;
-                double side = 0.9 * i;
+            for (double t = 0; t <= 1.0; t += 0.02) {
+                double angle = t * Math.PI * 0.6;
+                double radius = 0.5 + t * 0.8;
 
-                // Cánh phải
-                shapeOffsets.add(forward.clone().multiply(back).add(right.clone().multiply(side)));
-                // Cánh trái
-                shapeOffsets.add(forward.clone().multiply(back).add(right.clone().multiply(-side)));
+                double x = -Math.sin(angle) * radius;
+                double z = -Math.cos(angle) * radius * 0.6 - 0.2;
 
-                if (i < 0.5) {
-                    shapeOffsets.add(forward.clone().multiply(back + 0.1).add(right.clone().multiply(side * 0.5)));
-                    shapeOffsets.add(forward.clone().multiply(back + 0.1).add(right.clone().multiply(-side * 0.5)));
-                }
+                bladeShape.add(right.clone().multiply(x).add(forward.clone().multiply(z)));
+            }
+
+            for (double t = 0; t <= 1.0; t += 0.02) {
+                double angle = t * Math.PI * 0.6;
+                double radius = 0.5 + t * 0.8;
+
+                double x = Math.sin(angle) * radius;
+                double z = -Math.cos(angle) * radius * 0.6 - 0.2;
+
+                bladeShape.add(right.clone().multiply(x).add(forward.clone().multiply(z)));
+            }
+
+            for (double t = 0; t <= 1.0; t += 0.04) {
+                double x = (t - 0.5) * 0.3;
+                double z = -t * 0.2;
+                bladeShape.add(right.clone().multiply(x).add(forward.clone().multiply(z)));
+            }
+
+            for (double t = 0; t <= 1.0; t += 0.03) {
+                double angle = t * Math.PI * 0.6;
+                double radius = 0.4 + t * 0.6;
+
+                double x1 = -Math.sin(angle) * radius;
+                double z1 = -Math.cos(angle) * radius * 0.6 - 0.1;
+                bladeShape.add(right.clone().multiply(x1).add(forward.clone().multiply(z1)));
+
+                double x2 = Math.sin(angle) * radius;
+                double z2 = -Math.cos(angle) * radius * 0.6 - 0.1;
+                bladeShape.add(right.clone().multiply(x2).add(forward.clone().multiply(z2)));
             }
 
             new BukkitRunnable() {
@@ -523,27 +555,43 @@ public class Listener3 implements Listener {
                 @Override
                 public void run() {
                     try {
-                        if (ticks > 30 || currentLoc.getWorld() == null) {
+                        if (ticks > 40 || currentLoc.getWorld() == null) {
                             cancel();
                             return;
                         }
 
                         currentLoc.add(velocity);
 
-                        for (Vector offset : shapeOffsets) {
+                        for (Vector offset : bladeShape) {
                             Location pLoc = currentLoc.clone().add(offset);
-                            if (RANDOM.nextBoolean()) {
-                                currentLoc.getWorld().spawnParticle(Particle.CRIT, pLoc, 0, 0, 0, 0);
+
+                            double zOffset = offset.dot(forward);
+                            if (zOffset < -0.5) {
+                                currentLoc.getWorld().spawnParticle(
+                                        Particle.REDSTONE,
+                                        pLoc,
+                                        1,
+                                        0, 0, 0, 0,
+                                        new Particle.DustOptions(org.bukkit.Color.fromRGB(180, 180, 180), 0.25f)
+                                );
                             } else {
-                                currentLoc.getWorld().spawnParticle(Particle.SWEEP_ATTACK, pLoc, 0, 0, 0, 0);
+                                currentLoc.getWorld().spawnParticle(
+                                        Particle.REDSTONE,
+                                        pLoc,
+                                        1,
+                                        0, 0, 0, 0,
+                                        new Particle.DustOptions(org.bukkit.Color.fromRGB(180, 180, 180), 0.25f)
+                                );
                             }
                         }
 
-                        currentLoc.getWorld().spawnParticle(Particle.FLASH, currentLoc, 1, 0, 0, 0, 0);
+                        currentLoc.getWorld().spawnParticle(
+                                Particle.FALLING_OBSIDIAN_TEAR,
+                                currentLoc.clone().subtract(velocity.clone().multiply(0.5)),
+                                3, 0.2, 0.2, 0.2, 0.05
+                        );
 
-                        currentLoc.getWorld().spawnParticle(Particle.CLOUD, currentLoc.clone().subtract(velocity.clone().multiply(0.5)), 3, 0.2, 0.2, 0.2, 0.05);
-
-                        for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 1.8, 1.8, 1.8)) { // Tăng hitbox lên 1 chút vì đạn to hơn
+                        for (Entity entity : currentLoc.getWorld().getNearbyEntities(currentLoc, 2.0, 2.0, 2.0)) {
                             if (entity instanceof Player hitPlayer) {
                                 if (Utils.hasCreativeGameMode(hitPlayer)) continue;
                                 if (hitPlayer.getUniqueId().equals(phantom.getUniqueId())) continue;
@@ -551,7 +599,7 @@ public class Listener3 implements Listener {
                                 Utils.damage(hitPlayer, damage, true);
                                 hitPlayer.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, weaknessDuration, amplifier));
 
-                                hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f); // Tiếng va chạm trầm hơn
+                                hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f);
                                 hitPlayer.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, hitPlayer.getLocation().add(0, 1, 0), 1);
 
                                 cancel();

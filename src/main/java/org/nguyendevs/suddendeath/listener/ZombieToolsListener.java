@@ -21,7 +21,6 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ZombieToolsListener implements Listener {
     private static final Random random = new Random();
 
-    // Enum nội bộ để quản lý Tier và Material
     private enum ToolTier {
         NETHERITE("NETHERITE", "netherite-chance"),
         DIAMOND("DIAMOND", "diamond-chance"),
@@ -39,7 +38,6 @@ public class ZombieToolsListener implements Listener {
     }
 
     private enum ToolType {
-        SWORD("_SWORD"), // Thêm kiếm nếu muốn, nhưng prompt chỉ yêu cầu rìu, xẻng, cúp
         AXE("_AXE"),
         PICKAXE("_PICKAXE"),
         SHOVEL("_SHOVEL");
@@ -51,41 +49,33 @@ public class ZombieToolsListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onZombieSpawn(CreatureSpawnEvent event) {
         if (!(event.getEntity() instanceof Zombie zombie)) return;
         if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie)) return;
 
-        // Kiểm tra tỉ lệ spawn chung
         double spawnChance = Feature.ZOMBIE_TOOLS.getDouble("chance-percent") / 100.0;
         if (random.nextDouble() > spawnChance) return;
 
-        // Chọn Tier công cụ
         ToolTier tier = selectTier();
-        if (tier == null) return; // Fallback an toàn
+        if (tier == null) return;
 
-        // Chọn loại công cụ (Rìu, Xẻng, Cúp)
         ToolType type = ToolType.values()[random.nextInt(ToolType.values().length)];
-
-        // Bỏ qua Kiếm nếu chỉ muốn công cụ lao động
-        if (type == ToolType.SWORD) type = ToolType.AXE;
 
         Material mat = Material.getMaterial(tier.prefix + type.suffix);
         if (mat == null) return;
 
         ItemStack tool = new ItemStack(mat);
 
-        // Xử lý phù phép
         double enchantChance = Feature.ZOMBIE_TOOLS.getDouble("enchantment-chance") / 100.0;
         if (random.nextDouble() <= enchantChance) {
             applyRandomEnchants(tool);
         }
 
-        // Trang bị cho Zombie
         if (zombie.getEquipment() != null) {
             zombie.getEquipment().setItemInMainHand(tool);
-            // Đặt tỉ lệ rơi mặc định là 0 để chúng ta tự xử lý rơi đồ với độ bền ngẫu nhiên ở sự kiện Death
             zombie.getEquipment().setItemInMainHandDropChance(0.0f);
+            zombie.setCanPickupItems(false);
         }
     }
 
@@ -94,22 +84,17 @@ public class ZombieToolsListener implements Listener {
         if (!(event.getEntity() instanceof Zombie zombie)) return;
         if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie)) return;
 
-        // Kiểm tra tỉ lệ rơi đồ
         double dropChance = Feature.ZOMBIE_TOOLS.getDouble("drop-chance-percent") / 100.0;
         if (random.nextDouble() > dropChance) return;
 
         ItemStack mainHand = zombie.getEquipment() != null ? zombie.getEquipment().getItemInMainHand() : null;
 
-        // Kiểm tra xem item trên tay có phải là công cụ (Tool) hay không
         if (mainHand != null && isTool(mainHand.getType())) {
             ItemStack dropItem = mainHand.clone();
 
-            // Random độ bền
             ItemMeta meta = dropItem.getItemMeta();
             if (meta instanceof Damageable damageable) {
                 int maxDurability = dropItem.getType().getMaxDurability();
-                // Random lượng damage đã nhận (từ 0 đến maxDurability - 1)
-                // Damage càng cao = độ bền còn lại càng thấp
                 int damage = ThreadLocalRandom.current().nextInt(maxDurability);
                 damageable.setDamage(damage);
                 dropItem.setItemMeta(meta);
@@ -140,14 +125,11 @@ public class ZombieToolsListener implements Listener {
         int maxEnchants = (int) Feature.ZOMBIE_TOOLS.getDouble("max-enchantments");
         int count = random.nextInt(maxEnchants) + 1;
 
-        // Danh sách các enchant phù hợp cho tools (cơ bản)
         List<Enchantment> possibleEnchants = new ArrayList<>();
         possibleEnchants.add(Enchantment.DIG_SPEED);
         possibleEnchants.add(Enchantment.DURABILITY);
-        possibleEnchants.add(Enchantment.DAMAGE_ALL); // Cho Rìu
         possibleEnchants.add(Enchantment.LOOT_BONUS_BLOCKS);
 
-        // Nếu là rìu thì thêm enchant xác thương
         if (item.getType().name().contains("_AXE")) {
             possibleEnchants.add(Enchantment.DAMAGE_ALL);
             possibleEnchants.add(Enchantment.DAMAGE_UNDEAD);
@@ -157,14 +139,12 @@ public class ZombieToolsListener implements Listener {
             if (possibleEnchants.isEmpty()) break;
             Enchantment enchant = possibleEnchants.get(random.nextInt(possibleEnchants.size()));
 
-            // Random level từ StartLevel đến MaxLevel của enchant đó
             int level = random.nextInt(enchant.getMaxLevel()) + enchant.getStartLevel();
 
             try {
                 item.addUnsafeEnchantment(enchant, level);
             } catch (Exception ignored) {}
 
-            // Xóa enchant đã dùng để không trùng lặp (đơn giản hóa logic conflict)
             possibleEnchants.remove(enchant);
         }
     }
