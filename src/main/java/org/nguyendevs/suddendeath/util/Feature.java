@@ -615,7 +615,7 @@ public enum Feature {
 			},
 			"zombie-tools",
 			new Modifier[]{
-					new Modifier("chance-percent", 20.0),
+					new Modifier("chance-percent", 89.0),
 					new Modifier("drop-chance-percent", 15.0),
 					new Modifier("netherite-chance", 5.0),
 					new Modifier("diamond-chance", 2.0),

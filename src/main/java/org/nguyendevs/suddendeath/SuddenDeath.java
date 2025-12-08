@@ -7,12 +7,12 @@ import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import org.bukkit.*;
-import org.bukkit.command.defaults.ReloadCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -53,6 +53,9 @@ public class SuddenDeath extends JavaPlugin {
     private boolean worldGuardReady = false;
     public ConfigFile messages;
     public ConfigFile items;
+    // Map lưu cache hash của recipe để so sánh khi reload
+    private final Map<NamespacedKey, Integer> recipeCache = new HashMap<>();
+
     private static final Map<String, String> DEFAULT_MATERIAL_NAMES = new HashMap<>();
 
     static {
@@ -84,7 +87,8 @@ public class SuddenDeath extends JavaPlugin {
     @Override
     public void onDisable() {
         try {
-            removeCustomRecipes();
+            // Khi disable thì xóa hết recipe để tránh rác server nếu plugin bị xóa
+            removeAllCustomRecipes();
             savePlayerData();
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
         } catch (Exception e) {
@@ -105,7 +109,7 @@ public class SuddenDeath extends JavaPlugin {
         registerListeners();
         hookIntoPlaceholderAPI();
         initializeFeaturesAndEntities();
-        initializeItemsAndRecipes();
+        initializeItemsAndRecipes(); // Cache được khởi tạo ở đây
         registerCommands();
         printLogo();
         new SpigotPlugin(119526, this).checkForUpdate();
@@ -114,7 +118,7 @@ public class SuddenDeath extends JavaPlugin {
     private void initializeConfigFiles() {
         messages = new ConfigFile(this, "/language", "messages");
         items = new ConfigFile(this, "/language", "items");
-        features = new ConfigFile(this, "/language","feature");
+        features = new ConfigFile(this, "/language", "feature");
         initializeDefaultMessages();
         initializeDefaultItems();
         initializeDefaultFeatures();
@@ -302,7 +306,10 @@ public class SuddenDeath extends JavaPlugin {
 
     private void initializeItemsAndRecipes() {
         initializeDefaultItems();
-        removeCustomRecipes();
+        // Xóa sạch để init lại từ đầu, đảm bảo sạch sẽ khi khởi động
+        removeAllCustomRecipes();
+        recipeCache.clear();
+
         for (CustomItem item : CustomItem.values()) {
             ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
             if (section == null) {
@@ -313,6 +320,9 @@ public class SuddenDeath extends JavaPlugin {
             if (section.getBoolean("craft-enabled") && item.getCraft() != null) {
                 try {
                     registerCraftingRecipe(item);
+                    // Lưu hash ngay khi khởi tạo
+                    NamespacedKey key = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
+                    recipeCache.put(key, calculateRecipeHash(item));
                 } catch (IllegalArgumentException e) {
                     getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
                 }
@@ -325,10 +335,10 @@ public class SuddenDeath extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MainListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
 
-        getServer().getPluginManager().registerEvents(new PlayerFeaturesListener(), this);
-        getServer().getPluginManager().registerEvents(new UndeadFeaturesListener(), this);
-        getServer().getPluginManager().registerEvents(new MobAbilityListener(this), this);
-        getServer().getPluginManager().registerEvents(new GeneralEntityListener(this), this);
+        getServer().getPluginManager().registerEvents(new Listener1(this), this);
+        getServer().getPluginManager().registerEvents(new Listener2(), this);
+        getServer().getPluginManager().registerEvents(new Listener3(this), this);
+        getServer().getPluginManager().registerEvents(new ZombieToolsListener(), this);
     }
 
     private void registerCommands() {
@@ -528,7 +538,10 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    private void removeCustomRecipes() {
+    /**
+     * Dùng hàm này khi Disable plugin hoặc reset hoàn toàn.
+     */
+    private void removeAllCustomRecipes() {
         Iterator<Recipe> recipes = getServer().recipeIterator();
         List<NamespacedKey> toRemove = new ArrayList<>();
         while (recipes.hasNext()) {
@@ -546,8 +559,11 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    private void reRegisterRecipes() {
-        removeCustomRecipes();
+    /**
+     * Tối ưu logic register lại recipe.
+     * Chỉ unregister và register nếu recipe có thay đổi.
+     */
+    private void reRegisterRecipesOptimized() {
         for (CustomItem item : CustomItem.values()) {
             if (items.getConfig().contains(item.name())) {
                 ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
@@ -555,16 +571,51 @@ public class SuddenDeath extends JavaPlugin {
                     getLogger().log(Level.WARNING, "Configuration section is null for CustomItem: " + item.name());
                     continue;
                 }
+                // Update item info (name, lore) từ config vào Enum
                 item.update(section);
-                if (section.getBoolean("craft-enabled") && item.getCraft() != null) {
-                    try {
+
+                NamespacedKey recipeKey = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
+                boolean isEnabled = section.getBoolean("craft-enabled") && item.getCraft() != null;
+
+                if (isEnabled) {
+                    // Tính toán hash mới
+                    int newHash = calculateRecipeHash(item);
+
+                    // Kiểm tra xem recipe đã tồn tại và có giống hệt không
+                    if (recipeCache.containsKey(recipeKey)) {
+                        int oldHash = recipeCache.get(recipeKey);
+                        if (newHash != oldHash) {
+                            // Recipe thay đổi -> Xóa cũ, thêm mới
+                            getServer().removeRecipe(recipeKey);
+                            registerCraftingRecipe(item);
+                            recipeCache.put(recipeKey, newHash);
+                        }
+                        // Nếu hash giống nhau -> Không làm gì cả (Tối ưu performance)
+                    } else {
+                        // Recipe mới (hoặc trước đó bị disable) -> Thêm mới
                         registerCraftingRecipe(item);
-                    } catch (IllegalArgumentException e) {
-                        getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
+                        recipeCache.put(recipeKey, newHash);
+                    }
+                } else {
+                    // Nếu recipe bị disable trong config mới
+                    if (recipeCache.containsKey(recipeKey)) {
+                        getServer().removeRecipe(recipeKey);
+                        recipeCache.remove(recipeKey);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Tính toán hash của một recipe dựa trên nguyên liệu và kết quả đầu ra
+     */
+    private int calculateRecipeHash(CustomItem item) {
+        List<String> craft = item.getCraft();
+        ItemStack result = item.a(); // Item kết quả
+        // Hash dựa trên list công thức craft và thông tin item kết quả (name, lore, type)
+        // Nếu config thay đổi tên, lore hoặc nguyên liệu -> hash sẽ đổi
+        return Objects.hash(craft, result.getType(), result.getItemMeta().getDisplayName(), result.getItemMeta().getLore());
     }
 
     public void refreshFeatures() {
@@ -592,7 +643,9 @@ public class SuddenDeath extends JavaPlugin {
             }
             initializeConfigFiles();
             refreshFeatures();
-            reRegisterRecipes();
+            // Sử dụng hàm tối ưu thay vì removeCustomRecipes() + initializeItemsAndRecipes()
+            reRegisterRecipesOptimized();
+
             if (wgPlugin instanceof WorldGuardOn) {
                 WorldGuardOn wgOn = (WorldGuardOn) wgPlugin;
             }

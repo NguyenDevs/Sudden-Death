@@ -378,7 +378,7 @@ public class PlayerView extends PluginInventory {
             case WITHER_MACHINEGUN: return Material.WITHER_SKELETON_SPAWN_EGG;
             case WITHER_RUSH: return Material.WITHER_SKELETON_SPAWN_EGG;
             case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
-            case ZOMBIE_TOOLS: return Material.IRON_SHOVEL; // Đã thêm icon ở đây
+            case ZOMBIE_TOOLS: return Material.ZOMBIE_SPAWN_EGG;
             case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
             case ARROW_SLOW: return Material.TIPPED_ARROW;
             case BLEEDING: return Material.PAPER;
