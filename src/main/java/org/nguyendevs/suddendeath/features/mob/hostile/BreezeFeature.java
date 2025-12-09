@@ -1,4 +1,170 @@
 package org.nguyendevs.suddendeath.features.mob.hostile;
 
-public class BreezeFeature {
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
+import org.nguyendevs.suddendeath.features.base.AbstractFeature;
+import org.nguyendevs.suddendeath.util.Feature;
+import java.util.logging.Level;
+
+public class BreezeFeature extends AbstractFeature {
+
+    private boolean isSupported;
+
+    @Override
+    public String getName() {
+        return "Breeze Dash";
+    }
+
+    @Override
+    public void initialize(org.nguyendevs.suddendeath.SuddenDeath plugin) {
+        try {
+            EntityType.valueOf("BREEZE");
+            this.isSupported = true;
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().info("Breeze feature disabled (requires 1.21+).");
+            this.isSupported = false;
+            return;
+        }
+        super.initialize(plugin);
+    }
+
+    @Override
+    protected void onEnable() {
+        if (!isSupported) return;
+
+        BukkitRunnable breezeLoop = new BukkitRunnable() {
+            @Override
+            public void run() {
+                try {
+                    for (World world : org.bukkit.Bukkit.getWorlds()) {
+                        if (Feature.BREEZE_DASH.isEnabled(world)) {
+                            for (Entity entity : world.getEntities()) {
+                                if (entity.getType().name().equals("BREEZE")) {
+                                    LivingEntity breeze = (LivingEntity) entity;
+                                    if (breeze.getTarget() instanceof Player) {
+                                        applyBreezeDash(breeze);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Error in Breeze Dash task", e);
+                }
+            }
+        };
+        breezeLoop.runTaskTimer(plugin, 0L, 60L);
+        registerTask((BukkitTask) breezeLoop);
+    }
+
+    private void applyBreezeDash(LivingEntity breeze) {
+        if (breeze == null || breeze.getHealth() <= 0 || !(breeze.getTarget() instanceof Player target)) return;
+        if (!target.getWorld().equals(breeze.getWorld())) return;
+
+        try {
+            double chance = Feature.BREEZE_DASH.getDouble("chance-percent") / 100.0;
+            if (RANDOM.nextDouble() <= chance) {
+                double duration = Feature.BREEZE_DASH.getDouble("duration");
+                int coefficient = (int) Feature.BREEZE_DASH.getDouble("amplifier");
+
+                breeze.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, (int) (duration * 20), coefficient - 1));
+                breeze.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, (int) (duration * 20), coefficient - 1));
+                breeze.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, (int) (duration * 20), coefficient - 1));
+                breeze.getWorld().playSound(breeze.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 1.0f, 0.5f);
+                breeze.getWorld().playSound(breeze.getLocation(), Sound.ENTITY_VEX_CHARGE, 1.0f, 0.1f);
+
+                breeze.setVelocity(breeze.getVelocity().setY(0));
+                breeze.setGravity(true);
+
+                final double[] previousY = {breeze.getLocation().getY()};
+
+                new BukkitRunnable() {
+                    int shots = 0;
+                    @Override
+                    public void run() {
+                        try {
+                            if (shots < Feature.BREEZE_DASH.getDouble("shoot-amount")) {
+                                Location breezeLoc = breeze.getLocation();
+                                Vector direction = target.getLocation().subtract(breezeLoc).toVector().normalize();
+                                Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), EntityType.valueOf("WIND_CHARGE"));
+                                windCharge.setVelocity(direction.multiply(1.5));
+
+                                new BukkitRunnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            if (windCharge.isValid()) {
+                                                Location chargeLoc = windCharge.getLocation();
+                                                Vector velocity = windCharge.getVelocity().normalize();
+                                                Location particleLoc = chargeLoc.clone().subtract(velocity.multiply(0.5));
+                                                breeze.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, particleLoc, 1, 0, 0, 0, 0);
+                                            } else {
+                                                cancel();
+                                            }
+                                        } catch (Exception e) {
+                                            cancel();
+                                        }
+                                    }
+                                }.runTaskTimer(plugin, 0, 1);
+                                shots++;
+                            } else {
+                                cancel();
+                            }
+                        } catch (Exception e) {
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(plugin, 0, 10);
+
+                new BukkitRunnable() {
+                    int ticks = 0;
+                    @Override
+                    public void run() {
+                        try {
+                            if (breeze.isValid() && breeze.getHealth() > 0) {
+                                Location loc = breeze.getLocation().add(0, 0.5, 0);
+                                Vector velocity = breeze.getVelocity().normalize();
+                                double currentY = breeze.getLocation().getY();
+
+                                if (currentY > previousY[0] + 0.1) {
+                                    breeze.setVelocity(breeze.getVelocity().setY(-0.2));
+                                }
+                                previousY[0] = currentY;
+
+                                if (velocity.lengthSquared() > 0.1 && ticks < duration * 20) {
+                                    Location trailLoc = loc.subtract(velocity.multiply(0.5));
+                                    Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(189, 235, 255), 1.0f);
+                                    breeze.getWorld().spawnParticle(Particle.REDSTONE, trailLoc, 2, 0.1, 0.1, 0.1, 0, dustOptions);
+                                }
+                                ticks++;
+                                if (ticks >= duration * 20) {
+                                    breeze.setVelocity(breeze.getVelocity().setY(0.1));
+                                    breeze.setGravity(true);
+                                    cancel();
+                                }
+                            } else {
+                                cancel();
+                            }
+                        } catch (Exception e) {
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(plugin, 0, 1);
+            }
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error applying Breeze Dash", e);
+        }
+    }
 }

@@ -6,7 +6,10 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -25,11 +28,29 @@ import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import org.nguyendevs.suddendeath.comp.worldguard.WGPlugin;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOff;
 import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOn;
+import org.nguyendevs.suddendeath.features.base.IFeature;
+import org.nguyendevs.suddendeath.features.combat.ArrowSlowFeature;
+import org.nguyendevs.suddendeath.features.combat.MobCriticalStrikesFeature;
+import org.nguyendevs.suddendeath.features.combat.SharpKnifeFeature;
+import org.nguyendevs.suddendeath.features.items.AdvancedPlayerDropsFeature;
+import org.nguyendevs.suddendeath.features.items.PhysicEnderPearlFeature;
+import org.nguyendevs.suddendeath.features.items.RealisticPickupFeature;
+import org.nguyendevs.suddendeath.features.items.ZombieToolsFeature;
+import org.nguyendevs.suddendeath.features.mob.attributes.ForceOfUndeadFeature;
+import org.nguyendevs.suddendeath.features.mob.attributes.QuickMobsFeature;
+import org.nguyendevs.suddendeath.features.mob.attributes.TankyMonstersFeature;
+import org.nguyendevs.suddendeath.features.mob.hostile.*;
+import org.nguyendevs.suddendeath.features.nether.NetherShieldFeature;
+import org.nguyendevs.suddendeath.features.player.*;
+import org.nguyendevs.suddendeath.features.world.DangerousCoalFeature;
+import org.nguyendevs.suddendeath.features.world.FreddyFeature;
+import org.nguyendevs.suddendeath.features.world.SnowSlowFeature;
 import org.nguyendevs.suddendeath.gui.AdminView;
 import org.nguyendevs.suddendeath.gui.PlayerView;
 import org.nguyendevs.suddendeath.gui.PluginInventory;
 import org.nguyendevs.suddendeath.gui.listener.GuiListener;
-import org.nguyendevs.suddendeath.listener.*;
+import org.nguyendevs.suddendeath.listener.CustomMobs;
+import org.nguyendevs.suddendeath.listener.MainListener;
 import org.nguyendevs.suddendeath.manager.EventManager;
 import org.nguyendevs.suddendeath.packets.PacketSender;
 import org.nguyendevs.suddendeath.packets.v1_17.ProtocolLibImpl;
@@ -53,8 +74,8 @@ public class SuddenDeath extends JavaPlugin {
     private boolean worldGuardReady = false;
     public ConfigFile messages;
     public ConfigFile items;
-    // Map lưu cache hash của recipe để so sánh khi reload
     private final Map<NamespacedKey, Integer> recipeCache = new HashMap<>();
+    private final List<IFeature> loadedFeatures = new ArrayList<>();
 
     private static final Map<String, String> DEFAULT_MATERIAL_NAMES = new HashMap<>();
 
@@ -87,7 +108,11 @@ public class SuddenDeath extends JavaPlugin {
     @Override
     public void onDisable() {
         try {
-            // Khi disable thì xóa hết recipe để tránh rác server nếu plugin bị xóa
+            for (IFeature feature : loadedFeatures) {
+                feature.shutdown();
+            }
+            loadedFeatures.clear();
+
             removeAllCustomRecipes();
             savePlayerData();
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
@@ -99,7 +124,6 @@ public class SuddenDeath extends JavaPlugin {
     private void initializePlugin() {
         ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
         if (protocolManager == null) {
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &6ProtocolLib is unavailable, stopping..."));
             throw new IllegalStateException("ProtocolLib is required but not found");
         }
         packetSender = new ProtocolLibImpl(protocolManager);
@@ -109,7 +133,7 @@ public class SuddenDeath extends JavaPlugin {
         registerListeners();
         hookIntoPlaceholderAPI();
         initializeFeaturesAndEntities();
-        initializeItemsAndRecipes(); // Cache được khởi tạo ở đây
+        initializeItemsAndRecipes();
         registerCommands();
         printLogo();
         new SpigotPlugin(119526, this).checkForUpdate();
@@ -306,7 +330,6 @@ public class SuddenDeath extends JavaPlugin {
 
     private void initializeItemsAndRecipes() {
         initializeDefaultItems();
-        // Xóa sạch để init lại từ đầu, đảm bảo sạch sẽ khi khởi động
         removeAllCustomRecipes();
         recipeCache.clear();
 
@@ -320,7 +343,6 @@ public class SuddenDeath extends JavaPlugin {
             if (section.getBoolean("craft-enabled") && item.getCraft() != null) {
                 try {
                     registerCraftingRecipe(item);
-                    // Lưu hash ngay khi khởi tạo
                     NamespacedKey key = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
                     recipeCache.put(key, calculateRecipeHash(item));
                 } catch (IllegalArgumentException e) {
@@ -335,10 +357,48 @@ public class SuddenDeath extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MainListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
 
-        getServer().getPluginManager().registerEvents(new Listener1(this), this);
-        getServer().getPluginManager().registerEvents(new Listener2(), this);
-        getServer().getPluginManager().registerEvents(new Listener3(this), this);
-        getServer().getPluginManager().registerEvents(new ZombieToolsListener(), this);
+        registerFeature(new BlazeFeatures());
+        registerFeature(new BreezeFeature());
+        registerFeature(new CreeperFeature());
+        registerFeature(new DrownedFeature());
+        registerFeature(new EnderFeatures());
+        registerFeature(new EvokerFeature());
+        registerFeature(new GuardianFeature());
+        registerFeature(new PhantomFeature());
+        registerFeature(new SilverfishFeature());
+        registerFeature(new SkeletonFeatures());
+        registerFeature(new SlimeFeatures());
+        registerFeature(new SpiderFeatures());
+        registerFeature(new StrayFeature());
+        registerFeature(new WitchFeature());
+        registerFeature(new WitherSkeletonFeature());
+        registerFeature(new ZombieFeatures());
+        registerFeature(new ForceOfUndeadFeature());
+        registerFeature(new QuickMobsFeature());
+        registerFeature(new TankyMonstersFeature());
+        registerFeature(new ArrowSlowFeature());
+        registerFeature(new MobCriticalStrikesFeature());
+        registerFeature(new SharpKnifeFeature());
+        registerFeature(new AdvancedPlayerDropsFeature());
+        registerFeature(new BleedingFeature());
+        registerFeature(new BloodScreenFeature());
+        registerFeature(new DangerousCoalFeature());
+        registerFeature(new ElectricityShockFeature());
+        registerFeature(new FallStunFeature());
+        registerFeature(new FreddyFeature());
+        registerFeature(new HungerNauseaFeature());
+        registerFeature(new InfectionFeature());
+        registerFeature(new NetherShieldFeature());
+        registerFeature(new PhysicEnderPearlFeature());
+        registerFeature(new RealisticPickupFeature());
+        registerFeature(new SnowSlowFeature());
+        registerFeature(new StoneStiffnessFeature());
+        registerFeature(new ZombieToolsFeature());
+    }
+
+    private void registerFeature(IFeature feature) {
+        feature.initialize(this);
+        loadedFeatures.add(feature);
     }
 
     private void registerCommands() {
@@ -413,7 +473,6 @@ public class SuddenDeath extends JavaPlugin {
                                                     delayedFlagCount + " custom flags"));
                                 } else {
                                     getLogger().severe("WorldGuard integration failed - flags not loaded properly");
-                                    getLogger().severe("Ready: " + delayedReady + ", Flag count: " + delayedFlagCount);
                                     worldGuardReady = false;
                                 }
                             }, 40L);
@@ -423,28 +482,8 @@ public class SuddenDeath extends JavaPlugin {
                     } else {
                         throw new IllegalStateException("WorldGuardOn instance creation failed");
                     }
-                } catch (IllegalStateException e) {
-                    getLogger().severe("Failed to initialize WorldGuardOn - " + e.getMessage());
-                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6[&cSudden&4Death&6] &cWorldGuardOn failed: " + e.getMessage()));
-                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6[&cSudden&4Death&6] &6Falling FIback to WorldGuardOff mode"));
-                    this.wgPlugin = new WorldGuardOff();
-                    worldGuardReady = true;
-                } catch (NoClassDefFoundError e) {
-                    getLogger().severe("WorldGuard classes not found - " + e.getMessage());
-                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6[&cSudden&4Death&6] &cMissing WorldGuard dependencies"));
-                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6[&cSudden&4Death&6] &6Falling back to WorldGuardOff mode"));
-                    this.wgPlugin = new WorldGuardOff();
-                    worldGuardReady = true;
                 } catch (Exception e) {
-                    getLogger().log(Level.SEVERE, "Unexpected error initializing WorldGuardOn", e);
-                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6[&cSudden&4Death&6] &cUnexpected error: " + e.getClass().getSimpleName()));
-                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                            "&6[&cSudden&4Death&6] &6Falling back to WorldGuardOff mode"));
+                    getLogger().severe("Failed to initialize WorldGuardOn - " + e.getMessage());
                     this.wgPlugin = new WorldGuardOff();
                     worldGuardReady = true;
                 }
@@ -458,78 +497,32 @@ public class SuddenDeath extends JavaPlugin {
             getLogger().log(Level.SEVERE, "Failed to initialize WorldGuard integration", e);
             this.wgPlugin = new WorldGuardOff();
             worldGuardReady = true;
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                    "&6[&cSudden&4Death&6] &cForced fallback to WorldGuardOff due to initialization error"));
         }
     }
 
     public boolean isWorldGuardReady() {
-        boolean ready = worldGuardReady && wgPlugin != null;
-        if (!ready) {
-            getLogger().fine("WorldGuard not ready - worldGuardReady: " + worldGuardReady +
-                    ", wgPlugin: " + (wgPlugin != null ? wgPlugin.getClass().getSimpleName() : "null"));
-        }
-        return ready;
+        return worldGuardReady && wgPlugin != null;
     }
 
     public WGPlugin getWorldGuard() {
         if (wgPlugin == null) {
-            getLogger().warning("WorldGuard plugin requested but not initialized, returning fallback");
             return new WorldGuardOff();
-        }
-        if (getLogger().isLoggable(Level.FINE)) {
-            String wgType = wgPlugin instanceof WorldGuardOn ? "WorldGuardOn" : "WorldGuardOff";
-            getLogger().fine("WorldGuard requested, returning: " + wgType);
         }
         return wgPlugin;
     }
 
-    public boolean canUseWorldGuardFlags() {
-        boolean canUse = isWorldGuardReady() &&
-                wgPlugin instanceof WorldGuardOn &&
-                ((WorldGuardOn) wgPlugin).isReady();
-        if (!canUse && getLogger().isLoggable(Level.FINE)) {
-            if (!isWorldGuardReady()) {
-                getLogger().fine("Cannot use WG flags - WorldGuard not ready");
-            } else if (!(wgPlugin instanceof WorldGuardOn)) {
-                getLogger().fine("Cannot use WG flags - Using WorldGuardOff");
-            } else if (!((WorldGuardOn) wgPlugin).isReady()) {
-                getLogger().fine("Cannot use WG flags - WorldGuardOn not ready");
-            }
-        }
-        return canUse;
-    }
-
     private void registerCraftingRecipe(CustomItem item) {
-        if (item.getCraft() == null || item.getCraft().isEmpty()) {
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &6No crafting recipe defined for " + item.name()));
-            return;
-        }
+        if (item.getCraft() == null || item.getCraft().isEmpty()) return;
         try {
             NamespacedKey recipeKey = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
             ShapedRecipe recipe = new ShapedRecipe(recipeKey, item.a());
             recipe.shape("ABC", "DEF", "GHI");
             char[] chars = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'};
             List<String> craftLines = item.getCraft();
-            if (craftLines.size() != 3) {
-                throw new IllegalArgumentException("Invalid craft format for " + item.name() +
-                        ". Expected 3 lines, got " + craftLines.size());
-            }
             for (int i = 0; i < 9; i++) {
-                String[] line = craftLines.get(i / 3).split(",");
-                if (line.length != 3) {
-                    throw new IllegalArgumentException("Invalid craft line format for " + item.name() +
-                            ". Line " + (i / 3 + 1) + " has " + line.length + " elements, expected 3");
-                }
-                String materialName = line[i % 3].trim();
-                if (materialName.equalsIgnoreCase("AIR") || materialName.isEmpty()) {
-                    continue;
-                }
-                Material material = Material.getMaterial(materialName.toUpperCase());
-                if (material == null) {
-                    throw new IllegalArgumentException("Invalid material: " + materialName + " for " + item.name());
-                }
-                recipe.setIngredient(chars[i], material);
+                String materialName = craftLines.get(i / 3).split(",")[i % 3].trim();
+                if (materialName.equalsIgnoreCase("AIR") || materialName.isEmpty()) continue;
+                recipe.setIngredient(chars[i], Material.valueOf(materialName.toUpperCase()));
             }
             recipe.setGroup("suddendeath_items");
             getServer().addRecipe(recipe);
@@ -538,16 +531,13 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Dùng hàm này khi Disable plugin hoặc reset hoàn toàn.
-     */
     private void removeAllCustomRecipes() {
         Iterator<Recipe> recipes = getServer().recipeIterator();
         List<NamespacedKey> toRemove = new ArrayList<>();
         while (recipes.hasNext()) {
             Recipe recipe = recipes.next();
-            if (recipe instanceof Keyed) {
-                NamespacedKey key = ((Keyed) recipe).getKey();
+            if (recipe instanceof org.bukkit.Keyed) {
+                NamespacedKey key = ((org.bukkit.Keyed) recipe).getKey();
                 if (key.getNamespace().equals(this.getName().toLowerCase()) &&
                         key.getKey().startsWith("suddendeath_")) {
                     toRemove.add(key);
@@ -559,45 +549,29 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Tối ưu logic register lại recipe.
-     * Chỉ unregister và register nếu recipe có thay đổi.
-     */
     private void reRegisterRecipesOptimized() {
         for (CustomItem item : CustomItem.values()) {
             if (items.getConfig().contains(item.name())) {
                 ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
-                if (section == null) {
-                    getLogger().log(Level.WARNING, "Configuration section is null for CustomItem: " + item.name());
-                    continue;
-                }
-                // Update item info (name, lore) từ config vào Enum
+                if (section == null) continue;
                 item.update(section);
-
                 NamespacedKey recipeKey = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
                 boolean isEnabled = section.getBoolean("craft-enabled") && item.getCraft() != null;
 
                 if (isEnabled) {
-                    // Tính toán hash mới
                     int newHash = calculateRecipeHash(item);
-
-                    // Kiểm tra xem recipe đã tồn tại và có giống hệt không
                     if (recipeCache.containsKey(recipeKey)) {
                         int oldHash = recipeCache.get(recipeKey);
                         if (newHash != oldHash) {
-                            // Recipe thay đổi -> Xóa cũ, thêm mới
                             getServer().removeRecipe(recipeKey);
                             registerCraftingRecipe(item);
                             recipeCache.put(recipeKey, newHash);
                         }
-                        // Nếu hash giống nhau -> Không làm gì cả (Tối ưu performance)
                     } else {
-                        // Recipe mới (hoặc trước đó bị disable) -> Thêm mới
                         registerCraftingRecipe(item);
                         recipeCache.put(recipeKey, newHash);
                     }
                 } else {
-                    // Nếu recipe bị disable trong config mới
                     if (recipeCache.containsKey(recipeKey)) {
                         getServer().removeRecipe(recipeKey);
                         recipeCache.remove(recipeKey);
@@ -607,20 +581,12 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    /**
-     * Tính toán hash của một recipe dựa trên nguyên liệu và kết quả đầu ra
-     */
     private int calculateRecipeHash(CustomItem item) {
-        List<String> craft = item.getCraft();
-        ItemStack result = item.a(); // Item kết quả
-        // Hash dựa trên list công thức craft và thông tin item kết quả (name, lore, type)
-        // Nếu config thay đổi tên, lore hoặc nguyên liệu -> hash sẽ đổi
-        return Objects.hash(craft, result.getType(), result.getItemMeta().getDisplayName(), result.getItemMeta().getLore());
+        return Objects.hash(item.getCraft(), item.a().getType(), item.a().getItemMeta().getDisplayName(), item.a().getItemMeta().getLore());
     }
 
     public void refreshFeatures() {
         for (Feature feature : Feature.values()) {
-            List<String> enabledWorld = getConfiguration().getConfig().getStringList(feature.getPath());
             feature.updateConfig();
         }
         if (eventManager != null) {
@@ -643,12 +609,7 @@ public class SuddenDeath extends JavaPlugin {
             }
             initializeConfigFiles();
             refreshFeatures();
-            // Sử dụng hàm tối ưu thay vì removeCustomRecipes() + initializeItemsAndRecipes()
             reRegisterRecipesOptimized();
-
-            if (wgPlugin instanceof WorldGuardOn) {
-                WorldGuardOn wgOn = (WorldGuardOn) wgPlugin;
-            }
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
             Feature.reloadDescriptions();
             Bukkit.getScheduler().runTask(this, () -> {
@@ -656,9 +617,7 @@ public class SuddenDeath extends JavaPlugin {
                     if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory pluginInventory) {
                         if (pluginInventory instanceof AdminView || pluginInventory instanceof PlayerView) {
                             player.closeInventory();
-                            Bukkit.getScheduler().runTaskLater(this, () -> {
-                                pluginInventory.open();
-                            }, 10L);
+                            Bukkit.getScheduler().runTaskLater(this, pluginInventory::open, 10L);
                         }
                     }
                 }
@@ -682,25 +641,9 @@ public class SuddenDeath extends JavaPlugin {
     }
 
     public void printLogo() {
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝████╗  ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████╗██║   ██║██║  ██║██║  ██║█████╗  ██╔██╗ ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ╚════██║██║   ██║██║  ██║██║  ██║██╔══╝  ██║╚██╗██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ███████║╚██████╔╝██████╔╝██████╔╝███████╗██║ ╚████║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&c   ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╗ ███████╗ █████╗ ████████╗██╗  ██╗"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║█████╗  ███████║   ██║   ███████║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║██╔══╝  ██╔══██║   ██║   ██╔══██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4         Sudden Death"));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6         Version " + getDescription().getVersion()));
         Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&b         Development by NguyenDevs"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
     }
 
     public static SuddenDeath getInstance() {
@@ -713,10 +656,6 @@ public class SuddenDeath extends JavaPlugin {
 
     public ConfigFile getConfiguration() {
         return configuration;
-    }
-
-    public ConfigFile getFeaturesConfig() {
-        return features;
     }
 
     public PacketSender getPacketSender() {
