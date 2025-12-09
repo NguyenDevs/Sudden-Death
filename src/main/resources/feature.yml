@@ -293,3 +293,15 @@ features:
       - " "
       - "&e&oYou can create custom Zombie with tools by using"
       - "&6/sdmob &ecommand."
+  zombie-place-block:
+    name: "Zombie Place Block"
+    lore:
+      - "&2Zombies &7with &bBlocks &7in their hand can intelligently"
+      - "&aplace blocks &7to reach players."
+      - "&7They can build &fbridges&7, &eclimb walls&7, and"
+      - "&6navigate around obstacles &7by placing blocks."
+      - " "
+      - "&e&oYou can create custom Zombie with blocks by using"
+      - "&6/sdmob &ecommand."
+      - " "
+      - "&c&l⚠ &cRequires blocks in zombie's main/off hand"

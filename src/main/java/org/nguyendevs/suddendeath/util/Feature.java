@@ -690,6 +690,40 @@ public enum Feature {
 							"CRIMSON_PLANKS", "WARPED_PLANKS"
 					}))
 			}
+	),
+	ZOMBIE_PLACE_BLOCK(
+			"Zombie Place Block",
+			new String[]{
+					"&2Zombies &7with &bBlocks &7in their hand can intelligently",
+					"&aplace blocks &7to reach players.",
+					"&7They can build &fbridges&7, &eclimb walls&7, and",
+					"&6navigate around obstacles &7by placing blocks.",
+					" ",
+					"&e&oYou can create custom Zombie with blocks by using",
+					"&6/sdmob &ecommand.",
+					" ",
+					"&c&l⚠ &cRequires blocks in zombie's main/off hand"
+			},
+			"zombie-place-block",
+			new Modifier[]{
+					new Modifier("placeable-blocks", String.join(",", new String[]{
+							"COBBLESTONE", "STONE", "DIRT", "NETHERRACK", "SAND",
+							"GRAVEL", "SOUL_SAND", "BLACKSTONE", "DEEPSLATE_COBBLESTONE",
+							"OAK_PLANKS", "SPRUCE_PLANKS", "BIRCH_PLANKS"
+					})),
+					new Modifier("max-bridge-length", 30),
+					new Modifier("max-climb-height", 20),
+					new Modifier("placement-cooldown-ms", 500),
+					new Modifier("check-radius", 3.0),
+					new Modifier("enable-bridge-building", true),
+					new Modifier("enable-climbing", true),
+					new Modifier("enable-descending", true),
+					new Modifier("enable-around-obstacles", true),
+					new Modifier("ai-freeze-while-placing", true),
+					new Modifier("block-consume-on-place", true),
+					new Modifier("show-particles", true),
+					new Modifier("play-sounds", true)
+			}
 	);
 
 	private String name;

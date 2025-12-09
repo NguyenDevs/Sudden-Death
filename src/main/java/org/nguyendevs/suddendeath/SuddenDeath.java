@@ -391,6 +391,7 @@ public class SuddenDeath extends JavaPlugin {
         registerFeature(new SnowSlowFeature());
         registerFeature(new StoneStiffnessFeature());
         registerFeature(new ZombieToolsFeature());
+        registerFeature(new ZombiePlaceFeature());
     }
 
     private void registerFeature(IFeature feature) {
