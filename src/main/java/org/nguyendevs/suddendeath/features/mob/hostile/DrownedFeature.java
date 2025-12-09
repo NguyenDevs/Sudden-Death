@@ -53,45 +53,54 @@ public class DrownedFeature extends AbstractFeature {
 
             int duration = (int) (Feature.TRIDENT_WRATH.getDouble("duration") * 20);
             double speed = Feature.TRIDENT_WRATH.getDouble("speed");
-            double spinSpeed = 30.0;
+            float spinSpeed = 45.0f;
 
             drowned.getWorld().playSound(drowned.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 1.0f, 1.0f);
 
             new BukkitRunnable() {
                 int ticks = 0;
-                final Location startLoc = drowned.getLocation().clone();
-                final Vector direction = target.getLocation().add(0, 1, 0).subtract(startLoc).toVector().normalize();
+                final Vector direction = target.getLocation().add(0, 1, 0).subtract(drowned.getLocation()).toVector().normalize();
+                float currentYaw = drowned.getLocation().getYaw();
 
                 @Override
                 public void run() {
                     try {
-                        if (ticks >= duration || !drowned.isValid() || !target.isOnline()) {
+                        if (ticks >= duration || !drowned.isValid() || !target.isOnline() || drowned.isDead()) {
                             cancel();
                             return;
                         }
-
                         Vector velocity = direction.clone().multiply(speed);
-                        drowned.setVelocity(velocity);
+                        currentYaw = (currentYaw + spinSpeed) % 360;
 
-                        float pitch = (float) ((drowned.getLocation().getPitch() + spinSpeed) % 360);
-                        drowned.setRotation(drowned.getLocation().getYaw(), pitch);
+                        try {
 
-                        Location loc = drowned.getLocation().clone().add(0, 1, 0);
-                        double radius = 0.6;
-                        double particleSpinSpeed = 0.3;
-                        for (double height = -0.8; height <= 0.8; height += 0.2) {
-                            double spiralAngle = (height * Math.PI * 2) + (ticks * particleSpinSpeed);
-                            double x = Math.cos(spiralAngle) * radius;
-                            double z = Math.sin(spiralAngle) * radius;
-                            loc.getWorld().spawnParticle(Particle.WATER_SPLASH, loc.clone().add(x, height, z), 1, 0, 0, 0, 0);
-                            loc.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, loc.clone().add(x, height, z), 1, 0, 0, 0, 0);
+                            drowned.setRotation(currentYaw, 0f);
+                            drowned.setVelocity(velocity);
+
+                        } catch (NoSuchMethodError | Exception e) {
+                            Location loc = drowned.getLocation();
+                            loc.setYaw(currentYaw);
+                            loc.setPitch(0f);
+
+                            drowned.teleport(loc);
+                            drowned.setVelocity(velocity);
+                        }
+                        Location particleLoc = drowned.getLocation().clone().add(0, 1, 0);
+                        double radius = 0.7;
+                        for (int i = 0; i < 2; i++) {
+                            double angle = (ticks * 0.5) + (i * Math.PI);
+                            double x = Math.cos(angle) * radius;
+                            double z = Math.sin(angle) * radius;
+                            particleLoc.getWorld().spawnParticle(Particle.WATER_SPLASH, particleLoc.clone().add(x, 0, z), 2, 0, 0, 0, 0);
+                            particleLoc.getWorld().spawnParticle(Particle.BUBBLE_COLUMN_UP, particleLoc.clone().add(x, -0.5, z), 1, 0, 0, 0, 0.1);
                         }
 
-                        if (loc.distanceSquared(target.getLocation()) < 2.0) {
+                        if (particleLoc.distanceSquared(target.getLocation()) < 2.5) {
                             if (!Utils.hasCreativeGameMode(target)) {
                                 Utils.damage(target, Feature.TRIDENT_WRATH.getDouble("damage"), true);
                                 target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT_DROWN, 1.0f, 1.0f);
-                                target.getWorld().spawnParticle(Particle.WATER_SPLASH, target.getLocation().add(0, 1, 0), 20, 0.3, 0.3, 0.3, 0);
+                                //target.getWorld().spawnParticle(Particle.EXPLOSION, target.getLocation().add(0, 1, 0), 1);
+                                target.getWorld().spawnParticle(Particle.WATER_SPLASH, target.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
                             }
                             cancel();
                         }

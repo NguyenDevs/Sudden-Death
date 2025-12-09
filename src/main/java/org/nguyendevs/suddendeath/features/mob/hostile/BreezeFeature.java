@@ -69,7 +69,6 @@ public class BreezeFeature extends AbstractFeature {
                 }
             }
         };
-        // SỬA LỖI: Gọi runTaskTimer trả về BukkitTask rồi mới register
         registerTask(breezeLoop.runTaskTimer(plugin, 0L, 60L));
     }
 

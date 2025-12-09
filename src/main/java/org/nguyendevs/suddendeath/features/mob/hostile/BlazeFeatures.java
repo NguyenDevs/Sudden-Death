@@ -72,7 +72,7 @@ public class BlazeFeatures extends AbstractFeature {
             for (Entity entity : blaze.getNearbyEntities(10, 10, 10)) {
                 if (!(entity instanceof Player player) || Utils.hasCreativeGameMode(player) || !blaze.hasLineOfSight(player)) continue;
 
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LARGE_BLAST, 1.0f, 2.0f);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 1.0f, 2f);
                 double duration = Feature.EVERBURNING_BLAZES.getDouble("burn-duration") * 20;
                 player.setFireTicks((int) duration);
 
@@ -94,7 +94,6 @@ public class BlazeFeatures extends AbstractFeature {
     }
 
     private void applyHomingFlameBarrage(Blaze blaze) {
-        // Logic applyHomingFlameBarrage giữ nguyên như cũ
         if (blaze == null || blaze.getHealth() <= 0 || !(blaze.getTarget() instanceof Player target)) return;
         if (!target.getWorld().equals(blaze.getWorld())) return;
 
@@ -128,7 +127,14 @@ public class BlazeFeatures extends AbstractFeature {
                         double y = beamDirection.getY() * cosAngle - beamDirection.getZ() * sinAngle;
                         double z = beamDirection.getY() * sinAngle + beamDirection.getZ() * cosAngle;
                         beamDirection.setY(y).setZ(z);
-                        target.getWorld().playSound(target.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 1.0f, 1.5f);
+
+                        try {
+                            Sound breezeSound = Sound.valueOf("ENTITY_BREEZE_IDLE_AIR");
+                            target.getWorld().playSound(target.getLocation(), breezeSound, 1.0f, 1.5f);
+                        } catch (IllegalArgumentException | NullPointerException ignored) {
+
+                            target.getWorld().playSound(target.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 2.0f, 0.1f);
+                        }
 
                         shootHomingBeam(blazeEyeLoc, beamDirection, target, damage);
                         beamCount++;

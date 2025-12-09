@@ -134,7 +134,6 @@ public class SkeletonFeatures extends AbstractFeature {
         double duration = Feature.SHOCKING_SKELETON_ARROWS.getDouble("shock-duration");
         Location loc = player.getLocation();
 
-        // Smoke particles
         new BukkitRunnable() {
             double ticks = 0;
             @Override
@@ -152,7 +151,6 @@ public class SkeletonFeatures extends AbstractFeature {
             }
         }.runTaskTimer(plugin, 0, 1);
 
-        // Shaking effect
         new BukkitRunnable() {
             int ticksPassed = 0;
             @Override
@@ -170,7 +168,6 @@ public class SkeletonFeatures extends AbstractFeature {
             }
         }.runTaskTimer(plugin, 0, 2);
 
-        // Hurt sound
         new BukkitRunnable() {
             int playCount = 0;
             @Override
@@ -198,7 +195,6 @@ public class SkeletonFeatures extends AbstractFeature {
             double duration = Feature.BONE_WIZARDS.getDouble("fireball-duration");
             skeleton.getWorld().playSound(skeleton.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 2.0f, 0.0f);
 
-            // Logic Projectile
             Vector direction = target.getLocation().add(0, 0.5, 0).toVector()
                     .subtract(skeleton.getLocation().add(0, 0.75, 0).toVector()).normalize().multiply(TICK_INTERVAL);
             Location loc = skeleton.getEyeLocation();
@@ -244,6 +240,7 @@ public class SkeletonFeatures extends AbstractFeature {
         try {
             Location loc = target.getLocation();
             double radius = 4.0;
+
             new BukkitRunnable() {
                 double ticks = 0;
                 @Override
@@ -255,15 +252,22 @@ public class SkeletonFeatures extends AbstractFeature {
 
                         if (ticks > 27) {
                             loc.getWorld().playSound(loc, Sound.BLOCK_GLASS_BREAK, 2.0f, 0.0f);
+
                             for (double j = 0; j < Math.PI * 2; j += Math.PI / 36) {
                                 Location circleLoc = loc.clone().add(Math.cos(j) * radius, 0.1, Math.sin(j) * radius);
                                 loc.getWorld().spawnParticle(Particle.CLOUD, circleLoc, 0);
                             }
+
                             for (Player player : skeleton.getWorld().getPlayers()) {
                                 if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < radius * radius) {
                                     Utils.damage(player, damage, true);
+
                                     player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
                                             (int) (duration * 20), (int) amplifier));
+
+                                    int freezeTicks = 140 + (int) (duration * 20);
+                                    player.setFreezeTicks(freezeTicks);
+
                                     cancel();
                                     return;
                                 }

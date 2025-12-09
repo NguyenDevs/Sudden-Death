@@ -136,7 +136,7 @@ public class PhantomFeature extends AbstractFeature {
             double damage = Feature.PHANTOM_BLADE.getDouble("damage");
             int weaknessDuration = (int) (Feature.PHANTOM_BLADE.getDouble("weakness-duration") * 20);
             int amplifier = (int) Feature.PHANTOM_BLADE.getDouble("weakness-amplifier");
-            double speed = 1.0;
+            double speed = 1.4;
 
             phantom.getWorld().playSound(startLoc, Sound.ENTITY_BREEZE_IDLE_AIR, 2.0f, 0.8f);
             phantom.getWorld().playSound(startLoc, Sound.ITEM_TRIDENT_RIPTIDE_1, 2.0f, 1.5f);
@@ -181,7 +181,15 @@ public class PhantomFeature extends AbstractFeature {
                                 hitPlayer.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, weaknessDuration, amplifier));
 
                                 hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 1.8f);
-                                hitPlayer.getWorld().spawnParticle(Particle.SWEEP_ATTACK, hitPlayer.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0);
+                                hitPlayer.getWorld().spawnParticle(Particle.SWEEP_ATTACK, hitPlayer.getLocation().add(0, 1, 0), 1, 0.5, 0.5, 0.5, 0);
+                                try {
+                                    Particle windParticle = Particle.valueOf("GUST");
+
+                                    hitPlayer.getWorld().spawnParticle(windParticle, hitPlayer.getLocation().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0.1);
+
+                                    // hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.valueOf("ENTITY_WIND_CHARGE_WIND_BURST"), 1.0f, 1.0f);
+                                } catch (IllegalArgumentException | NullPointerException ignored) {
+                                }
 
                                 cancel();
                                 return;
