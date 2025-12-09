@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.world;
+package org.nguyendevs.suddendeath.features.world;
 
 import org.bukkit.*;
 import org.bukkit.entity.*;

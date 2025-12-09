@@ -9,7 +9,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.Feature;
@@ -49,8 +48,7 @@ public class PhantomFeature extends AbstractFeature {
                 }
             }
         };
-        phantomLoop.runTaskTimer(plugin, 0L, 20L);
-        registerTask((BukkitTask) phantomLoop);
+        registerTask(phantomLoop.runTaskTimer(plugin, 0L, 20L));
 
         BukkitRunnable hoverLoop = new BukkitRunnable() {
             @Override
@@ -65,12 +63,11 @@ public class PhantomFeature extends AbstractFeature {
                             }
                         }
                     }
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
             }
         };
-        hoverLoop.runTaskTimer(plugin, 0, 2);
-        registerTask((BukkitTask) hoverLoop);
+        registerTask(hoverLoop.runTaskTimer(plugin, 0, 2));
     }
 
     private void handlePhantomHover(Phantom phantom) {

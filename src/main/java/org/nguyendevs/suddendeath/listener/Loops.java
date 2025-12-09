@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.listener;
+/*package org.nguyendevs.suddendeath.listener;
 
 import org.bukkit.*;
 import org.bukkit.entity.*;
@@ -491,3 +491,5 @@ public final class Loops {
 		}
 	}
 }
+
+ */

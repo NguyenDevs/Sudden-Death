@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.features.mob.hostile;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -9,7 +8,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Drowned;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.Feature;
@@ -29,7 +27,7 @@ public class DrownedFeature extends AbstractFeature {
             @Override
             public void run() {
                 try {
-                    for (World world : Bukkit.getWorlds()) {
+                    for (World world : org.bukkit.Bukkit.getWorlds()) {
                         if (Feature.TRIDENT_WRATH.isEnabled(world)) {
                             for (Drowned drowned : world.getEntitiesByClass(Drowned.class)) {
                                 if (drowned.getTarget() instanceof Player)
@@ -42,8 +40,7 @@ public class DrownedFeature extends AbstractFeature {
                 }
             }
         };
-        drownedLoop.runTaskTimer(plugin, 0L, 100L);
-        registerTask((BukkitTask) drownedLoop);
+        registerTask(drownedLoop.runTaskTimer(plugin, 0L, 100L));
     }
 
     private void applyTridentWrath(Drowned drowned) {

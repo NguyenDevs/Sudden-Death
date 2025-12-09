@@ -20,7 +20,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.SuddenDeath;
-import org.nguyendevs.suddendeath.listener.MainListener;
+import org.nguyendevs.suddendeath.features.player.PlayerCoreFeature;
 import org.nguyendevs.suddendeath.util.ConfigFile;
 import org.nguyendevs.suddendeath.util.ItemUtils;
 import org.nguyendevs.suddendeath.util.MobStat;
@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.logging.Level;
 
 public class MonsterEdition extends PluginInventory {
+    // ... (Giữ nguyên các biến static và constructor)
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final int[] AVAILABLE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
     private static final String TITLE_PREFIX = "Mob Editor: ";
@@ -42,40 +43,31 @@ public class MonsterEdition extends PluginInventory {
 
     public MonsterEdition(Player player, EntityType type, String id) {
         super(player);
-        if (type == null || id == null) {
-            throw new IllegalArgumentException("EntityType and ID cannot be null");
-        }
+        if (type == null || id == null) throw new IllegalArgumentException("EntityType and ID cannot be null");
         this.type = type;
         this.id = id;
     }
 
+    // ... (Giữ nguyên getInventory, createMobStatItem, createMobStatLore)
     @Override
     public @NotNull Inventory getInventory() {
         FileConfiguration config = new ConfigFile(type).getConfig();
         Inventory inventory = Bukkit.createInventory(this, 54, translateColors(TITLE_PREFIX + id));
-
         try {
             for (MobStat stat : MobStat.values()) {
                 inventory.setItem(getAvailableSlot(inventory), createMobStatItem(stat, config));
             }
             inventory.setItem(4, createMobEggItem(config));
         } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error creating inventory for player: " + player.getName() + ", mob: " + type + ", id: " + id, e);
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error creating inventory", e);
         }
-
         return inventory;
     }
 
     private ItemStack createMobStatItem(MobStat stat, FileConfiguration config) {
         ItemStack item = stat.getNewItem().clone();
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "ItemMeta is null for mob stat: " + stat.name());
-            return item;
-        }
-
+        if (meta == null) return item;
         meta.setDisplayName(translateColors("&a" + stat.getName()));
         meta.addItemFlags(ItemFlag.values());
         meta.getPersistentDataContainer().set(Utils.nsk("mobStatId"), PersistentDataType.STRING, stat.name());
@@ -86,11 +78,8 @@ public class MonsterEdition extends PluginInventory {
 
     private List<String> createMobStatLore(MobStat stat, FileConfiguration config) {
         List<String> lore = new ArrayList<>();
-        for (String line : stat.getLore()) {
-            lore.add(translateColors("&7" + line));
-        }
+        for (String line : stat.getLore()) lore.add(translateColors("&7" + line));
         lore.add("");
-
         switch (stat.getType()) {
             case DOUBLE:
                 lore.add(translateColors("&7Current Value: &f" + config.getDouble(id + "." + stat.getPath(), 0.0)));
@@ -118,18 +107,14 @@ public class MonsterEdition extends PluginInventory {
         String format = Utils.caseOnWords(deserialized.getType().name().toLowerCase().replace("_", " "));
         format += (deserialized.getAmount() > 0 ? " x" + deserialized.getAmount() : "");
         lore.add(translateColors("&b" + format));
-
         if (deserialized.hasItemMeta() && deserialized.getItemMeta() != null) {
             if (deserialized.getType().name().startsWith("LEATHER_")) {
                 LeatherArmorMeta leatherMeta = (LeatherArmorMeta) deserialized.getItemMeta();
-                if (leatherMeta.getColor() != null) {
-                    lore.add(translateColors("&b* Dye color: " + leatherMeta.getColor().asRGB()));
-                }
+                if (leatherMeta.getColor() != null) lore.add(translateColors("&b* Dye color: " + leatherMeta.getColor().asRGB()));
             }
             if (deserialized.getItemMeta().hasEnchants()) {
                 for (Enchantment ench : deserialized.getItemMeta().getEnchants().keySet()) {
-                    lore.add(translateColors("&b* " + Utils.caseOnWords(ench.getKey().getKey().replace("_", " ")) +
-                            " " + deserialized.getItemMeta().getEnchantLevel(ench)));
+                    lore.add(translateColors("&b* " + Utils.caseOnWords(ench.getKey().getKey().replace("_", " ")) + " " + deserialized.getItemMeta().getEnchantLevel(ench)));
                 }
             }
         }
@@ -158,12 +143,7 @@ public class MonsterEdition extends PluginInventory {
     private ItemStack createMobEggItem(FileConfiguration config) {
         ItemStack egg = new ItemStack(Material.CREEPER_SPAWN_EGG);
         ItemMeta meta = egg.getItemMeta();
-        if (meta == null) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "ItemMeta is null for mob egg: " + type);
-            return egg;
-        }
-
+        if (meta == null) return egg;
         String name = config.getString(id + ".name", id);
         meta.setDisplayName(translateColors("&a" + (name.isEmpty() ? id : name)));
         List<String> lore = new ArrayList<>();
@@ -173,6 +153,7 @@ public class MonsterEdition extends PluginInventory {
         return egg;
     }
 
+    // ... (Giữ nguyên whenClicked, handleDoubleOrStringStat)
     @Override
     public void whenClicked(InventoryClickEvent event) {
         Inventory clickedInv = event.getClickedInventory();
@@ -189,22 +170,15 @@ public class MonsterEdition extends PluginInventory {
             }
         }
         ItemStack item = event.getCurrentItem();
-        if (item == null || !Utils.isPluginItem(item, false)) {
-            return;
-        }
+        if (item == null || !Utils.isPluginItem(item, false)) return;
         ItemMeta meta = item.getItemMeta();
-        if (meta == null || meta.getDisplayName().isEmpty()) {
-            return;
-        }
+        if (meta == null || meta.getDisplayName().isEmpty()) return;
         String tag = meta.getPersistentDataContainer().get(Utils.nsk("mobStatId"), PersistentDataType.STRING);
-        if (tag == null || tag.isEmpty()) {
-            return;
-        }
+        if (tag == null || tag.isEmpty()) return;
         event.setCancelled(true);
         try {
             MobStat stat = MobStat.valueOf(tag);
             ConfigFile config = new ConfigFile(type);
-
             switch (stat.getType()) {
                 case DOUBLE:
                 case STRING:
@@ -218,9 +192,7 @@ public class MonsterEdition extends PluginInventory {
                     break;
             }
         } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error handling InventoryClickEvent for player: " + player.getName() + ", mob: " + type + ", id: " + id, e);
-            player.sendMessage(translateColors(PREFIX + " " + "&cAn error occurred while processing your action."));
+            player.sendMessage(translateColors(PREFIX + " " + "&cAn error occurred."));
         }
     }
 
@@ -236,7 +208,8 @@ public class MonsterEdition extends PluginInventory {
             ItemStack cursorItem = event.getCursor();
             if (cursorItem != null && cursorItem.getType() != Material.AIR) {
                 String serialized = ItemUtils.serialize(cursorItem);
-                MainListener.cancelNextDrop(player);
+                // CHANGE HERE: Use PlayerCoreFeature instead of MainListener
+                PlayerCoreFeature.cancelNextDrop(player);
                 config.getConfig().set(id + "." + stat.getPath(), serialized);
                 config.save();
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
@@ -290,28 +263,17 @@ public class MonsterEdition extends PluginInventory {
             public void run() {
                 try {
                     player.sendMessage(translateColors("&f► &eType 'cancel' to abort editing the mob."));
-                } catch (Exception e) {
-                    SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                            "Error sending chat prompt for player: " + player.getName(), e);
-                }
+                } catch (Exception e) {}
             }
         }.runTaskLater(SuddenDeath.getInstance(), 0);
     }
 
     private int getAvailableSlot(Inventory inventory) {
         for (int slot : AVAILABLE_SLOTS) {
-            if (inventory.getItem(slot) == null) {
-                return slot;
-            }
+            if (inventory.getItem(slot) == null) return slot;
         }
         return -1;
     }
-
-    private boolean isAvailableSlot(int slot) {
-        return Arrays.stream(AVAILABLE_SLOTS).anyMatch(s -> s == slot);
-    }
-
-    private String translateColors(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
-    }
+    private boolean isAvailableSlot(int slot) { return Arrays.stream(AVAILABLE_SLOTS).anyMatch(s -> s == slot); }
+    private String translateColors(String message) { return ChatColor.translateAlternateColorCodes('&', message); }
 }

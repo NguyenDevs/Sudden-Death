@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.world;
+package org.nguyendevs.suddendeath.features.world;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;

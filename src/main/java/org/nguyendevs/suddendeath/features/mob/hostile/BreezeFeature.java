@@ -7,7 +7,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -21,8 +21,8 @@ import java.util.logging.Level;
 public class BreezeFeature extends AbstractFeature {
 
     private boolean isSupported;
-    private EntityType breezeType;
-    private EntityType windChargeType;
+    private String breezeTypeName = "BREEZE";
+    private String windChargeTypeName = "WIND_CHARGE";
 
     @Override
     public String getName() {
@@ -32,8 +32,7 @@ public class BreezeFeature extends AbstractFeature {
     @Override
     public void initialize(org.nguyendevs.suddendeath.SuddenDeath plugin) {
         try {
-            this.breezeType = EntityType.valueOf("BREEZE");
-            this.windChargeType = EntityType.valueOf("WIND_CHARGE");
+            EntityType.valueOf(breezeTypeName);
             this.isSupported = true;
         } catch (IllegalArgumentException e) {
             plugin.getLogger().info("Breeze feature disabled (requires 1.21+).");
@@ -54,10 +53,12 @@ public class BreezeFeature extends AbstractFeature {
                     for (World world : org.bukkit.Bukkit.getWorlds()) {
                         if (Feature.BREEZE_DASH.isEnabled(world)) {
                             for (Entity entity : world.getEntities()) {
-                                if (entity.getType() == breezeType) {
-                                    LivingEntity breeze = (LivingEntity) entity;
-                                    if (breeze.getTarget() instanceof Player) {
-                                        applyBreezeDash(breeze, (Player) breeze.getTarget());
+                                if (entity.getType().name().equals(breezeTypeName)) {
+                                    if (entity instanceof Mob) {
+                                        Mob breeze = (Mob) entity;
+                                        if (breeze.getTarget() instanceof Player) {
+                                            applyBreezeDash(breeze, (Player) breeze.getTarget());
+                                        }
                                     }
                                 }
                             }
@@ -68,11 +69,14 @@ public class BreezeFeature extends AbstractFeature {
                 }
             }
         };
-        // Fix: get BukkitTask from runTaskTimer then register
+        // SỬA LỖI: Gọi runTaskTimer trả về BukkitTask rồi mới register
         registerTask(breezeLoop.runTaskTimer(plugin, 0L, 60L));
     }
 
-    private void applyBreezeDash(LivingEntity breeze, Player target) {
+    private void applyBreezeDash(Mob breeze, Player target) {
+        if (breeze == null || breeze.getHealth() <= 0 || !target.isOnline()) return;
+        if (!target.getWorld().equals(breeze.getWorld())) return;
+
         try {
             double chance = Feature.BREEZE_DASH.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() <= chance) {
@@ -88,17 +92,21 @@ public class BreezeFeature extends AbstractFeature {
                 breeze.setVelocity(breeze.getVelocity().setY(0));
                 breeze.setGravity(true);
 
-                final double[] previousY = {breeze.getLocation().getY()};
-
                 new BukkitRunnable() {
                     int shots = 0;
                     @Override
                     public void run() {
                         try {
+                            if (breeze.isDead() || !target.isOnline()) {
+                                cancel();
+                                return;
+                            }
                             if (shots < Feature.BREEZE_DASH.getDouble("shoot-amount")) {
                                 Location breezeLoc = breeze.getLocation();
                                 Vector direction = target.getLocation().subtract(breezeLoc).toVector().normalize();
-                                Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), windChargeType);
+
+                                // Dùng string name để spawn WindCharge
+                                Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), EntityType.valueOf(windChargeTypeName));
                                 windCharge.setVelocity(direction.multiply(1.5));
 
                                 new BukkitRunnable() {
@@ -136,12 +144,7 @@ public class BreezeFeature extends AbstractFeature {
                             if (breeze.isValid() && !breeze.isDead()) {
                                 Location loc = breeze.getLocation().add(0, 0.5, 0);
                                 Vector velocity = breeze.getVelocity().normalize();
-                                double currentY = breeze.getLocation().getY();
 
-                                if (currentY > previousY[0] + 0.1) {
-                                    breeze.setVelocity(breeze.getVelocity().setY(-0.2));
-                                }
-                                previousY[0] = currentY;
 
                                 if (velocity.lengthSquared() > 0.1 && ticks < duration * 20) {
                                     Location trailLoc = loc.subtract(velocity.multiply(0.5));

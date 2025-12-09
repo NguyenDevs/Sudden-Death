@@ -1,9 +1,7 @@
 package org.nguyendevs.suddendeath.features.mob.hostile;
-import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.util.Vector;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.Feature;

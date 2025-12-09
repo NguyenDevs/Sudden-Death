@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.features.mob.hostile;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -11,7 +10,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.Feature;
@@ -31,7 +29,7 @@ public class GuardianFeature extends AbstractFeature {
             @Override
             public void run() {
                 try {
-                    for (World world : Bukkit.getWorlds()) {
+                    for (World world : org.bukkit.Bukkit.getWorlds()) {
                         if (Feature.ABYSSAL_VORTEX.isEnabled(world)) {
                             for (Guardian guardian : world.getEntitiesByClass(Guardian.class)) {
                                 if (guardian.getTarget() instanceof Player)
@@ -44,8 +42,7 @@ public class GuardianFeature extends AbstractFeature {
                 }
             }
         };
-        guardianLoop.runTaskTimer(plugin, 0L, 80L);
-        registerTask((BukkitTask) guardianLoop);
+        registerTask(guardianLoop.runTaskTimer(plugin, 0L, 80L));
     }
 
     private void applyAbyssalVortex(Guardian guardian) {
@@ -63,11 +60,10 @@ public class GuardianFeature extends AbstractFeature {
             final Location fixedTargetLoc = target.getLocation().clone();
             final Vector fixedDirection = fixedTargetLoc.toVector().subtract(fixedGuardianLoc.toVector()).normalize();
             final double vortexLength = 20;
-            final World world = guardian.getWorld();
 
             guardian.setAI(false);
             guardian.setInvulnerable(true);
-            world.playSound(fixedGuardianLoc, Sound.BLOCK_CONDUIT_ACTIVATE, 1.0f, 1.0f);
+            guardian.getWorld().playSound(fixedGuardianLoc, Sound.BLOCK_CONDUIT_ACTIVATE, 1.0f, 1.0f);
 
             new BukkitRunnable() {
                 int ticks = 0;
@@ -102,13 +98,13 @@ public class GuardianFeature extends AbstractFeature {
                                     double x = Math.cos(spiralAngle) * currentRadius;
                                     double y = Math.sin(spiralAngle) * currentRadius;
                                     Vector spiralOffset = axis1.clone().multiply(x).add(axis2.clone().multiply(y));
-                                    world.spawnParticle(Particle.WATER_BUBBLE, fixedGuardianLoc.clone().add(fixedDirection.clone().multiply(distance)).add(spiralOffset), 1, 0, 0, 0, 0);
+                                    guardian.getWorld().spawnParticle(Particle.WATER_BUBBLE, fixedGuardianLoc.clone().add(fixedDirection.clone().multiply(distance)).add(spiralOffset), 1, 0, 0, 0, 0);
                                 }
                             }
                         }
 
                         double searchRadius = Math.max(maxRadius + 2, vortexLength);
-                        for (Entity entity : world.getNearbyEntities(fixedGuardianLoc, searchRadius, searchRadius, searchRadius)) {
+                        for (Entity entity : guardian.getWorld().getNearbyEntities(fixedGuardianLoc, searchRadius, searchRadius, searchRadius)) {
                             if (!(entity instanceof Player player) || Utils.hasCreativeGameMode(player)) continue;
                             Location playerLoc = player.getLocation();
                             Vector toPlayer = playerLoc.toVector().subtract(fixedGuardianLoc.toVector());
@@ -129,12 +125,12 @@ public class GuardianFeature extends AbstractFeature {
 
                                 if (ticks % 40 == 0) {
                                     player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int) (RANDOM.nextDouble() * 40 + 60), 1));
-                                    world.playSound(playerLoc, Sound.ENTITY_PLAYER_HURT_DROWN, 0.8f, 1.2f);
+                                    guardian.getWorld().playSound(playerLoc, Sound.ENTITY_PLAYER_HURT_DROWN, 0.8f, 1.2f);
                                 }
                                 if (playerLoc.distance(fixedGuardianLoc) <= 2.5) {
                                     Utils.damage(player, 2.0, true);
-                                    world.spawnParticle(Particle.WATER_SPLASH, playerLoc.add(0, 1, 0), 5, 0.2, 0.2, 0.2, 0);
-                                    world.playSound(playerLoc, Sound.ENTITY_PLAYER_HURT_DROWN, 0.8f, 0.9f);
+                                    guardian.getWorld().spawnParticle(Particle.WATER_SPLASH, playerLoc.add(0, 1, 0), 5, 0.2, 0.2, 0.2, 0);
+                                    guardian.getWorld().playSound(playerLoc, Sound.ENTITY_PLAYER_HURT_DROWN, 0.8f, 0.9f);
                                 }
                             }
                         }

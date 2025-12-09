@@ -16,29 +16,29 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.Feature;
-import org.nguyendevs.suddendeath.listener.Loops;
 import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import java.util.*;
-        import java.util.logging.Level;
+import java.util.logging.Level;
 
 public class ZombieFeatures extends AbstractFeature {
 
     private final Map<UUID, BukkitRunnable> activeBreakingTasks = new HashMap<>();
+    private static final double TICK_INTERVAL = 0.5;
+    private static final int MAX_TICKS = 20;
 
     @Override
     public String getName() {
-        return "Zombie Features (Undead Gunners + Rage + Break Block)";
+        return "Zombie Features";
     }
 
     @Override
     protected void onEnable() {
-        // Undead Gunners loop
-        BukkitRunnable gunnerLoop = new BukkitRunnable() {
+        // Undead Gunners Loop
+        registerTask(new BukkitRunnable() {
             @Override
             public void run() {
                 try {
@@ -46,7 +46,7 @@ public class ZombieFeatures extends AbstractFeature {
                         if (Feature.UNDEAD_GUNNERS.isEnabled(world)) {
                             for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
                                 if (zombie.getTarget() instanceof Player && isUndeadGunner(zombie)) {
-                                    Loops.loop3s_zombie(zombie);
+                                    loop3s_zombie(zombie);
                                 }
                             }
                         }
@@ -55,12 +55,10 @@ public class ZombieFeatures extends AbstractFeature {
                     plugin.getLogger().log(Level.WARNING, "Error in Undead Gunners loop", e);
                 }
             }
-        };
-        gunnerLoop.runTaskTimer(plugin, 20L, 60L);
-        registerTask((BukkitTask) gunnerLoop);
+        }.runTaskTimer(plugin, 20L, 60L));
 
-        // Zombie Break Block loop
-        BukkitRunnable breakLoop = new BukkitRunnable() {
+        // Zombie Break Block Loop
+        registerTask(new BukkitRunnable() {
             @Override
             public void run() {
                 try {
@@ -78,9 +76,7 @@ public class ZombieFeatures extends AbstractFeature {
                     plugin.getLogger().log(Level.WARNING, "Error in Zombie Break Block loop", e);
                 }
             }
-        };
-        breakLoop.runTaskTimer(plugin, 0, 20);
-        registerTask((BukkitTask) breakLoop);
+        }.runTaskTimer(plugin, 0, 20));
     }
 
     @Override
@@ -119,6 +115,55 @@ public class ZombieFeatures extends AbstractFeature {
 
     private boolean isUndeadGunner(Zombie zombie) {
         return zombie.getCustomName() != null && zombie.getCustomName().equalsIgnoreCase("Undead Gunner");
+    }
+
+    private void loop3s_zombie(Zombie zombie) {
+        if (zombie == null || zombie.getHealth() <= 0 || zombie.getTarget() == null || !(zombie.getTarget() instanceof Player target)) return;
+        try {
+            if (!target.getWorld().equals(zombie.getWorld())) return;
+
+            double damage = Feature.UNDEAD_GUNNERS.getDouble("damage");
+            zombie.getWorld().playSound(zombie.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 0.0f);
+
+            // Logic projectile nội bộ
+            Vector direction = target.getLocation().add(0, 0.5, 0).toVector()
+                    .subtract(zombie.getLocation().add(0, 0.75, 0).toVector()).normalize().multiply(TICK_INTERVAL);
+            Location loc = zombie.getEyeLocation();
+
+            new BukkitRunnable() {
+                double ticks = 0;
+                @Override
+                public void run() {
+                    try {
+                        for (int j = 0; j < 2; j++) {
+                            ticks += TICK_INTERVAL;
+                            loc.add(direction);
+                            loc.getWorld().spawnParticle(Particle.CLOUD, loc, 4, 0.1, 0.1, 0.1, 0);
+
+                            for (Player player : zombie.getWorld().getPlayers()) {
+                                if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 2.3 * 2.3) {
+                                    loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 0);
+                                    loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
+                                    // Utils.damage(player, damage, true);
+                                    // Sửa lại: Dùng damage method của Feature cũ
+                                    player.damage(damage);
+
+                                    double blockDmg = Feature.UNDEAD_GUNNERS.getDouble("block-damage");
+                                    if (blockDmg > 0) {
+                                        zombie.getWorld().createExplosion(zombie.getLocation(), (float) blockDmg);
+                                    }
+                                    cancel();
+                                    return;
+                                }
+                            }
+                        }
+                        if (ticks > MAX_TICKS) cancel();
+                    } catch (Exception e) { cancel(); }
+                }
+            }.runTaskTimer(plugin, 0, 1);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error in Zombie loop for entity: " + zombie.getUniqueId(), e);
+        }
     }
 
     private void applyZombieBreakBlock(Zombie zombie) {
@@ -211,7 +256,6 @@ public class ZombieFeatures extends AbstractFeature {
                         return;
                     }
 
-                    // Break the block
                     zombie.swingMainHand();
                     Sound breakSound = block.getType().createBlockData().getSoundGroup().getBreakSound();
                     zombie.getWorld().playSound(block.getLocation(), breakSound, 0.8f, 1.0f);
@@ -224,7 +268,6 @@ public class ZombieFeatures extends AbstractFeature {
                     activeBreakingTasks.remove(zombieUUID);
                     cancel();
 
-                    // Schedule next break
                     Bukkit.getScheduler().runTaskLater(plugin,
                             () -> applyZombieBreakBlock(zombie), 10 + RANDOM.nextInt(10));
 
@@ -282,28 +325,19 @@ public class ZombieFeatures extends AbstractFeature {
 
     private boolean canBreakBlock(Material tool, Material block) {
         if (block.getHardness() < 0) return false;
-
         String modifierKey;
-        if (isPickaxe(tool)) {
-            modifierKey = "breakable-pickaxe-blocks";
-        } else if (isShovel(tool)) {
-            modifierKey = "breakable-shovel-blocks";
-        } else if (isAxe(tool)) {
-            modifierKey = "breakable-axe-blocks";
-        } else {
-            return false;
-        }
+        if (isPickaxe(tool)) modifierKey = "breakable-pickaxe-blocks";
+        else if (isShovel(tool)) modifierKey = "breakable-shovel-blocks";
+        else if (isAxe(tool)) modifierKey = "breakable-axe-blocks";
+        else return false;
 
         String blockListString = Feature.ZOMBIE_BREAK_BLOCK.getString(modifierKey);
         if (blockListString == null || blockListString.isEmpty()) return false;
 
         Set<Material> breakableBlocks = new HashSet<>();
-        String[] blockNames = blockListString.split(",");
-        for (String blockName : blockNames) {
+        for (String blockName : blockListString.split(",")) {
             Material material = Material.getMaterial(blockName.trim().toUpperCase());
-            if (material != null) {
-                breakableBlocks.add(material);
-            }
+            if (material != null) breakableBlocks.add(material);
         }
 
         if (isPickaxe(tool) && block == Material.OBSIDIAN &&
@@ -317,7 +351,6 @@ public class ZombieFeatures extends AbstractFeature {
     private double calculateBreakTime(Material tool, Material block) {
         float blockHardness = block.getHardness();
         if (blockHardness < 0) return -1;
-
         float toolMultiplier = switch (tool) {
             case WOODEN_PICKAXE, WOODEN_SHOVEL, WOODEN_AXE -> 2.0f;
             case GOLDEN_PICKAXE, GOLDEN_SHOVEL, GOLDEN_AXE -> 12.0f;

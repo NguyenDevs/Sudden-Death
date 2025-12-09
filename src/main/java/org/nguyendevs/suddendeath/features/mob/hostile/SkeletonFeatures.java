@@ -17,7 +17,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.Feature;
@@ -37,7 +36,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        BukkitRunnable skeletonLoop = new BukkitRunnable() {
+        registerTask(new BukkitRunnable() {
             @Override
             public void run() {
                 try {
@@ -54,8 +53,7 @@ public class SkeletonFeatures extends AbstractFeature {
                     plugin.getLogger().log(Level.WARNING, "Error in Skeleton loop", e);
                 }
             }
-        };
-        registerTask(skeletonLoop.runTaskTimer(plugin, 20L, 60L));
+        }.runTaskTimer(plugin, 20L, 60L));
     }
 
     @EventHandler
@@ -199,21 +197,11 @@ public class SkeletonFeatures extends AbstractFeature {
             double damage = Feature.BONE_WIZARDS.getDouble("fireball-damage");
             double duration = Feature.BONE_WIZARDS.getDouble("fireball-duration");
             skeleton.getWorld().playSound(skeleton.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 2.0f, 0.0f);
-            launchProjectile(skeleton, target, Particle.FLAME, Particle.LAVA, damage, duration, Sound.ENTITY_GENERIC_EXPLODE);
-        } else {
-            double damage = Feature.BONE_WIZARDS.getDouble("frost-curse-damage");
-            double duration = Feature.BONE_WIZARDS.getDouble("frost-curse-duration");
-            double amplifier = Feature.BONE_WIZARDS.getDouble("frost-curse-amplifier");
-            applyFrostCurse(skeleton, target, damage, duration, amplifier);
-        }
-    }
 
-    private void launchProjectile(org.bukkit.entity.LivingEntity entity, Player target, Particle primary, Particle secondary,
-                                  double damage, double duration, Sound hitSound) {
-        try {
+            // Logic Projectile
             Vector direction = target.getLocation().add(0, 0.5, 0).toVector()
-                    .subtract(entity.getLocation().add(0, 0.75, 0).toVector()).normalize().multiply(TICK_INTERVAL);
-            Location loc = entity.getEyeLocation();
+                    .subtract(skeleton.getLocation().add(0, 0.75, 0).toVector()).normalize().multiply(TICK_INTERVAL);
+            Location loc = skeleton.getEyeLocation();
 
             new BukkitRunnable() {
                 double ticks = 0;
@@ -223,15 +211,13 @@ public class SkeletonFeatures extends AbstractFeature {
                         for (int j = 0; j < 2; j++) {
                             ticks += TICK_INTERVAL;
                             loc.add(direction);
-                            loc.getWorld().spawnParticle(primary, loc, 4, 0.1, 0.1, 0.1, 0);
-                            if (secondary != null) {
-                                loc.getWorld().spawnParticle(secondary, loc, 0);
-                            }
+                            loc.getWorld().spawnParticle(Particle.FLAME, loc, 4, 0.1, 0.1, 0.1, 0);
+                            loc.getWorld().spawnParticle(Particle.LAVA, loc, 0);
 
-                            for (Player player : entity.getWorld().getPlayers()) {
+                            for (Player player : skeleton.getWorld().getPlayers()) {
                                 if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 1.7 * 1.7) {
                                     loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 0);
-                                    loc.getWorld().playSound(loc, hitSound, 1.0f, 1.0f);
+                                    loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
                                     Utils.damage(player, damage, true);
                                     if (duration > 0) {
                                         player.setFireTicks((int) (duration * 20));
@@ -241,16 +227,16 @@ public class SkeletonFeatures extends AbstractFeature {
                                 }
                             }
                         }
-                        if (ticks > MAX_TICKS) {
-                            cancel();
-                        }
-                    } catch (Exception e) {
-                        cancel();
-                    }
+                        if (ticks > MAX_TICKS) cancel();
+                    } catch (Exception e) { cancel(); }
                 }
             }.runTaskTimer(plugin, 0, 1);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error launching projectile", e);
+
+        } else {
+            double damage = Feature.BONE_WIZARDS.getDouble("frost-curse-damage");
+            double duration = Feature.BONE_WIZARDS.getDouble("frost-curse-duration");
+            double amplifier = Feature.BONE_WIZARDS.getDouble("frost-curse-amplifier");
+            applyFrostCurse(skeleton, target, damage, duration, amplifier);
         }
     }
 
@@ -284,9 +270,7 @@ public class SkeletonFeatures extends AbstractFeature {
                             }
                             cancel();
                         }
-                    } catch (Exception e) {
-                        cancel();
-                    }
+                    } catch (Exception e) { cancel(); }
                 }
             }.runTaskTimer(plugin, 0, 1);
         } catch (Exception e) {

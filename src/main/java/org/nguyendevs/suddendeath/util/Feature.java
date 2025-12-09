@@ -6,9 +6,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.nguyendevs.suddendeath.SuddenDeath;
+import org.nguyendevs.suddendeath.features.world.*;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.Modifier.Type;
-import org.nguyendevs.suddendeath.world.*;
 
 import java.io.File;
 import java.util.*;

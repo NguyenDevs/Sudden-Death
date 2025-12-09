@@ -1,7 +1,6 @@
 package org.nguyendevs.suddendeath.features.items;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.entity.EnderPearl;
@@ -49,6 +48,7 @@ public class PhysicEnderPearlFeature extends AbstractFeature {
             allowed.remove(player.getUniqueId());
             if (Feature.PHYSIC_ENDER_PEARL.isEnabled(player.getWorld())) {
                 player.getWorld().playSound(event.getFrom(), Sound.BLOCK_SCULK_CATALYST_BLOOM, 1.0f, 1.0f);
+                assert event.getTo() != null;
                 player.getWorld().playSound(event.getTo(), Sound.BLOCK_SCULK_CATALYST_BLOOM, 1.0f, 1.0f);
             }
         } catch (Exception e) {

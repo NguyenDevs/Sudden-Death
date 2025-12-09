@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.listener;
+/*package org.nguyendevs.suddendeath.listener;
 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -1805,3 +1805,5 @@ public class Listener3 implements Listener {
         return blockHardness * 1.5f / toolMultiplier * 20.0;
     }
 }
+
+ */

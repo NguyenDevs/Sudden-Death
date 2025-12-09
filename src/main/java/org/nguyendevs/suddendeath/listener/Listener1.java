@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.listener;
+/*package org.nguyendevs.suddendeath.listener;
 
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
@@ -25,6 +25,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import org.nguyendevs.suddendeath.listener.Loops;
 import org.nguyendevs.suddendeath.util.*;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
@@ -799,3 +800,5 @@ public class Listener1 implements Listener {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
 }
+
+ */

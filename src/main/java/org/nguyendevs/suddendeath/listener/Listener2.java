@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.listener;
+/*package org.nguyendevs.suddendeath.listener;
 
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -21,6 +21,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.nguyendevs.suddendeath.listener.Loops;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.player.ExperienceCalculator;
@@ -438,3 +439,5 @@ public class Listener2 implements Listener {
 		return ChatColor.translateAlternateColorCodes('&', message);
 	}
 }
+
+ */

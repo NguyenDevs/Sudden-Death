@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.listener;
+/*package org.nguyendevs.suddendeath.listener;
 
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.bukkit.entity.Player;
@@ -127,3 +127,5 @@ public class MainListener implements Listener {
         }
     }
 }
+
+ */
