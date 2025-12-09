@@ -25,14 +25,14 @@ import java.util.logging.Level;
 public class ZombiePlaceFeature extends AbstractFeature {
 
     private final Map<UUID, PathfinderData> zombiePathData = new ConcurrentHashMap<>();
+    // Map này lưu BukkitTask để có thể cancel khi cần
     private final Map<UUID, BukkitTask> activePlacingTasks = new ConcurrentHashMap<>();
     private final Map<Location, Long> recentlyPlacedBlocks = new ConcurrentHashMap<>();
     private final Map<UUID, Long> zombiePlaceCooldown = new ConcurrentHashMap<>();
     private final Set<UUID> zombiesWithCustomAI = ConcurrentHashMap.newKeySet();
     private Set<Material> placeableBlocks;
 
-    private static final double MAX_TARGET_DISTANCE = 150.0;
-    private static final double MAX_TARGET_DISTANCE_SQUARED = MAX_TARGET_DISTANCE * MAX_TARGET_DISTANCE;
+    private static final double MAX_TARGET_DISTANCE_SQUARED = 150.0 * 150.0;
 
     @Override
     public String getName() {
@@ -41,10 +41,8 @@ public class ZombiePlaceFeature extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        // Load placeable blocks from config
         loadPlaceableBlocks();
 
-        // Main pathfinding and placing task
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {
@@ -52,11 +50,7 @@ public class ZombiePlaceFeature extends AbstractFeature {
                     for (World world : Bukkit.getWorlds()) {
                         if (Feature.ZOMBIE_PLACE_BLOCK.isEnabled(world)) {
                             List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));
-
-                            for (int i = 0; i < zombies.size(); i++) {
-                                final Zombie zombie = zombies.get(i);
-                                final long delay = i; // tick delay for stagger
-
+                            for (Zombie zombie : zombies) {
                                 Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
                                     try {
                                         if (zombie.isValid() && zombie.getTarget() instanceof Player) {
@@ -65,7 +59,7 @@ public class ZombiePlaceFeature extends AbstractFeature {
                                     } catch (Exception e) {
                                         plugin.getLogger().log(Level.WARNING, "Error processing zombie placement", e);
                                     }
-                                }, delay);
+                                }, 0L);
                             }
                         }
                     }
@@ -73,9 +67,8 @@ public class ZombiePlaceFeature extends AbstractFeature {
                     plugin.getLogger().log(Level.WARNING, "Error in Zombie Place task", e);
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L));
+        }.runTaskTimer(plugin, 0L, 10L));
 
-        // Cleanup old data
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {
@@ -91,101 +84,98 @@ public class ZombiePlaceFeature extends AbstractFeature {
         zombiePathData.clear();
         recentlyPlacedBlocks.clear();
         zombiePlaceCooldown.clear();
-
         for (UUID uuid : zombiesWithCustomAI) {
             Entity entity = Bukkit.getEntity(uuid);
-            if (entity instanceof Zombie zombie) {
-                removeCustomAI(zombie);
-            }
+            if (entity instanceof Zombie zombie) removeCustomAI(zombie);
         }
         zombiesWithCustomAI.clear();
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntityDeath(EntityDeathEvent event) {
-        if (event.getEntity() instanceof Zombie zombie) {
-            cleanupZombie(zombie);
-        }
+        if (event.getEntity() instanceof Zombie zombie) cleanupZombie(zombie);
     }
 
     private void loadPlaceableBlocks() {
         placeableBlocks = new HashSet<>();
         String blocksStr = Feature.ZOMBIE_PLACE_BLOCK.getString("placeable-blocks");
-
         if (blocksStr != null && !blocksStr.isEmpty()) {
             for (String materialName : blocksStr.split(",")) {
                 try {
                     Material material = Material.valueOf(materialName.trim().toUpperCase());
-                    if (material.isBlock() && material.isSolid()) {
-                        placeableBlocks.add(material);
-                    }
-                } catch (IllegalArgumentException e) {
-                    plugin.getLogger().warning("Invalid material in placeable-blocks: " + materialName);
-                }
+                    if (material.isBlock() && material.isSolid()) placeableBlocks.add(material);
+                } catch (IllegalArgumentException ignored) {}
             }
         }
-
-        // Default blocks if config is empty
         if (placeableBlocks.isEmpty()) {
-            placeableBlocks.addAll(Arrays.asList(
-                    Material.COBBLESTONE, Material.STONE, Material.DIRT,
-                    Material.NETHERRACK, Material.SAND, Material.GRAVEL
-            ));
+            placeableBlocks.addAll(Arrays.asList(Material.COBBLESTONE, Material.STONE, Material.DIRT, Material.NETHERRACK));
         }
     }
 
     private void processZombiePlacement(Zombie zombie) {
         UUID zombieUUID = zombie.getUniqueId();
 
-        // Check cooldown from config
-        long cooldownMs = (long) Feature.ZOMBIE_PLACE_BLOCK.getDouble("placement-cooldown-ms");
+        long cooldownMs = 100;
         Long lastPlace = zombiePlaceCooldown.get(zombieUUID);
-        long now = System.currentTimeMillis();
-        if (lastPlace != null && now - lastPlace < cooldownMs) {
-            return;
-        }
+        if (lastPlace != null && System.currentTimeMillis() - lastPlace < cooldownMs) return;
 
-        // Ensure zombie has custom AI for safe placement if enabled
-        if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("ai-freeze-while-placing") &&
-                !zombiesWithCustomAI.contains(zombieUUID)) {
+        if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("ai-freeze-while-placing") && !zombiesWithCustomAI.contains(zombieUUID)) {
             Bukkit.getScheduler().runTask(plugin, () -> injectCustomAI(zombie));
             zombiesWithCustomAI.add(zombieUUID);
         }
 
         if (!(zombie.getTarget() instanceof Player target)) return;
-        if (!plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(), CustomFlag.SDS_PLACE))
-            return;
-
+        if (!plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(), CustomFlag.SDS_PLACE)) return;
         if (activePlacingTasks.containsKey(zombieUUID)) return;
+
+        ItemStack heldItem = getPlaceableBlocks(zombie);
+        if (heldItem == null || heldItem.getType() == Material.AIR) {
+            Bukkit.getScheduler().runTask(plugin, () -> tryAcquireBlock(zombie));
+            return;
+        }
 
         Bukkit.getScheduler().runTask(plugin, () -> analyzeAndPlace(zombie, target));
     }
 
+    private void tryAcquireBlock(Zombie zombie) {
+        List<Entity> nearbyEntities = zombie.getNearbyEntities(3, 2, 3);
+        for (Entity entity : nearbyEntities) {
+            if (entity instanceof Item itemEntity) {
+                ItemStack stack = itemEntity.getItemStack();
+                if (placeableBlocks.contains(stack.getType())) {
+                    zombie.getEquipment().setItemInMainHand(stack);
+                    zombie.getWorld().playSound(zombie.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+                    itemEntity.remove();
+                    return;
+                }
+            }
+        }
+
+        if (zombie.isOnGround()) {
+            Block blockBelow = zombie.getLocation().getBlock().getRelative(BlockFace.DOWN);
+            Material type = blockBelow.getType();
+            if (placeableBlocks.contains(type) && type != Material.BEDROCK && type != Material.OBSIDIAN) {
+                zombie.getEquipment().setItemInMainHand(new ItemStack(type, 64));
+                zombie.getWorld().playEffect(blockBelow.getLocation(), Effect.STEP_SOUND, type);
+                zombie.getWorld().playSound(zombie.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 0.5f, 0.5f);
+            }
+        }
+    }
+
     private void analyzeAndPlace(Zombie zombie, Player target) {
         UUID zombieUUID = zombie.getUniqueId();
-        Location zombieLoc = zombie.getLocation();
         Location targetLoc = target.getLocation();
-
         ItemStack blocks = getPlaceableBlocks(zombie);
+
         if (blocks == null || blocks.getType() == Material.AIR) return;
-        if (!placeableBlocks.contains(blocks.getType())) return;
 
         PathfinderData pathData = zombiePathData.computeIfAbsent(zombieUUID, k -> new PathfinderData());
-
         PlacementSituation situation = analyzeSituation(zombie, target, pathData);
 
         if (situation.needsPlacement) {
             Location placeLocation = situation.placeLocation;
-            BlockFace placeFace = situation.placeFace;
-
-            // Check block place cooldown from config
-            long blockCooldownMs = (long) Feature.ZOMBIE_PLACE_BLOCK.getDouble("placement-cooldown-ms") * 2;
-            if (wasRecentlyPlaced(placeLocation, blockCooldownMs)) return;
-
-            executePlacement(zombie, target, placeLocation, placeFace, blocks, situation.type);
-        } else {
-            pathData.lastTargetLocation = targetLoc.clone();
-            pathData.lastCheckTime = System.currentTimeMillis();
+            if (wasRecentlyPlaced(placeLocation, 200)) return;
+            executePlacement(zombie, target, placeLocation, situation.placeFace, blocks, situation.type);
         }
     }
 
@@ -193,70 +183,38 @@ public class ZombiePlaceFeature extends AbstractFeature {
         Location zombieLoc = zombie.getLocation();
         Location targetLoc = target.getLocation();
         Vector direction = targetLoc.toVector().subtract(zombieLoc.toVector()).normalize();
-
         PlacementSituation situation = new PlacementSituation();
-        double checkRadius = Feature.ZOMBIE_PLACE_BLOCK.getDouble("check-radius");
+        double checkRadius = 3.0;
 
-        // Check 1: Gap/Void ahead (if bridge building enabled)
-        if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("enable-bridge-building")) {
-            GapInfo gapInfo = detectGap(zombie, direction, checkRadius);
-            if (gapInfo.hasGap) {
-                int maxBridgeLength = (int) Feature.ZOMBIE_PLACE_BLOCK.getDouble("max-bridge-length");
-                if (gapInfo.gapDistance <= maxBridgeLength) {
-                    situation.needsPlacement = true;
-                    situation.placeLocation = gapInfo.placeLocation;
-                    situation.placeFace = gapInfo.placeFace;
-                    situation.type = PlacementType.BRIDGE;
-                    return situation;
-                }
+        if (targetLoc.getY() > zombieLoc.getY() + 2.5 && zombie.isOnGround()) {
+            Location headLoc = zombieLoc.clone().add(0, 2, 0);
+            if (headLoc.getBlock().getType().isAir()) {
+                situation.needsPlacement = true;
+                situation.placeLocation = zombieLoc.getBlock().getLocation();
+                situation.placeFace = BlockFace.UP;
+                situation.type = PlacementType.PILLAR;
+                return situation;
             }
         }
 
-        // Check 2: Height difference (if climbing enabled)
-        if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("enable-climbing")) {
-            double heightDiff = targetLoc.getY() - zombieLoc.getY();
-            if (heightDiff > 1.5) {
-                ClimbInfo climbInfo = findClimbPlacement(zombie, target, direction);
-                if (climbInfo.canClimb) {
-                    int maxClimbHeight = (int) Feature.ZOMBIE_PLACE_BLOCK.getDouble("max-climb-height");
-                    if (climbInfo.climbHeight <= maxClimbHeight) {
-                        situation.needsPlacement = true;
-                        situation.placeLocation = climbInfo.placeLocation;
-                        situation.placeFace = climbInfo.placeFace;
-                        situation.type = PlacementType.CLIMB;
-                        return situation;
-                    }
-                }
-            }
+        GapInfo gapInfo = detectGap(zombie, direction, checkRadius);
+        if (gapInfo.hasGap) {
+            situation.needsPlacement = true;
+            situation.placeLocation = gapInfo.placeLocation;
+            situation.placeFace = gapInfo.placeFace;
+            situation.type = PlacementType.BRIDGE;
+            return situation;
         }
 
-        // Check 3: Target is lower (if descending enabled)
-        if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("enable-descending")) {
-            double heightDiff = targetLoc.getY() - zombieLoc.getY();
-            if (heightDiff < -2.0) {
-                DescendInfo descendInfo = findDescendPlacement(zombie, target, direction);
-                if (descendInfo.needsPlatform) {
-                    situation.needsPlacement = true;
-                    situation.placeLocation = descendInfo.placeLocation;
-                    situation.placeFace = descendInfo.placeFace;
-                    situation.type = PlacementType.DESCEND;
-                    return situation;
-                }
-            }
-        }
-
-        // Check 4: Blocked by obstacle (if around obstacles enabled)
-        if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("enable-around-obstacles")) {
-            ObstacleInfo obstacleInfo = detectObstacle(zombie, direction);
-            if (obstacleInfo.isBlocked) {
-                AroundInfo aroundInfo = findAroundPlacement(zombie, target, direction);
-                if (aroundInfo.canGoAround) {
-                    situation.needsPlacement = true;
-                    situation.placeLocation = aroundInfo.placeLocation;
-                    situation.placeFace = aroundInfo.placeFace;
-                    situation.type = PlacementType.AROUND;
-                    return situation;
-                }
+        double heightDiff = targetLoc.getY() - zombieLoc.getY();
+        if (heightDiff > 1.2) {
+            ClimbInfo climbInfo = findClimbPlacement(zombie, direction);
+            if (climbInfo.canClimb) {
+                situation.needsPlacement = true;
+                situation.placeLocation = climbInfo.placeLocation;
+                situation.placeFace = climbInfo.placeFace;
+                situation.type = PlacementType.CLIMB;
+                return situation;
             }
         }
 
@@ -267,280 +225,145 @@ public class ZombiePlaceFeature extends AbstractFeature {
     private GapInfo detectGap(Zombie zombie, Vector direction, double checkRadius) {
         GapInfo info = new GapInfo();
         Location checkLoc = zombie.getLocation().clone();
-
-        int maxCheck = (int) Math.min(checkRadius, 3);
-        for (int i = 1; i <= maxCheck; i++) {
+        for (int i = 1; i <= checkRadius; i++) {
             checkLoc.add(direction.clone().multiply(1));
             Block checkBlock = checkLoc.getBlock();
             Block belowBlock = checkBlock.getRelative(BlockFace.DOWN);
-            Block twoBelow = belowBlock.getRelative(BlockFace.DOWN);
-
-            if (!checkBlock.getType().isSolid() &&
-                    !belowBlock.getType().isSolid() &&
-                    !twoBelow.getType().isSolid()) {
-
+            if (!checkBlock.getType().isSolid() && !belowBlock.getType().isSolid()) {
                 info.hasGap = true;
                 info.placeLocation = belowBlock.getLocation();
-                info.placeFace = findSupportingFace(belowBlock);
-                info.gapDistance = i;
+                info.placeFace = BlockFace.UP;
                 return info;
             }
         }
-
         info.hasGap = false;
         return info;
     }
 
-    private ClimbInfo findClimbPlacement(Zombie zombie, Player target, Vector direction) {
+    private ClimbInfo findClimbPlacement(Zombie zombie, Vector direction) {
         ClimbInfo info = new ClimbInfo();
-        Location zombieLoc = zombie.getLocation();
-
-        Location frontLoc = zombieLoc.clone().add(direction.clone().multiply(0.5));
+        Location frontLoc = zombie.getLocation().clone().add(direction.clone().multiply(0.8));
         Block frontBlock = frontLoc.getBlock();
 
-        int maxHeight = (int) Feature.ZOMBIE_PLACE_BLOCK.getDouble("max-climb-height");
-        for (int height = 1; height <= Math.min(maxHeight, 3); height++) {
-            Location placeLoc = frontBlock.getLocation().add(0, height, 0);
-            Block placeBlock = placeLoc.getBlock();
-
-            if (!placeBlock.getType().isSolid() && placeBlock.getType().isAir()) {
-                Block belowPlace = placeBlock.getRelative(BlockFace.DOWN);
-
-                if (belowPlace.getType().isSolid()) {
-                    info.canClimb = true;
-                    info.placeLocation = placeLoc;
-                    info.placeFace = BlockFace.UP;
-                    info.climbHeight = height;
-                    return info;
-                }
+        if (!frontBlock.getType().isSolid()) {
+            Block below = frontBlock.getRelative(BlockFace.DOWN);
+            if (below.getType().isSolid()) {
+                info.canClimb = true;
+                info.placeLocation = frontBlock.getLocation();
+                info.placeFace = BlockFace.UP;
+                return info;
             }
         }
-
         info.canClimb = false;
         return info;
     }
 
-    private DescendInfo findDescendPlacement(Zombie zombie, Player target, Vector direction) {
-        DescendInfo info = new DescendInfo();
-        Location zombieLoc = zombie.getLocation();
-
-        Location frontLoc = zombieLoc.clone().add(direction.clone().multiply(1.5));
-        Block frontDown = frontLoc.getBlock().getRelative(BlockFace.DOWN);
-
-        if (!frontDown.getType().isSolid() && frontDown.getType().isAir()) {
-            info.needsPlatform = true;
-            info.placeLocation = frontDown.getLocation();
-            info.placeFace = findSupportingFace(frontDown);
-            return info;
-        }
-
-        info.needsPlatform = false;
-        return info;
-    }
-
-    private AroundInfo findAroundPlacement(Zombie zombie, Player target, Vector direction) {
-        AroundInfo info = new AroundInfo();
-        Location zombieLoc = zombie.getLocation();
-
-        Vector[] sideVectors = {
-                direction.clone().rotateAroundY(Math.PI / 2),
-                direction.clone().rotateAroundY(-Math.PI / 2)
-        };
-
-        for (Vector sideDir : sideVectors) {
-            Location sideLoc = zombieLoc.clone().add(sideDir.multiply(1));
-            Block sideBlock = sideLoc.getBlock();
-            Block belowSide = sideBlock.getRelative(BlockFace.DOWN);
-
-            if (!sideBlock.getType().isSolid() && !belowSide.getType().isSolid()) {
-                info.canGoAround = true;
-                info.placeLocation = belowSide.getLocation();
-                info.placeFace = findSupportingFace(belowSide);
-                return info;
-            }
-        }
-
-        info.canGoAround = false;
-        return info;
-    }
-
-    private ObstacleInfo detectObstacle(Zombie zombie, Vector direction) {
-        ObstacleInfo info = new ObstacleInfo();
-        Location checkLoc = zombie.getEyeLocation();
-
-        for (int i = 1; i <= 2; i++) {
-            checkLoc.add(direction.clone().multiply(1));
-            Block block = checkLoc.getBlock();
-
-            if (block.getType().isSolid()) {
-                info.isBlocked = true;
-                info.obstacleLocation = block.getLocation();
-                return info;
-            }
-        }
-
-        info.isBlocked = false;
-        return info;
-    }
-
-    private BlockFace findSupportingFace(Block block) {
-        BlockFace[] faces = {BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH,
-                BlockFace.EAST, BlockFace.WEST};
-
-        for (BlockFace face : faces) {
-            Block adjacent = block.getRelative(face);
-            if (adjacent.getType().isSolid()) {
-                return face.getOppositeFace();
-            }
-        }
-
-        return BlockFace.UP;
-    }
-
-    private void executePlacement(Zombie zombie, Player target, Location placeLocation,
-                                  BlockFace placeFace, ItemStack blocks, PlacementType type) {
+    // === PHẦN SỬA LỖI CHÍNH ===
+    private void executePlacement(Zombie zombie, Player target, Location placeLocation, BlockFace placeFace, ItemStack blocks, PlacementType type) {
         UUID zombieUUID = zombie.getUniqueId();
 
-        BukkitRunnable placeTask = new BukkitRunnable() {
+        if (type == PlacementType.PILLAR) {
+            zombie.setVelocity(new Vector(0, 0.42, 0));
+
+            // SỬA: Tạo BukkitRunnable và gọi runTaskLater để nhận về BukkitTask
+            BukkitTask pillarTask = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (!zombie.isValid()) return;
+                    placeBlockLogic(zombie, placeLocation, blocks, true);
+                    activePlacingTasks.remove(zombieUUID);
+                }
+            }.runTaskLater(plugin, 1L); // Lưu BukkitTask trả về, không phải BukkitRunnable
+
+            activePlacingTasks.put(zombieUUID, pillarTask);
+            return;
+        }
+
+        // SỬA: Tạo BukkitRunnable và gọi runTask để nhận về BukkitTask
+        BukkitTask placeTask = new BukkitRunnable() {
             @Override
             public void run() {
-                try {
-                    if (!zombie.isValid() || !target.isValid() ||
-                            zombie.getLocation().distanceSquared(target.getLocation()) > MAX_TARGET_DISTANCE_SQUARED) {
-                        activePlacingTasks.remove(zombieUUID);
-                        cancel();
-                        return;
-                    }
-
-                    Block block = placeLocation.getBlock();
-
-                    if (block.getType().isSolid()) {
-                        activePlacingTasks.remove(zombieUUID);
-                        cancel();
-                        return;
-                    }
-
-                    lookAtLocation(zombie, placeLocation);
-                    zombie.swingMainHand();
-
-                    Material blockType = blocks.getType();
-                    block.setType(blockType);
-
-                    // Effects (check config)
-                    if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("play-sounds")) {
-                        zombie.getWorld().playSound(placeLocation,
-                                blockType.createBlockData().getSoundGroup().getPlaceSound(),
-                                1.0f, 1.0f);
-                    }
-
-                    if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("show-particles")) {
-                        zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK,
-                                placeLocation.clone().add(0.5, 0.5, 0.5),
-                                10, 0.2, 0.2, 0.2, 0.1, blockType.createBlockData());
-                    }
-
-                    recentlyPlacedBlocks.put(placeLocation.clone(), System.currentTimeMillis());
-                    zombiePlaceCooldown.put(zombieUUID, System.currentTimeMillis());
-
-                    // Consume block if enabled
-                    if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("block-consume-on-place")) {
-                        blocks.setAmount(blocks.getAmount() - 1);
-                    }
-
+                if (!zombie.isValid() || !target.isValid()) {
                     activePlacingTasks.remove(zombieUUID);
                     cancel();
-
-                    // Schedule next check
-                    long cooldown = (long) Feature.ZOMBIE_PLACE_BLOCK.getDouble("placement-cooldown-ms") / 50;
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                        if (zombie.isValid() && target.isValid()) {
-                            Bukkit.getScheduler().runTaskAsynchronously(plugin,
-                                    () -> processZombiePlacement(zombie));
-                        }
-                    }, cooldown);
-
-                } catch (Exception e) {
-                    plugin.getLogger().log(Level.WARNING, "Error placing block", e);
-                    activePlacingTasks.remove(zombieUUID);
-                    cancel();
+                    return;
                 }
+                placeBlockLogic(zombie, placeLocation, blocks, false);
+                activePlacingTasks.remove(zombieUUID);
             }
-        };
+        }.runTask(plugin); // Lưu BukkitTask trả về
 
-        BukkitTask task = placeTask.runTaskTimer(plugin, 10L, 2L);
-        activePlacingTasks.put(zombieUUID, task);
+        activePlacingTasks.put(zombieUUID, placeTask);
+    }
+
+    private void placeBlockLogic(Zombie zombie, Location loc, ItemStack blocks, boolean isPillar) {
+        Block block = loc.getBlock();
+        if (block.getType().isSolid() && !isPillar) return;
+
+        lookAtLocation(zombie, loc);
+        zombie.swingMainHand();
+
+        Material blockType = blocks.getType();
+        block.setType(blockType);
+
+        zombie.getWorld().playSound(loc, blockType.createBlockData().getSoundGroup().getPlaceSound(), 1.0f, 1.0f);
+        zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, loc.clone().add(0.5, 0.5, 0.5), 10, 0.2, 0.2, 0.2, 0.1, blockType.createBlockData());
+
+        recentlyPlacedBlocks.put(loc.clone(), System.currentTimeMillis());
+        zombiePlaceCooldown.put(zombie.getUniqueId(), System.currentTimeMillis());
+
+        if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("block-consume-on-place")) {
+            blocks.setAmount(blocks.getAmount() - 1);
+        }
+
+        if (isPillar) {
+            Location newLoc = zombie.getLocation();
+            newLoc.setY(loc.getY() + 1.0);
+            zombie.teleport(newLoc);
+        }
     }
 
     private void injectCustomAI(Zombie zombie) {
         try {
             com.destroystokyo.paper.entity.ai.MobGoals goals = Bukkit.getMobGoals();
-            GoalKey<Zombie> safeMovementKey = GoalKey.of(Zombie.class,
-                    new NamespacedKey(plugin, "safe_placement_movement"));
-
-            SafePlacementGoal safeGoal = new SafePlacementGoal(zombie, this);
-            goals.addGoal(zombie, 1, safeGoal);
-
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to inject custom AI", e);
-        }
+            GoalKey<Zombie> key = GoalKey.of(Zombie.class, new NamespacedKey(plugin, "safe_placement_movement"));
+            goals.addGoal(zombie, 1, new SafePlacementGoal(zombie, this, key));
+        } catch (Exception ignored) {}
     }
 
     private void removeCustomAI(Zombie zombie) {
         try {
             com.destroystokyo.paper.entity.ai.MobGoals goals = Bukkit.getMobGoals();
-            GoalKey<Zombie> safeMovementKey = GoalKey.of(Zombie.class,
-                    new NamespacedKey(plugin, "safe_placement_movement"));
-            goals.removeGoal(zombie, safeMovementKey);
-        } catch (Exception e) {
-            // Ignore
-        }
+            GoalKey<Zombie> key = GoalKey.of(Zombie.class, new NamespacedKey(plugin, "safe_placement_movement"));
+            goals.removeGoal(zombie, key);
+        } catch (Exception ignored) {}
     }
 
     private ItemStack getPlaceableBlocks(Zombie zombie) {
-        ItemStack mainHand = zombie.getEquipment().getItemInMainHand();
-        if (mainHand != null && mainHand.getType().isBlock() && mainHand.getType().isSolid()) {
-            return mainHand;
-        }
-
-        ItemStack offHand = zombie.getEquipment().getItemInOffHand();
-        if (offHand != null && offHand.getType().isBlock() && offHand.getType().isSolid()) {
-            return offHand;
-        }
-
+        ItemStack main = zombie.getEquipment().getItemInMainHand();
+        if (main != null && placeableBlocks.contains(main.getType())) return main;
+        ItemStack off = zombie.getEquipment().getItemInOffHand();
+        if (off != null && placeableBlocks.contains(off.getType())) return off;
         return null;
     }
 
     private void lookAtLocation(Zombie zombie, Location target) {
-        Location zombieLoc = zombie.getEyeLocation();
-        Vector direction = target.toVector().subtract(zombieLoc.toVector()).normalize();
-
-        Location lookAt = zombieLoc.clone();
-        lookAt.setDirection(direction);
-
-        zombie.teleport(new Location(zombie.getWorld(),
-                zombie.getLocation().getX(),
-                zombie.getLocation().getY(),
-                zombie.getLocation().getZ(),
-                lookAt.getYaw(),
-                lookAt.getPitch()));
+        Location zLoc = zombie.getEyeLocation();
+        Vector dir = target.toVector().subtract(zLoc.toVector()).normalize();
+        Location newLoc = zombie.getLocation();
+        newLoc.setDirection(dir);
+        zombie.teleport(newLoc);
     }
 
     private boolean wasRecentlyPlaced(Location location, long cooldownMs) {
-        long now = System.currentTimeMillis();
-        return recentlyPlacedBlocks.entrySet().stream()
-                .anyMatch(entry ->
-                        entry.getKey().getWorld().equals(location.getWorld()) &&
-                                entry.getKey().distanceSquared(location) < 1 &&
-                                now - entry.getValue() < cooldownMs
-                );
+        Long time = recentlyPlacedBlocks.get(location);
+        return time != null && System.currentTimeMillis() - time < cooldownMs;
     }
 
     private void cleanupOldData() {
         long now = System.currentTimeMillis();
-        long maxAge = (long) Feature.ZOMBIE_PLACE_BLOCK.getDouble("placement-cooldown-ms") * 5;
-
-        recentlyPlacedBlocks.entrySet().removeIf(entry -> now - entry.getValue() > maxAge);
-        zombiePlaceCooldown.entrySet().removeIf(entry -> now - entry.getValue() > maxAge);
+        recentlyPlacedBlocks.entrySet().removeIf(e -> now - e.getValue() > 2000);
+        zombiePlaceCooldown.entrySet().removeIf(e -> now - e.getValue() > 2000);
     }
 
     private void cleanupZombie(Zombie zombie) {
@@ -552,49 +375,29 @@ public class ZombiePlaceFeature extends AbstractFeature {
         zombiesWithCustomAI.remove(uuid);
     }
 
-    private class SafePlacementGoal implements Goal<Zombie> {
+    private static class SafePlacementGoal implements Goal<Zombie> {
         private final Zombie zombie;
         private final ZombiePlaceFeature feature;
         private final GoalKey<Zombie> key;
 
-        public SafePlacementGoal(Zombie zombie, ZombiePlaceFeature feature) {
+        public SafePlacementGoal(Zombie zombie, ZombiePlaceFeature feature, GoalKey<Zombie> key) {
             this.zombie = zombie;
             this.feature = feature;
-            this.key = GoalKey.of(Zombie.class,
-                    new NamespacedKey(plugin, "safe_placement_movement"));
+            this.key = key;
         }
-
-        @Override
-        public boolean shouldActivate() {
-            return zombie.getTarget() instanceof Player &&
-                    feature.activePlacingTasks.containsKey(zombie.getUniqueId());
+        @Override public boolean shouldActivate() {
+            return feature.activePlacingTasks.containsKey(zombie.getUniqueId());
         }
-
-        @Override
-        public void tick() {
-            Location loc = zombie.getLocation();
-            Block below = loc.getBlock().getRelative(BlockFace.DOWN);
-
-            if (!below.getType().isSolid()) {
-                zombie.setVelocity(new Vector(0, zombie.getVelocity().getY(), 0));
-            }
+        @Override public void tick() {
+            zombie.setVelocity(new Vector(0, zombie.getVelocity().getY(), 0));
         }
-
-        @Override
-        public GoalKey<Zombie> getKey() {
-            return key;
-        }
-
-        @Override
-        public EnumSet<GoalType> getTypes() {
-            return EnumSet.of(GoalType.MOVE);
-        }
+        @Override public GoalKey<Zombie> getKey() { return key; }
+        @Override public EnumSet<GoalType> getTypes() { return EnumSet.of(GoalType.MOVE); }
     }
 
     private static class PathfinderData {
         Location lastTargetLocation;
         long lastCheckTime;
-        List<Location> plannedPath = new ArrayList<>();
     }
 
     private static class PlacementSituation {
@@ -604,38 +407,17 @@ public class ZombiePlaceFeature extends AbstractFeature {
         PlacementType type;
     }
 
-    private enum PlacementType {
-        BRIDGE, CLIMB, DESCEND, AROUND
-    }
+    private enum PlacementType { BRIDGE, CLIMB, PILLAR }
 
     private static class GapInfo {
         boolean hasGap;
         Location placeLocation;
         BlockFace placeFace;
-        int gapDistance;
     }
 
     private static class ClimbInfo {
         boolean canClimb;
         Location placeLocation;
         BlockFace placeFace;
-        int climbHeight;
-    }
-
-    private static class DescendInfo {
-        boolean needsPlatform;
-        Location placeLocation;
-        BlockFace placeFace;
-    }
-
-    private static class AroundInfo {
-        boolean canGoAround;
-        Location placeLocation;
-        BlockFace placeFace;
-    }
-
-    private static class ObstacleInfo {
-        boolean isBlocked;
-        Location obstacleLocation;
     }
 }

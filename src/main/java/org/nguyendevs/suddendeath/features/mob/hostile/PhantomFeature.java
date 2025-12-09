@@ -136,7 +136,7 @@ public class PhantomFeature extends AbstractFeature {
             double damage = Feature.PHANTOM_BLADE.getDouble("damage");
             int weaknessDuration = (int) (Feature.PHANTOM_BLADE.getDouble("weakness-duration") * 20);
             int amplifier = (int) Feature.PHANTOM_BLADE.getDouble("weakness-amplifier");
-            double speed = 1.5;
+            double speed = 1.0;
 
             phantom.getWorld().playSound(startLoc, Sound.ENTITY_BREEZE_IDLE_AIR, 2.0f, 0.8f);
             phantom.getWorld().playSound(startLoc, Sound.ITEM_TRIDENT_RIPTIDE_1, 2.0f, 1.5f);
