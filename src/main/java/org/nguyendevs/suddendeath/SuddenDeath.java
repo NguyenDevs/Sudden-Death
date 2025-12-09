@@ -365,7 +365,9 @@ public class SuddenDeath extends JavaPlugin {
         registerFeature(new StrayFeature());
         registerFeature(new WitchFeature());
         registerFeature(new WitherSkeletonFeature());
-        registerFeature(new ZombieFeatures());
+        registerFeature(new UndeadRageFeature());
+        registerFeature(new UndeadGunnersFeature());
+        registerFeature(new ZombieBreakBlockFeature());
 
         registerFeature(new ForceOfUndeadFeature());
         registerFeature(new QuickMobsFeature());

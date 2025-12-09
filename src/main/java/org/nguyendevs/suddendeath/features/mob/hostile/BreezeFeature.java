@@ -1,10 +1,6 @@
 package org.nguyendevs.suddendeath.features.mob.hostile;
 
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Mob;
@@ -35,7 +31,7 @@ public class BreezeFeature extends AbstractFeature {
             EntityType.valueOf(breezeTypeName);
             this.isSupported = true;
         } catch (IllegalArgumentException e) {
-            plugin.getLogger().info("Breeze feature disabled (requires 1.21+).");
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aBreeze feature disabled &c(requires 1.21+)&a."));
             this.isSupported = false;
             return;
         }
@@ -104,7 +100,6 @@ public class BreezeFeature extends AbstractFeature {
                                 Location breezeLoc = breeze.getLocation();
                                 Vector direction = target.getLocation().subtract(breezeLoc).toVector().normalize();
 
-                                // Dùng string name để spawn WindCharge
                                 Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), EntityType.valueOf(windChargeTypeName));
                                 windCharge.setVelocity(direction.multiply(1.5));
 

@@ -10,12 +10,9 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BlockIterator;
@@ -29,40 +26,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
-public class ZombieFeatures extends AbstractFeature {
+public class ZombieBreakBlockFeature extends AbstractFeature {
 
     private final Map<UUID, BukkitTask> activeBreakingTasks = new ConcurrentHashMap<>();
     private final Map<UUID, Set<Location>> recentlyBrokenBlocks = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> breakAttempts = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastBreakTime = new ConcurrentHashMap<>();
+
+    // Hệ thống Target thông minh được chuyển vào đây vì nó phục vụ chính cho tính năng Break Block
     private final Map<UUID, UUID> persistentTargets = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastTargetTime = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastTargetSearchTime = new ConcurrentHashMap<>();
 
-    private static final double TICK_INTERVAL = 0.5;
-    private static final int MAX_TICKS = 20;
-    private static final int MAX_BREAK_ATTEMPTS = 50;
     private static final long MEMORY_DURATION = 2000;
     private static final double MAX_TARGET_DISTANCE_SQUARED = 150.0 * 150.0;
     private static final long TARGET_SEARCH_COOLDOWN = 2000;
 
     @Override
     public String getName() {
-        return "Improved Zombie Features";
-    }
-
-    private boolean isPaper() {
-        try {
-            Class.forName("com.destroystokyo.paper.PaperConfig");
-            return true;
-        } catch (ClassNotFoundException e) {
-            try {
-                Class.forName("io.papermc.paper.configuration.GlobalConfiguration");
-                return true;
-            } catch (ClassNotFoundException ignored) {
-                return false;
-            }
-        }
+        return "Zombie Break Block";
     }
 
     @Override
@@ -72,56 +54,29 @@ public class ZombieFeatures extends AbstractFeature {
             public void run() {
                 try {
                     for (World world : Bukkit.getWorlds()) {
-                        if (Feature.UNDEAD_GUNNERS.isEnabled(world)) {
-                            for (Zombie zombie : world.getEntitiesByClass(Zombie.class)) {
-                                if (zombie.getTarget() instanceof Player && isUndeadGunner(zombie)) {
-                                    loop3s_zombie(zombie);
-                                }
+                        if (Feature.ZOMBIE_BREAK_BLOCK.isEnabled(world)) {
+                            List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));
+                            for (Zombie zombie : zombies) {
+                                long randomDelay = ThreadLocalRandom.current().nextLong(0, 5);
+                                Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+                                    try {
+                                        if (zombie.isValid() && (zombie.getTarget() instanceof Player || zombie.getTarget() instanceof Villager)) {
+                                            if (plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(), CustomFlag.SDS_BREAK)) {
+                                                processZombieBreakBlock(zombie);
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        plugin.getLogger().log(Level.WARNING, "Error processing zombie break", e);
+                                    }
+                                }, randomDelay);
                             }
                         }
                     }
                 } catch (Exception e) {
-                    plugin.getLogger().log(Level.WARNING, "Error in Undead Gunners loop", e);
+                    plugin.getLogger().log(Level.WARNING, "Error in Zombie Break Block loop", e);
                 }
             }
-        }.runTaskTimer(plugin, 20L, 60L));
-
-        if (isPaper()) {
-            registerTask(new BukkitRunnable() {
-                @Override
-                public void run() {
-                    try {
-                        for (World world : Bukkit.getWorlds()) {
-                            if (Feature.ZOMBIE_BREAK_BLOCK.isEnabled(world)) {
-                                List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));
-                                for (Zombie zombie : zombies) {
-                                    long randomDelay = ThreadLocalRandom.current().nextLong(0, 5);
-                                    Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-                                        try {
-                                            if (zombie.isValid() && (zombie.getTarget() instanceof Player || zombie.getTarget() instanceof Villager)) {
-                                                if (plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(), CustomFlag.SDS_BREAK)) {
-                                                    processZombieBreakBlock(zombie);
-                                                }
-                                            }
-                                        } catch (Exception e) {
-                                            plugin.getLogger().log(Level.WARNING, "Error processing zombie break", e);
-                                        }
-                                    }, randomDelay);
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        plugin.getLogger().log(Level.WARNING, "Error in Zombie Break Block loop", e);
-                    }
-                }
-            }.runTaskTimer(plugin, 0L, 5L));
-        } else {
-            if (!plugin.getConfiguration().getConfig().getStringList(Feature.ZOMBIE_BREAK_BLOCK.getPath()).isEmpty()) {
-                plugin.getConfiguration().getConfig().set(Feature.ZOMBIE_BREAK_BLOCK.getPath(), new ArrayList<>());
-                plugin.getConfiguration().save();
-                plugin.getLogger().log(Level.WARNING, "Zombie Break Block has been disabled because this server is not running Paper.");
-            }
-        }
+        }.runTaskTimer(plugin, 0L, 5L));
 
         registerTask(new BukkitRunnable() {
             @Override
@@ -170,18 +125,6 @@ public class ZombieFeatures extends AbstractFeature {
         persistentTargets.clear();
         lastTargetTime.clear();
         lastTargetSearchTime.clear();
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie)) return;
-        if (event.getDamage() <= 0 || zombie.hasMetadata("NPC")) return;
-        if (!Feature.UNDEAD_RAGE.isEnabled(zombie)) return;
-        try {
-            applyUndeadRage(zombie);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error in onEntityDamage", e);
-        }
     }
 
     @EventHandler
@@ -287,59 +230,12 @@ public class ZombieFeatures extends AbstractFeature {
         });
     }
 
+    // --- Logic Phá Block ---
+
     private void processZombieBreakBlock(Zombie zombie) {
         UUID zombieUUID = zombie.getUniqueId();
         if (activeBreakingTasks.containsKey(zombieUUID)) return;
         Bukkit.getScheduler().runTask(plugin, () -> applyZombieBreakBlock(zombie));
-    }
-
-    private void applyUndeadRage(Zombie zombie) {
-        int duration = (int) (Feature.UNDEAD_RAGE.getDouble("rage-duration") * 20);
-        zombie.getWorld().spawnParticle(Particle.VILLAGER_ANGRY, zombie.getLocation().add(0, 1.7, 0), 6, 0.35, 0.35, 0.35, 0);
-        zombie.addPotionEffect(new PotionEffect(PotionEffectType.INCREASE_DAMAGE, duration, 1));
-        zombie.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, duration, 1));
-    }
-
-    private boolean isUndeadGunner(Zombie zombie) {
-        return zombie.getCustomName() != null && zombie.getCustomName().equalsIgnoreCase("Undead Gunner");
-    }
-
-    private void loop3s_zombie(Zombie zombie) {
-        if (zombie == null || zombie.getHealth() <= 0 || zombie.getTarget() == null || !(zombie.getTarget() instanceof Player target)) return;
-        try {
-            if (!target.getWorld().equals(zombie.getWorld())) return;
-            double damage = Feature.UNDEAD_GUNNERS.getDouble("damage");
-            zombie.getWorld().playSound(zombie.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 0.0f);
-            Vector direction = target.getLocation().add(0, 0.5, 0).toVector().subtract(zombie.getLocation().add(0, 0.75, 0).toVector()).normalize().multiply(TICK_INTERVAL);
-            Location loc = zombie.getEyeLocation().clone();
-            new BukkitRunnable() {
-                double ticks = 0;
-                @Override
-                public void run() {
-                    try {
-                        for (int j = 0; j < 2; j++) {
-                            ticks += TICK_INTERVAL;
-                            loc.add(direction);
-                            loc.getWorld().spawnParticle(Particle.CLOUD, loc, 4, 0.1, 0.1, 0.1, 0);
-                            for (Player player : zombie.getWorld().getPlayers()) {
-                                if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 2.3 * 2.3) {
-                                    loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 0);
-                                    loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
-                                    player.damage(damage);
-                                    double blockDmg = Feature.UNDEAD_GUNNERS.getDouble("block-damage");
-                                    if (blockDmg > 0) zombie.getWorld().createExplosion(zombie.getLocation(), (float) blockDmg);
-                                    cancel();
-                                    return;
-                                }
-                            }
-                        }
-                        if (ticks > MAX_TICKS) cancel();
-                    } catch (Exception e) { cancel(); }
-                }
-            }.runTaskTimer(plugin, 0L, 1L);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Error in Zombie loop", e);
-        }
     }
 
     private void applyZombieBreakBlock(Zombie zombie) {

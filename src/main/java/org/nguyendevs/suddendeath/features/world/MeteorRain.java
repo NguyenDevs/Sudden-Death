@@ -8,10 +8,15 @@ import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.WrappedBlockData;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldUnloadEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.SuddenDeath;
@@ -500,17 +505,30 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
         private void applyShockwaveAt(Location center) {
             World world = center.getWorld();
+            if (world == null) return;
+
             double knockRadius = meteorSize * 2.5;
-            for (Player player : world.getPlayers()) {
-                if (!player.getWorld().equals(world)) continue;
-                double distance = player.getLocation().distance(center);
+
+            for (Entity entity : world.getNearbyEntities(center, knockRadius, knockRadius, knockRadius)) {
+                if (!(entity instanceof LivingEntity livingEntity)) continue;
+                if (entity instanceof ArmorStand) continue;
+
+                double distance = livingEntity.getLocation().distance(center);
                 if (distance <= knockRadius) {
-                    Vector direction = player.getLocation().toVector().subtract(center.toVector()).normalize();
+                    Vector direction = livingEntity.getLocation().toVector().subtract(center.toVector()).normalize();
+
                     double strength = (1.0 - distance / knockRadius) * (meteorSize / 3.5) + 1.5;
-                    player.setVelocity(direction.multiply(strength).add(new Vector(0, 0.8 + meteorSize * 0.04, 0)));
+
+                    livingEntity.setVelocity(direction.multiply(strength).add(new Vector(0, 0.8 + meteorSize * 0.04, 0)));
+
                     double baseDamage = 5.0 + meteorSize * 1.0;
                     double damage = Math.max(1.0, baseDamage * (1.0 - (distance / knockRadius)));
-                    player.damage(damage);
+                    livingEntity.damage(damage);
+
+                    livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 4));
+                    livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 80, 1));
+
+                    world.spawnParticle(Particle.CRIT, livingEntity.getEyeLocation().add(0, 0.5, 0), 5, 0.3, 0.1, 0.3, 0.1);
                 }
             }
         }
