@@ -4,6 +4,7 @@ import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.FurnaceSmeltEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -11,6 +12,7 @@ import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.CustomItem;
 import org.nguyendevs.suddendeath.util.Feature;
+import org.nguyendevs.suddendeath.util.Utils;
 import java.util.logging.Level;
 
 public class AdvancedPlayerDropsFeature extends AbstractFeature {
@@ -35,7 +37,6 @@ public class AdvancedPlayerDropsFeature extends AbstractFeature {
 
             FileConfiguration config = Feature.ADVANCED_PLAYER_DROPS.getConfigFile().getConfig();
 
-            // Drop skull
             if (config.getBoolean("drop-skull", false)) {
                 ItemStack skull = new ItemStack(config.getBoolean("player-skull", false) ?
                         Material.PLAYER_HEAD : Material.SKELETON_SKULL);
@@ -49,7 +50,6 @@ public class AdvancedPlayerDropsFeature extends AbstractFeature {
                 player.getWorld().dropItemNaturally(player.getLocation(), skull);
             }
 
-            // Drop bones
             int boneAmount = config.getInt("dropped-bones", 0);
             if (boneAmount > 0) {
                 ItemStack bone = CustomItem.HUMAN_BONE.a().clone();
@@ -57,7 +57,6 @@ public class AdvancedPlayerDropsFeature extends AbstractFeature {
                 player.getWorld().dropItemNaturally(player.getLocation(), bone);
             }
 
-            // Drop flesh
             int fleshAmount = config.getInt("dropped-flesh", 0);
             if (fleshAmount > 0) {
                 ItemStack flesh = CustomItem.RAW_HUMAN_FLESH.a().clone();
@@ -66,6 +65,18 @@ public class AdvancedPlayerDropsFeature extends AbstractFeature {
             }
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in AdvancedPlayerDropsFeature.onPlayerDeath", e);
+        }
+    }
+
+    @EventHandler
+    public void onFurnaceSmelt(FurnaceSmeltEvent event) {
+        try {
+            ItemStack item = event.getSource();
+            if (Utils.isPluginItem(item, false) && item.isSimilar(CustomItem.RAW_HUMAN_FLESH.a())) {
+                event.setResult(CustomItem.COOKED_HUMAN_FLESH.a());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error handling FurnaceSmeltEvent", e);
         }
     }
 }

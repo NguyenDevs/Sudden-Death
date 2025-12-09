@@ -21,6 +21,8 @@ import java.util.logging.Level;
 public class BreezeFeature extends AbstractFeature {
 
     private boolean isSupported;
+    private EntityType breezeType;
+    private EntityType windChargeType;
 
     @Override
     public String getName() {
@@ -30,7 +32,8 @@ public class BreezeFeature extends AbstractFeature {
     @Override
     public void initialize(org.nguyendevs.suddendeath.SuddenDeath plugin) {
         try {
-            EntityType.valueOf("BREEZE");
+            this.breezeType = EntityType.valueOf("BREEZE");
+            this.windChargeType = EntityType.valueOf("WIND_CHARGE");
             this.isSupported = true;
         } catch (IllegalArgumentException e) {
             plugin.getLogger().info("Breeze feature disabled (requires 1.21+).");
@@ -51,10 +54,10 @@ public class BreezeFeature extends AbstractFeature {
                     for (World world : org.bukkit.Bukkit.getWorlds()) {
                         if (Feature.BREEZE_DASH.isEnabled(world)) {
                             for (Entity entity : world.getEntities()) {
-                                if (entity.getType().name().equals("BREEZE")) {
+                                if (entity.getType() == breezeType) {
                                     LivingEntity breeze = (LivingEntity) entity;
                                     if (breeze.getTarget() instanceof Player) {
-                                        applyBreezeDash(breeze);
+                                        applyBreezeDash(breeze, (Player) breeze.getTarget());
                                     }
                                 }
                             }
@@ -65,14 +68,11 @@ public class BreezeFeature extends AbstractFeature {
                 }
             }
         };
-        breezeLoop.runTaskTimer(plugin, 0L, 60L);
-        registerTask((BukkitTask) breezeLoop);
+        // Fix: get BukkitTask from runTaskTimer then register
+        registerTask(breezeLoop.runTaskTimer(plugin, 0L, 60L));
     }
 
-    private void applyBreezeDash(LivingEntity breeze) {
-        if (breeze == null || breeze.getHealth() <= 0 || !(breeze.getTarget() instanceof Player target)) return;
-        if (!target.getWorld().equals(breeze.getWorld())) return;
-
+    private void applyBreezeDash(LivingEntity breeze, Player target) {
         try {
             double chance = Feature.BREEZE_DASH.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() <= chance) {
@@ -98,7 +98,7 @@ public class BreezeFeature extends AbstractFeature {
                             if (shots < Feature.BREEZE_DASH.getDouble("shoot-amount")) {
                                 Location breezeLoc = breeze.getLocation();
                                 Vector direction = target.getLocation().subtract(breezeLoc).toVector().normalize();
-                                Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), EntityType.valueOf("WIND_CHARGE"));
+                                Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), windChargeType);
                                 windCharge.setVelocity(direction.multiply(1.5));
 
                                 new BukkitRunnable() {
@@ -133,7 +133,7 @@ public class BreezeFeature extends AbstractFeature {
                     @Override
                     public void run() {
                         try {
-                            if (breeze.isValid() && breeze.getHealth() > 0) {
+                            if (breeze.isValid() && !breeze.isDead()) {
                                 Location loc = breeze.getLocation().add(0, 0.5, 0);
                                 Vector velocity = breeze.getVelocity().normalize();
                                 double currentY = breeze.getLocation().getY();

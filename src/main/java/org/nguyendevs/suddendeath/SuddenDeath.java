@@ -108,6 +108,7 @@ public class SuddenDeath extends JavaPlugin {
     @Override
     public void onDisable() {
         try {
+            // Shutdown features gracefully
             for (IFeature feature : loadedFeatures) {
                 feature.shutdown();
             }
@@ -146,6 +147,7 @@ public class SuddenDeath extends JavaPlugin {
         initializeDefaultMessages();
         initializeDefaultItems();
         initializeDefaultFeatures();
+        // ... (Giữ nguyên logic load config mặc định)
         FileConfiguration defaultConfig = new YamlConfiguration();
         try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(getResource("config.yml")))) {
             defaultConfig.load(reader);
@@ -262,7 +264,6 @@ public class SuddenDeath extends JavaPlugin {
     private void initializeDefaultFeatures() {
         features.setup();
         boolean saveNeeded = false;
-
         for (Feature feature : Feature.values()) {
             String featureKey = feature.getPath();
             ConfigurationSection section = features.getConfig().getConfigurationSection("features." + featureKey);
@@ -332,7 +333,6 @@ public class SuddenDeath extends JavaPlugin {
         initializeDefaultItems();
         removeAllCustomRecipes();
         recipeCache.clear();
-
         for (CustomItem item : CustomItem.values()) {
             ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
             if (section == null) {
@@ -357,6 +357,7 @@ public class SuddenDeath extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MainListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
 
+        // Register new Feature classes
         registerFeature(new BlazeFeatures());
         registerFeature(new BreezeFeature());
         registerFeature(new CreeperFeature());
@@ -373,12 +374,15 @@ public class SuddenDeath extends JavaPlugin {
         registerFeature(new WitchFeature());
         registerFeature(new WitherSkeletonFeature());
         registerFeature(new ZombieFeatures());
+
         registerFeature(new ForceOfUndeadFeature());
         registerFeature(new QuickMobsFeature());
         registerFeature(new TankyMonstersFeature());
+
         registerFeature(new ArrowSlowFeature());
         registerFeature(new MobCriticalStrikesFeature());
         registerFeature(new SharpKnifeFeature());
+
         registerFeature(new AdvancedPlayerDropsFeature());
         registerFeature(new BleedingFeature());
         registerFeature(new BloodScreenFeature());
@@ -401,6 +405,7 @@ public class SuddenDeath extends JavaPlugin {
         loadedFeatures.add(feature);
     }
 
+    // ... (Các method registerCommands, hook, WG, etc. giữ nguyên)
     private void registerCommands() {
         Optional.ofNullable(getCommand("sds")).ifPresent(cmd -> {
             cmd.setExecutor(new SuddenDeathStatusCommand());

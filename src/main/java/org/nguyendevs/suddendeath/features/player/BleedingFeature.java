@@ -88,6 +88,8 @@ public class BleedingFeature extends AbstractFeature {
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (!event.hasItem()) return;
+
+        // Check if player is enabled for Bleeding Feature
         if (!Feature.BLEEDING.isEnabled(player)) return;
 
         try {
