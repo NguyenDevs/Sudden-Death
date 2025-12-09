@@ -43,6 +43,8 @@ public class ZombieToolsFeature extends AbstractFeature {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onZombieSpawn(CreatureSpawnEvent event) {
         if (!(event.getEntity() instanceof Zombie zombie)) return;
+        if (zombie.hasMetadata("SDCustomMob")) return;
+
         if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie)) return;
 
         double spawnChance = Feature.ZOMBIE_TOOLS.getDouble("chance-percent") / 100.0;

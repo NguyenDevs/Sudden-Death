@@ -526,7 +526,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     livingEntity.damage(damage);
 
                     livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 4));
-                    livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 80, 1));
+                    livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 100, 2));
 
                     world.spawnParticle(Particle.CRIT, livingEntity.getEyeLocation().add(0, 0.5, 0), 5, 0.3, 0.1, 0.3, 0.1);
                 }
