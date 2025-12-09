@@ -179,8 +179,10 @@ public class PhantomFeature extends AbstractFeature {
                                 if (hitPlayer.getUniqueId().equals(phantom.getUniqueId())) continue;
                                 Utils.damage(hitPlayer, damage, true);
                                 hitPlayer.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, weaknessDuration, amplifier));
-                                hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.ENTITY_IRON_GOLEM_DAMAGE, 1.0f, 0.8f);
-                                hitPlayer.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, hitPlayer.getLocation().add(0, 1, 0), 1);
+
+                                hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, 1.8f);
+                                hitPlayer.getWorld().spawnParticle(Particle.SWEEP_ATTACK, hitPlayer.getLocation().add(0, 1, 0), 3, 0.5, 0.5, 0.5, 0);
+
                                 cancel();
                                 return;
                             }

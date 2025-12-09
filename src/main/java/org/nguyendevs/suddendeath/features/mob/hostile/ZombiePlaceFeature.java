@@ -20,19 +20,22 @@ import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
 public class ZombiePlaceFeature extends AbstractFeature {
 
     private final Map<UUID, PathfinderData> zombiePathData = new ConcurrentHashMap<>();
-    // Map này lưu BukkitTask để có thể cancel khi cần
     private final Map<UUID, BukkitTask> activePlacingTasks = new ConcurrentHashMap<>();
     private final Map<Location, Long> recentlyPlacedBlocks = new ConcurrentHashMap<>();
     private final Map<UUID, Long> zombiePlaceCooldown = new ConcurrentHashMap<>();
     private final Set<UUID> zombiesWithCustomAI = ConcurrentHashMap.newKeySet();
     private Set<Material> placeableBlocks;
+    private Set<Material> toolMaterials; // Danh sách công cụ không được thay thế
 
     private static final double MAX_TARGET_DISTANCE_SQUARED = 150.0 * 150.0;
+    private static final long MIN_PLACE_COOLDOWN = 1000; // 1 giây cooldown tối thiểu
+    private static final long MAX_PLACE_COOLDOWN = 3000; // 3 giây cooldown tối đa
 
     @Override
     public String getName() {
@@ -42,6 +45,7 @@ public class ZombiePlaceFeature extends AbstractFeature {
     @Override
     protected void onEnable() {
         loadPlaceableBlocks();
+        loadToolMaterials();
 
         registerTask(new BukkitRunnable() {
             @Override
@@ -51,6 +55,8 @@ public class ZombiePlaceFeature extends AbstractFeature {
                         if (Feature.ZOMBIE_PLACE_BLOCK.isEnabled(world)) {
                             List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));
                             for (Zombie zombie : zombies) {
+                                // Random delay cho mỗi zombie để không đồng bộ
+                                long randomDelay = ThreadLocalRandom.current().nextLong(0, 10);
                                 Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
                                     try {
                                         if (zombie.isValid() && zombie.getTarget() instanceof Player) {
@@ -59,7 +65,7 @@ public class ZombiePlaceFeature extends AbstractFeature {
                                     } catch (Exception e) {
                                         plugin.getLogger().log(Level.WARNING, "Error processing zombie placement", e);
                                     }
-                                }, 0L);
+                                }, randomDelay);
                             }
                         }
                     }
@@ -112,12 +118,31 @@ public class ZombiePlaceFeature extends AbstractFeature {
         }
     }
 
+    private void loadToolMaterials() {
+        toolMaterials = new HashSet<>();
+        // Thêm tất cả các loại công cụ
+        for (Material mat : Material.values()) {
+            String name = mat.name();
+            if (name.contains("PICKAXE") || name.contains("AXE") ||
+                    name.contains("SHOVEL") || name.contains("HOE") ||
+                    name.contains("SWORD") || name.contains("BOW") ||
+                    name.contains("CROSSBOW") || name.contains("TRIDENT") ||
+                    name.contains("SHEARS") || name.contains("FISHING_ROD")) {
+                toolMaterials.add(mat);
+            }
+        }
+    }
+
     private void processZombiePlacement(Zombie zombie) {
         UUID zombieUUID = zombie.getUniqueId();
 
-        long cooldownMs = 100;
+        // Kiểm tra cooldown với random time
         Long lastPlace = zombiePlaceCooldown.get(zombieUUID);
-        if (lastPlace != null && System.currentTimeMillis() - lastPlace < cooldownMs) return;
+        if (lastPlace != null) {
+            long timeSinceLastPlace = System.currentTimeMillis() - lastPlace;
+            long requiredCooldown = ThreadLocalRandom.current().nextLong(MIN_PLACE_COOLDOWN, MAX_PLACE_COOLDOWN);
+            if (timeSinceLastPlace < requiredCooldown) return;
+        }
 
         if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("ai-freeze-while-placing") && !zombiesWithCustomAI.contains(zombieUUID)) {
             Bukkit.getScheduler().runTask(plugin, () -> injectCustomAI(zombie));
@@ -130,14 +155,29 @@ public class ZombiePlaceFeature extends AbstractFeature {
 
         ItemStack heldItem = getPlaceableBlocks(zombie);
         if (heldItem == null || heldItem.getType() == Material.AIR) {
-            Bukkit.getScheduler().runTask(plugin, () -> tryAcquireBlock(zombie));
+            // Chỉ tìm block nếu zombie KHÔNG cầm công cụ
+            if (!isHoldingTool(zombie)) {
+                Bukkit.getScheduler().runTask(plugin, () -> tryAcquireBlock(zombie));
+            }
             return;
         }
 
         Bukkit.getScheduler().runTask(plugin, () -> analyzeAndPlace(zombie, target));
     }
 
+    private boolean isHoldingTool(Zombie zombie) {
+        ItemStack main = zombie.getEquipment().getItemInMainHand();
+        ItemStack off = zombie.getEquipment().getItemInOffHand();
+
+        return (main != null && toolMaterials.contains(main.getType())) ||
+                (off != null && toolMaterials.contains(off.getType()));
+    }
+
     private void tryAcquireBlock(Zombie zombie) {
+        // Kiểm tra lại để chắc chắn zombie không cầm công cụ
+        if (isHoldingTool(zombie)) return;
+
+        // Tìm item rơi gần đó
         List<Entity> nearbyEntities = zombie.getNearbyEntities(3, 2, 3);
         for (Entity entity : nearbyEntities) {
             if (entity instanceof Item itemEntity) {
@@ -151,6 +191,7 @@ public class ZombiePlaceFeature extends AbstractFeature {
             }
         }
 
+        // Lấy block dưới chân (chỉ khi không cầm gì hoặc cầm không phải công cụ)
         if (zombie.isOnGround()) {
             Block blockBelow = zombie.getLocation().getBlock().getRelative(BlockFace.DOWN);
             Material type = blockBelow.getType();
@@ -174,8 +215,15 @@ public class ZombiePlaceFeature extends AbstractFeature {
 
         if (situation.needsPlacement) {
             Location placeLocation = situation.placeLocation;
-            if (wasRecentlyPlaced(placeLocation, 200)) return;
-            executePlacement(zombie, target, placeLocation, situation.placeFace, blocks, situation.type);
+            if (wasRecentlyPlaced(placeLocation, 500)) return;
+
+            // Thêm random delay trước khi đặt để tạo cảm giác tự nhiên
+            long randomDelay = ThreadLocalRandom.current().nextLong(0, 20);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (zombie.isValid() && target.isValid()) {
+                    executePlacement(zombie, target, placeLocation, situation.placeFace, blocks, situation.type);
+                }
+            }, randomDelay);
         }
     }
 
@@ -184,19 +232,39 @@ public class ZombiePlaceFeature extends AbstractFeature {
         Location targetLoc = target.getLocation();
         Vector direction = targetLoc.toVector().subtract(zombieLoc.toVector()).normalize();
         PlacementSituation situation = new PlacementSituation();
-        double checkRadius = 3.0;
+        double checkRadius = 4.0; // Tăng range kiểm tra
 
-        if (targetLoc.getY() > zombieLoc.getY() + 2.5 && zombie.isOnGround()) {
-            Location headLoc = zombieLoc.clone().add(0, 2, 0);
-            if (headLoc.getBlock().getType().isAir()) {
-                situation.needsPlacement = true;
-                situation.placeLocation = zombieLoc.getBlock().getLocation();
-                situation.placeFace = BlockFace.UP;
-                situation.type = PlacementType.PILLAR;
-                return situation;
+        // 1. Kiểm tra cần leo dốc (ưu tiên cao nhất)
+        double heightDiff = targetLoc.getY() - zombieLoc.getY();
+        if (heightDiff > 1.5 && zombie.isOnGround()) {
+            // Kiểm tra xem có block phía trước không
+            Location frontLoc = zombieLoc.clone().add(direction.clone().multiply(1.0));
+            Block frontBlock = frontLoc.getBlock();
+
+            if (!frontBlock.getType().isSolid()) {
+                // Có thể đặt pillar
+                Location headLoc = zombieLoc.clone().add(0, 2, 0);
+                if (headLoc.getBlock().getType().isAir()) {
+                    situation.needsPlacement = true;
+                    situation.placeLocation = zombieLoc.getBlock().getLocation();
+                    situation.placeFace = BlockFace.UP;
+                    situation.type = PlacementType.PILLAR;
+                    return situation;
+                }
+            } else {
+                // Block phía trước solid, tìm chỗ để leo
+                ClimbInfo climbInfo = findClimbPlacement(zombie, direction);
+                if (climbInfo.canClimb) {
+                    situation.needsPlacement = true;
+                    situation.placeLocation = climbInfo.placeLocation;
+                    situation.placeFace = climbInfo.placeFace;
+                    situation.type = PlacementType.CLIMB;
+                    return situation;
+                }
             }
         }
 
+        // 2. Kiểm tra khoảng trống (bridge)
         GapInfo gapInfo = detectGap(zombie, direction, checkRadius);
         if (gapInfo.hasGap) {
             situation.needsPlacement = true;
@@ -206,14 +274,17 @@ public class ZombiePlaceFeature extends AbstractFeature {
             return situation;
         }
 
-        double heightDiff = targetLoc.getY() - zombieLoc.getY();
-        if (heightDiff > 1.2) {
-            ClimbInfo climbInfo = findClimbPlacement(zombie, direction);
-            if (climbInfo.canClimb) {
+        // 3. Kiểm tra xem target có ở dưới không
+        if (heightDiff < -2.0) {
+            // Target ở dưới, đặt block để xuống
+            Location frontLoc = zombieLoc.clone().add(direction.clone().multiply(1.0));
+            Block belowFront = frontLoc.getBlock().getRelative(BlockFace.DOWN);
+
+            if (!belowFront.getType().isSolid()) {
                 situation.needsPlacement = true;
-                situation.placeLocation = climbInfo.placeLocation;
-                situation.placeFace = climbInfo.placeFace;
-                situation.type = PlacementType.CLIMB;
+                situation.placeLocation = belowFront.getLocation();
+                situation.placeFace = BlockFace.UP;
+                situation.type = PlacementType.BRIDGE;
                 return situation;
             }
         }
@@ -225,11 +296,17 @@ public class ZombiePlaceFeature extends AbstractFeature {
     private GapInfo detectGap(Zombie zombie, Vector direction, double checkRadius) {
         GapInfo info = new GapInfo();
         Location checkLoc = zombie.getLocation().clone();
+
         for (int i = 1; i <= checkRadius; i++) {
             checkLoc.add(direction.clone().multiply(1));
             Block checkBlock = checkLoc.getBlock();
             Block belowBlock = checkBlock.getRelative(BlockFace.DOWN);
-            if (!checkBlock.getType().isSolid() && !belowBlock.getType().isSolid()) {
+            Block belowBelow = belowBlock.getRelative(BlockFace.DOWN);
+
+            // Kiểm tra gap sâu (2 block trở lên)
+            if (!checkBlock.getType().isSolid() &&
+                    !belowBlock.getType().isSolid() &&
+                    !belowBelow.getType().isSolid()) {
                 info.hasGap = true;
                 info.placeLocation = belowBlock.getLocation();
                 info.placeFace = BlockFace.UP;
@@ -242,44 +319,49 @@ public class ZombiePlaceFeature extends AbstractFeature {
 
     private ClimbInfo findClimbPlacement(Zombie zombie, Vector direction) {
         ClimbInfo info = new ClimbInfo();
-        Location frontLoc = zombie.getLocation().clone().add(direction.clone().multiply(0.8));
+        Location frontLoc = zombie.getLocation().clone().add(direction.clone().multiply(1.2));
         Block frontBlock = frontLoc.getBlock();
 
-        if (!frontBlock.getType().isSolid()) {
-            Block below = frontBlock.getRelative(BlockFace.DOWN);
-            if (below.getType().isSolid()) {
-                info.canClimb = true;
-                info.placeLocation = frontBlock.getLocation();
-                info.placeFace = BlockFace.UP;
-                return info;
+        // Tìm vị trí để đặt block leo
+        for (int y = 0; y <= 2; y++) {
+            Block checkBlock = frontBlock.getRelative(0, y, 0);
+            if (!checkBlock.getType().isSolid()) {
+                Block below = checkBlock.getRelative(BlockFace.DOWN);
+                if (below.getType().isSolid()) {
+                    info.canClimb = true;
+                    info.placeLocation = checkBlock.getLocation();
+                    info.placeFace = BlockFace.UP;
+                    return info;
+                }
             }
         }
+
         info.canClimb = false;
         return info;
     }
 
-    // === PHẦN SỬA LỖI CHÍNH ===
     private void executePlacement(Zombie zombie, Player target, Location placeLocation, BlockFace placeFace, ItemStack blocks, PlacementType type) {
         UUID zombieUUID = zombie.getUniqueId();
 
         if (type == PlacementType.PILLAR) {
             zombie.setVelocity(new Vector(0, 0.42, 0));
 
-            // SỬA: Tạo BukkitRunnable và gọi runTaskLater để nhận về BukkitTask
             BukkitTask pillarTask = new BukkitRunnable() {
                 @Override
                 public void run() {
-                    if (!zombie.isValid()) return;
+                    if (!zombie.isValid()) {
+                        activePlacingTasks.remove(zombieUUID);
+                        return;
+                    }
                     placeBlockLogic(zombie, placeLocation, blocks, true);
                     activePlacingTasks.remove(zombieUUID);
                 }
-            }.runTaskLater(plugin, 1L); // Lưu BukkitTask trả về, không phải BukkitRunnable
+            }.runTaskLater(plugin, 1L);
 
             activePlacingTasks.put(zombieUUID, pillarTask);
             return;
         }
 
-        // SỬA: Tạo BukkitRunnable và gọi runTask để nhận về BukkitTask
         BukkitTask placeTask = new BukkitRunnable() {
             @Override
             public void run() {
@@ -291,7 +373,7 @@ public class ZombiePlaceFeature extends AbstractFeature {
                 placeBlockLogic(zombie, placeLocation, blocks, false);
                 activePlacingTasks.remove(zombieUUID);
             }
-        }.runTask(plugin); // Lưu BukkitTask trả về
+        }.runTask(plugin);
 
         activePlacingTasks.put(zombieUUID, placeTask);
     }
@@ -314,6 +396,9 @@ public class ZombiePlaceFeature extends AbstractFeature {
 
         if (Feature.ZOMBIE_PLACE_BLOCK.getBoolean("block-consume-on-place")) {
             blocks.setAmount(blocks.getAmount() - 1);
+            if (blocks.getAmount() <= 0) {
+                zombie.getEquipment().setItemInMainHand(new ItemStack(Material.AIR));
+            }
         }
 
         if (isPillar) {
@@ -341,9 +426,18 @@ public class ZombiePlaceFeature extends AbstractFeature {
 
     private ItemStack getPlaceableBlocks(Zombie zombie) {
         ItemStack main = zombie.getEquipment().getItemInMainHand();
-        if (main != null && placeableBlocks.contains(main.getType())) return main;
         ItemStack off = zombie.getEquipment().getItemInOffHand();
-        if (off != null && placeableBlocks.contains(off.getType())) return off;
+
+        // Ưu tiên main hand, nhưng chỉ nếu KHÔNG phải công cụ
+        if (main != null && placeableBlocks.contains(main.getType()) && !toolMaterials.contains(main.getType())) {
+            return main;
+        }
+
+        // Kiểm tra off hand
+        if (off != null && placeableBlocks.contains(off.getType()) && !toolMaterials.contains(off.getType())) {
+            return off;
+        }
+
         return null;
     }
 
@@ -362,8 +456,8 @@ public class ZombiePlaceFeature extends AbstractFeature {
 
     private void cleanupOldData() {
         long now = System.currentTimeMillis();
-        recentlyPlacedBlocks.entrySet().removeIf(e -> now - e.getValue() > 2000);
-        zombiePlaceCooldown.entrySet().removeIf(e -> now - e.getValue() > 2000);
+        recentlyPlacedBlocks.entrySet().removeIf(e -> now - e.getValue() > 5000);
+        zombiePlaceCooldown.entrySet().removeIf(e -> now - e.getValue() > 10000);
     }
 
     private void cleanupZombie(Zombie zombie) {
