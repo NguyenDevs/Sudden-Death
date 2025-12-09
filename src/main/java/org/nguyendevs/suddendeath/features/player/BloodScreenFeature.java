@@ -6,12 +6,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.FadingType;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.util.Utils;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Level;
 
 public class BloodScreenFeature extends AbstractFeature {
@@ -23,40 +24,68 @@ public class BloodScreenFeature extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        BukkitRunnable task = new BukkitRunnable() {
+        registerTask(new BukkitRunnable() {
             @Override
             public void run() {
                 try {
-                    var players = plugin.getPlayers();
-                    for (var entry : players.entrySet()) {
+                    Map<Player, Integer> players = plugin.getPlayers();
+                    Iterator<Map.Entry<Player, Integer>> iterator = players.entrySet().iterator();
+
+                    while (iterator.hasNext()) {
+                        Map.Entry<Player, Integer> entry = iterator.next();
                         Player player = entry.getKey();
+
+                        // Nếu player offline hoặc chết, xóa hiệu ứng và xóa khỏi danh sách
                         if (!player.isOnline() || player.isDead()) {
-                            players.remove(player);
+                            iterator.remove();
+                            if (player.isOnline()) {
+                                player.setWorldBorder(null); // Reset về border mặc định của world
+                            }
                             continue;
                         }
 
-                        WorldBorder border = player.getWorld().getWorldBorder();
-                        double distanceToBorder = border.getSize() / 2.0 -
-                                player.getLocation().distance(border.getCenter());
-                        int currentDistance = entry.getValue();
-                        plugin.getPacketSender().fading(player, currentDistance);
+                        WorldBorder worldBorder = player.getWorld().getWorldBorder();
+                        double distanceToBorder = worldBorder.getSize() / 2.0 -
+                                player.getLocation().distance(worldBorder.getCenter());
 
+                        int currentDistance = entry.getValue();
+
+                        // Gửi hiệu ứng màn hình đỏ bằng API 1.19+
+                        sendRedScreenEffect(player, currentDistance);
+
+                        // Giảm dần hiệu ứng (fading)
                         double coefficient = Feature.BLOOD_SCREEN.getDouble("coefficient");
                         int newDistance = (int) (currentDistance * coefficient);
                         entry.setValue(newDistance);
 
+                        // Nếu hiệu ứng đã giảm đến mức an toàn (hoặc player đi ra xa border ảo), tắt hiệu ứng
                         if (distanceToBorder >= currentDistance) {
-                            players.remove(player);
-                            plugin.getPacketSender().fading(player, border.getWarningDistance());
+                            iterator.remove();
+                            player.setWorldBorder(null); // Reset về border mặc định
                         }
                     }
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.SEVERE, "Error in BloodScreenFeature loop", e);
                 }
             }
-        };
-        task.runTaskTimer(plugin, 0L, 0L);
-        registerTask((BukkitTask) task);
+        }.runTaskTimer(plugin, 0L, 0L));
+    }
+
+    private void sendRedScreenEffect(Player player, int warningDistance) {
+        WorldBorder original = player.getWorld().getWorldBorder();
+        WorldBorder fakeBorder = Bukkit.createWorldBorder();
+
+        // Copy thông số từ border thật để không ảnh hưởng gameplay
+        fakeBorder.setSize(original.getSize());
+        fakeBorder.setCenter(original.getCenter());
+        fakeBorder.setDamageBuffer(original.getDamageBuffer());
+        fakeBorder.setDamageAmount(original.getDamageAmount());
+        fakeBorder.setWarningTime(original.getWarningTime());
+
+        // Set warning distance để tạo hiệu ứng đỏ
+        fakeBorder.setWarningDistance(warningDistance);
+
+        player.setWorldBorder(fakeBorder);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -68,6 +97,8 @@ public class BloodScreenFeature extends AbstractFeature {
         try {
             double distance = player.getWorld().getWorldBorder().getSize() / 2.0 -
                     player.getLocation().distance(player.getWorld().getWorldBorder().getCenter());
+
+            // Tính toán độ đậm của màn hình đỏ dựa trên config
             int fakeDistance = (int) (distance * Feature.BLOOD_SCREEN.getDouble("interval"));
 
             FadingType mode = FadingType.valueOf(Feature.BLOOD_SCREEN.getString("mode"));

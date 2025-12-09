@@ -15,6 +15,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -50,8 +51,6 @@ import org.nguyendevs.suddendeath.gui.PluginInventory;
 import org.nguyendevs.suddendeath.gui.listener.GuiListener;
 import org.nguyendevs.suddendeath.features.CustomMobs;
 import org.nguyendevs.suddendeath.manager.EventManager;
-import org.nguyendevs.suddendeath.packets.PacketSender;
-import org.nguyendevs.suddendeath.packets.v1_17.ProtocolLibImpl;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.*;
@@ -66,7 +65,6 @@ public class SuddenDeath extends JavaPlugin {
     private final Map<Player, Integer> players = new ConcurrentHashMap<>();
     private ConfigFile configuration;
     private ConfigFile features;
-    private PacketSender packetSender;
     private WGPlugin wgPlugin;
     private EventManager eventManager;
     private boolean worldGuardReady = false;
@@ -106,7 +104,6 @@ public class SuddenDeath extends JavaPlugin {
     @Override
     public void onDisable() {
         try {
-            // Shutdown features gracefully
             for (IFeature feature : loadedFeatures) {
                 feature.shutdown();
             }
@@ -125,7 +122,6 @@ public class SuddenDeath extends JavaPlugin {
         if (protocolManager == null) {
             throw new IllegalStateException("ProtocolLib is required but not found");
         }
-        packetSender = new ProtocolLibImpl(protocolManager);
         configuration.reload();
         initializeWorldGuard();
         initializeConfigFiles();
@@ -145,7 +141,6 @@ public class SuddenDeath extends JavaPlugin {
         initializeDefaultMessages();
         initializeDefaultItems();
         initializeDefaultFeatures();
-        // ... (Giữ nguyên logic load config mặc định)
         FileConfiguration defaultConfig = new YamlConfiguration();
         try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(getResource("config.yml")))) {
             defaultConfig.load(reader);
@@ -354,9 +349,8 @@ public class SuddenDeath extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
 
+        // Feature Registration
         registerFeature(new PlayerCoreFeature());
-
-        // Register new Feature classes
         registerFeature(new BlazeFeatures());
         registerFeature(new BreezeFeature());
         registerFeature(new CreeperFeature());
@@ -404,7 +398,6 @@ public class SuddenDeath extends JavaPlugin {
         loadedFeatures.add(feature);
     }
 
-    // ... (Các method registerCommands, hook, WG, etc. giữ nguyên)
     private void registerCommands() {
         Optional.ofNullable(getCommand("sds")).ifPresent(cmd -> {
             cmd.setExecutor(new SuddenDeathStatusCommand());
@@ -660,10 +653,6 @@ public class SuddenDeath extends JavaPlugin {
 
     public ConfigFile getConfiguration() {
         return configuration;
-    }
-
-    public PacketSender getPacketSender() {
-        return packetSender;
     }
 
     public EventManager getEventManager() {
