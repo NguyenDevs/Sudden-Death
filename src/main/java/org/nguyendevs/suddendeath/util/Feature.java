@@ -387,11 +387,11 @@ public enum Feature {
 			},
 			"phantom-blade",
 			new Modifier[]{
-					new Modifier("invisibility-interval", 30.0),
-					new Modifier("invisibility-duration", 25.0),
+					new Modifier("invisibility-interval", 5.0),
+					new Modifier("invisibility-duration", 10.0),
 					new Modifier("shoot-chance", 40.0),
-					new Modifier("damage", 6.0),
-					new Modifier("weakness-duration", 3.0),
+					new Modifier("damage", 1.0),
+					new Modifier("weakness-duration", 10.0),
 					new Modifier("weakness-amplifier", 1)
 			}
 	),
@@ -630,7 +630,7 @@ public enum Feature {
 					"Tools have varied materials, enchantments,",
 					"and a #drop-chance-percent#% chance to drop with random durability.",
 					"&5&o(Optional) Recommended to enable together with the",
-					"Zombie-Break-Block feature."
+					"&cZombie Break Block &7feature."
 			},
 			"zombie-tools",
 			new Modifier[]{
@@ -690,7 +690,9 @@ public enum Feature {
 							"CRIMSON_PLANKS", "WARPED_PLANKS"
 					}))
 			}
-	),
+	);
+
+	/*
 	ZOMBIE_PLACE_BLOCK(
 			"Zombie Place Block",
 			new String[]{
@@ -724,7 +726,8 @@ public enum Feature {
 					new Modifier("show-particles", true),
 					new Modifier("play-sounds", true)
 			}
-	);
+	)
+	 */
 
 	private String name;
 	private List<String> lore;

@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.features.items;
+package org.nguyendevs.suddendeath.features.mob.hostile;
 
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;

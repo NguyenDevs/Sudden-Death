@@ -73,9 +73,6 @@ public class InfectionFeature extends AbstractFeature {
         }
     }
 
-    // ... (Giữ nguyên các EventHandler khác onEntityRegainHealth, onPlayerMove, onPlayerInteract từ response trước)
-    // Tôi paste lại để đầy đủ:
-
     @EventHandler
     public void onEntityRegainHealth(EntityRegainHealthEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
@@ -100,7 +97,7 @@ public class InfectionFeature extends AbstractFeature {
             if (plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_REMOVE)) {
                 if (data.isInfected()) {
                     data.setInfected(false);
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("no-longer-infected")));
+                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("use-strange-brew")));
                     player.removePotionEffect(PotionEffectType.CONFUSION);
                     player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, 1.0f, 0.0f);
                 }

@@ -15,7 +15,6 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -35,7 +34,7 @@ import org.nguyendevs.suddendeath.features.combat.SharpKnifeFeature;
 import org.nguyendevs.suddendeath.features.items.AdvancedPlayerDropsFeature;
 import org.nguyendevs.suddendeath.features.items.PhysicEnderPearlFeature;
 import org.nguyendevs.suddendeath.features.items.RealisticPickupFeature;
-import org.nguyendevs.suddendeath.features.items.ZombieToolsFeature;
+import org.nguyendevs.suddendeath.features.mob.hostile.ZombieToolsFeature;
 import org.nguyendevs.suddendeath.features.mob.attributes.ForceOfUndeadFeature;
 import org.nguyendevs.suddendeath.features.mob.attributes.QuickMobsFeature;
 import org.nguyendevs.suddendeath.features.mob.attributes.TankyMonstersFeature;
@@ -391,7 +390,7 @@ public class SuddenDeath extends JavaPlugin {
         registerFeature(new SnowSlowFeature());
         registerFeature(new StoneStiffnessFeature());
         registerFeature(new ZombieToolsFeature());
-        registerFeature(new ZombiePlaceFeature());
+        //registerFeature(new ZombiePlaceFeature());
     }
 
     private void registerFeature(IFeature feature) {

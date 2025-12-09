@@ -12,6 +12,8 @@ public enum Message {
 	USE_STRANGE_BREW("&7You are no longer infected."),
 	USE_BANDAGE("&7You cured all your wounds."),
 	NO_LONGER_BLEEDING("&7You are no longer bleeding."),
+	HUNGER_NAUSEA("&7It seems like your blood sugar is low, you start to feel dizzy."),
+	NO_LONGER_HUNGER("&7Feeling full feels good, doesn't it?"),
 	FREDDY_SUMMONED("&7You summoned &0Freddy!"),
 	LOST_EXP("You just lost #exp# EXP!"),
 	NOT_ENOUGH_PERMS("&cYou don't have enough permissions."),

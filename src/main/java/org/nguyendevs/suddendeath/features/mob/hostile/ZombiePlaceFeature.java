@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.features.mob.hostile;
+/*package org.nguyendevs.suddendeath.features.mob.hostile;
 
 import com.destroystokyo.paper.entity.ai.Goal;
 import com.destroystokyo.paper.entity.ai.GoalKey;
@@ -515,3 +515,4 @@ public class ZombiePlaceFeature extends AbstractFeature {
         BlockFace placeFace;
     }
 }
+ */

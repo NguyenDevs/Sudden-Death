@@ -51,6 +51,20 @@ public class ZombieFeatures extends AbstractFeature {
         return "Improved Zombie Features";
     }
 
+    private boolean isPaper() {
+        try {
+            Class.forName("com.destroystokyo.paper.PaperConfig");
+            return true;
+        } catch (ClassNotFoundException e) {
+            try {
+                Class.forName("io.papermc.paper.configuration.GlobalConfiguration");
+                return true;
+            } catch (ClassNotFoundException ignored) {
+                return false;
+            }
+        }
+    }
+
     @Override
     protected void onEnable() {
         registerTask(new BukkitRunnable() {
@@ -72,34 +86,42 @@ public class ZombieFeatures extends AbstractFeature {
             }
         }.runTaskTimer(plugin, 20L, 60L));
 
-        registerTask(new BukkitRunnable() {
-            @Override
-            public void run() {
-                try {
-                    for (World world : Bukkit.getWorlds()) {
-                        if (Feature.ZOMBIE_BREAK_BLOCK.isEnabled(world)) {
-                            List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));
-                            for (Zombie zombie : zombies) {
-                                long randomDelay = ThreadLocalRandom.current().nextLong(0, 5);
-                                Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
-                                    try {
-                                        if (zombie.isValid() && (zombie.getTarget() instanceof Player || zombie.getTarget() instanceof Villager)) {
-                                            if (plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(), CustomFlag.SDS_BREAK)) {
-                                                processZombieBreakBlock(zombie);
+        if (isPaper()) {
+            registerTask(new BukkitRunnable() {
+                @Override
+                public void run() {
+                    try {
+                        for (World world : Bukkit.getWorlds()) {
+                            if (Feature.ZOMBIE_BREAK_BLOCK.isEnabled(world)) {
+                                List<Zombie> zombies = new ArrayList<>(world.getEntitiesByClass(Zombie.class));
+                                for (Zombie zombie : zombies) {
+                                    long randomDelay = ThreadLocalRandom.current().nextLong(0, 5);
+                                    Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
+                                        try {
+                                            if (zombie.isValid() && (zombie.getTarget() instanceof Player || zombie.getTarget() instanceof Villager)) {
+                                                if (plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(), CustomFlag.SDS_BREAK)) {
+                                                    processZombieBreakBlock(zombie);
+                                                }
                                             }
+                                        } catch (Exception e) {
+                                            plugin.getLogger().log(Level.WARNING, "Error processing zombie break", e);
                                         }
-                                    } catch (Exception e) {
-                                        plugin.getLogger().log(Level.WARNING, "Error processing zombie break", e);
-                                    }
-                                }, randomDelay);
+                                    }, randomDelay);
+                                }
                             }
                         }
+                    } catch (Exception e) {
+                        plugin.getLogger().log(Level.WARNING, "Error in Zombie Break Block loop", e);
                     }
-                } catch (Exception e) {
-                    plugin.getLogger().log(Level.WARNING, "Error in Zombie Break Block loop", e);
                 }
+            }.runTaskTimer(plugin, 0L, 5L));
+        } else {
+            if (!plugin.getConfiguration().getConfig().getStringList(Feature.ZOMBIE_BREAK_BLOCK.getPath()).isEmpty()) {
+                plugin.getConfiguration().getConfig().set(Feature.ZOMBIE_BREAK_BLOCK.getPath(), new ArrayList<>());
+                plugin.getConfiguration().save();
+                plugin.getLogger().log(Level.WARNING, "Zombie Break Block has been disabled because this server is not running Paper.");
             }
-        }.runTaskTimer(plugin, 0L, 5L));
+        }
 
         registerTask(new BukkitRunnable() {
             @Override
@@ -186,7 +208,8 @@ public class ZombieFeatures extends AbstractFeature {
             UUID targetUUID = persistentTargets.get(zombieUUID);
             Player persistentPlayer = Bukkit.getPlayer(targetUUID);
             if (persistentPlayer != null && persistentPlayer.isOnline()) {
-                if (zombie.getLocation().distanceSquared(persistentPlayer.getLocation()) <= MAX_TARGET_DISTANCE_SQUARED) {
+                if (zombie.getWorld().equals(persistentPlayer.getWorld()) &&
+                        zombie.getLocation().distanceSquared(persistentPlayer.getLocation()) <= MAX_TARGET_DISTANCE_SQUARED) {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         if (zombie.isValid() && zombie.getTarget() == null) {
                             zombie.setTarget(persistentPlayer);
@@ -248,6 +271,11 @@ public class ZombieFeatures extends AbstractFeature {
 
             Player target = Bukkit.getPlayer(entry.getValue());
             if (target == null || !target.isOnline()) return true;
+
+            if (!zombie.getWorld().equals(target.getWorld())) {
+                zombie.setTarget(null);
+                return true;
+            }
 
             if (zombie.getLocation().distanceSquared(target.getLocation()) > MAX_TARGET_DISTANCE_SQUARED) {
                 zombie.setTarget(null);
@@ -322,6 +350,8 @@ public class ZombieFeatures extends AbstractFeature {
         LivingEntity target = getZombieTarget(zombie);
         if (target == null) return;
 
+        if (!target.getWorld().equals(zombie.getWorld())) return;
+
         ItemStack itemInHand = zombie.getEquipment().getItemInMainHand();
         Material toolType = itemInHand != null ? itemInHand.getType() : Material.AIR;
         if (!isValidTool(toolType)) return;
@@ -340,6 +370,7 @@ public class ZombieFeatures extends AbstractFeature {
         if (persistentTargetUUID != null) {
             Player persistentPlayer = Bukkit.getPlayer(persistentTargetUUID);
             if (persistentPlayer != null && persistentPlayer.isOnline() &&
+                    zombie.getWorld().equals(persistentPlayer.getWorld()) &&
                     zombie.getLocation().distanceSquared(persistentPlayer.getLocation()) <= MAX_TARGET_DISTANCE_SQUARED) {
                 return persistentPlayer;
             }

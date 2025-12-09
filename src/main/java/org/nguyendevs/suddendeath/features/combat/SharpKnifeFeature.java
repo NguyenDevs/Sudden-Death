@@ -36,11 +36,9 @@ public class SharpKnifeFeature extends AbstractFeature {
         try {
             ItemStack item = damager.getInventory().getItemInMainHand();
             if (Utils.isPluginItem(item, false) && item.isSimilar(CustomItem.SHARP_KNIFE.a())) {
-                // Trigger bleeding through PlayerData
                 org.nguyendevs.suddendeath.player.PlayerData data =
                         org.nguyendevs.suddendeath.player.PlayerData.get(player);
                 if (data != null && !data.isBleeding()) {
-                    // Manually trigger bleeding
                     double chance = Feature.BLEEDING.getDouble("chance-percent") / 100.0;
                     if (RANDOM.nextDouble() <= chance) {
                         data.setBleeding(true);

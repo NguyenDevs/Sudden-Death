@@ -47,7 +47,7 @@ public class FreddyFeature extends AbstractFeature {
             freddy.setTarget(player);
             player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("freddy-summoned")));
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_DEATH, 2.0f, 0.0f);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 120, 0));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0));
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in Freddy feature", e);
         }

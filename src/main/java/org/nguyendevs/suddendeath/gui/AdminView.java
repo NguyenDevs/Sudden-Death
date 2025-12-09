@@ -45,8 +45,8 @@ public class AdminView extends PluginInventory {
             Feature.POISONED_SLIMES, Feature.QUICK_MOBS, Feature.SHOCKING_SKELETON_ARROWS,
             Feature.SILVERFISHES_SUMMON, Feature.STRAY_FROST, Feature.SPIDER_WEB, Feature.TANKY_MONSTERS,
             Feature.THIEF_SLIMES, Feature.TRIDENT_WRATH, Feature.UNDEAD_GUNNERS, Feature.UNDEAD_RAGE,
-            Feature.WITCH_SCROLLS, Feature.WITHER_MACHINEGUN, Feature.WITHER_RUSH, Feature.ZOMBIE_BREAK_BLOCK,
-            Feature.ZOMBIE_TOOLS, Feature.ZOMBIE_PLACE_BLOCK
+            Feature.WITCH_SCROLLS, Feature.WITHER_MACHINEGUN, Feature.WITHER_RUSH, Feature.ZOMBIE_BREAK_BLOCK
+            //Feature.ZOMBIE_TOOLS, Feature.ZOMBIE_PLACE_BLOCK
     );
     private static final EnumSet<Feature> SURVIVAL_SET = EnumSet.of(
             Feature.ADVANCED_PLAYER_DROPS, Feature.ARROW_SLOW, Feature.BLEEDING, Feature.BLOOD_SCREEN,
@@ -198,7 +198,7 @@ public class AdminView extends PluginInventory {
             case WITHER_RUSH: return Material.WITHER_SKELETON_SPAWN_EGG;
             case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ZOMBIE_TOOLS: return Material.ZOMBIE_SPAWN_EGG;
-            case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
+            //case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
             case ARROW_SLOW: return Material.TIPPED_ARROW;
             case BLEEDING: return Material.PAPER;
