@@ -39,6 +39,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Leaping Spiders:** Spiders can leap powerfully at players.
 - **Mob Critical Strikes:** Monsters can deal critical strikes with extra damage, configurable per mob.
 - **Nether Shield:** Magma cubes, pigmen, and blazes may block attacks, reflecting damage and igniting players.
+- **Phantom Blade:** Phantoms enter invisible state. Shoot Wind Blades applying weakness effect
 - **Poisoned Slimes:** Slimes may poison players on hit.
 - **Quick Mobs:** Monsters move faster, configurable per mob.
 - **Shocking Skeleton Arrows:** Skeleton arrows shock players, slowing them.
@@ -54,6 +55,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Wither Machinegun:** Wither Skeletons throw damaging coal projectiles.
 - **Wither Rush:** Wither Skeletons teleport to players, dealing damage.
 - **Zombie Break Block:** Zombie with tools in hand can break the corresponding block type
+- **Zombie Tools:** Zombies have a chance to spawn with random tools
 
 ![image](https://github.com/user-attachments/assets/1fcdbad5-5c56-4335-96bd-d958248dc608)
 
