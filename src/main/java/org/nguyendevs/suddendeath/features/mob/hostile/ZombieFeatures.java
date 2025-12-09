@@ -37,7 +37,6 @@ public class ZombieFeatures extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        // Undead Gunners Loop
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {
@@ -57,7 +56,6 @@ public class ZombieFeatures extends AbstractFeature {
             }
         }.runTaskTimer(plugin, 20L, 60L));
 
-        // Zombie Break Block Loop
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {
@@ -125,7 +123,6 @@ public class ZombieFeatures extends AbstractFeature {
             double damage = Feature.UNDEAD_GUNNERS.getDouble("damage");
             zombie.getWorld().playSound(zombie.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 0.0f);
 
-            // Logic projectile nội bộ
             Vector direction = target.getLocation().add(0, 0.5, 0).toVector()
                     .subtract(zombie.getLocation().add(0, 0.75, 0).toVector()).normalize().multiply(TICK_INTERVAL);
             Location loc = zombie.getEyeLocation();
@@ -144,8 +141,6 @@ public class ZombieFeatures extends AbstractFeature {
                                 if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 2.3 * 2.3) {
                                     loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 0);
                                     loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
-                                    // Utils.damage(player, damage, true);
-                                    // Sửa lại: Dùng damage method của Feature cũ
                                     player.damage(damage);
 
                                     double blockDmg = Feature.UNDEAD_GUNNERS.getDouble("block-damage");
@@ -245,27 +240,47 @@ public class ZombieFeatures extends AbstractFeature {
                     ticksElapsed++;
 
                     if (ticksElapsed < breakTime) {
-                        int destroyStage = Math.min(9, (int) ((ticksElapsed / breakTime) * 10));
-                        sendBreakAnimation(target, entityId, block, destroyStage);
+                        new BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    int destroyStage = Math.min(9, (int) ((ticksElapsed / breakTime) * 10));
+                                    sendBreakAnimation(target, entityId, block, destroyStage);
 
-                        if (ticksElapsed % 8 == 0) zombie.swingMainHand();
-                        if (ticksElapsed % 10 == 0) {
-                            Sound hitSound = block.getType().createBlockData().getSoundGroup().getHitSound();
-                            zombie.getWorld().playSound(block.getLocation(), hitSound, 0.4f, 0.8f);
-                        }
+                                    if (ticksElapsed % 8 == 0) zombie.swingMainHand();
+                                    if (ticksElapsed % 10 == 0) {
+                                        Sound hitSound = block.getType().createBlockData().getSoundGroup().getHitSound();
+                                        zombie.getWorld().playSound(block.getLocation(), hitSound, 0.4f, 0.8f);
+                                    }
+                                } catch (Exception e) {
+                                    plugin.getLogger().log(Level.WARNING, "Error in block break animation", e);
+                                }
+                            }
+                        }.runTask(plugin);
                         return;
                     }
 
-                    zombie.swingMainHand();
-                    Sound breakSound = block.getType().createBlockData().getSoundGroup().getBreakSound();
-                    zombie.getWorld().playSound(block.getLocation(), breakSound, 0.8f, 1.0f);
-                    sendBreakAnimation(target, entityId, block, -1);
-                    zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK,
-                            block.getLocation().add(0.5, 0.5, 0.5),
-                            25, 0.3, 0.3, 0.3, 0.1, block.getBlockData());
-                    block.breakNaturally(tool);
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                zombie.swingMainHand();
+                                Sound breakSound = block.getType().createBlockData().getSoundGroup().getBreakSound();
+                                zombie.getWorld().playSound(block.getLocation(), breakSound, 0.8f, 1.0f);
+                                sendBreakAnimation(target, entityId, block, -1);
+                                zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK,
+                                        block.getLocation().add(0.5, 0.5, 0.5),
+                                        25, 0.3, 0.3, 0.3, 0.1, block.getBlockData());
+                                block.breakNaturally(tool);
 
-                    activeBreakingTasks.remove(zombieUUID);
+                                activeBreakingTasks.remove(zombieUUID);
+                            } catch (Exception e) {
+                                plugin.getLogger().log(Level.WARNING, "Error breaking block", e);
+                                activeBreakingTasks.remove(zombieUUID);
+                            }
+                        }
+                    }.runTask(plugin);
+
                     cancel();
 
                     Bukkit.getScheduler().runTaskLater(plugin,

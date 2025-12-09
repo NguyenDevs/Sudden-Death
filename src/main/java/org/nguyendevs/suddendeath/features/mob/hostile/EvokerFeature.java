@@ -10,7 +10,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import org.nguyendevs.suddendeath.features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.util.Feature;
 import org.nguyendevs.suddendeath.util.Utils;
@@ -30,7 +29,6 @@ public class EvokerFeature extends AbstractFeature {
     protected void onEnable() {
         totemUsed = new NamespacedKey(plugin, "totem_used");
 
-        // Evoker Fangs loop
         BukkitRunnable fangLoop = new BukkitRunnable() {
             @Override
             public void run() {
@@ -51,8 +49,7 @@ public class EvokerFeature extends AbstractFeature {
                 }
             }
         };
-        fangLoop.runTaskTimer(plugin, 0L, 100L);
-        registerTask((BukkitTask) fangLoop);
+        registerTask(fangLoop.runTaskTimer(plugin, 0L, 100L));
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

@@ -67,6 +67,7 @@ public class WitherSkeletonFeature extends AbstractFeature {
                     @Override
                     public void run() {
                         try {
+                            target.getWorld().playSound(target.getLocation(), Sound.ENTITY_SKELETON_DEATH, 1.0F, 2.0F);
                             ItemStack stack = new ItemStack(Material.COAL);
                             ItemMeta meta = stack.getItemMeta();
                             if (meta != null) {

@@ -93,10 +93,12 @@ public class BleedingFeature extends AbstractFeature {
                 }
                 return;
             }
+            /*
             if (plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT) &&
                     player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
                 spawnBleedingParticles(player);
             }
+             */
         } catch (Exception e) {}
     }
 
@@ -142,6 +144,7 @@ public class BleedingFeature extends AbstractFeature {
                 }
             };
             data.setBleedingTask(task);
+            spawnBleedingParticles(player);
             task.runTaskLater(plugin, (long)(Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
         }
     }

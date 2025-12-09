@@ -35,11 +35,10 @@ public class BloodScreenFeature extends AbstractFeature {
                         Map.Entry<Player, Integer> entry = iterator.next();
                         Player player = entry.getKey();
 
-                        // Nếu player offline hoặc chết, xóa hiệu ứng và xóa khỏi danh sách
                         if (!player.isOnline() || player.isDead()) {
                             iterator.remove();
                             if (player.isOnline()) {
-                                player.setWorldBorder(null); // Reset về border mặc định của world
+                                player.setWorldBorder(null);
                             }
                             continue;
                         }
@@ -50,18 +49,15 @@ public class BloodScreenFeature extends AbstractFeature {
 
                         int currentDistance = entry.getValue();
 
-                        // Gửi hiệu ứng màn hình đỏ bằng API 1.19+
                         sendRedScreenEffect(player, currentDistance);
 
-                        // Giảm dần hiệu ứng (fading)
                         double coefficient = Feature.BLOOD_SCREEN.getDouble("coefficient");
                         int newDistance = (int) (currentDistance * coefficient);
                         entry.setValue(newDistance);
 
-                        // Nếu hiệu ứng đã giảm đến mức an toàn (hoặc player đi ra xa border ảo), tắt hiệu ứng
                         if (distanceToBorder >= currentDistance) {
                             iterator.remove();
-                            player.setWorldBorder(null); // Reset về border mặc định
+                            player.setWorldBorder(null);
                         }
                     }
                 } catch (Exception e) {
@@ -75,14 +71,12 @@ public class BloodScreenFeature extends AbstractFeature {
         WorldBorder original = player.getWorld().getWorldBorder();
         WorldBorder fakeBorder = Bukkit.createWorldBorder();
 
-        // Copy thông số từ border thật để không ảnh hưởng gameplay
         fakeBorder.setSize(original.getSize());
         fakeBorder.setCenter(original.getCenter());
         fakeBorder.setDamageBuffer(original.getDamageBuffer());
         fakeBorder.setDamageAmount(original.getDamageAmount());
         fakeBorder.setWarningTime(original.getWarningTime());
 
-        // Set warning distance để tạo hiệu ứng đỏ
         fakeBorder.setWarningDistance(warningDistance);
 
         player.setWorldBorder(fakeBorder);
@@ -98,7 +92,6 @@ public class BloodScreenFeature extends AbstractFeature {
             double distance = player.getWorld().getWorldBorder().getSize() / 2.0 -
                     player.getLocation().distance(player.getWorld().getWorldBorder().getCenter());
 
-            // Tính toán độ đậm của màn hình đỏ dựa trên config
             int fakeDistance = (int) (distance * Feature.BLOOD_SCREEN.getDouble("interval"));
 
             FadingType mode = FadingType.valueOf(Feature.BLOOD_SCREEN.getString("mode"));

@@ -20,6 +20,7 @@ import java.util.logging.Level;
 public class PhantomFeature extends AbstractFeature {
 
     private NamespacedKey phantomVanishKey;
+    private NamespacedKey phantomOffsetKey;
 
     @Override
     public String getName() {
@@ -29,6 +30,7 @@ public class PhantomFeature extends AbstractFeature {
     @Override
     protected void onEnable() {
         this.phantomVanishKey = new NamespacedKey(plugin, "phantom_vanish_time");
+        this.phantomOffsetKey = new NamespacedKey(plugin, "phantom_time_offset");
 
         BukkitRunnable phantomLoop = new BukkitRunnable() {
             @Override
@@ -95,15 +97,22 @@ public class PhantomFeature extends AbstractFeature {
 
             PersistentDataContainer data = phantom.getPersistentDataContainer();
             long now = System.currentTimeMillis();
+
+            if (!data.has(phantomOffsetKey, PersistentDataType.LONG)) {
+                long randomOffset = (long) (RANDOM.nextDouble() * 5000);
+                data.set(phantomOffsetKey, PersistentDataType.LONG, randomOffset);
+            }
+            long timeOffset = data.get(phantomOffsetKey, PersistentDataType.LONG);
+
             double intervalMillis = Feature.PHANTOM_BLADE.getDouble("invisibility-interval") * 1000;
             double durationTicks = Feature.PHANTOM_BLADE.getDouble("invisibility-duration") * 20;
             long lastVanish = data.has(phantomVanishKey, PersistentDataType.LONG) ? data.get(phantomVanishKey, PersistentDataType.LONG) : 0L;
 
-            if (now - lastVanish > intervalMillis + (durationTicks * 50)) {
+            if ((now + timeOffset) - lastVanish > intervalMillis + (durationTicks * 50)) {
                 phantom.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, (int) durationTicks, 0, false, false));
                 phantom.getWorld().playSound(phantom.getLocation(), Sound.ENTITY_PHANTOM_SWOOP, 2.0f, 0.5f);
                 phantom.getWorld().spawnParticle(Particle.CLOUD, phantom.getLocation(), 20, 0.5, 0.5, 0.5, 0.05);
-                data.set(phantomVanishKey, PersistentDataType.LONG, now);
+                data.set(phantomVanishKey, PersistentDataType.LONG, now + timeOffset);
             }
 
             if (phantom.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
