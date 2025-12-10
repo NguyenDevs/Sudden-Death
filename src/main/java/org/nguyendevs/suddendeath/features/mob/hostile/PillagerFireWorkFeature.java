@@ -56,7 +56,7 @@ public class PillagerFireWorkFeature extends AbstractFeature {
                     .flicker(true)
                     .build();
             meta.addEffect(effect);
-            meta.setPower(2);
+            meta.setPower(0);
             firework.setFireworkMeta(meta);
 
             firework.setVelocity(velocity.multiply(1.2));
@@ -71,16 +71,24 @@ public class PillagerFireWorkFeature extends AbstractFeature {
             new BukkitRunnable(){
                 @Override
                 public void run(){
-                    if(arrow.isDead() || arrow.isOnGround()) {
+                    if(firework.isDead() || !firework.isValid()) {
                         cancel();
                         return;
                     }
-                    arrow.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, arrow.getLocation(), 2, 0, 0, 0, 0);
+                    firework.getWorld().spawnParticle(Particle.END_ROD, firework.getLocation(), 1, 0, 0, 0, 0);
                 }
             }.runTaskTimer(plugin, 1L, 1L);
         } catch(Exception e){
             plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature shoot event", e);
         }
+    }
+
+    @EventHandler
+    public void onProjectileHit(ProjectileHitEvent event) {
+        if(!(event.getEntity() instanceof Firework firework)) return;
+        if(!firework.hasMetadata(FIREWORK_ARROW_KEY)) return;
+
+        firework.detonate();
     }
 
     @EventHandler
@@ -105,8 +113,7 @@ public class PillagerFireWorkFeature extends AbstractFeature {
                     Utils.damage(player, damage, true);
 
                     player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int)(duration * 20), 1));
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 4, 1));
-                player.playHurtAnimation(0);
+                    player.playHurtAnimation(0);
                 }
             }
 
