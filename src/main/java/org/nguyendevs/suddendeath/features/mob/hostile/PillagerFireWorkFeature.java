@@ -38,46 +38,53 @@ public class PillagerFireWorkFeature extends AbstractFeature {
             double chance = Feature.FIREWORK_ARROWS.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() > chance) return;
 
-            Entity originalArrow = event.getProjectile();
-            Vector velocity = originalArrow.getVelocity();
-            Location spawnLoc = originalArrow.getLocation();
+            // Hủy mũi tên gốc và spawn pháo hoa thay thế
+            Vector velocity = arrow.getVelocity();
+            Location spawnLoc = pillager.getEyeLocation().add(pillager.getLocation().getDirection().multiply(0.5));
 
-            Firework firework = pillager.getWorld().spawn(spawnLoc, Firework.class);
-            FireworkMeta meta = firework.getFireworkMeta();
+            event.setCancelled(true);
 
-            Color brown = Color.fromRGB(160,82,45);
-            Color maroon = Color.MAROON;
+            // Xử lý bất đồng bộ để mỗi pillager bắn tự nhiên hơn
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                try{
+                    Firework firework = pillager.getWorld().spawn(spawnLoc, Firework.class);
+                    FireworkMeta meta = firework.getFireworkMeta();
 
-            FireworkEffect effect = FireworkEffect.builder()
-                    .with(FireworkEffect.Type.BALL)
-                    .withColor(brown, maroon)
-                    .withFade(Color.BLACK)
-                    .trail(true)
-                    .flicker(true)
-                    .build();
-            meta.addEffect(effect);
-            meta.setPower(0);
-            firework.setFireworkMeta(meta);
+                    Color brown = Color.fromRGB(160,82,45);
+                    Color maroon = Color.MAROON;
 
-            firework.setVelocity(velocity.multiply(1.2));
-            firework.setShooter(pillager);
+                    FireworkEffect effect = FireworkEffect.builder()
+                            .with(FireworkEffect.Type.BALL)
+                            .withColor(brown, maroon)
+                            .withFade(Color.BLACK)
+                            .trail(true)
+                            .flicker(true)
+                            .build();
+                    meta.addEffect(effect);
+                    meta.setPower(0);
+                    firework.setFireworkMeta(meta);
 
-            firework.setMetadata(FIREWORK_ARROW_KEY, new FixedMetadataValue(plugin, true));
+                    firework.setVelocity(velocity);
+                    firework.setShooter(pillager);
 
-            event.setProjectile(firework);
+                    firework.setMetadata(FIREWORK_ARROW_KEY, new FixedMetadataValue(plugin, true));
 
-            pillager.getWorld().playSound(pillager.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
+                    pillager.getWorld().playSound(pillager.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
 
-            new BukkitRunnable(){
-                @Override
-                public void run(){
-                    if(firework.isDead() || !firework.isValid()) {
-                        cancel();
-                        return;
-                    }
-                    firework.getWorld().spawnParticle(Particle.END_ROD, firework.getLocation(), 1, 0, 0, 0, 0);
+                    new BukkitRunnable(){
+                        @Override
+                        public void run(){
+                            if(firework.isDead() || !firework.isValid()) {
+                                cancel();
+                                return;
+                            }
+                            firework.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, firework.getLocation(), 1, 0, 0, 0, 0);
+                        }
+                    }.runTaskTimer(plugin, 1L, 1L);
+                } catch(Exception e){
+                    plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature shoot event", e);
                 }
-            }.runTaskTimer(plugin, 1L, 1L);
+            }, RANDOM.nextInt(5) + 1);
         } catch(Exception e){
             plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature shoot event", e);
         }
