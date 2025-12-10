@@ -255,7 +255,7 @@ public enum Feature {
 			},
 			"firework-arrows",
 			new Modifier[]{
-					new Modifier("chance-percent", 15.0),
+					new Modifier("chance-percent", 55.0),
 					new Modifier("damage", 3),
 					new Modifier("area", 3),
 					new  Modifier("duration", 8)
