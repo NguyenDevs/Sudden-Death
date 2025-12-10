@@ -350,6 +350,7 @@ public class SuddenDeath extends JavaPlugin {
 
         // Feature Registration
         registerFeature(new PlayerCoreFeature());
+
         registerFeature(new BlazeFeatures());
         registerFeature(new BreezeFeature());
         registerFeature(new CreeperFeature());
@@ -383,6 +384,7 @@ public class SuddenDeath extends JavaPlugin {
         registerFeature(new DangerousCoalFeature());
         registerFeature(new ElectricityShockFeature());
         registerFeature(new FallStunFeature());
+        registerFeature(new PillagerFireWorkFeature());
         registerFeature(new FreddyFeature());
         registerFeature(new HungerNauseaFeature());
         registerFeature(new InfectionFeature());

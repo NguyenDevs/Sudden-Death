@@ -97,6 +97,12 @@ features:
     lore:
       - "High falls cause players to be slowed (III)"
       - "for a duration. Duration scales with fall height."
+  firework-arrows:
+    name: "Firework Arrows"
+    lore:
+      - "Pillager have #chance#% chance to shoot a Firework Arrow"
+      - "instead of regular arrow. Deal #damage# damage per shot in"
+      - "in #area#x#area# area. Apply shock effect for #duration#s."
   force-of-the-undead:
     name: "Force of the Undead"
     lore:

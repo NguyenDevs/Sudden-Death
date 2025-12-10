@@ -122,7 +122,8 @@ public class PlayerView extends PluginInventory {
             Feature.WITHER_MACHINEGUN,
             Feature.WITHER_RUSH,
             Feature.ZOMBIE_BREAK_BLOCK,
-            Feature.ZOMBIE_TOOLS
+            Feature.ZOMBIE_TOOLS,
+            Feature.FIREWORK_ARROWS
             //Feature.ZOMBIE_PLACE_BLOCK
     );
 
@@ -359,6 +360,7 @@ public class PlayerView extends PluginInventory {
             case ENDER_POWER: return Material.ENDER_DRAGON_SPAWN_EGG;
             case EVERBURNING_BLAZES: return Material.BLAZE_SPAWN_EGG;
             case FORCE_OF_THE_UNDEAD: return Material.SPAWNER;
+            case FIREWORK_ARROWS: return Material.PILLAGER_SPAWN_EGG;
             case HOMING_FLAME_BARRAGE: return Material.BLAZE_SPAWN_EGG;
             case IMMORTAL_EVOKER: return Material.EVOKER_SPAWN_EGG;
             case LEAPING_SPIDERS: return Material.SPIDER_SPAWN_EGG;

@@ -45,8 +45,8 @@ public class AdminView extends PluginInventory {
             Feature.POISONED_SLIMES, Feature.QUICK_MOBS, Feature.SHOCKING_SKELETON_ARROWS,
             Feature.SILVERFISHES_SUMMON, Feature.STRAY_FROST, Feature.SPIDER_WEB, Feature.TANKY_MONSTERS,
             Feature.THIEF_SLIMES, Feature.TRIDENT_WRATH, Feature.UNDEAD_GUNNERS, Feature.UNDEAD_RAGE,
-            Feature.WITCH_SCROLLS, Feature.WITHER_MACHINEGUN, Feature.WITHER_RUSH, Feature.ZOMBIE_BREAK_BLOCK
-            //Feature.ZOMBIE_TOOLS, Feature.ZOMBIE_PLACE_BLOCK
+            Feature.WITCH_SCROLLS, Feature.WITHER_MACHINEGUN, Feature.WITHER_RUSH, Feature.ZOMBIE_BREAK_BLOCK,
+            Feature.ZOMBIE_TOOLS, Feature.FIREWORK_ARROWS
     );
     private static final EnumSet<Feature> SURVIVAL_SET = EnumSet.of(
             Feature.ADVANCED_PLAYER_DROPS, Feature.ARROW_SLOW, Feature.BLEEDING, Feature.BLOOD_SCREEN,
@@ -175,6 +175,7 @@ public class AdminView extends PluginInventory {
             case ENDER_POWER: return Material.ENDER_DRAGON_SPAWN_EGG;
             case EVERBURNING_BLAZES: return Material.BLAZE_SPAWN_EGG;
             case FORCE_OF_THE_UNDEAD: return Material.SPAWNER;
+            case FIREWORK_ARROWS: return Material.PILLAGER_SPAWN_EGG;
             case HOMING_FLAME_BARRAGE: return Material.BLAZE_SPAWN_EGG;
             case IMMORTAL_EVOKER: return Material.EVOKER_SPAWN_EGG;
             case LEAPING_SPIDERS: return Material.SPIDER_SPAWN_EGG;

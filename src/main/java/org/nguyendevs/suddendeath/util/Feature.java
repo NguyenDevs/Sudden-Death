@@ -246,6 +246,22 @@ public enum Feature {
 			"fall-stun",
 			new Modifier[]{new Modifier("duration-amplifier", 1)}
 	),
+	FIREWORK_ARROWS(
+			"Firework Arrows",
+			new String[]{
+					"&6Pillager &7have #chance-percent#% chance to shoot a &fFire&cwork &fArrow",
+					"instead of regular arrow. Deal #damage# damage per shot in",
+					"in #area#x#area# area. Apply shock effect for #duration#s."
+			},
+			"firework-arrows",
+			new Modifier[]{
+					new Modifier("chance-percent", 15.0),
+					new Modifier("damage", 3),
+					new Modifier("area", 3),
+					new  Modifier("duration", 8)
+			}
+
+	),
 	FORCE_OF_THE_UNDEAD(
 			"Force of the Undead",
 			new String[]{
