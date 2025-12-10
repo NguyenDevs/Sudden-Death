@@ -46,7 +46,7 @@ public class PillagerFireWorkFeature extends AbstractFeature {
                         cancel();
                         return;
                     }
-                    arrow.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, arrow.getLocation(), 2, 0.05, 0.05, 0.05, 0.02);
+                    arrow.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, arrow.getLocation(), 2, 0, 0, 0, 0);
                 }
             }.runTaskTimer(plugin, 1L, 1L);
         } catch(Exception e){
@@ -63,7 +63,6 @@ public class PillagerFireWorkFeature extends AbstractFeature {
             Location loc = arrow.getLocation();
 
             explode(loc);
-
             arrow.remove();
         } catch (Exception e){
             plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature hit event", e);
@@ -81,14 +80,25 @@ public class PillagerFireWorkFeature extends AbstractFeature {
         Firework fw = (Firework) world.spawnEntity(loc, EntityType.FIREWORK);
         FireworkMeta meta = fw.getFireworkMeta();
         meta.addEffect(FireworkEffect.builder()
-                .with(FireworkEffect.Type.BURST)
+                .with(FireworkEffect.Type.BALL)
                 .withColor(Color.fromRGB(139,69,19), Color.MAROON, Color.ORANGE)
                 .withFade(Color.BLACK)
                 .trail(true)
                 .flicker(true)
                 .build());
+        FireworkMeta meta2 = fw.getFireworkMeta();
+        meta2.addEffect(FireworkEffect.builder()
+                .with(FireworkEffect.Type.BALL_LARGE)
+                .withColor(Color.fromRGB(139,69,19), Color.ORANGE, Color.PURPLE)
+                .withFade(Color.GRAY)
+                .trail(true)
+                .flicker(true)
+                .build());
         meta.setPower(0);
         fw.setFireworkMeta(meta);
+        fw.detonate();
+        meta2.setPower(0);
+        fw.setFireworkMeta(meta2);
         fw.detonate();
 
         world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.8f);
@@ -99,6 +109,7 @@ public class PillagerFireWorkFeature extends AbstractFeature {
                 Utils.damage(player, damage, true);
 
                 player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int)(duration * 20), 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 4, 1));
             }
         }
     }
