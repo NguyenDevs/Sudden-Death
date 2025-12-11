@@ -201,13 +201,12 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                     if (progress >= 0.5) {
                         hasPulled = true;
 
-                        Location pullDest = surfaceLoc.clone().subtract(0, 1.25, 0);
+                        Location pullDest = surfaceLoc.clone().subtract(0, 1, 0);
 
-                        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EVOKER_FANGS_ATTACK, 1.0f, 0.5f);
+                        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_HUSK_CONVERTED_TO_ZOMBIE, 1.0f, 0.1f);
                         player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getEyeLocation(), 30, 0.5, 0.5, 0.5, blockUnder.getBlockData());
 
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 255));
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 60, 250));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 255));
 
                         new BukkitRunnable() {
                             int pullFrame = 0;
