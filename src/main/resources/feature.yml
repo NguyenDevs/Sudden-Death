@@ -291,9 +291,11 @@ features:
   whispers-of-the-desert:
     name: "Whispers of the Desert"
     lore:
-      - "&ePlayers in arid biomes have a #chance-percent#% chance"
-      - "to encounter rising &6Husks &ein waves."
-      - "&7Ambushers can pull players into the ground."
+      - "&eIn arid biomes like &6Desert &eand &6Badlands&e,"
+      - "there is a #chance-percent#% chance for &6Husks"
+      - "to rise from the sands in waves."
+      - "&cWarning: &7Ambushers (#ambush-chance#%) can pull"
+      - "you down and trap you in the sand."
   zombie-tools:
     name: "Zombie Tools"
     lore:

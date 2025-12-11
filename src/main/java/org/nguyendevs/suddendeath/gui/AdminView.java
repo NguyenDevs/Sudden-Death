@@ -59,7 +59,7 @@ public class AdminView extends PluginInventory {
     private static final EnumSet<Feature> ANIMATED_FEATURES = EnumSet.of(
             Feature.ENDER_POWER, Feature.FORCE_OF_THE_UNDEAD, Feature.QUICK_MOBS, Feature.MOB_CRITICAL_STRIKES,
             Feature.TANKY_MONSTERS, Feature.NETHER_SHIELD, Feature.ANGRY_SPIDERS, Feature.LEAPING_SPIDERS,
-            Feature.UNDEAD_RAGE
+            Feature.UNDEAD_RAGE, Feature.WHISPERS_OF_THE_DESERT
     );
 
     // Animation Materials
@@ -68,6 +68,8 @@ public class AdminView extends PluginInventory {
     private static final Material[] ANGRY_SPIDERS_EGGS = {Material.SPIDER_SPAWN_EGG, Material.CAVE_SPIDER_SPAWN_EGG};
     private static final Material[] LEAPING_SPIDERS_EGGS = {Material.SPIDER_SPAWN_EGG, Material.CAVE_SPIDER_SPAWN_EGG};
     private static final Material[] ENDER_POWER_EGGS = {Material.SHULKER_SPAWN_EGG, Material.ENDERMAN_SPAWN_EGG, Material.ENDERMITE_SPAWN_EGG, Material.ENDER_DRAGON_SPAWN_EGG};
+    private static final Material[] WHISPER_OF_THE_DESERT_BLOCK = {Material.CHISELED_SANDSTONE, Material.CHISELED_RED_SANDSTONE, Material.HUSK_SPAWN_EGG};
+
 
     private static final int ANIM_PERIOD_TICKS = 15;
     private BukkitTask visualTask = null;
@@ -157,6 +159,7 @@ public class AdminView extends PluginInventory {
             case ANGRY_SPIDERS: pool = ANGRY_SPIDERS_EGGS; break;
             case UNDEAD_RAGE: pool = UNDEAD_RAGE_EGGS; break;
             case ENDER_POWER: pool = ENDER_POWER_EGGS; break;
+            case WHISPERS_OF_THE_DESERT: pool = WHISPER_OF_THE_DESERT_BLOCK; break;
             default: return getVisualMaterial(f);
         }
         if (pool.length == 0) return getVisualMaterial(f);
@@ -200,7 +203,6 @@ public class AdminView extends PluginInventory {
             case WITHER_RUSH: return Material.WITHER_SKELETON_SPAWN_EGG;
             case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ZOMBIE_TOOLS: return Material.ZOMBIE_SPAWN_EGG;
-            case WHISPERS_OF_THE_DESERT: return Material.CHISELED_SANDSTONE;
             //case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
             case ARROW_SLOW: return Material.TIPPED_ARROW;

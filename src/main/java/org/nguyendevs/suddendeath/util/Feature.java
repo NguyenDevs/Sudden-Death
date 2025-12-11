@@ -657,15 +657,17 @@ public enum Feature {
 	WHISPERS_OF_THE_DESERT(
 			"Whispers of the Desert",
 			new String[]{
-					"&ePlayers in arid biomes have a #chance-percent#% chance",
-					"to encounter rising &6Husks &ein waves.",
-					"&7Ambushers can pull players into the ground."
+					"&eIn arid biomes like &6Desert &eand &6Badlands&e,",
+					"there is a #chance-percent#% chance for &6Husks",
+					"to rise from the sands in waves.",
+					"&cWarning: &7Ambushers (#ambush-chance#%) can pull",
+					"you down and trap you in the sand."
 			},
 			"whispers-of-the-desert",
 			new Modifier[]{
-					new Modifier("chance-percent", 5.0),
+					new Modifier("chance-percent", 45.0),
 					new Modifier("max-mobs", 3),
-					new Modifier("ambush-chance", 5.0),
+					new Modifier("ambush-chance", 20.0),
 					new Modifier("spawn-particles", true),
 					new Modifier("use-block-under-entity-for-particles", true)
 			}

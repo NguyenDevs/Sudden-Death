@@ -31,12 +31,12 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
     );
 
     private static final String METADATA_KEY = "SD_WHISPER_HUSK";
-    private static final double SPAWN_DEPTH = 2.5; // Sâu hơn chút để trồi lên trông kịch tính
+    private static final double SPAWN_DEPTH = 2.5;
     private static final Material PARTICLE_BLOCK = Material.LAVA;
     private static final Sound SPAWN_SOUND = Sound.BLOCK_GRAVEL_HIT;
-    private static final float SOUND_VOLUME = 0.5f;
-    private static final float SOUND_PITCH = 0.6f;
-    private static final int SOUND_DELAY = 3;
+    private static final float SOUND_VOLUME = 0.2f;
+    private static final float SOUND_PITCH = 0.1f;
+    private static final int SOUND_DELAY = 4;
 
     private final Map<UUID, WaveData> playerWaves = new ConcurrentHashMap<>();
 
@@ -137,18 +137,14 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
         Location surfaceLoc;
 
         if (isAmbush) {
-            // Ambush: Spawn ngay dưới chân người chơi
             surfaceLoc = player.getLocation().clone();
-            // Lấy block đất (block dưới chân người chơi)
             int groundY = player.getWorld().getHighestBlockYAt(surfaceLoc);
-            // Nếu người chơi đang đứng trên mặt đất (không bay quá cao)
             if (Math.abs(surfaceLoc.getY() - groundY) < 3) {
-                surfaceLoc.setY(groundY + 1.0); // +1 để mob đứng trên block
+                surfaceLoc.setY(groundY + 1.0);
             } else {
-                return null; // Không ambush nếu player đang bay quá cao
+                return null;
             }
         } else {
-            // Normal: Spawn ngẫu nhiên quanh người chơi
             Location playerLoc = player.getLocation();
             double offsetX = (RANDOM.nextDouble() * 10) - 10;
             double offsetZ = (RANDOM.nextDouble() * 10) - 10;
@@ -156,14 +152,12 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
             int x = (int) (playerLoc.getX() + offsetX);
             int z = (int) (playerLoc.getZ() + offsetZ);
             int y = player.getWorld().getHighestBlockYAt(x, z);
-            surfaceLoc = new Location(player.getWorld(), x + 0.5, y + 1.0, z + 0.5); // +1.0 Y để đứng trên mặt đất
+            surfaceLoc = new Location(player.getWorld(), x + 0.5, y + 1.0, z + 0.5);
         }
 
-        // Kiểm tra block dưới chân có phải là block cứng không (cát, đất...)
         Block blockUnder = surfaceLoc.clone().add(0, -1, 0).getBlock();
         if (!blockUnder.getType().isSolid()) return null;
 
-        // Vị trí bắt đầu (sâu dưới đất)
         Location graveLoc = surfaceLoc.clone().add(0, -SPAWN_DEPTH, 0);
 
         Husk husk = (Husk) player.getWorld().spawnEntity(graveLoc, EntityType.HUSK);
@@ -173,7 +167,7 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
         husk.setInvulnerable(true);
         husk.setSilent(true);
         husk.setGravity(false);
-        husk.setRotation(RANDOM.nextFloat() * 360, 0); // Random hướng nhìn
+        husk.setRotation(RANDOM.nextFloat() * 360, 0);
 
         applyRandomBuffs(husk);
 
@@ -181,7 +175,6 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                 ? blockUnder.getBlockData()
                 : PARTICLE_BLOCK.createBlockData();
 
-        // Tốc độ: Ambush cực nhanh (0.5s - 1.0s), Normal chậm hơn (2.0s - 3.5s)
         double durationSeconds = isAmbush
                 ? (0.5 + RANDOM.nextDouble() * 0.5)
                 : (2.0 + RANDOM.nextDouble() * 1.5);
@@ -197,31 +190,44 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
 
             @Override
             public void run() {
-                // Kiểm tra entity hợp lệ
                 if (!husk.isValid() || ticksRun > totalTicks + 20) {
                     finalizeMob(husk);
                     cancel();
                     return;
                 }
 
-                // Ambush Mechanic: Kéo người chơi xuống khi trồi lên được 50%
                 if (isAmbush && !hasPulled && player.isOnline() && !Utils.hasCreativeGameMode(player)) {
                     double progress = (currentLoc.getY() - graveLoc.getY()) / SPAWN_DEPTH;
                     if (progress >= 0.5) {
                         hasPulled = true;
-                        // Kéo xuống lòng đất (mặt đất - 1.75)
-                        Location pullLoc = surfaceLoc.clone().subtract(0, 1.75, 0);
-                        pullLoc.setYaw(player.getLocation().getYaw());
-                        pullLoc.setPitch(player.getLocation().getPitch());
-                        player.teleport(pullLoc);
 
-                        // Giữ chân: Slow cực mạnh và Jump boost âm (để không nhảy được)
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 255)); // 3s
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 60, 250)); // 3s
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0)); // Hiệu ứng mù nhẹ tạo kịch tính
+                        Location pullDest = surfaceLoc.clone().subtract(0, 1.25, 0);
 
                         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EVOKER_FANGS_ATTACK, 1.0f, 0.5f);
                         player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getEyeLocation(), 30, 0.5, 0.5, 0.5, blockUnder.getBlockData());
+
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 255));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 60, 250));
+
+                        new BukkitRunnable() {
+                            int pullFrame = 0;
+                            final int pullDuration = 5;
+                            final Location startPos = player.getLocation();
+
+                            @Override
+                            public void run() {
+                                if (!player.isOnline() || pullFrame > pullDuration) {
+                                    cancel();
+                                    return;
+                                }
+                                double ratio = (double) pullFrame / pullDuration;
+                                Location interp = startPos.clone().add(pullDest.clone().subtract(startPos).multiply(ratio));
+                                interp.setYaw(player.getLocation().getYaw());
+                                interp.setPitch(player.getLocation().getPitch());
+                                player.teleport(interp);
+                                pullFrame++;
+                            }
+                        }.runTaskTimer(plugin, 0L, 1L);
                     }
                 }
 
@@ -230,14 +236,11 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                     husk.teleport(currentLoc);
 
                     if (Feature.WHISPERS_OF_THE_DESERT.getBoolean("spawn-particles")) {
-                        // FIX PARTICLE: Spawn particle TẠI MẶT ĐẤT (surfaceLoc) để thấy hiệu ứng đất nứt
-                        // chứ không spawn theo mob (vì mob đang ở dưới đất sẽ che mất particle)
                         husk.getWorld().spawnParticle(Particle.BLOCK_CRACK,
-                                surfaceLoc.clone().add(0, 0.2, 0), // Trên mặt block 1 chút
+                                surfaceLoc.clone().add(0, 0.2, 0),
                                 15, 0.4, 0.1, 0.4, 0.0,
                                 particleData);
 
-                        // Thêm particle bụi bay lên
                         if (ticksRun % 2 == 0) {
                             husk.getWorld().spawnParticle(Particle.SMOKE_NORMAL,
                                     surfaceLoc.clone().add(0, 0.5, 0),
@@ -250,7 +253,6 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                     }
                     soundTicker++;
                 } else {
-                    // Đã lên tới mặt đất
                     husk.teleport(surfaceLoc);
                     finalizeMob(husk);
                     cancel();
@@ -263,7 +265,7 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
     }
 
     private void applyRandomBuffs(Husk husk) {
-        if (RANDOM.nextBoolean()) { // 50% cơ hội nhận buff
+        if (RANDOM.nextBoolean()) {
             int roll = RANDOM.nextInt(3);
             if (roll == 0) husk.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 999999, 0));
             else if (roll == 1) husk.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 999999, 0));
@@ -277,9 +279,7 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
             husk.setInvulnerable(false);
             husk.setSilent(false);
             husk.setGravity(true);
-            // Lực đẩy nhẹ khi hoàn tất spawn
             husk.setVelocity(new Vector(0, 0.2, 0));
-            husk.getWorld().playSound(husk.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 0.5f, 0.5f);
         }
     }
 
@@ -288,9 +288,7 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
         if (!(event.getEntity() instanceof Player player)) return;
         if (!(event.getDamager() instanceof Husk husk)) return;
 
-        // Nếu là Husk do plugin spawn (có metadata)
         if (husk.hasMetadata(METADATA_KEY)) {
-            // Áp dụng Weakness I (amplifier 0) trong 5 giây (100 ticks)
             player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0));
         }
     }

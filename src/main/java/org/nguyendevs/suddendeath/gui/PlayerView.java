@@ -78,6 +78,12 @@ public class PlayerView extends PluginInventory {
             Material.ENDERMITE_SPAWN_EGG,
             Material.ENDER_DRAGON_SPAWN_EGG
     };
+    private static final Material[] WHISPER_OF_THE_DESERT_BLOCK = {
+            Material.CHISELED_SANDSTONE,
+            Material.CHISELED_RED_SANDSTONE,
+            Material.HUSK_SPAWN_EGG
+    };
+
 
     private static final int ANIM_PERIOD_TICKS = 15;
     private int animIndex = 0;
@@ -230,6 +236,7 @@ public class PlayerView extends PluginInventory {
             case ANGRY_SPIDERS:       pool = ANGRY_SPIDERS_EGGS; break;
             case UNDEAD_RAGE:         pool = UNDEAD_RAGE_EGGS; break;
             case ENDER_POWER:         pool = ENDER_POWER_EGGS; break;
+            case WHISPERS_OF_THE_DESERT: pool = WHISPER_OF_THE_DESERT_BLOCK; break;
             default:
                 return getVisualMaterial(f);
         }
@@ -237,26 +244,6 @@ public class PlayerView extends PluginInventory {
         return pool[rng.nextInt(pool.length)];
     }
 
-    private Material getAnimatedMaterialFor(Feature f, int idx) {
-        Material[] pool;
-        switch (f) {
-            case NETHER_SHIELD:
-                pool = NETHER_SHIELD_EGGS; break;
-            case LEAPING_SPIDERS:
-                pool = LEAPING_SPIDERS_EGGS; break;
-            case ANGRY_SPIDERS:
-                pool = ANGRY_SPIDERS_EGGS; break;
-            case UNDEAD_RAGE:
-                pool = UNDEAD_RAGE_EGGS; break;
-            case ENDER_POWER:
-                pool = ENDER_POWER_EGGS; break;
-            default:
-                return getVisualMaterial(f);
-        }
-        if (pool.length == 0) return getVisualMaterial(f);
-        int i = Math.floorMod(idx, pool.length);
-        return pool[i];
-    }
 
     @Override
     public @NotNull Inventory getInventory() {
@@ -359,7 +346,6 @@ public class PlayerView extends PluginInventory {
             case BONE_GRENADES: return Material.SKELETON_SPAWN_EGG;
             case BONE_WIZARDS: return Material.SKELETON_SPAWN_EGG;
             case BREEZE_DASH: return Material.BREEZE_SPAWN_EGG;
-            case WHISPERS_OF_THE_DESERT: return Material.CHISELED_SANDSTONE;
             case CREEPER_REVENGE: return Material.CREEPER_SPAWN_EGG;
             case ENDER_POWER: return Material.ENDER_DRAGON_SPAWN_EGG;
             case EVERBURNING_BLAZES: return Material.BLAZE_SPAWN_EGG;
