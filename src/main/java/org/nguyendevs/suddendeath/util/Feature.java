@@ -59,6 +59,20 @@ public enum Feature {
 	),
 
 	 */
+
+	ANGRY_SPIDERS(
+			"Angry Spiders",
+			new String[]{
+					"&8Spiders &7throw cobwebs, dealing #damage# damage.",
+					"Slows players (#amplifier#) for #duration# seconds."
+			},
+			"angry-spiders",
+			new Modifier[]{
+					new Modifier("damage", 4),
+					new Modifier("duration", 3.0),
+					new Modifier("amplifier", 1.0)
+			}
+	),
 	ARMOR_PIERCING(
 			"Armor Piercing",
 			new String[]{
@@ -72,19 +86,6 @@ public enum Feature {
 					new Modifier("chance-percent", 15.0, Type.EACH_MOB),
 					new Modifier("visual-particles", true),
 					new Modifier("visual-sound", true)
-			}
-	),
-	ANGRY_SPIDERS(
-			"Angry Spiders",
-			new String[]{
-					"&8Spiders &7throw cobwebs, dealing #damage# damage.",
-					"Slows players (#amplifier#) for #duration# seconds."
-			},
-			"angry-spiders",
-			new Modifier[]{
-					new Modifier("damage", 4),
-					new Modifier("duration", 3.0),
-					new Modifier("amplifier", 1.0)
 			}
 	),
 	ARROW_SLOW(
@@ -652,6 +653,19 @@ public enum Feature {
 			},
 			"wither-rush",
 			new Modifier[]{new Modifier("damage", 3.0)}
+	),
+	WHISPERS_OF_THE_DESERT(
+			"Whispers of the Desert",
+			new String[]{
+					"&ePlayers in arid biomes (Desert, Badlands...) have",
+					"a #chance-percent#% chance to encounter rising &6Husks&e.",
+					"Husks emerge from the ground with special effects."
+			},
+			"whispers-of-the-desert",
+			new Modifier[]{
+					new Modifier("chance-percent", 10.0),
+					new Modifier("max-mobs", 9)
+			}
 	),
 	ZOMBIE_TOOLS(
 			"Zombie Tools",

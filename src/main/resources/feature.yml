@@ -9,6 +9,12 @@ features:
     lore:
       - "&fPlayers &7drop a skull, bones and human"
       - "flesh on death. Human flesh can be cooked."
+
+  angry-spiders:
+    name: "Angry Spiders"
+    lore:
+      - "&8Spiders &7throw cobwebs, dealing #damage# damage."
+      - "Slows players (#amplifier#) for #duration# seconds."
   armor-piercing:
     name: "Armor Piercing"
     lore:
@@ -16,11 +22,6 @@ features:
       - "completely ignoring player armor."
       - " "
       - "&cConfigurable chance for each monster."
-  angry-spiders:
-    name: "Angry Spiders"
-    lore:
-      - "&8Spiders &7throw cobwebs, dealing #damage# damage."
-      - "Slows players (#amplifier#) for #duration# seconds."
   arrow-slow:
     name: "Arrow Slow"
     lore:
@@ -287,6 +288,12 @@ features:
     lore:
       - "&8Wither Skeletons &7blink to players,"
       - "dealing #damage# damage."
+  whispers-of-the-desert:
+    name: "Whispers of the Desert"
+    lore:
+      - "&ePlayers in arid biomes (Desert, Badlands...) have"
+      - "a #chance-percent#% chance to encounter rising &6Husks&e."
+      - "Husks emerge from the ground with special effects."
   zombie-tools:
     name: "Zombie Tools"
     lore:

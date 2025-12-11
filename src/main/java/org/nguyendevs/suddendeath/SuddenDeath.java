@@ -45,6 +45,7 @@ import org.nguyendevs.suddendeath.features.player.*;
 import org.nguyendevs.suddendeath.features.world.DangerousCoalFeature;
 import org.nguyendevs.suddendeath.features.world.FreddyFeature;
 import org.nguyendevs.suddendeath.features.world.SnowSlowFeature;
+import org.nguyendevs.suddendeath.features.world.WhispersOfTheDesertFeature;
 import org.nguyendevs.suddendeath.gui.AdminView;
 import org.nguyendevs.suddendeath.gui.PlayerView;
 import org.nguyendevs.suddendeath.gui.PluginInventory;
@@ -396,6 +397,7 @@ public class SuddenDeath extends JavaPlugin {
         registerFeature(new SnowSlowFeature());
         registerFeature(new StoneStiffnessFeature());
         registerFeature(new ZombieToolsFeature());
+        registerFeature(new WhispersOfTheDesertFeature());
         //registerFeature(new ZombiePlaceFeature());
     }
 

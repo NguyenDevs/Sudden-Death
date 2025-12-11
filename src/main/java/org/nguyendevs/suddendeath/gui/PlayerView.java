@@ -142,7 +142,8 @@ public class PlayerView extends PluginInventory {
             Feature.PHYSIC_ENDER_PEARL,
             Feature.REALISTIC_PICKUP,
             Feature.SNOW_SLOW,
-            Feature.STONE_STIFFNESS
+            Feature.STONE_STIFFNESS,
+            Feature.WHISPERS_OF_THE_DESERT
     );
 
     private int page;
@@ -358,6 +359,7 @@ public class PlayerView extends PluginInventory {
             case BONE_GRENADES: return Material.SKELETON_SPAWN_EGG;
             case BONE_WIZARDS: return Material.SKELETON_SPAWN_EGG;
             case BREEZE_DASH: return Material.BREEZE_SPAWN_EGG;
+            case WHISPERS_OF_THE_DESERT: return Material.CHISELED_SANDSTONE;
             case CREEPER_REVENGE: return Material.CREEPER_SPAWN_EGG;
             case ENDER_POWER: return Material.ENDER_DRAGON_SPAWN_EGG;
             case EVERBURNING_BLAZES: return Material.BLAZE_SPAWN_EGG;

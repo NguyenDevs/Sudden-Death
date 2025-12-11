@@ -52,7 +52,7 @@ public class AdminView extends PluginInventory {
             Feature.ADVANCED_PLAYER_DROPS, Feature.ARROW_SLOW, Feature.BLEEDING, Feature.BLOOD_SCREEN,
             Feature.DANGEROUS_COAL, Feature.ELECTRICITY_SHOCK, Feature.FALL_STUN, Feature.FREDDY,
             Feature.HUNGER_NAUSEA, Feature.INFECTION, Feature.PHYSIC_ENDER_PEARL, Feature.REALISTIC_PICKUP,
-            Feature.SNOW_SLOW, Feature.STONE_STIFFNESS
+            Feature.SNOW_SLOW, Feature.STONE_STIFFNESS, Feature.WHISPERS_OF_THE_DESERT
     );
 
     // Animation Sets
@@ -200,6 +200,7 @@ public class AdminView extends PluginInventory {
             case WITHER_RUSH: return Material.WITHER_SKELETON_SPAWN_EGG;
             case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ZOMBIE_TOOLS: return Material.ZOMBIE_SPAWN_EGG;
+            case WHISPERS_OF_THE_DESERT: return Material.CHISELED_SANDSTONE;
             //case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
             case ARROW_SLOW: return Material.TIPPED_ARROW;
