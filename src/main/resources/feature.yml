@@ -9,6 +9,13 @@ features:
     lore:
       - "&fPlayers &7drop a skull, bones and human"
       - "flesh on death. Human flesh can be cooked."
+  armor-piercing:
+    name: "Armor Piercing"
+    lore:
+      - "&cMonsters &7have a chance to deal &4True Damage&7,"
+      - "completely ignoring player armor."
+      - " "
+      - "&cConfigurable chance for each monster."
   angry-spiders:
     name: "Angry Spiders"
     lore:

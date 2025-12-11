@@ -46,7 +46,7 @@ public class AdminView extends PluginInventory {
             Feature.SILVERFISHES_SUMMON, Feature.STRAY_FROST, Feature.SPIDER_WEB, Feature.TANKY_MONSTERS,
             Feature.THIEF_SLIMES, Feature.TRIDENT_WRATH, Feature.UNDEAD_GUNNERS, Feature.UNDEAD_RAGE,
             Feature.WITCH_SCROLLS, Feature.WITHER_MACHINEGUN, Feature.WITHER_RUSH, Feature.ZOMBIE_BREAK_BLOCK,
-            Feature.ZOMBIE_TOOLS, Feature.FIREWORK_ARROWS
+            Feature.ZOMBIE_TOOLS, Feature.FIREWORK_ARROWS, Feature.ARMOR_PIERCING
     );
     private static final EnumSet<Feature> SURVIVAL_SET = EnumSet.of(
             Feature.ADVANCED_PLAYER_DROPS, Feature.ARROW_SLOW, Feature.BLEEDING, Feature.BLOOD_SCREEN,
@@ -166,6 +166,7 @@ public class AdminView extends PluginInventory {
     private Material getVisualMaterial(Feature f) {
         switch (f) {
             case ABYSSAL_VORTEX: return Material.GUARDIAN_SPAWN_EGG;
+            case ARMOR_PIERCING: return Material.NETHERITE_CHESTPLATE;
             case ANGRY_SPIDERS: return Material.SPIDER_SPAWN_EGG;
             case BLOOD_MOON: return Material.ZOMBIE_HEAD;
             case BONE_GRENADES: return Material.SKELETON_SPAWN_EGG;

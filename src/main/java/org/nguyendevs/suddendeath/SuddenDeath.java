@@ -34,6 +34,7 @@ import org.nguyendevs.suddendeath.features.combat.SharpKnifeFeature;
 import org.nguyendevs.suddendeath.features.items.AdvancedPlayerDropsFeature;
 import org.nguyendevs.suddendeath.features.items.PhysicEnderPearlFeature;
 import org.nguyendevs.suddendeath.features.items.RealisticPickupFeature;
+import org.nguyendevs.suddendeath.features.mob.attributes.ArmorPiercingFeature;
 import org.nguyendevs.suddendeath.features.mob.hostile.ZombieToolsFeature;
 import org.nguyendevs.suddendeath.features.mob.attributes.ForceOfUndeadFeature;
 import org.nguyendevs.suddendeath.features.mob.attributes.QuickMobsFeature;
@@ -373,6 +374,7 @@ public class SuddenDeath extends JavaPlugin {
         registerFeature(new ForceOfUndeadFeature());
         registerFeature(new QuickMobsFeature());
         registerFeature(new TankyMonstersFeature());
+        registerFeature(new ArmorPiercingFeature());
 
         registerFeature(new ArrowSlowFeature());
         registerFeature(new MobCriticalStrikesFeature());

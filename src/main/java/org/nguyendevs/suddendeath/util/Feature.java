@@ -59,6 +59,21 @@ public enum Feature {
 	),
 
 	 */
+	ARMOR_PIERCING(
+			"Armor Piercing",
+			new String[]{
+					"&cMonsters &7have a chance to deal &4True Damage&7,",
+					"completely ignoring player armor.",
+					" ",
+					"&cConfigurable chance for each monster."
+			},
+			"armor-piercing",
+			new Modifier[]{
+					new Modifier("chance-percent", 15.0, Type.EACH_MOB),
+					new Modifier("visual-particles", true),
+					new Modifier("visual-sound", true)
+			}
+	),
 	ANGRY_SPIDERS(
 			"Angry Spiders",
 			new String[]{
