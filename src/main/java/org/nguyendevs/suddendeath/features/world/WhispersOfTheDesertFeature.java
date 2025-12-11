@@ -207,6 +207,7 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                         player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getEyeLocation(), 30, 0.5, 0.5, 0.5, blockUnder.getBlockData());
 
                         player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 255));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, 255));
 
                         new BukkitRunnable() {
                             int pullFrame = 0;

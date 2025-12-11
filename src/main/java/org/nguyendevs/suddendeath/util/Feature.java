@@ -265,7 +265,7 @@ public enum Feature {
 	FIREWORK_ARROWS(
 			"Firework Arrows",
 			new String[]{
-					"&6Pillager &7have #chance-percent#% chance to shoot a &fFire&cwork &fArrow",
+					"&6Pillager &7have #chance-percent#% chance to shoot a &fFirework &fArrow",
 					"instead of regular arrow. Deal #damage# damage per shot in",
 					"in #area#x#area# area. Apply shock effect for #duration#s."
 			},
