@@ -52,6 +52,7 @@ import org.nguyendevs.suddendeath.gui.PluginInventory;
 import org.nguyendevs.suddendeath.gui.listener.GuiListener;
 import org.nguyendevs.suddendeath.features.CustomMobs;
 import org.nguyendevs.suddendeath.manager.EventManager;
+import org.nguyendevs.suddendeath.manager.RecipeRegistrationManager;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.*;
@@ -72,8 +73,10 @@ public class SuddenDeath extends JavaPlugin {
     public ConfigFile messages;
     public ConfigFile items;
     private final Map<NamespacedKey, Integer> recipeCache = new HashMap<>();
-    private final List<IFeature> loadedFeatures = new ArrayList<>();
 
+    private RecipeRegistrationManager recipeManager;
+
+    private final List<IFeature> loadedFeatures = new ArrayList<>();
     private static final Map<String, String> DEFAULT_MATERIAL_NAMES = new HashMap<>();
 
     static {
@@ -110,9 +113,13 @@ public class SuddenDeath extends JavaPlugin {
             }
             loadedFeatures.clear();
 
-            removeAllCustomRecipes();
+            if (recipeManager != null) {
+                recipeManager.unregisterAllRecipes();
+            }
+
             savePlayerData();
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                    "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error while disabling plugin", e);
         }
@@ -123,13 +130,18 @@ public class SuddenDeath extends JavaPlugin {
         if (protocolManager == null) {
             throw new IllegalStateException("ProtocolLib is required but not found");
         }
+
         configuration.reload();
+        recipeManager = new RecipeRegistrationManager(this);
+
         initializeWorldGuard();
         initializeConfigFiles();
         registerListeners();
         hookIntoPlaceholderAPI();
         initializeFeaturesAndEntities();
+
         initializeItemsAndRecipes();
+
         registerCommands();
         printLogo();
         new SpigotPlugin(119526, this).checkForUpdate();
@@ -325,25 +337,10 @@ public class SuddenDeath extends JavaPlugin {
 
     private void initializeItemsAndRecipes() {
         initializeDefaultItems();
-        removeAllCustomRecipes();
-        recipeCache.clear();
-        for (CustomItem item : CustomItem.values()) {
-            ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
-            if (section == null) {
-                getLogger().log(Level.WARNING, "Configuration section is null for CustomItem: " + item.name());
-                continue;
-            }
-            item.update(section);
-            if (section.getBoolean("craft-enabled") && item.getCraft() != null) {
-                try {
-                    registerCraftingRecipe(item);
-                    NamespacedKey key = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
-                    recipeCache.put(key, calculateRecipeHash(item));
-                } catch (IllegalArgumentException e) {
-                    getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
-                }
-            }
-        }
+
+        recipeManager.registerAllRecipes();
+
+        getLogger().info("Items and recipes initialized successfully!");
     }
 
     private void registerListeners() {
@@ -516,80 +513,6 @@ public class SuddenDeath extends JavaPlugin {
         return wgPlugin;
     }
 
-    private void registerCraftingRecipe(CustomItem item) {
-        if (item.getCraft() == null || item.getCraft().isEmpty()) return;
-        try {
-            NamespacedKey recipeKey = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
-            ShapedRecipe recipe = new ShapedRecipe(recipeKey, item.a());
-            recipe.shape("ABC", "DEF", "GHI");
-            char[] chars = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'};
-            List<String> craftLines = item.getCraft();
-            for (int i = 0; i < 9; i++) {
-                String materialName = craftLines.get(i / 3).split(",")[i % 3].trim();
-                if (materialName.equalsIgnoreCase("AIR") || materialName.isEmpty()) continue;
-                recipe.setIngredient(chars[i], Material.valueOf(materialName.toUpperCase()));
-            }
-            recipe.setGroup("suddendeath_items");
-            getServer().addRecipe(recipe);
-        } catch (Exception e) {
-            getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
-        }
-    }
-
-    private void removeAllCustomRecipes() {
-        Iterator<Recipe> recipes = getServer().recipeIterator();
-        List<NamespacedKey> toRemove = new ArrayList<>();
-        while (recipes.hasNext()) {
-            Recipe recipe = recipes.next();
-            if (recipe instanceof org.bukkit.Keyed) {
-                NamespacedKey key = ((org.bukkit.Keyed) recipe).getKey();
-                if (key.getNamespace().equals(this.getName().toLowerCase()) &&
-                        key.getKey().startsWith("suddendeath_")) {
-                    toRemove.add(key);
-                }
-            }
-        }
-        for (NamespacedKey key : toRemove) {
-            getServer().removeRecipe(key);
-        }
-    }
-
-    private void reRegisterRecipesOptimized() {
-        for (CustomItem item : CustomItem.values()) {
-            if (items.getConfig().contains(item.name())) {
-                ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
-                if (section == null) continue;
-                item.update(section);
-                NamespacedKey recipeKey = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
-                boolean isEnabled = section.getBoolean("craft-enabled") && item.getCraft() != null;
-
-                if (isEnabled) {
-                    int newHash = calculateRecipeHash(item);
-                    if (recipeCache.containsKey(recipeKey)) {
-                        int oldHash = recipeCache.get(recipeKey);
-                        if (newHash != oldHash) {
-                            getServer().removeRecipe(recipeKey);
-                            registerCraftingRecipe(item);
-                            recipeCache.put(recipeKey, newHash);
-                        }
-                    } else {
-                        registerCraftingRecipe(item);
-                        recipeCache.put(recipeKey, newHash);
-                    }
-                } else {
-                    if (recipeCache.containsKey(recipeKey)) {
-                        getServer().removeRecipe(recipeKey);
-                        recipeCache.remove(recipeKey);
-                    }
-                }
-            }
-        }
-    }
-
-    private int calculateRecipeHash(CustomItem item) {
-        return Objects.hash(item.getCraft(), item.a().getType(), item.a().getItemMeta().getDisplayName(), item.a().getItemMeta().getLore());
-    }
-
     public void refreshFeatures() {
         for (Feature feature : Feature.values()) {
             feature.updateConfig();
@@ -606,20 +529,26 @@ public class SuddenDeath extends JavaPlugin {
             messages.reload();
             items.reload();
             features.reload();
+
             for (EntityType type : EntityType.values()) {
                 if (type.isAlive()) {
                     ConfigFile mobConfig = new ConfigFile(this, "/customMobs", Utils.lowerCaseId(type.name()));
                     mobConfig.setup();
                 }
             }
+
             initializeConfigFiles();
             refreshFeatures();
-            reRegisterRecipesOptimized();
+
+            recipeManager.reloadRecipes();
+
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
             Feature.reloadDescriptions();
+
             Bukkit.getScheduler().runTask(this, () -> {
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory pluginInventory) {
+                    if (player.getOpenInventory() != null &&
+                            player.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory pluginInventory) {
                         if (pluginInventory instanceof AdminView || pluginInventory instanceof PlayerView) {
                             player.closeInventory();
                             Bukkit.getScheduler().runTaskLater(this, pluginInventory::open, 10L);
@@ -627,7 +556,9 @@ public class SuddenDeath extends JavaPlugin {
                     }
                 }
             });
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aConfiguration reload completed successfully."));
+
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                    "&6[&cSudden&4Death&6] &aConfiguration reload completed successfully."));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error reloading configuration files", e);
         }
@@ -643,6 +574,11 @@ public class SuddenDeath extends JavaPlugin {
                 getLogger().log(Level.WARNING, "Failed to save player data for " + data.getUniqueId(), e);
             }
         });
+    }
+
+
+    public RecipeRegistrationManager getRecipeManager() {
+        return recipeManager;
     }
 
     public static SuddenDeath getInstance() {
