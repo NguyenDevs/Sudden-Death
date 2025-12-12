@@ -18,14 +18,21 @@ public class RecipeBookListener implements Listener {
 
     public static void unlockRecipes(Player player) {
         SuddenDeath plugin = SuddenDeath.getInstance();
-        FileConfiguration itemsConfig = plugin.items.getConfig();
+        if (plugin.items == null) {
+            return;
+        }
+
+        FileConfiguration config = plugin.items.getConfig();
 
         for (CustomItem item : CustomItem.values()) {
-            String itemKey = item.name();
+            String path = item.name();
 
-            if (itemsConfig.getBoolean(itemKey + ".craft-enabled", false) && item.getCraft() != null) {
+            if (config.getBoolean(path + ".craft-enabled", false) && item.getCraft() != null && !item.getCraft().isEmpty()) {
                 NamespacedKey key = new NamespacedKey(plugin, "suddendeath_" + item.name().toLowerCase());
-                player.discoverRecipe(key);
+                try {
+                    player.discoverRecipe(key);
+                } catch (Exception ignored) {
+                }
             }
         }
     }
