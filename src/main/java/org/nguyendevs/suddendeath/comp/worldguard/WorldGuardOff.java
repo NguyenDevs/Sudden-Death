@@ -21,7 +21,7 @@ public class WorldGuardOff implements WGPlugin {
 		if (customFlag == null) {
 			throw new IllegalArgumentException("CustomFlag cannot be null");
 		}
-		return true;
+		return customFlag == CustomFlag.SDS_EFFECT;
 	}
 
 	@Override
@@ -32,6 +32,6 @@ public class WorldGuardOff implements WGPlugin {
 		if (customFlag == null) {
 			throw new IllegalArgumentException("CustomFlag cannot be null");
 		}
-		return true;
+		return customFlag == CustomFlag.SDS_EFFECT;
 	}
 }

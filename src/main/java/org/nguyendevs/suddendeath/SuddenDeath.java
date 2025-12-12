@@ -51,6 +51,7 @@ import org.nguyendevs.suddendeath.gui.PlayerView;
 import org.nguyendevs.suddendeath.gui.PluginInventory;
 import org.nguyendevs.suddendeath.gui.listener.GuiListener;
 import org.nguyendevs.suddendeath.features.CustomMobs;
+import org.nguyendevs.suddendeath.listener.RecipeBookListener;
 import org.nguyendevs.suddendeath.manager.EventManager;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.PlayerData;
@@ -349,6 +350,7 @@ public class SuddenDeath extends JavaPlugin {
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
+        getServer().getPluginManager().registerEvents(new RecipeBookListener(), this);
 
         // Feature Registration
         registerFeature(new PlayerCoreFeature());
@@ -436,7 +438,12 @@ public class SuddenDeath extends JavaPlugin {
                     if (registry.get(flagPath) != null) {
                         continue;
                     }
-                    boolean defaultState = customFlag == CustomFlag.SDS_REMOVE ? false : true;
+
+                    // SỬA: Logic mặc định cho StateFlag
+                    // SDS_EFFECT: true (ALLOW)
+                    // SDS_BREAK, SDS_EVENT, SDS_REMOVE: false (DENY)
+                    boolean defaultState = customFlag == CustomFlag.SDS_EFFECT;
+
                     StateFlag flag = new StateFlag(flagPath, defaultState);
                     registry.register(flag);
                 } catch (FlagConflictException e) {
@@ -617,6 +624,9 @@ public class SuddenDeath extends JavaPlugin {
             reRegisterRecipesOptimized();
             Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
             Feature.reloadDescriptions();
+
+            Bukkit.getOnlinePlayers().forEach(RecipeBookListener::unlockRecipes);
+
             Bukkit.getScheduler().runTask(this, () -> {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory pluginInventory) {

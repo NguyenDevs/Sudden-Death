@@ -89,12 +89,14 @@ public class WorldGuardOn implements WGPlugin {
 			throw new IllegalArgumentException("CustomFlag cannot be null");
 		}
 		if (!flagsRegistered) {
-			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+			// SỬA: Nếu chưa load xong, chỉ SDS_EFFECT là true, còn lại false
+			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 
 		String flagPath = customFlag.getPath();
 		if (failedFlags.contains(flagPath)) {
-			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+			// SỬA: Flag lỗi, fallback tương tự
+			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 		try {
 			ApplicableRegionSet regions = getApplicableRegion(player.getLocation());
@@ -104,15 +106,22 @@ public class WorldGuardOn implements WGPlugin {
 				if (!failedFlags.contains(flagPath)) {
 					failedFlags.add(flagPath);
 				}
-				return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+				return customFlag == CustomFlag.SDS_EFFECT;
 			}
 			StateFlag.State state = regions.queryValue(worldGuardPlugin.wrapPlayer(player), flag);
-			return state == null ? (customFlag == CustomFlag.SDS_REMOVE ? false : true) : state == StateFlag.State.ALLOW;
+
+			// Nếu state != null -> Trả về true nếu là ALLOW, false nếu là DENY
+			// Nếu state == null (unset) -> Chỉ SDS_EFFECT là true, các flag khác (BREAK, EVENT, REMOVE) là false
+			if (state != null) {
+				return state == StateFlag.State.ALLOW;
+			}
+
+			return customFlag == CustomFlag.SDS_EFFECT;
 
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error checking flag " + flagPath + " for player: " + player.getName(), e);
-			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 	}
 
@@ -125,11 +134,11 @@ public class WorldGuardOn implements WGPlugin {
 			throw new IllegalArgumentException("CustomFlag cannot be null");
 		}
 		if (!flagsRegistered) {
-			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 		String flagPath = customFlag.getPath();
 		if (failedFlags.contains(flagPath)) {
-			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 		try {
 			ApplicableRegionSet regions = getApplicableRegion(location);
@@ -140,14 +149,19 @@ public class WorldGuardOn implements WGPlugin {
 					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 							"Custom flag not found after registration: " + flagPath + " - Using default behavior");
 				}
-				return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+				return customFlag == CustomFlag.SDS_EFFECT;
 			}
 			StateFlag.State state = regions.queryState(null, flag);
-			return state == null ? (customFlag == CustomFlag.SDS_REMOVE ? false : true) : state == StateFlag.State.ALLOW;
+
+			if (state != null) {
+				return state == StateFlag.State.ALLOW;
+			}
+
+			return customFlag == CustomFlag.SDS_EFFECT;
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error checking flag " + flagPath + " at location: " + location, e);
-			return customFlag == CustomFlag.SDS_REMOVE ? false : true;
+			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 	}
 
