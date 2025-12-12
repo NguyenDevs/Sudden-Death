@@ -56,6 +56,7 @@ import org.nguyendevs.suddendeath.manager.RecipeRegistrationManager;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.PlayerData;
 import org.nguyendevs.suddendeath.util.*;
+import org.nguyendevs.suddendeath.listener.RecipeDiscoveryListener;
 
 import java.io.InputStreamReader;
 import java.util.*;
@@ -345,6 +346,7 @@ public class SuddenDeath extends JavaPlugin {
 
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
+        getServer().getPluginManager().registerEvents(new RecipeDiscoveryListener(this), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
 
         // Feature Registration
@@ -556,12 +558,15 @@ public class SuddenDeath extends JavaPlugin {
                     }
                 }
             });
-
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                getRecipeManager().discoverAllRecipesForPlayer(player);
+            }
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
                     "&6[&cSudden&4Death&6] &aConfiguration reload completed successfully."));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error reloading configuration files", e);
         }
+
     }
 
     private void savePlayerData() {

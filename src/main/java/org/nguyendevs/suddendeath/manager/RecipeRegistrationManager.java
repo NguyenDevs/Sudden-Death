@@ -7,6 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.recipe.CraftingBookCategory;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.util.CustomItem;
 
@@ -114,8 +115,9 @@ public class RecipeRegistrationManager {
                 recipe.setIngredient(entry.getKey(), entry.getValue());
             }
 
-            recipe.setGroup("suddendeath_items");
-
+            //recipe.setGroup("suddendeath_items");
+            recipe.setGroup("");
+            recipe.setCategory(CraftingBookCategory.MISC);
             boolean added = Bukkit.addRecipe(recipe);
 
             if (added) {

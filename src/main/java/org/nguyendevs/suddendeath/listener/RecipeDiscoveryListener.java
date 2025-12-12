@@ -27,7 +27,7 @@ public class RecipeDiscoveryListener implements Listener {
             if (player.isOnline()) {
                 plugin.getRecipeManager().discoverAllRecipesForPlayer(player);
             }
-        }, 20L);
+        }, 100L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
