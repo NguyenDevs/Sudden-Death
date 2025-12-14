@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.logging.Level;
 
 public class MonsterEdition extends PluginInventory {
-    // ... (Giữ nguyên các biến static và constructor)
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final int[] AVAILABLE_SLOTS = {19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
     private static final String TITLE_PREFIX = "Mob Editor: ";
@@ -47,10 +46,10 @@ public class MonsterEdition extends PluginInventory {
         this.id = id;
     }
 
-    // ... (Giữ nguyên getInventory, createMobStatItem, createMobStatLore)
     @Override
     public @NotNull Inventory getInventory() {
-        FileConfiguration config = new ConfigFile(type).getConfig();
+        // FIX: Sử dụng Manager thay vì new ConfigFile
+        FileConfiguration config = SuddenDeath.getInstance().getConfigManager().getMobConfig(type).getConfig();
         Inventory inventory = Bukkit.createInventory(this, 54, translateColors(TITLE_PREFIX + id));
         try {
             for (MobStat stat : MobStat.values()) {
@@ -152,7 +151,6 @@ public class MonsterEdition extends PluginInventory {
         return egg;
     }
 
-    // ... (Giữ nguyên whenClicked, handleDoubleOrStringStat)
     @Override
     public void whenClicked(InventoryClickEvent event) {
         Inventory clickedInv = event.getClickedInventory();
@@ -177,7 +175,8 @@ public class MonsterEdition extends PluginInventory {
         event.setCancelled(true);
         try {
             MobStat stat = MobStat.valueOf(tag);
-            ConfigFile config = new ConfigFile(type);
+            // FIX: Sử dụng Manager thay vì new ConfigFile
+            ConfigFile config = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
             switch (stat.getType()) {
                 case DOUBLE:
                 case STRING:
@@ -207,7 +206,6 @@ public class MonsterEdition extends PluginInventory {
             ItemStack cursorItem = event.getCursor();
             if (cursorItem != null && cursorItem.getType() != Material.AIR) {
                 String serialized = ItemUtils.serialize(cursorItem);
-                // CHANGE HERE: Use PlayerCoreFeature instead of MainListener
                 PlayerCoreFeature.cancelNextDrop(player);
                 config.getConfig().set(id + "." + stat.getPath(), serialized);
                 config.save();

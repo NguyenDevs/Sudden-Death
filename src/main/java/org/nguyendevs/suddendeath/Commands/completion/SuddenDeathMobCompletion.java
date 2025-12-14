@@ -98,7 +98,8 @@ public class SuddenDeathMobCompletion implements TabCompleter {
 
     private List<String> getMobIdsForType(EntityType entityType) {
         try {
-            ConfigFile configFile = new ConfigFile(entityType);
+            ConfigFile configFile = SuddenDeath.getInstance().getConfigManager().getMobConfig(entityType);
+            if (configFile == null) return Collections.emptyList();
             return new ArrayList<>(configFile.getConfig().getKeys(false));
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,

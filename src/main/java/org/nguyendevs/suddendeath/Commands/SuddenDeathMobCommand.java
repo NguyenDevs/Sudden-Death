@@ -136,8 +136,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         String id = args[2].toUpperCase().replace("-", "_");
-        ConfigFile mobs = new ConfigFile(type);
-        if (!mobs.getConfig().contains(id)) {
+        ConfigFile mobs = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
+        if (mobs == null || !mobs.getConfig().contains(id)) {
             player.sendMessage(translateColors(PREFIX + " " +translateColors("&cCouldn't find the mob called " + id + ".")));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
             return;
@@ -160,9 +160,9 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         String id = args[2].toUpperCase().replace("-", "_");
-        ConfigFile mobs = new ConfigFile(type);
+        ConfigFile mobs = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
 
-        if (!isValidId(player, id, mobs)) {
+        if (mobs == null || !isValidId(player, id, mobs)) {
             return;
         }
 
@@ -194,9 +194,9 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         String id = args[2].toUpperCase().replace("-", "_");
-        ConfigFile mobs = new ConfigFile(type);
+        ConfigFile mobs = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
 
-        if (!mobs.getConfig().contains(id)) {
+        if (mobs == null || !mobs.getConfig().contains(id)) {
             player.sendMessage(translateColors(PREFIX + " " +translateColors("&cThere is no mob called " + id + "!")));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
             return;
@@ -231,7 +231,12 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             return;
         }
 
-        FileConfiguration mobs = new ConfigFile(type).getConfig();
+        ConfigFile configFile = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
+        if (configFile == null) {
+            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cFailed to load configuration for type " + type.name() + ".")));
+            return;
+        }
+        FileConfiguration mobs = configFile.getConfig();
         player.sendMessage(translateColors(MOB_LIST_HEADER));
         player.sendMessage(translateColors("&8&oFrom " + type.name()));
         player.sendMessage("");
