@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class SuddenDeathMobCompletion implements TabCompleter {
     private static final String PERMISSION_OP = "suddendeath.admin";
-    private static final List<String> MAIN_COMMANDS = Arrays.asList("create", "delete", "edit", "help", "kill", "list", "remove");
+    private static final List<String> MAIN_COMMANDS = Arrays.asList("create", "delete", "edit", "help", "kill", "list");
     private static final List<String> KILL_RADIUS_SUGGESTIONS = Arrays.asList("10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "1000");
 
     @Override
@@ -54,7 +54,7 @@ public class SuddenDeathMobCompletion implements TabCompleter {
             case "kill" -> {
                 return filterCompletions(KILL_RADIUS_SUGGESTIONS, args[1]);
             }
-            case "create", "edit", "remove", "delete" -> {
+            case "create", "edit", "delete" -> {
                 return filterCompletions(getValidEntityTypes(), args[1]);
             }
             case "list" -> {
@@ -71,7 +71,7 @@ public class SuddenDeathMobCompletion implements TabCompleter {
     private List<String> handleThirdArgument(String[] args) {
         String firstArg = args[0].toLowerCase();
 
-        if (!firstArg.equals("edit") && !firstArg.equals("remove") && !firstArg.equals("delete")) {
+        if (!firstArg.equals("edit") && !firstArg.equals("delete")) {
             return Collections.emptyList();
         }
 

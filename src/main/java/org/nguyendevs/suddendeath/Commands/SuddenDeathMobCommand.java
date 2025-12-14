@@ -54,7 +54,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
                 case "kill" -> handleKillCommand(player, args);
                 case "edit" -> handleEditCommand(player, args);
                 case "create" -> handleCreateCommand(player, args);
-                case "remove", "delete" -> handleDeleteCommand(player, args);
+                case "delete" -> handleDeleteCommand(player, args);
                 case "list" -> handleListCommand(player, args);
                 default -> {
                     player.sendMessage(translateColors(PREFIX + " " +translateColors("&cUnknown command. Use /sdmob for help.")));

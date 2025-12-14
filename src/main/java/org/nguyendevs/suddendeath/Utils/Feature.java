@@ -123,7 +123,8 @@ public enum Feature {
 					new Modifier("slow-duration", 3),
 					new Modifier("increase-damage", 2),
 					new Modifier("speed", 2),
-					new Modifier("damage-resistance", 2)
+					new Modifier("damage-resistance", 2),
+					new Modifier("max-mobs-per-chunk", 10)
 			},
 			BloodMoon::new
 	),
@@ -389,13 +390,17 @@ public enum Feature {
 			},
 			"meteor-rain",
 			new Modifier[]{
+
 					new Modifier("chance-percent", 1.0),
 					new Modifier("coal-ore-rate", 10),
 					new Modifier("iron-ore-rate", 20),
 					new Modifier("gold-ore-rate", 30),
 					new Modifier("diamond-ore-rate", 70),
 					new Modifier("emerald-ore-rate", 60),
-					new Modifier("ancient-debris-rate", 80)
+					new Modifier("ancient-debris-rate", 80),
+					new Modifier("meteor-crater", true),
+					new Modifier("crater-recovery", true),
+					new Modifier("recover-time-second", 100)
 			},
 			MeteorRain::new
 	),
@@ -673,14 +678,16 @@ public enum Feature {
 			new String[]{
 					"&5Witches &7have a #chance-percent#% chance",
 					"to block damage with a &fMagic shield.",
-					"Witches cast runes dealing #damage# damage",
-					"and slowing players (II) for #slow-duration# seconds."
+					"Witches cast runes dealing #damage# damage,",
+					"slowing players (II) for #slow-duration# seconds.",
+					"And apply Weakness for #weak-duration$ seconds"
 			},
 			"witch-scrolls",
 			new Modifier[]{
 					new Modifier("chance-percent", 40.0),
 					new Modifier("damage", 2.5),
-					new Modifier("slow-duration", 2.0)
+					new Modifier("slow-duration", 2.0),
+					new Modifier("weak-duration", 4.0)
 			}
 	),
 
@@ -764,6 +771,7 @@ public enum Feature {
 			},
 			"zombie-break-block",
 			new Modifier[]{
+					new Modifier("max-target-distance", 150.0),
 					new Modifier("breakable-pickaxe-blocks", String.join(",", new String[]{
 							"STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE",
 							"COBBLED_DEEPSLATE", "COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE",

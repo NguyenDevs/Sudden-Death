@@ -116,7 +116,7 @@ public class SuddenDeath extends JavaPlugin {
     private void hookIntoPlaceholderAPI() {
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new SuddenDeathPlaceholders().register();
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aHooked onto PlaceholderAPI"));
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aHooked into PlaceholderAPI"));
         }
     }
 

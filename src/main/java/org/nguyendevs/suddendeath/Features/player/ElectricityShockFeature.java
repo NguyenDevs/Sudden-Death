@@ -54,7 +54,7 @@ public class ElectricityShockFeature extends AbstractFeature {
                         cancel();
                         return;
                     }
-                    player.playHurtAnimation(0.005f);
+                    player.playHurtAnimation(0.003f);
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.2f);
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING,

@@ -111,9 +111,6 @@ public class ConfigFile {
     }
 
     public void save() {
-        if (config.getKeys(true).isEmpty()) {
-            return;
-        }
         try {
             config.save(configFile);
         } catch (IOException e) {

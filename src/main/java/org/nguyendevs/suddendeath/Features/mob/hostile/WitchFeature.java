@@ -48,6 +48,8 @@ public class WitchFeature extends AbstractFeature {
 
                 witch.getWorld().playSound(witch.getLocation(), Sound.ENTITY_EVOKER_FANGS_ATTACK, 1.0f, 2.0f);
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) (Feature.WITCH_SCROLLS.getDouble("slow-duration") * 20), 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, (int) (Feature.WITCH_SCROLLS.getDouble("weak-duration") * 20), 1));
+
                 Utils.damage(player, Feature.WITCH_SCROLLS.getDouble("damage"), true);
 
                 Location loc = entity.getLocation().add(0.0D, 1.0D, 0.0D);

@@ -1,7 +1,8 @@
 name: SuddenDeath
 version: 2.2.8
 main: org.nguyendevs.suddendeath.SuddenDeath
-softdepend: [WorldGuard, ProtocolLib]
+depend: [ProtocolLib]
+softdepend: [WorldGuard, SkinsRestorer]
 api-version: 1.19
 commands:
   sds:

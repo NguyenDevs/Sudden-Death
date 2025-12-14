@@ -277,7 +277,8 @@ features:
       - "&5Witches &7have a #chance-percent#% chance"
       - "to block damage with a &fMagic shield."
       - "Witches cast runes dealing #damage# damage"
-      - "and slowing players (II) for #slow-duration# seconds."
+      - "slowing players (II) for #slow-duration# seconds."
+      - "And apply Weakness for #weak-duration$ seconds"
   wither-machinegun:
     name: "Wither Machinegun"
     lore:

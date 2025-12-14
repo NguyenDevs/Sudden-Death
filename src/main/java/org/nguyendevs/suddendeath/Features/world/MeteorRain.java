@@ -53,6 +53,23 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
     private final Map<UUID, MeteorTask> activeMeteors = new ConcurrentHashMap<>();
     private final Map<BlockPosition, Set<UUID>> phantomBlockTracking = new ConcurrentHashMap<>();
+
+    private static class CraterData {
+        Location center;
+        Map<Location, Material> originalBlocks;
+        int radius;
+        long impactTime;
+
+        CraterData(Location center, int radius) {
+            this.center = center;
+            this.radius = radius;
+            this.originalBlocks = new HashMap<>();
+            this.impactTime = System.currentTimeMillis();
+        }
+    }
+
+    private final List<CraterData> cratersToRecover = new ArrayList<>();
+
     private int spawningTaskId = -1;
 
     public MeteorRain(World world) {
@@ -103,6 +120,13 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (MeteorTask t : tasks) t.cancel();
             activeMeteors.clear();
             clearAllPhantomBlocks();
+
+            boolean craterRecovery = Feature.METEOR_RAIN.getBoolean("crater-recovery");
+            if (craterRecovery && !cratersToRecover.isEmpty()) {
+                startCraterRecoveryProcess();
+            } else {
+                cratersToRecover.clear();
+            }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error cleaning up Meteor Rain effects in world: " + getWorld().getName(), e);
@@ -245,6 +269,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         private static class MeteorVoxel {
             final Vector offset;
             final WrappedBlockData data;
+
             MeteorVoxel(Vector offset, WrappedBlockData data) {
                 this.offset = offset;
                 this.data = data;
@@ -350,9 +375,9 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double offset = meteorSize / 2.0;
             world.spawnParticle(Particle.FLAME, currentLocation, 20, offset, offset, offset, 0.03);
             world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, currentLocation, 15, offset, offset, offset, 0.05);
-            world.spawnParticle(Particle.LAVA, currentLocation, 8, offset/2, offset/2, offset/2, 0);
+            world.spawnParticle(Particle.LAVA, currentLocation, 8, offset / 2, offset / 2, offset / 2, 0);
             world.spawnParticle(Particle.CRIT, currentLocation, 10, offset, offset, offset, 0.1);
-            world.spawnParticle(Particle.EXPLOSION_NORMAL, currentLocation, 5, offset/3, offset/3, offset/3, 0.02);
+            world.spawnParticle(Particle.EXPLOSION_NORMAL, currentLocation, 5, offset / 3, offset / 3, offset / 3, 0.02);
         }
 
         private void playMeteorFlightSound() {
@@ -537,12 +562,25 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             World world = impactPoint.getWorld();
             if (world == null) return;
 
+            boolean createCrater = Feature.METEOR_RAIN.getBoolean("meteor-crater");
+            boolean craterRecovery = Feature.METEOR_RAIN.getBoolean("crater-recovery");
+
+            if (!createCrater) {
+                return;
+            }
+
             clearVegetationAndFloatingObjects(impactPoint);
-            createInstantDrillingCrater(impactPoint);
+
+            CraterData craterData = craterRecovery ? new CraterData(impactPoint, meteorSize) : null;
+            createInstantDrillingCraterWithTracking(impactPoint, craterData);
             createMinimalScorchedArea(impactPoint);
 
             Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
                 performFinalCleanup(impactPoint);
+
+                if (craterRecovery && craterData != null && craterData.originalBlocks.size() > 0) {
+                    cratersToRecover.add(craterData);
+                }
             }, 60L);
         }
 
@@ -555,7 +593,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (int x = -radius; x <= radius; x++) {
                 for (int y = -15; y <= 10; y++) {
                     for (int z = -radius; z <= radius; z++) {
-                        double distance = Math.sqrt(x*x + z*z);
+                        double distance = Math.sqrt(x * x + z * z);
                         if (distance > radius) continue;
 
                         Location loc = impactPoint.clone().add(x, y, z);
@@ -627,7 +665,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (int x = -radius; x <= radius; x++) {
                 for (int y = -12; y <= 12; y++) {
                     for (int z = -radius; z <= radius; z++) {
-                        double distance = Math.sqrt(x*x + z*z);
+                        double distance = Math.sqrt(x * x + z * z);
                         if (distance > radius) continue;
 
                         Location loc = center.clone().add(x, y, z);
@@ -666,7 +704,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     material.name().contains("_ORE");
         }
 
-        private void createInstantDrillingCrater(Location impactPoint) {
+        private void createInstantDrillingCraterWithTracking(Location impactPoint, CraterData craterData) {
             World world = impactPoint.getWorld();
             if (world == null) return;
 
@@ -695,7 +733,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                         double currentRadius = maxRadius * (1.0 - depthRatio * 0.7);
                         if (currentRadius < 1.0) currentRadius = 1.0;
 
-                        drillCraterLayer(impactPoint, direction, currentDepth, currentRadius, rotationAngle);
+                        drillCraterLayerWithTracking(impactPoint, direction, currentDepth, currentRadius, rotationAngle, craterData);
                         currentDepth++;
                         rotationAngle += 0.15;
                     }
@@ -714,7 +752,8 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             }.runTaskTimer(SuddenDeath.getInstance(), 3L, 1L);
         }
 
-        private void drillCraterLayer(Location impactPoint, Vector direction, int depth, double radius, double rotation) {
+        private void drillCraterLayerWithTracking(Location impactPoint, Vector direction, int depth,
+                                                  double radius, double rotation, CraterData craterData) {
             World world = impactPoint.getWorld();
             ThreadLocalRandom random = ThreadLocalRandom.current();
 
@@ -727,7 +766,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             Vector right = new Vector(-direction.getZ(), 0, direction.getX()).normalize();
             Vector up = direction.clone().crossProduct(right).normalize();
 
-            int numPoints = Math.max(12, (int)(radius * 4));
+            int numPoints = Math.max(12, (int) (radius * 4));
             for (int i = 0; i < numPoints; i++) {
                 double angle = (2.0 * Math.PI * i / numPoints) + rotation;
 
@@ -740,6 +779,10 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     Block block = world.getBlockAt(blockLoc);
 
                     if (block.getType() != Material.BEDROCK && block.getType().isSolid()) {
+                        if (craterData != null && blockLoc.getBlockY() >= impactPoint.getBlockY() - 2) {
+                            craterData.originalBlocks.put(blockLoc.clone(), block.getType());
+                        }
+
                         if (random.nextDouble() < 0.4) {
                             world.spawnParticle(Particle.BLOCK_CRACK, blockLoc.add(0.5, 0.5, 0.5), 2,
                                     0.2, 0.2, 0.2, 0, block.getBlockData());
@@ -762,6 +805,10 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     Block centerBlock = world.getBlockAt(centerBlockLoc);
 
                     if (centerBlock.getType() != Material.BEDROCK && centerBlock.getType().isSolid()) {
+                        if (craterData != null) {
+                            craterData.originalBlocks.put(centerBlockLoc.clone(), centerBlock.getType());
+                        }
+
                         if (depth <= 3 && random.nextDouble() < 0.3) {
                             Material scorchedMaterial = SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)];
                             centerBlock.setType(scorchedMaterial, false);
@@ -782,7 +829,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (double x = -crustRadius; x <= crustRadius; x += 0.8) {
                 for (double y = -crustRadius; y <= crustRadius; y += 0.8) {
                     for (double z = -crustRadius; z <= crustRadius; z += 0.8) {
-                        double distance = Math.sqrt(x*x + y*y + z*z);
+                        double distance = Math.sqrt(x * x + y * y + z * z);
 
                         if (distance >= crustRadius * 0.4 && distance <= crustRadius && random.nextDouble() < 0.8) {
                             Vector offset = new Vector(x, y, z);
@@ -845,7 +892,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             Location meteorCenter = impactPoint.clone().add(direction.clone().multiply(depth * 0.8));
 
             double yaw = Math.atan2(-direction.getX(), direction.getZ());
-            double pitch = Math.atan2(-direction.getY(), Math.sqrt(direction.getX()*direction.getX() + direction.getZ()*direction.getZ()));
+            double pitch = Math.atan2(-direction.getY(), Math.sqrt(direction.getX() * direction.getX() + direction.getZ() * direction.getZ()));
 
             ThreadLocalRandom random = ThreadLocalRandom.current();
 
@@ -886,7 +933,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             for (int x = -radius; x <= radius; x++) {
                 for (int z = -radius; z <= radius; z++) {
-                    double distance = Math.sqrt(x*x + z*z);
+                    double distance = Math.sqrt(x * x + z * z);
                     if (distance <= radius) {
                         double placementChance = distance <= radius * 0.5 ? 0.15 : 0.05;
 
@@ -949,7 +996,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             int fireRadius = radius + 2;
             for (int x = -fireRadius; x <= fireRadius; x++) {
                 for (int z = -fireRadius; z <= fireRadius; z++) {
-                    double distance = Math.sqrt(x*x + z*z);
+                    double distance = Math.sqrt(x * x + z * z);
                     if (distance > radius && distance <= fireRadius && random.nextDouble() < 0.04) {
 
                         int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
@@ -1024,11 +1071,16 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double emeraldRate = Feature.METEOR_RAIN.getDouble("emerald-ore-rate");
             double ancientDebrisRate = Feature.METEOR_RAIN.getDouble("ancient-debris-rate");
 
-            rand -= ancientDebrisRate; if (rand < 0) return Material.ANCIENT_DEBRIS;
-            rand -= emeraldRate;      if (rand < 0) return Material.EMERALD_ORE;
-            rand -= diamondRate;      if (rand < 0) return Material.DIAMOND_ORE;
-            rand -= goldRate;         if (rand < 0) return Material.GOLD_ORE;
-            rand -= ironRate;         if (rand < 0) return Material.IRON_ORE;
+            rand -= ancientDebrisRate;
+            if (rand < 0) return Material.ANCIENT_DEBRIS;
+            rand -= emeraldRate;
+            if (rand < 0) return Material.EMERALD_ORE;
+            rand -= diamondRate;
+            if (rand < 0) return Material.DIAMOND_ORE;
+            rand -= goldRate;
+            if (rand < 0) return Material.GOLD_ORE;
+            rand -= ironRate;
+            if (rand < 0) return Material.IRON_ORE;
             return Material.COAL_ORE;
         }
 
@@ -1037,7 +1089,8 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             super.cancel();
             try {
                 clearAllFakeBlocks();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             activeMeteors.remove(this.meteorId);
         }
 
@@ -1241,6 +1294,50 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 }
             }
             return voxels;
+        }
+    }
+    private void scheduleCraterRecovery(CraterData craterData) {
+        int totalBlocks = craterData.originalBlocks.size();
+        if (totalBlocks == 0) return;
+
+        int blocksPerTick = Math.max(1, totalBlocks / (craterData.radius * 20));
+
+        List<Map.Entry<Location, Material>> blockList = new ArrayList<>(craterData.originalBlocks.entrySet());
+        blockList.sort(Comparator.comparingInt(e -> e.getKey().getBlockY()));
+
+        new BukkitRunnable() {
+            int currentIndex = 0;
+
+            @Override
+            public void run() {
+                if (currentIndex >= blockList.size()) {
+                    cancel();
+                    return;
+                }
+
+                int endIndex = Math.min(currentIndex + blocksPerTick, blockList.size());
+
+                for (int i = currentIndex; i < endIndex; i++) {
+                    Map.Entry<Location, Material> entry = blockList.get(i);
+                    Location loc = entry.getKey();
+                    Block block = loc.getBlock();
+
+                    if (block.getType() == Material.AIR) {
+                        block.setType(entry.getValue(), false);
+                    }
+                }
+
+                currentIndex = endIndex;
+            }
+        }.runTaskTimer(SuddenDeath.getInstance(), 40L, 2L);
+    }
+
+    private void startCraterRecoveryProcess() {
+        List<CraterData> cratersToProcess = new ArrayList<>(cratersToRecover);
+        cratersToRecover.clear();
+
+        for (CraterData craterData : cratersToProcess) {
+            scheduleCraterRecovery(craterData);
         }
     }
 }

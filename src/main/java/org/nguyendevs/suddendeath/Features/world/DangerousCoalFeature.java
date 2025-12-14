@@ -25,7 +25,7 @@ public class DangerousCoalFeature extends AbstractFeature {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         if (!Feature.DANGEROUS_COAL.isEnabled(player) || Utils.hasCreativeGameMode(player) ||
-                block.getType() != Material.COAL_ORE) {
+                (block.getType() != Material.COAL_ORE && block.getType() != Material.DEEPSLATE_COAL_ORE)) {
             return;
         }
 

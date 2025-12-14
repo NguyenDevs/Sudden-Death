@@ -161,7 +161,7 @@ public class SkeletonFeatures extends AbstractFeature {
                         cancel();
                         return;
                     }
-                    player.playHurtAnimation(0.004f);
+                    player.playHurtAnimation(0.003f);
                 } catch (Exception e) {
                     cancel();
                 }

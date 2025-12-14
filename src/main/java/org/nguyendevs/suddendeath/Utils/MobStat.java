@@ -104,7 +104,7 @@ public enum MobStat {
             new String[]{"Increase the damage your monster deals."}
     ),
     MOVEMENT_SPEED(
-            new ItemStack(Material.LEATHER_BOOTS),
+            new ItemStack(Material.NETHERITE_BOOTS),
             "ms",
             0.23,
             Type.DOUBLE,

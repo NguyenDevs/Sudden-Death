@@ -48,7 +48,6 @@ public class MonsterEdition extends PluginInventory {
 
     @Override
     public @NotNull Inventory getInventory() {
-        // FIX: Sử dụng Manager thay vì new ConfigFile
         FileConfiguration config = SuddenDeath.getInstance().getConfigManager().getMobConfig(type).getConfig();
         Inventory inventory = Bukkit.createInventory(this, 54, translateColors(TITLE_PREFIX + id));
         try {
@@ -139,16 +138,37 @@ public class MonsterEdition extends PluginInventory {
     }
 
     private ItemStack createMobEggItem(FileConfiguration config) {
-        ItemStack egg = new ItemStack(Material.CREEPER_SPAWN_EGG);
+        Material eggMaterial = getSpawnEggMaterial(type);
+
+        ItemStack egg = new ItemStack(eggMaterial);
         ItemMeta meta = egg.getItemMeta();
         if (meta == null) return egg;
+
         String name = config.getString(id + ".name", id);
         meta.setDisplayName(translateColors("&a" + (name.isEmpty() ? id : name)));
+
         List<String> lore = new ArrayList<>();
         lore.add(translateColors("&7" + type.name()));
         meta.setLore(lore);
+
         egg.setItemMeta(meta);
         return egg;
+    }
+
+    private Material getSpawnEggMaterial(EntityType type) {
+        try {
+            String eggName = type.name() + "_SPAWN_EGG";
+            Material eggMaterial = Material.matchMaterial(eggName);
+
+            if (eggMaterial != null && eggMaterial.isItem()) {
+                return eggMaterial;
+            }
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                    "Could not find spawn egg for " + type.name(), e);
+        }
+
+        return Material.PIG_SPAWN_EGG;
     }
 
     @Override
@@ -175,7 +195,6 @@ public class MonsterEdition extends PluginInventory {
         event.setCancelled(true);
         try {
             MobStat stat = MobStat.valueOf(tag);
-            // FIX: Sử dụng Manager thay vì new ConfigFile
             ConfigFile config = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
             switch (stat.getType()) {
                 case DOUBLE:
@@ -271,6 +290,12 @@ public class MonsterEdition extends PluginInventory {
         }
         return -1;
     }
-    private boolean isAvailableSlot(int slot) { return Arrays.stream(AVAILABLE_SLOTS).anyMatch(s -> s == slot); }
-    private String translateColors(String message) { return ChatColor.translateAlternateColorCodes('&', message); }
+
+    private boolean isAvailableSlot(int slot) {
+        return Arrays.stream(AVAILABLE_SLOTS).anyMatch(s -> s == slot);
+    }
+
+    private String translateColors(String message) {
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
 }

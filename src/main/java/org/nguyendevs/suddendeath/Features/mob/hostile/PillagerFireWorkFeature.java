@@ -38,13 +38,15 @@ public class PillagerFireWorkFeature extends AbstractFeature {
             double chance = Feature.FIREWORK_ARROWS.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() > chance) return;
 
-            // Hủy mũi tên gốc và spawn pháo hoa thay thế
             Vector velocity = arrow.getVelocity();
-            Location spawnLoc = pillager.getEyeLocation().add(pillager.getLocation().getDirection().multiply(0.5));
+            velocity.setY(velocity.getY() * 0.7);
+
+            Location spawnLoc = pillager.getEyeLocation()
+                    .add(pillager.getLocation().getDirection().multiply(0.5))
+                    .subtract(0, 0.2, 0);
 
             event.setCancelled(true);
 
-            // Xử lý bất đồng bộ để mỗi pillager bắn tự nhiên hơn
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 try{
                     Firework firework = pillager.getWorld().spawn(spawnLoc, Firework.class);

@@ -16,6 +16,7 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Managers.EventManager.WorldStatus;
 import org.nguyendevs.suddendeath.Hook.CustomFlag;
 
+import java.util.Arrays;
 import java.util.logging.Level;
 
 public class BloodMoon extends WorldEventHandler {
@@ -41,7 +42,7 @@ public class BloodMoon extends WorldEventHandler {
 
 		try {
 			Player player = (Player) event.getEntity();
-             if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
+			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
 				return;
 			}
 			double damageMultiplier = 1 + (Feature.BLOOD_MOON.getDouble("damage-percent") / 100.0);
@@ -68,7 +69,7 @@ public class BloodMoon extends WorldEventHandler {
 
 		try {
 			Location loc = event.getEntity().getLocation();
-              if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
+			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
 				return;
 			}
 			if (isWaterNearby(loc) && entity instanceof Zombie) {
@@ -77,6 +78,10 @@ public class BloodMoon extends WorldEventHandler {
 			}
 
 			if (!(entity instanceof Zombie)) {
+				if (shouldSkipSpawn(loc.getChunk())) {
+					return;
+				}
+
 				event.setCancelled(true);
 				spawnEnhancedZombie(loc);
 			}
@@ -110,10 +115,14 @@ public class BloodMoon extends WorldEventHandler {
 			for (Entity entity : getWorld().getEntities()) {
 				if (entity instanceof Monster && !(entity instanceof Zombie)) {
 					Location loc = entity.getLocation();
-                      if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
+					if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
 						continue;
 					}
 					if (!isWaterNearby(loc)) {
+						if (shouldSkipSpawn(loc.getChunk())) {
+							continue;
+						}
+
 						entity.remove();
 						spawnEnhancedZombie(loc);
 					}
@@ -143,9 +152,16 @@ public class BloodMoon extends WorldEventHandler {
 		}
 	}
 
+	private boolean shouldSkipSpawn(Chunk chunk) {
+		int maxMobs = (int) Feature.BLOOD_MOON.getDouble("max-mobs-per-chunk");
+		long count = Arrays.stream(chunk.getEntities())
+				.filter(e -> e.hasMetadata(BLOODMOON_METADATA))
+				.count();
+		return count >= maxMobs;
+	}
+
 	private void spawnEnhancedZombie(Location location) {
 		try {
-
 			if (isWaterNearby(location)) return;
 
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(location, CustomFlag.SDS_EVENT)) {
@@ -166,7 +182,6 @@ public class BloodMoon extends WorldEventHandler {
 					"Error spawning enhanced zombie in Blood Moon at: " + location, e);
 		}
 	}
-
 
 	private boolean isWaterNearby(Location location) {
 		try {
@@ -190,9 +205,11 @@ public class BloodMoon extends WorldEventHandler {
 	private static class ZombieSpawnEffectTask extends BukkitRunnable {
 		private final Location location;
 		private double time = 0.0;
+
 		ZombieSpawnEffectTask(Location location) {
 			this.location = location;
 		}
+
 		@Override
 		public void run() {
 			try {
