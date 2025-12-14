@@ -772,7 +772,7 @@ public enum Feature {
 			new Modifier[]{
 					new Modifier("max-target-distance", 150.0),
 					new Modifier("drop-blocks", true),
-					new  Modifier("drop-remove-interval", 5.0),
+					new  Modifier("drop-remove-interval", 15.0),
 					new Modifier("breakable-pickaxe-blocks", String.join(",", new String[]{
 							"STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE",
 							"COBBLED_DEEPSLATE", "COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE",

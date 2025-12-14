@@ -33,8 +33,7 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
     private final Map<UUID, Set<Location>> recentlyBrokenBlocks = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> breakAttempts = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastBreakTime = new ConcurrentHashMap<>();
-
-    // Hệ thống Target thông minh
+    private final Map<UUID, Set<UUID>> zombieDroppedItems = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> persistentTargets = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastTargetTime = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastTargetSearchTime = new ConcurrentHashMap<>();
@@ -130,6 +129,7 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
         persistentTargets.clear();
         lastTargetTime.clear();
         lastTargetSearchTime.clear();
+        zombieDroppedItems.clear();
     }
 
     @EventHandler
@@ -139,6 +139,7 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
             persistentTargets.remove(zombie.getUniqueId());
             lastTargetTime.remove(zombie.getUniqueId());
             lastTargetSearchTime.remove(zombie.getUniqueId());
+            zombieDroppedItems.remove(zombie.getUniqueId());
         }
     }
 
@@ -308,7 +309,6 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
 
         if (targetLoc.getY() > zombie.getLocation().getY() + 1.0) {
             Vector direction = targetLoc.toVector().subtract(zombie.getLocation().toVector()).setY(0).normalize();
-
             Block blockInFrontFeet = zombie.getLocation().add(direction).getBlock();
 
             if (blockInFrontFeet.getType().isSolid()) {
@@ -321,18 +321,47 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                 if (blockInFrontAboveHead.getType().isSolid() && canBreakBlock(toolType, blockInFrontAboveHead.getType())) {
                     return blockInFrontAboveHead;
                 }
-
                 return null;
             }
         }
 
-        Vector direction = targetLoc.toVector().subtract(zombieEyeLoc.toVector()).normalize();
-        BlockIterator iterator = new BlockIterator(zombie.getWorld(), zombieEyeLoc.toVector(), direction, 0, 3);
+        Vector direction = targetLoc.toVector().subtract(zombieEyeLoc.toVector());
+
+        if (direction.lengthSquared() < 0.01) {
+            return null;
+        }
+
+        direction.normalize();
+
+        if (!isValidVector(direction)) {
+            return null;
+        }
+
+        if (!zombieEyeLoc.isWorldLoaded() || zombieEyeLoc.getWorld() == null) {
+            return null;
+        }
+
+        BlockIterator iterator;
+        try {
+            iterator = new BlockIterator(zombie.getWorld(), zombieEyeLoc.toVector(), direction, 0, 3);
+        } catch (IllegalStateException e) {
+            plugin.getLogger().warning("Failed to create BlockIterator for zombie " + zombie.getUniqueId() +
+                    " at " + zombieEyeLoc + " facing " + direction);
+            return null;
+        }
+
+        Block targetFloorBlock = targetLoc.getBlock().getRelative(BlockFace.DOWN);
+        Block zombieFloorBlock = zombie.getLocation().getBlock().getRelative(BlockFace.DOWN);
+
+        boolean sameLevel = Math.abs(zombie.getLocation().getY() - targetLoc.getY()) < 0.8;
 
         while (iterator.hasNext()) {
             Block block = iterator.next();
 
-            if (Math.abs(zombie.getLocation().getY() - targetLoc.getY()) < 0.8) {
+            if (sameLevel) {
+                if (block.equals(targetFloorBlock) || block.equals(zombieFloorBlock)) {
+                    continue;
+                }
                 if (block.getY() < zombie.getLocation().getBlockY()) {
                     continue;
                 }
@@ -340,21 +369,38 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
 
             if (block.getType().isSolid()) {
                 if (canBreakBlock(toolType, block.getType())) {
+                    if (block.equals(targetFloorBlock) || block.equals(zombieFloorBlock)) {
+                        continue;
+                    }
                     return block;
                 } else {
                     return null;
                 }
             }
 
-            if (targetLoc.getY() < zombie.getLocation().getY() - 0.5) {
+            if (targetLoc.getY() < zombie.getLocation().getY() - 1.5) {
                 Block blockBelow = block.getRelative(BlockFace.DOWN);
-                if (blockBelow.getType().isSolid() && canBreakBlock(toolType, blockBelow.getType())) {
-                    return blockBelow;
+                if (!blockBelow.equals(targetFloorBlock) && !blockBelow.equals(zombieFloorBlock)) {
+                    if (blockBelow.getType().isSolid() && canBreakBlock(toolType, blockBelow.getType())) {
+                        return blockBelow;
+                    }
                 }
             }
         }
 
         return null;
+    }
+
+    private boolean isValidVector(Vector vec) {
+        if (vec == null) return false;
+        double x = vec.getX();
+        double y = vec.getY();
+        double z = vec.getZ();
+
+        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) return false;
+        if (Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z)) return false;
+
+        return vec.lengthSquared() > 0.0001;
     }
 
     private void startBreakingBlock(Zombie zombie, LivingEntity target, Block block, ItemStack tool, double breakTime) {
@@ -410,15 +456,38 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                     boolean shouldDrop = Feature.ZOMBIE_BREAK_BLOCK.getBoolean("drop-blocks");
 
                     if (shouldDrop) {
+                        Location dropLoc = block.getLocation().add(0.5, 0.5, 0.5);
+                        Set<UUID> existingItems = new HashSet<>();
+                        for (Entity entity : dropLoc.getWorld().getNearbyEntities(dropLoc, 1.5, 1.5, 1.5)) {
+                            if (entity instanceof Item) {
+                                existingItems.add(entity.getUniqueId());
+                            }
+                        }
                         block.breakNaturally(tool);
 
+                        Set<UUID> newDroppedItems = new HashSet<>();
+                        for (Entity entity : dropLoc.getWorld().getNearbyEntities(dropLoc, 1.5, 1.5, 1.5)) {
+                            if (entity instanceof Item && !existingItems.contains(entity.getUniqueId())) {
+                                newDroppedItems.add(entity.getUniqueId());
+                            }
+                        }
+
+                        if (!newDroppedItems.isEmpty()) {
+                            zombieDroppedItems.computeIfAbsent(zombieUUID, k -> ConcurrentHashMap.newKeySet())
+                                    .addAll(newDroppedItems);
+                        }
+
                         double removeInterval = Feature.ZOMBIE_BREAK_BLOCK.getDouble("drop-remove-interval");
-                        if (removeInterval > 0) {
-                            Location dropLoc = block.getLocation().add(0.5, 0.5, 0.5);
+                        if (removeInterval > 0 && !newDroppedItems.isEmpty()) {
                             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                                for (Entity entity : dropLoc.getWorld().getNearbyEntities(dropLoc, 1.5, 1.5, 1.5)) {
-                                    if (entity instanceof Item) {
-                                        entity.remove();
+                                Set<UUID> itemsToRemove = zombieDroppedItems.get(zombieUUID);
+                                if (itemsToRemove != null) {
+                                    for (UUID itemUUID : new HashSet<>(itemsToRemove)) {
+                                        Entity entity = Bukkit.getEntity(itemUUID);
+                                        if (entity instanceof Item && entity.isValid()) {
+                                            entity.remove();
+                                            itemsToRemove.remove(itemUUID);
+                                        }
                                     }
                                 }
                             }, (long) (removeInterval * 20L));
@@ -481,6 +550,7 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
         recentlyBrokenBlocks.remove(uuid);
         breakAttempts.remove(uuid);
         lastBreakTime.remove(uuid);
+        zombieDroppedItems.remove(uuid);
     }
 
     private boolean isValidTool(Material material) {
