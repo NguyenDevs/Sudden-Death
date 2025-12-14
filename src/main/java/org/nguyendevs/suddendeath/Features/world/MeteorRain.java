@@ -779,7 +779,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     Block block = world.getBlockAt(blockLoc);
 
                     if (block.getType() != Material.BEDROCK && block.getType().isSolid()) {
-                        if (craterData != null && blockLoc.getBlockY() >= impactPoint.getBlockY() - 2) {
+                        if (craterData != null) {
                             craterData.originalBlocks.put(blockLoc.clone(), block.getType());
                         }
 

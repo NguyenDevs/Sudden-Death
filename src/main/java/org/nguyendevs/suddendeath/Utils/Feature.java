@@ -399,8 +399,7 @@ public enum Feature {
 					new Modifier("emerald-ore-rate", 60),
 					new Modifier("ancient-debris-rate", 80),
 					new Modifier("meteor-crater", true),
-					new Modifier("crater-recovery", true),
-					new Modifier("recover-time-second", 100)
+					new Modifier("crater-recovery", true)
 			},
 			MeteorRain::new
 	),
