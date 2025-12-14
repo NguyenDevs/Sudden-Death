@@ -31,17 +31,14 @@ public final class ItemUtils {
 
 			ItemMeta meta = item.getItemMeta();
 			if (meta != null) {
-				// Damage
 				if (meta instanceof Damageable damageable) {
 					format.append(",damage=").append(damageable.getDamage());
 				}
 
-				// Color (for leather armor)
 				if (meta instanceof LeatherArmorMeta leatherMeta) {
 					format.append(",color=").append(leatherMeta.getColor().asRGB());
 				}
 
-				// Enchantments
 				if (meta.hasEnchants()) {
 					StringBuilder enchFormat = new StringBuilder();
 					meta.getEnchants().forEach((enchantment, level) ->
@@ -85,7 +82,6 @@ public final class ItemUtils {
 			ItemMeta meta = item.getItemMeta();
 
 			for (String arg : ARGUMENT_SPLITTER.split(cleanInput)) {
-				// Material
 				if (arg.startsWith("material=")) {
 					String materialName = arg.replace("material=", "");
 					try {
@@ -99,7 +95,6 @@ public final class ItemUtils {
 					}
 				}
 
-				// Color for leather armor
 				if (arg.startsWith("color=") && meta instanceof LeatherArmorMeta leatherMeta) {
 					String colorValue = arg.replace("color=", "");
 					try {
@@ -110,7 +105,6 @@ public final class ItemUtils {
 					}
 				}
 
-				// Damage for items
 				if (arg.startsWith("damage=") && meta instanceof Damageable damageable) {
 					String damageValue = arg.replace("damage=", "");
 					try {
@@ -121,7 +115,6 @@ public final class ItemUtils {
 					}
 				}
 
-				// Enchantments
 				if (arg.startsWith("enchants=")) {
 					String enchants = arg.replace("enchants=", "");
 					for (String ench : ENCHANTMENT_SPLITTER.split(enchants)) {

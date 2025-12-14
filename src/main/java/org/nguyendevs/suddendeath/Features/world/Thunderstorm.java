@@ -42,10 +42,8 @@ public class Thunderstorm extends WorldEventHandler {
 		}
 
 		Player player = (Player) event.getEntity();
-		// Không áp dụng damage multiplier cho creative/spectator/sds.admin
 		if (player.getGameMode() == GameMode.CREATIVE ||
-				player.getGameMode() == GameMode.SPECTATOR ||
-				player.hasPermission("sds.admin")) {
+				player.getGameMode() == GameMode.SPECTATOR) {
 			return;
 		}
 
@@ -82,10 +80,8 @@ public class Thunderstorm extends WorldEventHandler {
 			for (Entity entity : strike.getNearbyEntities(6, 3, 6)) {
 				if (entity instanceof Player) {
 					Player player = (Player) entity;
-					// Bỏ qua knockback nếu creative/spectator/sds.admin
 					if (player.getGameMode() == GameMode.CREATIVE ||
-							player.getGameMode() == GameMode.SPECTATOR ||
-							player.hasPermission("sds.admin")) {
+							player.getGameMode() == GameMode.SPECTATOR) {
 						continue;
 					}
 				}
@@ -108,10 +104,8 @@ public class Thunderstorm extends WorldEventHandler {
 			getWorld().setWeatherDuration(WEATHER_DURATION_TICKS);
 
 			for (Player player : getWorld().getPlayers()) {
-				// Bỏ qua spawn sét gần creative/spectator/sds.admin
 				if (player.getGameMode() == GameMode.CREATIVE ||
-						player.getGameMode() == GameMode.SPECTATOR ||
-						player.hasPermission("sds.admin")) {
+						player.getGameMode() == GameMode.SPECTATOR) {
 					continue;
 				}
 

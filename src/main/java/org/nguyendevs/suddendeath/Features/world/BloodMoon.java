@@ -72,16 +72,21 @@ public class BloodMoon extends WorldEventHandler {
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
 				return;
 			}
-			if (isWaterNearby(loc) && entity instanceof Zombie) {
+
+			if (isWaterNearby(loc)) {
+				event.setCancelled(true);
+				return;
+			}
+
+			if (shouldSkipSpawn(loc.getChunk())) {
 				event.setCancelled(true);
 				return;
 			}
 
 			if (!(entity instanceof Zombie)) {
-				if (shouldSkipSpawn(loc.getChunk())) {
-					return;
-				}
-
+				event.setCancelled(true);
+				spawnEnhancedZombie(loc);
+			} else {
 				event.setCancelled(true);
 				spawnEnhancedZombie(loc);
 			}
@@ -114,6 +119,19 @@ public class BloodMoon extends WorldEventHandler {
 		try {
 			for (Entity entity : getWorld().getEntities()) {
 				if (entity instanceof Monster && !(entity instanceof Zombie)) {
+					Location loc = entity.getLocation();
+					if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
+						continue;
+					}
+					if (!isWaterNearby(loc)) {
+						if (shouldSkipSpawn(loc.getChunk())) {
+							continue;
+						}
+
+						entity.remove();
+						spawnEnhancedZombie(loc);
+					}
+				} else if (entity instanceof Zombie && !entity.hasMetadata(BLOODMOON_METADATA)) {
 					Location loc = entity.getLocation();
 					if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
 						continue;

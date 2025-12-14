@@ -113,8 +113,6 @@ public class SpiderFeatures extends AbstractFeature {
     }
 
     private void applyCaveSpiderWeb(CaveSpider spider) {
-        // Logic applyCaveSpiderWeb (và các hàm phụ trợ shoot/place) giữ nguyên như code bạn đã có trong SpiderFeatures.java trước đó
-        // (Tôi không viết lại phần này để tiết kiệm không gian, hãy giữ nguyên logic applyCaveSpiderWeb, shootSingleWeb, shootContinuousWebs, placeCobwebsAroundPlayer đã có)
         if (spider == null || spider.getHealth() <= 0 || !(spider.getTarget() instanceof Player target)) return;
         if (!target.getWorld().equals(spider.getWorld())) return;
 

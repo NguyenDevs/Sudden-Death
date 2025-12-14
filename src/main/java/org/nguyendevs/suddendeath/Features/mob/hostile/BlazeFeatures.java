@@ -23,7 +23,6 @@ public class BlazeFeatures extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        // Everburning Blazes Loop
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {
@@ -43,7 +42,6 @@ public class BlazeFeatures extends AbstractFeature {
             }
         }.runTaskTimer(plugin, 0L, 60L));
 
-        // Homing Flame Barrage Loop
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {

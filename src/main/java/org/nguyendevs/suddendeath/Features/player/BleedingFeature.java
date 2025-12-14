@@ -26,7 +26,6 @@ public class BleedingFeature extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        // Periodic damage loop
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {
@@ -91,14 +90,7 @@ public class BleedingFeature extends AbstractFeature {
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("no-longer-bleeding")));
                     player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1.0f, 0.0f);
                 }
-                return;
             }
-            /*
-            if (plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT) &&
-                    player.isOnGround() && !Utils.hasCreativeGameMode(player) && data.isBleeding()) {
-                spawnBleedingParticles(player);
-            }
-             */
         } catch (Exception e) {}
     }
 

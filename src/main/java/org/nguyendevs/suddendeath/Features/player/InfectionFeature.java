@@ -26,7 +26,6 @@ public class InfectionFeature extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        // Periodic damage loop
         registerTask(new BukkitRunnable() {
             @Override
             public void run() {

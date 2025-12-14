@@ -6,6 +6,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
+
 public class CreeperFeature extends AbstractFeature {
     @Override
     public String getName() {

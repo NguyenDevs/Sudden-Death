@@ -19,7 +19,6 @@ import java.util.logging.Level;
 
 public class HungerNauseaFeature extends AbstractFeature {
 
-    // Danh sách lưu UUID của những người chơi đang bị đói (đã nhận thông báo đói)
     private final Set<UUID> starvingPlayers = new HashSet<>();
 
     @Override

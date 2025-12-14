@@ -186,11 +186,7 @@ public class PhantomFeature extends AbstractFeature {
                                     Particle windParticle = Particle.valueOf("GUST");
 
                                     hitPlayer.getWorld().spawnParticle(windParticle, hitPlayer.getLocation().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0.1);
-
-                                    // hitPlayer.getWorld().playSound(hitPlayer.getLocation(), Sound.valueOf("ENTITY_WIND_CHARGE_WIND_BURST"), 1.0f, 1.0f);
-                                } catch (IllegalArgumentException | NullPointerException ignored) {
-                                }
-
+                                } catch (IllegalArgumentException | NullPointerException ignored) {}
                                 cancel();
                                 return;
                             }

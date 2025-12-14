@@ -83,7 +83,6 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
         if (wave == null) {
             shouldSpawn = true;
         } else {
-            // Check điều kiện Wave: 5 phút cooldown HOẶC đi xa 50 block HOẶC giết hết đợt cũ
             boolean cooldownExpired = (System.currentTimeMillis() - wave.startTime) > (5 * 60 * 1000);
             boolean distanceExceeded = player.getLocation().distance(wave.spawnCenter) > 50;
 
@@ -105,7 +104,7 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
     private void startNewWave(Player player) {
         int maxMobs = (int) Feature.WHISPERS_OF_THE_DESERT.getDouble("max-mobs");
         int count = RANDOM.nextInt(maxMobs) + 1;
-        double ambushChance = Feature.WHISPERS_OF_THE_DESERT.getDouble("ambush-chance"); // Lấy từ config hoặc default 5%
+        double ambushChance = Feature.WHISPERS_OF_THE_DESERT.getDouble("ambush-chance");
 
         WaveData newWave = new WaveData(player.getLocation());
         playerWaves.put(player.getUniqueId(), newWave);
@@ -113,11 +112,9 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
         boolean ambushTriggered = false;
 
         for (int i = 0; i < count; i++) {
-            // Mỗi đợt chỉ tối đa 1 con ambush để tránh quá khó
             boolean isAmbush = !ambushTriggered && RANDOM.nextDouble() * 100 < ambushChance;
             if (isAmbush) ambushTriggered = true;
 
-            // Delay spawn ngẫu nhiên cho từng con (0-4 giây)
             long delay = RANDOM.nextInt(80);
 
             new BukkitRunnable() {

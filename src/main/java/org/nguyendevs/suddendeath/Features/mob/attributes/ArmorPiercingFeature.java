@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 public class ArmorPiercingFeature extends AbstractFeature {
+
     private final Map<UUID, String> pendingDeathMessages = new ConcurrentHashMap<>();
 
     @Override
@@ -67,16 +68,11 @@ public class ArmorPiercingFeature extends AbstractFeature {
     }
 
     private void performTrueDamage(EntityDamageByEntityEvent event, Player player, LivingEntity damager) {
-        // Calculate raw damage based on the mob's attack attribute
         double rawDamage = getRawDamage(damager);
-
-        // Cancel the original event to bypass armor calculations entirely
         event.setCancelled(true);
-
         double currentHealth = player.getHealth();
         double newHealth = currentHealth - rawDamage;
 
-        // Apply visual effects if enabled
         if (Feature.ARMOR_PIERCING.getBoolean("visual-particles")) {
             player.getWorld().spawnParticle(Particle.CRIT,
                     player.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, 0.1);
@@ -88,14 +84,11 @@ public class ArmorPiercingFeature extends AbstractFeature {
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.8f);
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.0f);
         }
-
-        // Apply Knockback manually since the event was cancelled
         Vector knockback = player.getLocation().toVector().subtract(damager.getLocation().toVector()).normalize();
         if (Double.isFinite(knockback.getX()) && Double.isFinite(knockback.getZ())) {
             player.setVelocity(knockback.multiply(0.4).setY(0.3));
         }
 
-        // Apply health reduction
         player.playEffect(EntityEffect.HURT);
         if (newHealth <= 0) {
             String mobName = damager.getCustomName() != null
@@ -122,7 +115,6 @@ public class ArmorPiercingFeature extends AbstractFeature {
             if (formatted.length() > 0) {
                 formatted.append(" ");
             }
-            // Viết hoa chữ cái đầu
             formatted.append(Character.toUpperCase(word.charAt(0)))
                     .append(word.substring(1));
         }

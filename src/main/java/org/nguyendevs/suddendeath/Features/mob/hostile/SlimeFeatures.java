@@ -28,14 +28,12 @@ public class SlimeFeatures extends AbstractFeature {
         if (event.getDamage() <= 0 || event.getEntity().hasMetadata("NPC")) return;
 
         try {
-            // Thief Slimes
             if (event.getEntity() instanceof Player player &&
                     (event.getDamager() instanceof Slime || event.getDamager() instanceof MagmaCube) &&
                     Feature.THIEF_SLIMES.isEnabled(player)) {
                 applyThiefSlime(player);
             }
 
-            // Poisoned Slimes
             if (event.getEntity() instanceof Slime slime &&
                     event.getDamager() instanceof Player player &&
                     !Utils.hasCreativeGameMode(player) &&

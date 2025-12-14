@@ -14,16 +14,9 @@ import java.util.logging.Level;
 
 public class SharpKnifeFeature extends AbstractFeature {
 
-    private BleedingFeature bleedingFeature;
-
     @Override
     public String getName() {
         return "Sharp Knife";
-    }
-
-    @Override
-    protected void onEnable() {
-        // Get reference to BleedingFeature if needed
     }
 
     @EventHandler

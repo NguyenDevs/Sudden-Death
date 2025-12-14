@@ -32,6 +32,7 @@ public abstract class AbstractFeature implements IFeature {
     }
 
     protected void onEnable() {}
+
     protected void onDisable() {}
 
     protected void registerTask(BukkitTask task) {
