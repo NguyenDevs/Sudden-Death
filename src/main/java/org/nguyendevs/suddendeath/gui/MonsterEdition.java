@@ -24,7 +24,6 @@ import org.nguyendevs.suddendeath.features.player.PlayerCoreFeature;
 import org.nguyendevs.suddendeath.util.ConfigFile;
 import org.nguyendevs.suddendeath.util.ItemUtils;
 import org.nguyendevs.suddendeath.util.MobStat;
-import org.nguyendevs.suddendeath.util.SpecialChar;
 import org.nguyendevs.suddendeath.util.Utils;
 
 import java.util.ArrayList;
@@ -84,7 +83,7 @@ public class MonsterEdition extends PluginInventory {
             case DOUBLE:
                 lore.add(translateColors("&7Current Value: &f" + config.getDouble(id + "." + stat.getPath(), 0.0)));
                 lore.add("");
-                lore.add(translateColors("&e" + SpecialChar.listDash + " Left click to change this value."));
+                lore.add(translateColors("&e► Left click to change this value."));
                 break;
             case ITEMSTACK:
                 addItemStackLore(lore, config, stat);
@@ -92,7 +91,7 @@ public class MonsterEdition extends PluginInventory {
             case STRING:
                 lore.add(translateColors("&7Current Value: &f" + config.getString(id + "." + stat.getPath(), "")));
                 lore.add("");
-                lore.add(translateColors("&e" + SpecialChar.listDash + " Left click to change this value."));
+                lore.add(translateColors("&e► Left click to change this value."));
                 break;
             case POTION_EFFECTS:
                 addPotionEffectsLore(lore, config, stat);
@@ -119,8 +118,8 @@ public class MonsterEdition extends PluginInventory {
             }
         }
         lore.add("");
-        lore.add(translateColors("&e" + SpecialChar.listDash + " Drag & drop an item to change this value."));
-        lore.add(translateColors("&e" + SpecialChar.listDash + " Right click to remove this value."));
+        lore.add(translateColors("&e► Drag & drop an item to change this value."));
+        lore.add(translateColors("&e► Right click to remove this value."));
     }
 
     private void addPotionEffectsLore(List<String> lore, FileConfiguration config, MobStat stat) {
@@ -136,8 +135,8 @@ public class MonsterEdition extends PluginInventory {
             }
         }
         lore.add("");
-        lore.add(translateColors("&e" + SpecialChar.listDash + " Left click to add an effect."));
-        lore.add(translateColors("&e" + SpecialChar.listDash + " Right click to remove the last effect."));
+        lore.add(translateColors("&e► Left click to add an effect."));
+        lore.add(translateColors("&e► Right click to remove the last effect."));
     }
 
     private ItemStack createMobEggItem(FileConfiguration config) {
