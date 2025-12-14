@@ -34,19 +34,20 @@ public class CustomMobs implements Listener {
         }
 
         try {
-            // Check world blacklist
-            List<String> blacklist = SuddenDeath.getInstance().getConfig().getStringList("custom-mobs-world-blacklist");
+            List<String> blacklist = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig().getStringList("custom-mobs-world-blacklist");
             if (blacklist.contains(entity.getWorld().getName())) {
                 return;
             }
 
-            // Load configuration
-            FileConfiguration config = new ConfigFile(entity.getType()).getConfig();
-            double defaultSpawnCoef = SuddenDeath.getInstance().getConfig().getDouble("default-spawn-coef." + entity.getType().name(), 0.0);
+            ConfigFile mobConfigFile = SuddenDeath.getInstance().getConfigManager().getMobConfig(entity.getType());
+            if (mobConfigFile == null) return;
+
+            FileConfiguration config = mobConfigFile.getConfig();
+
+            double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig().getDouble("default-spawn-coef." + entity.getType().name(), 0.0);
             Map<String, Double> spawnCoefficients = new LinkedHashMap<>();
             spawnCoefficients.put("DEFAULT_KEY", defaultSpawnCoef);
 
-            // Collect spawn coefficients
             for (String key : config.getKeys(false)) {
                 ConfigurationSection section = config.getConfigurationSection(key);
                 if (section == null || !section.contains("spawn-coef")) {
@@ -56,13 +57,11 @@ public class CustomMobs implements Listener {
                 spawnCoefficients.put(key, spawnCoefficients.getOrDefault(key, 0.0) + spawnCoef);
             }
 
-            // Select custom mob type
             String selectedId = selectCustomMobType(spawnCoefficients);
             if (selectedId.isEmpty() || "DEFAULT_KEY".equalsIgnoreCase(selectedId)) {
                 return;
             }
 
-            // Apply custom mob properties
             applyCustomMobProperties(entity, config, selectedId);
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -89,12 +88,9 @@ public class CustomMobs implements Listener {
         try {
             ConfigurationSection section = config.getConfigurationSection(id);
             if (section == null) {
-                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                        "Configuration section not found for ID: " + id + " for entity: " + entity.getType());
                 return;
             }
 
-            // Set custom name
             String name = ChatColor.translateAlternateColorCodes('&', section.getString("name", ""));
             if (!name.isEmpty() && !name.equals("None") && !name.equals("none")) {
                 entity.setCustomName(name);
@@ -103,29 +99,22 @@ public class CustomMobs implements Listener {
                 entity.setCustomNameVisible(false);
             }
 
-            // Set metadata
             entity.setMetadata(METADATA_KEY, new FixedMetadataValue(SuddenDeath.getInstance(), true));
 
-            // Set equipment
             EntityEquipment equipment = entity.getEquipment();
-            if (equipment == null) {
-                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                        "EntityEquipment is null for entity: " + entity.getType());
-                return;
+            if (equipment != null) {
+                equipment.setHelmet(ItemUtils.deserialize(section.getString("equipment.helmet")));
+                equipment.setChestplate(ItemUtils.deserialize(section.getString("equipment.chestplate")));
+                equipment.setLeggings(ItemUtils.deserialize(section.getString("equipment.leggings")));
+                equipment.setBoots(ItemUtils.deserialize(section.getString("equipment.boots")));
+                equipment.setItemInMainHand(ItemUtils.deserialize(section.getString("equipment.mainHand")));
+                equipment.setItemInOffHand(ItemUtils.deserialize(section.getString("equipment.offHand")));
             }
-            equipment.setHelmet(ItemUtils.deserialize(section.getString("equipment.helmet")));
-            equipment.setChestplate(ItemUtils.deserialize(section.getString("equipment.chestplate")));
-            equipment.setLeggings(ItemUtils.deserialize(section.getString("equipment.leggings")));
-            equipment.setBoots(ItemUtils.deserialize(section.getString("equipment.boots")));
-            equipment.setItemInMainHand(ItemUtils.deserialize(section.getString("equipment.mainHand")));
-            equipment.setItemInOffHand(ItemUtils.deserialize(section.getString("equipment.offHand")));
 
-            // Set attributes
             setAttribute(entity, Attribute.GENERIC_MAX_HEALTH, section.getDouble("hp", 20.0));
             setAttribute(entity, Attribute.GENERIC_MOVEMENT_SPEED, section.getDouble("ms", 0.2));
             setAttribute(entity, Attribute.GENERIC_ATTACK_DAMAGE, section.getDouble("atk", 2.0));
 
-            // Apply potion effects
             ConfigurationSection effectsSection = section.getConfigurationSection("eff");
             if (effectsSection != null) {
                 for (String effectKey : effectsSection.getKeys(false)) {
@@ -143,9 +132,6 @@ public class CustomMobs implements Listener {
             AttributeInstance attributeInstance = entity.getAttribute(attribute);
             if (attributeInstance != null) {
                 attributeInstance.setBaseValue(value);
-            } else {
-                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                        "Attribute " + attribute + " not found for entity: " + entity.getType());
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -156,15 +142,8 @@ public class CustomMobs implements Listener {
     private void applyPotionEffect(LivingEntity entity, String effectName, int amplifier) {
         try {
             PotionEffectType type = PotionEffectType.getByName(effectName.toUpperCase().replace("-", "_"));
-            if (type == null) {
-                SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                        "Invalid potion effect type: " + effectName + " for entity: " + entity.getType());
-                return;
-            }
+            if (type == null) return;
             entity.addPotionEffect(new PotionEffect(type, EFFECT_DURATION, Math.max(amplifier - 1, 0)));
-        } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error applying potion effect " + effectName + " for entity: " + entity.getType(), e);
-        }
+        } catch (Exception ignored) { }
     }
 }

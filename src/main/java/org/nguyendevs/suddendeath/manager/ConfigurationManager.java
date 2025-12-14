@@ -23,6 +23,8 @@ public class ConfigurationManager {
     public ConfigFile features;
     private final ConfigFile mainConfig;
     private final Map<NamespacedKey, Integer> recipeCache = new HashMap<>();
+    private final Map<EntityType, ConfigFile> mobConfigs = new HashMap<>();
+
     private static final Map<String, String> DEFAULT_MATERIAL_NAMES = new HashMap<>();
 
     static {
@@ -49,12 +51,7 @@ public class ConfigurationManager {
         initializeDefaultFeatures();
 
         loadDefaultConfig();
-
-        for (EntityType type : EntityType.values()) {
-            if (type.isAlive()) {
-                new ConfigFile(plugin, "/customMobs", Utils.lowerCaseId(type.name())).setup();
-            }
-        }
+        loadMobConfigs();
 
         plugin.items = this.items;
         plugin.messages = this.messages;
@@ -66,17 +63,17 @@ public class ConfigurationManager {
         return mainConfig;
     }
 
+    public ConfigFile getMobConfig(EntityType type) {
+        return mobConfigs.get(type);
+    }
+
     public void reloadAll() {
         mainConfig.reload();
         messages.reload();
         items.reload();
         features.reload();
 
-        for (EntityType type : EntityType.values()) {
-            if (type.isAlive()) {
-                new ConfigFile(plugin, "/customMobs", Utils.lowerCaseId(type.name())).setup();
-            }
-        }
+        loadMobConfigs();
 
         initializeDefaultMessages();
         initializeDefaultItems();
@@ -84,6 +81,17 @@ public class ConfigurationManager {
 
         initializeItemsAndRecipes();
         Feature.reloadDescriptions();
+    }
+
+    private void loadMobConfigs() {
+        mobConfigs.clear();
+        for (EntityType type : EntityType.values()) {
+            if (type.isAlive()) {
+                ConfigFile mobConfig = new ConfigFile(plugin, "/customMobs", Utils.lowerCaseId(type.name()));
+                mobConfig.setup();
+                mobConfigs.put(type, mobConfig);
+            }
+        }
     }
 
     private void loadDefaultConfig() {
@@ -190,26 +198,11 @@ public class ConfigurationManager {
         boolean saveNeeded = false;
         for (Feature feature : Feature.values()) {
             String featureKey = feature.getPath();
-            ConfigurationSection section = features.getConfig().getConfigurationSection("features." + featureKey);
-            if (section == null) {
-                section = features.getConfig().createSection("features." + featureKey);
+            if (!features.getConfig().contains("features." + featureKey)) {
+                ConfigurationSection section = features.getConfig().createSection("features." + featureKey);
                 section.set("name", feature.getName());
                 section.set("lore", feature.getLore());
                 saveNeeded = true;
-            } else {
-                if (!section.contains("name")) {
-                    section.set("name", feature.getName());
-                    saveNeeded = true;
-                }
-                if (!section.contains("lore")) {
-                    section.set("lore", feature.getLore());
-                    saveNeeded = true;
-                }
-                List<String> existingLore = section.getStringList("lore");
-                if (existingLore.isEmpty()) {
-                    section.set("lore", feature.getLore());
-                    saveNeeded = true;
-                }
             }
         }
         if (saveNeeded) features.save();

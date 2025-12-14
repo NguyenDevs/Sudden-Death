@@ -3,19 +3,18 @@ package org.nguyendevs.suddendeath.util;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.features.world.*;
 import org.nguyendevs.suddendeath.player.Modifier;
 import org.nguyendevs.suddendeath.player.Modifier.Type;
 
-import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
 
 public enum Feature {
+
 	ABYSSAL_VORTEX(
 			"Abyssal Vortex",
 			new String[]{
@@ -26,9 +25,10 @@ public enum Feature {
 			new Modifier[]{
 					new Modifier("chance-percent", 30),
 					new Modifier("duration", 2),
-					new Modifier("strength", 0.55),
+					new Modifier("strength", 0.55)
 			}
 	),
+
 	ADVANCED_PLAYER_DROPS(
 			"Advanced Player Drops",
 			new String[]{
@@ -43,22 +43,6 @@ public enum Feature {
 					new Modifier("dropped-bones", 2)
 			}
 	),
-	/*
-	AIM_BOT(
-			"Aim Bot",
-			new String[]{
-					"Arrows shot by &fSkeleton&7 have #aim-bot-chance#% always hit the target.",
-					"Arrows have a #crit-chance#% chance to critically strike. Deal #crit-damage# armor-piercing damage."
-			},
-			"aim-bot",
-			new Modifier[]{
-					new Modifier("aim-bot-chance", 50),
-					new Modifier("crit-chance", 100),
-					new Modifier("crit-damage", 5),
-			}
-	),
-
-	 */
 
 	ANGRY_SPIDERS(
 			"Angry Spiders",
@@ -73,6 +57,7 @@ public enum Feature {
 					new Modifier("amplifier", 1.0)
 			}
 	),
+
 	ARMOR_PIERCING(
 			"Armor Piercing",
 			new String[]{
@@ -88,6 +73,7 @@ public enum Feature {
 					new Modifier("visual-sound", true)
 			}
 	),
+
 	ARROW_SLOW(
 			"Arrow Slow",
 			new String[]{
@@ -95,8 +81,11 @@ public enum Feature {
 					"for #slow-duration# seconds."
 			},
 			"arrow-slow",
-			new Modifier[]{new Modifier("slow-duration", 1.5)}
+			new Modifier[]{
+					new Modifier("slow-duration", 1.5)
+			}
 	),
+
 	BLEEDING(
 			"Bleeding",
 			new String[]{
@@ -116,6 +105,7 @@ public enum Feature {
 					new Modifier("tug", true)
 			}
 	),
+
 	BLOOD_MOON(
 			"Blood Moon",
 			new String[]{
@@ -137,6 +127,7 @@ public enum Feature {
 			},
 			BloodMoon::new
 	),
+
 	BLOOD_SCREEN(
 			"Blood Screen",
 			new String[]{
@@ -147,9 +138,10 @@ public enum Feature {
 			new Modifier[]{
 					new Modifier("mode", "HEALTH"),
 					new Modifier("interval", 6),
-					new Modifier("coefficient", 0.95),
+					new Modifier("coefficient", 0.95)
 			}
 	),
+
 	BONE_GRENADES(
 			"Bone Grenades",
 			new String[]{
@@ -164,6 +156,7 @@ public enum Feature {
 					new Modifier("damage", 6.0)
 			}
 	),
+
 	BONE_WIZARDS(
 			"Bone Wizards",
 			new String[]{
@@ -183,6 +176,7 @@ public enum Feature {
 					new Modifier("frost-curse-amplifier", 1)
 			}
 	),
+
 	BREEZE_DASH(
 			"Breeze Dash",
 			new String[]{
@@ -199,6 +193,7 @@ public enum Feature {
 					new Modifier("duration", 10)
 			}
 	),
+
 	CREEPER_REVENGE(
 			"Creeper Revenge",
 			new String[]{
@@ -206,8 +201,11 @@ public enum Feature {
 					"to &cexplode &7on death."
 			},
 			"creeper-revenge",
-			new Modifier[]{new Modifier("chance-percent", 15.0)}
+			new Modifier[]{
+					new Modifier("chance-percent", 15.0)
+			}
 	),
+
 	DANGEROUS_COAL(
 			"Dangerous Coal",
 			new String[]{
@@ -221,6 +219,7 @@ public enum Feature {
 					new Modifier("radius", 5.0)
 			}
 	),
+
 	ELECTRICITY_SHOCK(
 			"Electricity Shock",
 			new String[]{
@@ -229,8 +228,11 @@ public enum Feature {
 					"Can occur every 3 seconds."
 			},
 			"electricity-shock",
-			new Modifier[]{new Modifier("damage", 6.0)}
+			new Modifier[]{
+					new Modifier("damage", 6.0)
+			}
 	),
+
 	ENDER_POWER(
 			"Ender Power",
 			new String[]{
@@ -244,6 +246,7 @@ public enum Feature {
 					new Modifier("duration", 6.0)
 			}
 	),
+
 	EVERBURNING_BLAZES(
 			"Everburning Blazes",
 			new String[]{
@@ -251,8 +254,11 @@ public enum Feature {
 					"players for #burn-duration# seconds."
 			},
 			"everburning-blazes",
-			new Modifier[]{new Modifier("burn-duration", 2.0)}
+			new Modifier[]{
+					new Modifier("burn-duration", 2.0)
+			}
 	),
+
 	FALL_STUN(
 			"Fall Stun",
 			new String[]{
@@ -260,8 +266,11 @@ public enum Feature {
 					"for a duration. Duration scales with fall height."
 			},
 			"fall-stun",
-			new Modifier[]{new Modifier("duration-amplifier", 1)}
+			new Modifier[]{
+					new Modifier("duration-amplifier", 1)
+			}
 	),
+
 	FIREWORK_ARROWS(
 			"Firework Arrows",
 			new String[]{
@@ -274,10 +283,10 @@ public enum Feature {
 					new Modifier("chance-percent", 55.0),
 					new Modifier("damage", 3),
 					new Modifier("area", 3),
-					new  Modifier("duration", 8)
+					new Modifier("duration", 8)
 			}
-
 	),
+
 	FORCE_OF_THE_UNDEAD(
 			"Force of the Undead",
 			new String[]{
@@ -286,8 +295,11 @@ public enum Feature {
 					"&cConfigurable for each monster."
 			},
 			"force-of-the-undead",
-			new Modifier[]{new Modifier("additional-ad-percent", 25.0, Type.EACH_MOB)}
+			new Modifier[]{
+					new Modifier("additional-ad-percent", 25.0, Type.EACH_MOB)
+			}
 	),
+
 	FREDDY(
 			"Freddy",
 			new String[]{
@@ -295,8 +307,11 @@ public enum Feature {
 					"to summon &8Freddy &7upon waking."
 			},
 			"freddy",
-			new Modifier[]{new Modifier("chance-percent", 5.0)}
+			new Modifier[]{
+					new Modifier("chance-percent", 5.0)
+			}
 	),
+
 	HOMING_FLAME_BARRAGE(
 			"Homing Flame Barrage",
 			new String[]{
@@ -311,6 +326,7 @@ public enum Feature {
 					new Modifier("damage", 1)
 			}
 	),
+
 	HUNGER_NAUSEA(
 			"Hunger Nausea",
 			new String[]{
@@ -319,6 +335,7 @@ public enum Feature {
 			"hunger-nausea",
 			new Modifier[]{}
 	),
+
 	IMMORTAL_EVOKER(
 			"Immortal Evoker",
 			new String[]{
@@ -330,9 +347,10 @@ public enum Feature {
 			"immortal-evoker",
 			new Modifier[]{
 					new Modifier("chance-percent", 75.0),
-					new Modifier("resistance-amplifier", 3),
+					new Modifier("resistance-amplifier", 3)
 			}
 	),
+
 	INFECTION(
 			"Infection",
 			new String[]{
@@ -351,6 +369,7 @@ public enum Feature {
 					new Modifier("sound", true)
 			}
 	),
+
 	LEAPING_SPIDERS(
 			"Leaping Spiders",
 			new String[]{
@@ -359,10 +378,10 @@ public enum Feature {
 			"leaping-spiders",
 			new Modifier[]{}
 	),
+
 	METEOR_RAIN(
 			"Meteor Rain",
 			new String[]{
-
 					"&9At night&7, there is a #chance-percent#% chance you will see a &6Meteor &7streaking",
 					"rapidly as it enters the atmosphere. It will devastate the terrain,",
 					"creating a crater at the impact point. At the center of the crater,",
@@ -380,6 +399,7 @@ public enum Feature {
 			},
 			MeteorRain::new
 	),
+
 	MOB_CRITICAL_STRIKES(
 			"Mob Critical Strikes",
 			new String[]{
@@ -394,6 +414,7 @@ public enum Feature {
 					new Modifier("damage-percent", 75.0)
 			}
 	),
+
 	NETHER_SHIELD(
 			"Nether Shield",
 			new String[]{
@@ -409,6 +430,7 @@ public enum Feature {
 					new Modifier("burn-duration", 3.0)
 			}
 	),
+
 	PHANTOM_BLADE(
 			"Phantom Blade",
 			new String[]{
@@ -427,6 +449,7 @@ public enum Feature {
 					new Modifier("weakness-amplifier", 1)
 			}
 	),
+
 	PHYSIC_ENDER_PEARL(
 			"Physic EnderPearl",
 			new String[]{
@@ -442,6 +465,7 @@ public enum Feature {
 					new Modifier("min-velocity-threshold", 0.03)
 			}
 	),
+
 	POISONED_SLIMES(
 			"Poisoned Slimes",
 			new String[]{
@@ -456,6 +480,7 @@ public enum Feature {
 					new Modifier("chance-percent", 65.0)
 			}
 	),
+
 	QUICK_MOBS(
 			"Quick Mobs",
 			new String[]{
@@ -464,8 +489,11 @@ public enum Feature {
 					"&cConfigurable for each monster."
 			},
 			"quick-mobs",
-			new Modifier[]{new Modifier("additional-ms-percent", 25.0, Type.EACH_MOB)}
+			new Modifier[]{
+					new Modifier("additional-ms-percent", 25.0, Type.EACH_MOB)
+			}
 	),
+
 	REALISTIC_PICKUP(
 			"Realistic Pickup",
 			new String[]{
@@ -476,6 +504,7 @@ public enum Feature {
 			"realistic-pickup",
 			new Modifier[]{}
 	),
+
 	SHOCKING_SKELETON_ARROWS(
 			"Shocking Skeleton Arrows",
 			new String[]{
@@ -489,6 +518,7 @@ public enum Feature {
 					new Modifier("shock-duration", 0.75)
 			}
 	),
+
 	SILVERFISHES_SUMMON(
 			"Silverfishes Summon",
 			new String[]{
@@ -502,6 +532,7 @@ public enum Feature {
 					new Modifier("max", 2)
 			}
 	),
+
 	SNOW_SLOW(
 			"Snow Slow",
 			new String[]{
@@ -511,6 +542,7 @@ public enum Feature {
 			"snow-slow",
 			new Modifier[]{}
 	),
+
 	STONE_STIFFNESS(
 			"Stone Stiffness",
 			new String[]{
@@ -518,8 +550,11 @@ public enum Feature {
 					"when punching stone."
 			},
 			"stone-stiffness",
-			new Modifier[]{new Modifier("damage", 1.0)}
+			new Modifier[]{
+					new Modifier("damage", 1.0)
+			}
 	),
+
 	STRAY_FROST(
 			"Stray Frost",
 			new String[]{
@@ -533,6 +568,7 @@ public enum Feature {
 					new Modifier("duration", 5)
 			}
 	),
+
 	SPIDER_WEB(
 			"Spider Web",
 			new String[]{
@@ -546,6 +582,7 @@ public enum Feature {
 					new Modifier("amount-per-shoot", 5)
 			}
 	),
+
 	TANKY_MONSTERS(
 			"Tanky Monsters",
 			new String[]{
@@ -554,8 +591,11 @@ public enum Feature {
 					"&cConfigurable for each monster."
 			},
 			"tanky-monsters",
-			new Modifier[]{new Modifier("dmg-reduction-percent", 25.0, Type.EACH_MOB)}
+			new Modifier[]{
+					new Modifier("dmg-reduction-percent", 25.0, Type.EACH_MOB)
+			}
 	),
+
 	THIEF_SLIMES(
 			"Thief Slimes",
 			new String[]{
@@ -568,6 +608,7 @@ public enum Feature {
 					new Modifier("exp", 12)
 			}
 	),
+
 	THUNDERSTORM(
 			"Thunderstorm",
 			new String[]{
@@ -583,6 +624,7 @@ public enum Feature {
 			},
 			Thunderstorm::new
 	),
+
 	TRIDENT_WRATH(
 			"Trident's Wrath",
 			new String[]{
@@ -597,6 +639,7 @@ public enum Feature {
 					new Modifier("speed", 0.5)
 			}
 	),
+
 	UNDEAD_GUNNERS(
 			"Undead Gunners",
 			new String[]{
@@ -612,6 +655,7 @@ public enum Feature {
 					new Modifier("block-damage", 3)
 			}
 	),
+
 	UNDEAD_RAGE(
 			"Undead Rage",
 			new String[]{
@@ -619,8 +663,11 @@ public enum Feature {
 					"&7and &3Speed II &7for #rage-duration# seconds when damaged."
 			},
 			"undead-rage",
-			new Modifier[]{new Modifier("rage-duration", 4.0)}
+			new Modifier[]{
+					new Modifier("rage-duration", 4.0)
+			}
 	),
+
 	WITCH_SCROLLS(
 			"Witch Scrolls",
 			new String[]{
@@ -636,6 +683,7 @@ public enum Feature {
 					new Modifier("slow-duration", 2.0)
 			}
 	),
+
 	WITHER_MACHINEGUN(
 			"Wither Machinegun",
 			new String[]{
@@ -643,8 +691,11 @@ public enum Feature {
 					"each dealing #damage# damage."
 			},
 			"wither-machinegun",
-			new Modifier[]{new Modifier("damage", 2)}
+			new Modifier[]{
+					new Modifier("damage", 2)
+			}
 	),
+
 	WITHER_RUSH(
 			"Wither Rush",
 			new String[]{
@@ -652,8 +703,11 @@ public enum Feature {
 					"dealing #damage# damage."
 			},
 			"wither-rush",
-			new Modifier[]{new Modifier("damage", 3.0)}
+			new Modifier[]{
+					new Modifier("damage", 3.0)
+			}
 	),
+
 	WHISPERS_OF_THE_DESERT(
 			"Whispers of the Desert",
 			new String[]{
@@ -672,6 +726,7 @@ public enum Feature {
 					new Modifier("use-block-under-entity-for-particles", true)
 			}
 	),
+
 	ZOMBIE_TOOLS(
 			"Zombie Tools",
 			new String[]{
@@ -695,6 +750,7 @@ public enum Feature {
 					new Modifier("max-enchantments", 3)
 			}
 	),
+
 	ZOMBIE_BREAK_BLOCK(
 			"Zombie Break Block",
 			new String[]{
@@ -709,32 +765,31 @@ public enum Feature {
 			"zombie-break-block",
 			new Modifier[]{
 					new Modifier("breakable-pickaxe-blocks", String.join(",", new String[]{
-							"STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE", "COBBLED_DEEPSLATE",
-							"COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE", "LAPIS_ORE", "REDSTONE_ORE", "COPPER_ORE",
-							"NETHER_QUARTZ_ORE", "NETHER_GOLD_ORE",
+							"STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE",
+							"COBBLED_DEEPSLATE", "COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE",
+							"LAPIS_ORE", "REDSTONE_ORE", "COPPER_ORE", "NETHER_QUARTZ_ORE", "NETHER_GOLD_ORE",
 							"DEEPSLATE_COAL_ORE", "DEEPSLATE_IRON_ORE", "DEEPSLATE_GOLD_ORE", "DEEPSLATE_DIAMOND_ORE",
-							"DEEPSLATE_EMERALD_ORE", "DEEPSLATE_LAPIS_ORE", "DEEPSLATE_REDSTONE_ORE", "DEEPSLATE_COPPER_ORE",
-							"OBSIDIAN", "STONE_BRICKS", "MOSSY_STONE_BRICKS", "CRACKED_STONE_BRICKS", "CHISELED_STONE_BRICKS",
-							"DEEPSLATE_BRICKS", "CRACKED_DEEPSLATE_BRICKS", "CHISELED_DEEPSLATE", "POLISHED_DEEPSLATE",
-							"SMOOTH_STONE", "SANDSTONE", "RED_SANDSTONE", "CHISELED_SANDSTONE", "SMOOTH_SANDSTONE",
+							"DEEPSLATE_EMERALD_ORE", "DEEPSLATE_LAPIS_ORE", "DEEPSLATE_REDSTONE_ORE",
+							"DEEPSLATE_COPPER_ORE", "OBSIDIAN", "STONE_BRICKS", "MOSSY_STONE_BRICKS",
+							"CRACKED_STONE_BRICKS", "CHISELED_STONE_BRICKS", "DEEPSLATE_BRICKS",
+							"CRACKED_DEEPSLATE_BRICKS", "CHISELED_DEEPSLATE", "POLISHED_DEEPSLATE", "SMOOTH_STONE",
+							"SANDSTONE", "RED_SANDSTONE", "CHISELED_SANDSTONE", "SMOOTH_SANDSTONE",
 							"CHISELED_RED_SANDSTONE", "SMOOTH_RED_SANDSTONE"
 					})),
 					new Modifier("breakable-shovel-blocks", String.join(",", new String[]{
 							"DIRT", "GRASS_BLOCK", "PODZOL", "MYCELIUM", "DIRT_PATH", "COARSE_DIRT", "ROOTED_DIRT",
-							"SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL",
-							"SNOW", "SNOW_BLOCK",
+							"SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL", "SNOW", "SNOW_BLOCK",
 							"FARMLAND", "MUD", "MUDDY_MANGROVE_ROOTS"
 					})),
 					new Modifier("breakable-axe-blocks", String.join(",", new String[]{
-							"OAK_LOG", "BIRCH_LOG", "SPRUCE_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG", "MANGROVE_LOG", "CHERRY_LOG",
-							"STRIPPED_OAK_LOG", "STRIPPED_BIRCH_LOG", "STRIPPED_SPRUCE_LOG", "STRIPPED_JUNGLE_LOG",
-							"STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG", "STRIPPED_MANGROVE_LOG", "STRIPPED_CHERRY_LOG",
-							"OAK_WOOD", "BIRCH_WOOD", "SPRUCE_WOOD", "JUNGLE_WOOD", "ACACIA_WOOD", "DARK_OAK_WOOD",
-							"MANGROVE_WOOD", "CHERRY_WOOD",
-							"STRIPPED_OAK_WOOD", "STRIPPED_BIRCH_WOOD", "STRIPPED_SPRUCE_WOOD", "STRIPPED_JUNGLE_WOOD",
-							"STRIPPED_ACACIA_WOOD", "STRIPPED_DARK_OAK_WOOD", "STRIPPED_MANGROVE_WOOD", "STRIPPED_CHERRY_WOOD",
-							"OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS", "JUNGLE_PLANKS", "ACACIA_PLANKS",
-							"DARK_OAK_PLANKS", "MANGROVE_PLANKS", "CHERRY_PLANKS",
+							"OAK_LOG", "BIRCH_LOG", "SPRUCE_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG",
+							"MANGROVE_LOG", "CHERRY_LOG", "STRIPPED_OAK_LOG", "STRIPPED_BIRCH_LOG", "STRIPPED_SPRUCE_LOG",
+							"STRIPPED_JUNGLE_LOG", "STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG", "STRIPPED_MANGROVE_LOG",
+							"STRIPPED_CHERRY_LOG", "OAK_WOOD", "BIRCH_WOOD", "SPRUCE_WOOD", "JUNGLE_WOOD", "ACACIA_WOOD",
+							"DARK_OAK_WOOD", "MANGROVE_WOOD", "CHERRY_WOOD", "STRIPPED_OAK_WOOD", "STRIPPED_BIRCH_WOOD",
+							"STRIPPED_SPRUCE_WOOD", "STRIPPED_JUNGLE_WOOD", "STRIPPED_ACACIA_WOOD", "STRIPPED_DARK_OAK_WOOD",
+							"STRIPPED_MANGROVE_WOOD", "STRIPPED_CHERRY_WOOD", "OAK_PLANKS", "BIRCH_PLANKS", "SPRUCE_PLANKS",
+							"JUNGLE_PLANKS", "ACACIA_PLANKS", "DARK_OAK_PLANKS", "MANGROVE_PLANKS", "CHERRY_PLANKS",
 							"CRIMSON_STEM", "WARPED_STEM", "STRIPPED_CRIMSON_STEM", "STRIPPED_WARPED_STEM",
 							"CRIMSON_HYPHAE", "WARPED_HYPHAE", "STRIPPED_CRIMSON_HYPHAE", "STRIPPED_WARPED_HYPHAE",
 							"CRIMSON_PLANKS", "WARPED_PLANKS"
@@ -742,50 +797,12 @@ public enum Feature {
 			}
 	);
 
-	/*
-	ZOMBIE_PLACE_BLOCK(
-			"Zombie Place Block",
-			new String[]{
-					"&2Zombies &7with &bBlocks &7in their hand can intelligently",
-					"&aplace blocks &7to reach players.",
-					"&7They can build &fbridges&7, &eclimb walls&7, and",
-					"&6navigate around obstacles &7by placing blocks.",
-					" ",
-					"&e&oYou can create custom Zombie with blocks by using",
-					"&6/sdmob &ecommand.",
-					" ",
-					"&c&l⚠ &cRequires blocks in zombie's main/off hand"
-			},
-			"zombie-place-block",
-			new Modifier[]{
-					new Modifier("placeable-blocks", String.join(",", new String[]{
-							"COBBLESTONE", "STONE", "DIRT", "NETHERRACK", "SAND",
-							"GRAVEL", "SOUL_SAND", "BLACKSTONE", "DEEPSLATE_COBBLESTONE",
-							"OAK_PLANKS", "SPRUCE_PLANKS", "BIRCH_PLANKS"
-					})),
-					new Modifier("max-bridge-length", 30),
-					new Modifier("max-climb-height", 20),
-					new Modifier("placement-cooldown-ms", 500),
-					new Modifier("check-radius", 3.0),
-					new Modifier("enable-bridge-building", true),
-					new Modifier("enable-climbing", true),
-					new Modifier("enable-descending", true),
-					new Modifier("enable-around-obstacles", true),
-					new Modifier("ai-freeze-while-placing", true),
-					new Modifier("block-consume-on-place", true),
-					new Modifier("show-particles", true),
-					new Modifier("play-sounds", true)
-			}
-	)
-	 */
-
 	private String name;
 	private List<String> lore;
 	private final String path;
 	private final List<Modifier> modifiers;
 	private final Function<World, WorldEventHandler> event;
 	private ConfigFile configFile;
-	private static FileConfiguration featureConfig;
 
 	Feature(String defaultName, String[] defaultLore, String path, Modifier[] modifiers) {
 		this(defaultName, defaultLore, path, modifiers, null);
@@ -799,37 +816,39 @@ public enum Feature {
 	}
 
 	private void loadDescriptions(String defaultName, String[] defaultLore) {
-		if (featureConfig == null) {
-			try {
-				File file = new File(SuddenDeath.getInstance().getDataFolder(), "language/feature.yml");
-				if (!file.exists()) {
-					SuddenDeath.getInstance().saveResource("language/feature.yml", false);
-				}
-				featureConfig = YamlConfiguration.loadConfiguration(file);
-			} catch (Exception e) {
-				SuddenDeath.getInstance().getLogger().log(Level.SEVERE, "Could not load Feature.yml", e);
-			}
-		}
+		try {
+			if (SuddenDeath.getInstance() != null && SuddenDeath.getInstance().getConfigManager() != null) {
+				FileConfiguration featureConfig = SuddenDeath.getInstance().getConfigManager().features.getConfig();
+				ConfigurationSection section = featureConfig.getConfigurationSection("features." + path);
 
-		ConfigurationSection section = featureConfig.getConfigurationSection("features." + path);
-		if (section != null) {
-			this.name = section.getString("name", defaultName);
-			this.lore = section.getStringList("lore");
-			if (this.lore.isEmpty()) {
-				this.lore = Collections.unmodifiableList(Arrays.asList(defaultLore));
+				if (section != null) {
+					this.name = section.getString("name", defaultName);
+					this.lore = section.getStringList("lore");
+					if (this.lore.isEmpty()) {
+						this.lore = Collections.unmodifiableList(Arrays.asList(defaultLore));
+					} else {
+						this.lore = Collections.unmodifiableList(this.lore);
+					}
+				} else {
+					this.name = defaultName;
+					this.lore = Collections.unmodifiableList(Arrays.asList(defaultLore));
+				}
 			} else {
-				this.lore = Collections.unmodifiableList(this.lore);
+				this.name = defaultName;
+				this.lore = Collections.unmodifiableList(Arrays.asList(defaultLore));
 			}
-		} else {
+		} catch (Exception e) {
+			if (SuddenDeath.getInstance() != null) {
+				SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Could not load descriptions for feature " + path, e);
+			}
 			this.name = defaultName;
 			this.lore = Collections.unmodifiableList(Arrays.asList(defaultLore));
 		}
 	}
 
 	public static void reloadDescriptions() {
-		featureConfig = null;
 		for (Feature feature : values()) {
-			feature.loadDescriptions(feature.name, feature.lore.toArray(new String[0]));
+			feature.loadDescriptions(feature.name, feature.lore != null ? feature.lore.toArray(new String[0]) : new String[0]);
 		}
 	}
 
@@ -894,7 +913,7 @@ public enum Feature {
 
 	public boolean isEnabled(World world) {
 		try {
-			List<String> enabledWorlds = SuddenDeath.getInstance().getConfiguration().getConfig().getStringList(path);
+			List<String> enabledWorlds = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig().getStringList(path);
 			return enabledWorlds.contains(world.getName());
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error while checking feature " + name + " the world " + world.getName(), e);
