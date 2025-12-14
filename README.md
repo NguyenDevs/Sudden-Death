@@ -18,6 +18,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 - **Physic EnderPearl** EnderPearl will have physical properties like bounce, friction.
 - **Snow Slow:** Players without specific boots are slowed on snow.
 - **Stone Stiffness:** Punching stone deals damage to players.
+- **Whisper of the Desert:** Husk has a chance to emerge from the ground in barren biomes, attacking and weakening the player.
   
 ## Events
 - **Blood Moon:** Nights may turn red, increasing player damage taken and slowing them; monsters gain speed, strength, and resistance.
@@ -27,12 +28,14 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 ## Monster abilities
 - **Abyssal Vortex:** The Guardian can create a whirlpool that pulls players toward it, preventing them from escaping.
 - **Angry Spiders:** Spiders throw cobwebs, dealing damage and slowing players.
+- **Armor Piercing:** All monsters will have a chance to attack, ignoring armor, protective enchantments, and golden apples (true damage).
 - **Bone Grenades:** Skeletons may throw explosive bone grenades, causing damage and knockback.
 - **Bone Wizards:** Skeletons named 'Bone Wizards' cast fireball or frost curse spells, dealing damage and slowing players.
 - **Breeze Dash:** Breeze may accelerate and fire multiple WindCharges, but with reduced jump ability.
 - **Creeper Revenge:** Creepers may explode on death.
 - **Ender Power:** Hitting certain End mobs may blind players temporarily.
 - **Everburning Blazes:** Blazes summon fire beams that ignite players.
+- **Firework Arrows:** Pillager will have a chance to fire explosive fireworks arrows in an area, dealing damage and stunning players.
 - **Force of the Undead:** Monsters deal increased attack damage, configurable per mob.
 - **Homing Flame Barrage:** Blaze has a chance to fire a beam of fire. It tracks the player and deals HP each beam with a hit rate 100%.
 - **Immortal Evoker:** Evoker has a chance to use Totem to avoid death and summon Fangs can pull the player into the ground.
