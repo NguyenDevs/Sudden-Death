@@ -48,7 +48,7 @@ public final class Utils {
 
     public static String msg(String path) {
         try {
-            String message = SuddenDeath.getInstance().messages.getConfig().getString(path);
+            String message = SuddenDeath.getInstance().getConfigManager().messages.getConfig().getString(path);
             return message != null ? ChatColor.translateAlternateColorCodes('&', message) : "";
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error retrieving message for path: " + path, e);
@@ -58,7 +58,7 @@ public final class Utils {
 
     public static List<String> msgList(String path) {
         try {
-            return SuddenDeath.getInstance().messages.getConfig().getStringList(path)
+            return SuddenDeath.getInstance().getConfigManager().messages.getConfig().getStringList(path)
                     .stream()
                     .map(text -> ChatColor.translateAlternateColorCodes('&', text))
                     .collect(Collectors.toList());

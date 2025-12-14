@@ -2,99 +2,78 @@ package org.nguyendevs.suddendeath;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import com.sk89q.worldguard.WorldGuard;
-import com.sk89q.worldguard.protection.flags.StateFlag;
-import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
-import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.nguyendevs.suddendeath.command.SuddenDeathMobCommand;
 import org.nguyendevs.suddendeath.command.SuddenDeathStatusCommand;
 import org.nguyendevs.suddendeath.command.completion.SuddenDeathMobCompletion;
 import org.nguyendevs.suddendeath.command.completion.SuddenDeathStatusCompletion;
 import org.nguyendevs.suddendeath.comp.SuddenDeathPlaceholders;
-import org.nguyendevs.suddendeath.comp.worldguard.CustomFlag;
 import org.nguyendevs.suddendeath.comp.worldguard.WGPlugin;
-import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOff;
-import org.nguyendevs.suddendeath.comp.worldguard.WorldGuardOn;
-import org.nguyendevs.suddendeath.features.base.IFeature;
-import org.nguyendevs.suddendeath.features.combat.ArrowSlowFeature;
-import org.nguyendevs.suddendeath.features.combat.MobCriticalStrikesFeature;
-import org.nguyendevs.suddendeath.features.combat.SharpKnifeFeature;
-import org.nguyendevs.suddendeath.features.items.AdvancedPlayerDropsFeature;
-import org.nguyendevs.suddendeath.features.items.PhysicEnderPearlFeature;
-import org.nguyendevs.suddendeath.features.items.RealisticPickupFeature;
-import org.nguyendevs.suddendeath.features.mob.attributes.ArmorPiercingFeature;
-import org.nguyendevs.suddendeath.features.mob.hostile.ZombieToolsFeature;
-import org.nguyendevs.suddendeath.features.mob.attributes.ForceOfUndeadFeature;
-import org.nguyendevs.suddendeath.features.mob.attributes.QuickMobsFeature;
-import org.nguyendevs.suddendeath.features.mob.attributes.TankyMonstersFeature;
-import org.nguyendevs.suddendeath.features.mob.hostile.*;
-import org.nguyendevs.suddendeath.features.nether.NetherShieldFeature;
-import org.nguyendevs.suddendeath.features.player.*;
-import org.nguyendevs.suddendeath.features.world.DangerousCoalFeature;
-import org.nguyendevs.suddendeath.features.world.FreddyFeature;
-import org.nguyendevs.suddendeath.features.world.SnowSlowFeature;
-import org.nguyendevs.suddendeath.features.world.WhispersOfTheDesertFeature;
-import org.nguyendevs.suddendeath.gui.AdminView;
-import org.nguyendevs.suddendeath.gui.PlayerView;
-import org.nguyendevs.suddendeath.gui.PluginInventory;
-import org.nguyendevs.suddendeath.gui.listener.GuiListener;
 import org.nguyendevs.suddendeath.features.CustomMobs;
+import org.nguyendevs.suddendeath.gui.listener.GuiListener;
+import org.nguyendevs.suddendeath.manager.ConfigurationManager;
 import org.nguyendevs.suddendeath.manager.EventManager;
-import org.nguyendevs.suddendeath.player.Modifier;
+import org.nguyendevs.suddendeath.manager.FeatureManager;
+import org.nguyendevs.suddendeath.manager.WorldGuardManager;
 import org.nguyendevs.suddendeath.player.PlayerData;
-import org.nguyendevs.suddendeath.util.*;
+import org.nguyendevs.suddendeath.util.ConfigFile;
+import org.nguyendevs.suddendeath.util.SpigotPlugin;
 
-import java.io.InputStreamReader;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 public class SuddenDeath extends JavaPlugin {
     private static SuddenDeath instance;
     private final Map<Player, Integer> players = new ConcurrentHashMap<>();
-    private ConfigFile configuration;
-    private ConfigFile features;
-    private WGPlugin wgPlugin;
-    private EventManager eventManager;
-    private boolean worldGuardReady = false;
+
     public ConfigFile messages;
     public ConfigFile items;
-    private final Map<NamespacedKey, Integer> recipeCache = new HashMap<>();
-    private final List<IFeature> loadedFeatures = new ArrayList<>();
 
-    private static final Map<String, String> DEFAULT_MATERIAL_NAMES = new HashMap<>();
-
-    static {
-        DEFAULT_MATERIAL_NAMES.put("PAPER", "&aPaper");
-        DEFAULT_MATERIAL_NAMES.put("STICK", "&aStick");
-        DEFAULT_MATERIAL_NAMES.put("GLOW_INK_SAC", "&aGlow Ink Sac");
-        DEFAULT_MATERIAL_NAMES.put("BOWL", "&aBowl");
-        DEFAULT_MATERIAL_NAMES.put("BROWN_MUSHROOM", "&aBrown Mushroom");
-    }
+    private ConfigurationManager configManager;
+    private WorldGuardManager worldGuardManager;
+    private FeatureManager featureManager;
+    private EventManager eventManager;
 
     @Override
     public void onLoad() {
         instance = this;
-        configuration = new ConfigFile(this, "config");
-        registerWorldGuardFlags();
+        this.worldGuardManager = new WorldGuardManager(this);
+        this.worldGuardManager.registerFlags();
     }
 
     @Override
     public void onEnable() {
         try {
-            initializePlugin();
+            ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
+            if (protocolManager == null) {
+                throw new IllegalStateException("ProtocolLib is required but not found");
+            }
+
+            this.configManager = new ConfigurationManager(this);
+            this.configManager.initialize();
+
+            this.worldGuardManager.initialize();
+
+            registerListeners();
+            hookIntoPlaceholderAPI();
+
+            this.eventManager = new EventManager();
+
+            this.featureManager = new FeatureManager(this);
+            this.featureManager.registerAllFeatures();
+
+            registerCommands();
+
+            Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
+
+            printLogo();
+            new SpigotPlugin(119526, this).checkForUpdate();
+
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aSuddenDeath plugin enabled successfully!"));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Failed to enable SuddenDeath plugin.", e);
@@ -105,12 +84,12 @@ public class SuddenDeath extends JavaPlugin {
     @Override
     public void onDisable() {
         try {
-            for (IFeature feature : loadedFeatures) {
-                feature.shutdown();
+            if (featureManager != null) {
+                featureManager.shutdownAll();
             }
-            loadedFeatures.clear();
-
-            removeAllCustomRecipes();
+            if (eventManager != null) {
+                eventManager.cancel();
+            }
             savePlayerData();
             Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
         } catch (Exception e) {
@@ -118,292 +97,9 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    private void initializePlugin() {
-        ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
-        if (protocolManager == null) {
-            throw new IllegalStateException("ProtocolLib is required but not found");
-        }
-        configuration.reload();
-        initializeWorldGuard();
-        initializeConfigFiles();
-        registerListeners();
-        hookIntoPlaceholderAPI();
-        initializeFeaturesAndEntities();
-        initializeItemsAndRecipes();
-        registerCommands();
-        printLogo();
-        new SpigotPlugin(119526, this).checkForUpdate();
-    }
-
-    private void initializeConfigFiles() {
-        messages = new ConfigFile(this, "/language", "messages");
-        items = new ConfigFile(this, "/language", "items");
-        features = new ConfigFile(this, "/language", "feature");
-        initializeDefaultMessages();
-        initializeDefaultItems();
-        initializeDefaultFeatures();
-        FileConfiguration defaultConfig = new YamlConfiguration();
-        try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(getResource("config.yml")))) {
-            defaultConfig.load(reader);
-        } catch (Exception e) {
-            getLogger().log(Level.WARNING, "Failed to load default config.yml from resources", e);
-        }
-        ConfigurationSection configSection = configuration.getConfig();
-        if (!configSection.contains("update-notify")) {
-            configSection.set("update-notify", defaultConfig.getBoolean("update-notify", true));
-        }
-        for (Feature feature : Feature.values()) {
-            if (!configSection.contains(feature.getPath())) {
-                List<String> worlds = new ArrayList<>();
-                Bukkit.getWorlds().forEach(world -> worlds.add(world.getName()));
-                configSection.set(feature.getPath(), worlds);
-            }
-        }
-        for (EntityType type : EntityType.values()) {
-            if (type.isAlive() && !configSection.contains("default-spawn-coef." + type.name())) {
-                configSection.set("default-spawn-coef." + type.name(), 20);
-            }
-        }
-        configuration.save();
-    }
-
-    private void initializeDefaultMessages() {
-        boolean saveNeeded = false;
-        for (Message msg : Message.values()) {
-            String key = msg.name().toLowerCase().replace("_", "-");
-            if (!messages.getConfig().contains(key)) {
-                messages.getConfig().set(key, msg.getValue());
-                saveNeeded = true;
-            }
-        }
-        if (saveNeeded) {
-            messages.save();
-        }
-    }
-
-    private void initializeDefaultItems() {
-        items.setup();
-        boolean saveNeeded = false;
-        for (CustomItem item : CustomItem.values()) {
-            String itemKey = item.name();
-            ConfigurationSection section = items.getConfig().getConfigurationSection(itemKey);
-            if (section == null) {
-                section = items.getConfig().createSection(itemKey);
-                section.set("name", item.getDefaultName());
-                section.set("lore", item.getLore());
-                section.set("craft-enabled", item.getCraft() != null);
-                if (item.getCraft() != null) {
-                    section.set("craft", item.getCraft());
-                    List<String> materials = new ArrayList<>();
-                    Set<String> uniqueMaterials = new HashSet<>();
-                    for (String row : item.getCraft()) {
-                        for (String material : row.split(",")) {
-                            String trimmedMaterial = material.trim().toUpperCase();
-                            if (!trimmedMaterial.equals("AIR") && !uniqueMaterials.contains(trimmedMaterial)) {
-                                String displayName = DEFAULT_MATERIAL_NAMES.getOrDefault(
-                                        trimmedMaterial,
-                                        "&a" + trimmedMaterial.replace("_", " ")
-                                );
-                                materials.add(trimmedMaterial + ": " + displayName);
-                                uniqueMaterials.add(trimmedMaterial);
-                            }
-                        }
-                    }
-                    section.set("materials", materials);
-                }
-                saveNeeded = true;
-            } else {
-                if (!section.contains("name")) {
-                    section.set("name", item.getDefaultName());
-                    saveNeeded = true;
-                }
-                if (!section.contains("lore")) {
-                    section.set("lore", item.getLore());
-                    saveNeeded = true;
-                }
-                if (!section.contains("craft-enabled")) {
-                    section.set("craft-enabled", item.getCraft() != null);
-                    saveNeeded = true;
-                }
-                if (item.getCraft() != null && !section.contains("craft")) {
-                    section.set("craft", item.getCraft());
-                    saveNeeded = true;
-                }
-                if (item.getCraft() != null && !section.contains("materials")) {
-                    List<String> materials = new ArrayList<>();
-                    Set<String> uniqueMaterials = new HashSet<>();
-                    for (String row : item.getCraft()) {
-                        for (String material : row.split(",")) {
-                            String trimmedMaterial = material.trim().toUpperCase();
-                            if (!trimmedMaterial.equals("AIR") && !uniqueMaterials.contains(trimmedMaterial)) {
-                                String displayName = DEFAULT_MATERIAL_NAMES.getOrDefault(
-                                        trimmedMaterial,
-                                        "&a" + trimmedMaterial.replace("_", " ")
-                                );
-                                materials.add(trimmedMaterial + ": " + displayName);
-                                uniqueMaterials.add(trimmedMaterial);
-                            }
-                        }
-                    }
-                    section.set("materials", materials);
-                    saveNeeded = true;
-                }
-            }
-        }
-        if (saveNeeded) {
-            items.save();
-        }
-    }
-
-    private void initializeDefaultFeatures() {
-        features.setup();
-        boolean saveNeeded = false;
-        for (Feature feature : Feature.values()) {
-            String featureKey = feature.getPath();
-            ConfigurationSection section = features.getConfig().getConfigurationSection("features." + featureKey);
-            if (section == null) {
-                section = features.getConfig().createSection("features." + featureKey);
-                section.set("name", feature.getName());
-                section.set("lore", feature.getLore());
-                saveNeeded = true;
-            } else {
-                if (!section.contains("name")) {
-                    section.set("name", feature.getName());
-                    saveNeeded = true;
-                }
-                if (!section.contains("lore")) {
-                    section.set("lore", feature.getLore());
-                    saveNeeded = true;
-                }
-                List<String> existingLore = section.getStringList("lore");
-                if (existingLore.isEmpty()) {
-                    section.set("lore", feature.getLore());
-                    saveNeeded = true;
-                }
-            }
-        }
-        if (saveNeeded) {
-            features.save();
-        }
-        Feature.reloadDescriptions();
-    }
-
-    private void initializeFeaturesAndEntities() {
-        eventManager = new EventManager();
-        for (EntityType type : EntityType.values()) {
-            if (type.isAlive()) {
-                ConfigFile mobConfig = new ConfigFile(this, "/customMobs", Utils.lowerCaseId(type.name()));
-                mobConfig.setup();
-            }
-        }
-        Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
-        for (Feature feature : Feature.values()) {
-            feature.updateConfig();
-            ConfigFile modifiers = feature.getConfigFile();
-            boolean saveNeeded = false;
-            for (Modifier mod : feature.getModifiers()) {
-                if (modifiers.getConfig().contains(mod.getName())) {
-                    continue;
-                }
-                if (mod.getType() == Modifier.Type.NONE) {
-                    modifiers.getConfig().set(mod.getName(), mod.getValue());
-                    saveNeeded = true;
-                } else if (mod.getType() == Modifier.Type.EACH_MOB) {
-                    for (EntityType type : Utils.getLivingEntityTypes()) {
-                        if (!modifiers.getConfig().contains(mod.getName() + "." + type.name())) {
-                            modifiers.getConfig().set(mod.getName() + "." + type.name(), mod.getValue());
-                            saveNeeded = true;
-                        }
-                    }
-                }
-            }
-            if (saveNeeded) {
-                modifiers.save();
-            }
-        }
-    }
-
-    private void initializeItemsAndRecipes() {
-        initializeDefaultItems();
-        removeAllCustomRecipes();
-        recipeCache.clear();
-        for (CustomItem item : CustomItem.values()) {
-            ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
-            if (section == null) {
-                getLogger().log(Level.WARNING, "Configuration section is null for CustomItem: " + item.name());
-                continue;
-            }
-            item.update(section);
-            if (section.getBoolean("craft-enabled") && item.getCraft() != null) {
-                try {
-                    registerCraftingRecipe(item);
-                    NamespacedKey key = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
-                    recipeCache.put(key, calculateRecipeHash(item));
-                } catch (IllegalArgumentException e) {
-                    getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
-                }
-            }
-        }
-    }
-
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new GuiListener(), this);
         getServer().getPluginManager().registerEvents(new CustomMobs(), this);
-
-        // Feature Registration
-        registerFeature(new PlayerCoreFeature());
-
-        registerFeature(new BlazeFeatures());
-        registerFeature(new BreezeFeature());
-        registerFeature(new CreeperFeature());
-        registerFeature(new DrownedFeature());
-        registerFeature(new EnderFeatures());
-        registerFeature(new EvokerFeature());
-        registerFeature(new GuardianFeature());
-        registerFeature(new PhantomFeature());
-        registerFeature(new SilverfishFeature());
-        registerFeature(new SkeletonFeatures());
-        registerFeature(new SlimeFeatures());
-        registerFeature(new SpiderFeatures());
-        registerFeature(new StrayFeature());
-        registerFeature(new WitchFeature());
-        registerFeature(new WitherSkeletonFeature());
-        registerFeature(new UndeadRageFeature());
-        registerFeature(new UndeadGunnersFeature());
-        registerFeature(new ZombieBreakBlockFeature());
-
-        registerFeature(new ForceOfUndeadFeature());
-        registerFeature(new QuickMobsFeature());
-        registerFeature(new TankyMonstersFeature());
-        registerFeature(new ArmorPiercingFeature());
-
-        registerFeature(new ArrowSlowFeature());
-        registerFeature(new MobCriticalStrikesFeature());
-        registerFeature(new SharpKnifeFeature());
-
-        registerFeature(new AdvancedPlayerDropsFeature());
-        registerFeature(new BleedingFeature());
-        registerFeature(new BloodScreenFeature());
-        registerFeature(new DangerousCoalFeature());
-        registerFeature(new ElectricityShockFeature());
-        registerFeature(new FallStunFeature());
-        registerFeature(new PillagerFireWorkFeature());
-        registerFeature(new FreddyFeature());
-        registerFeature(new HungerNauseaFeature());
-        registerFeature(new InfectionFeature());
-        registerFeature(new NetherShieldFeature());
-        registerFeature(new PhysicEnderPearlFeature());
-        registerFeature(new RealisticPickupFeature());
-        registerFeature(new SnowSlowFeature());
-        registerFeature(new StoneStiffnessFeature());
-        registerFeature(new ZombieToolsFeature());
-        registerFeature(new WhispersOfTheDesertFeature());
-        //registerFeature(new ZombiePlaceFeature());
-    }
-
-    private void registerFeature(IFeature feature) {
-        feature.initialize(this);
-        loadedFeatures.add(feature);
     }
 
     private void registerCommands() {
@@ -424,215 +120,6 @@ public class SuddenDeath extends JavaPlugin {
         }
     }
 
-    private void registerWorldGuardFlags() {
-        if (getServer().getPluginManager().getPlugin("WorldGuard") == null) {
-            return;
-        }
-        try {
-            FlagRegistry registry = WorldGuard.getInstance().getFlagRegistry();
-            for (CustomFlag customFlag : CustomFlag.values()) {
-                String flagPath = customFlag.getPath();
-                try {
-                    if (registry.get(flagPath) != null) {
-                        continue;
-                    }
-                    boolean defaultState = customFlag == CustomFlag.SDS_REMOVE ? false : true;
-                    StateFlag flag = new StateFlag(flagPath, defaultState);
-                    registry.register(flag);
-                } catch (FlagConflictException e) {
-                    getLogger().warning("Flag conflict while registering: " + flagPath + " - " + e.getMessage());
-                } catch (Exception e) {
-                    getLogger().log(Level.SEVERE, "Unexpected error while registering WorldGuard flag: " + flagPath, e);
-                }
-            }
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard flag registration completed."));
-        } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Failed to register WorldGuard flags during onLoad", e);
-        }
-    }
-
-    private void initializeWorldGuard() {
-        try {
-            if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
-                org.bukkit.plugin.Plugin wgPlugin = getServer().getPluginManager().getPlugin("WorldGuard");
-                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard version: " + wgPlugin.getDescription().getVersion()));
-                try {
-                    this.wgPlugin = new WorldGuardOn();
-                    if (this.wgPlugin instanceof WorldGuardOn) {
-                        WorldGuardOn wgOn = (WorldGuardOn) this.wgPlugin;
-                        boolean isReady = wgOn.isReady();
-                        int flagCount = wgOn.getRegisteredFlags().size();
-                        if (isReady && flagCount > 0) {
-                            worldGuardReady = true;
-                            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                    "&6[&cSudden&4Death&6] &aWorldGuard integration ready immediately with " +
-                                            flagCount + " custom flags: " + String.join(", ", wgOn.getRegisteredFlags().keySet())));
-                        } else {
-                            getServer().getScheduler().runTaskLater(this, () -> {
-                                boolean delayedReady = wgOn.isReady();
-                                int delayedFlagCount = wgOn.getRegisteredFlags().size();
-                                if (delayedReady && delayedFlagCount > 0) {
-                                    worldGuardReady = true;
-                                    Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                            "&6[&cSudden&4Death&6] &aWorldGuard integration read with " +
-                                                    delayedFlagCount + " custom flags"));
-                                } else {
-                                    getLogger().severe("WorldGuard integration failed - flags not loaded properly");
-                                    worldGuardReady = false;
-                                }
-                            }, 40L);
-                            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                                    "&6[&cSudden&4Death&6] &6WorldGuard integration created, waiting for flags to load..."));
-                        }
-                    } else {
-                        throw new IllegalStateException("WorldGuardOn instance creation failed");
-                    }
-                } catch (Exception e) {
-                    getLogger().severe("Failed to initialize WorldGuardOn - " + e.getMessage());
-                    this.wgPlugin = new WorldGuardOff();
-                    worldGuardReady = true;
-                }
-            } else {
-                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                        "&6[&cSudden&4Death&6] &6WorldGuard not found, using fallback mode"));
-                this.wgPlugin = new WorldGuardOff();
-                worldGuardReady = true;
-            }
-        } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Failed to initialize WorldGuard integration", e);
-            this.wgPlugin = new WorldGuardOff();
-            worldGuardReady = true;
-        }
-    }
-
-    public boolean isWorldGuardReady() {
-        return worldGuardReady && wgPlugin != null;
-    }
-
-    public WGPlugin getWorldGuard() {
-        if (wgPlugin == null) {
-            return new WorldGuardOff();
-        }
-        return wgPlugin;
-    }
-
-    private void registerCraftingRecipe(CustomItem item) {
-        if (item.getCraft() == null || item.getCraft().isEmpty()) return;
-        try {
-            NamespacedKey recipeKey = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
-            ShapedRecipe recipe = new ShapedRecipe(recipeKey, item.a());
-            recipe.shape("ABC", "DEF", "GHI");
-            char[] chars = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'};
-            List<String> craftLines = item.getCraft();
-            for (int i = 0; i < 9; i++) {
-                String materialName = craftLines.get(i / 3).split(",")[i % 3].trim();
-                if (materialName.equalsIgnoreCase("AIR") || materialName.isEmpty()) continue;
-                recipe.setIngredient(chars[i], Material.valueOf(materialName.toUpperCase()));
-            }
-            recipe.setGroup("suddendeath_items");
-            getServer().addRecipe(recipe);
-        } catch (Exception e) {
-            getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
-        }
-    }
-
-    private void removeAllCustomRecipes() {
-        Iterator<Recipe> recipes = getServer().recipeIterator();
-        List<NamespacedKey> toRemove = new ArrayList<>();
-        while (recipes.hasNext()) {
-            Recipe recipe = recipes.next();
-            if (recipe instanceof org.bukkit.Keyed) {
-                NamespacedKey key = ((org.bukkit.Keyed) recipe).getKey();
-                if (key.getNamespace().equals(this.getName().toLowerCase()) &&
-                        key.getKey().startsWith("suddendeath_")) {
-                    toRemove.add(key);
-                }
-            }
-        }
-        for (NamespacedKey key : toRemove) {
-            getServer().removeRecipe(key);
-        }
-    }
-
-    private void reRegisterRecipesOptimized() {
-        for (CustomItem item : CustomItem.values()) {
-            if (items.getConfig().contains(item.name())) {
-                ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
-                if (section == null) continue;
-                item.update(section);
-                NamespacedKey recipeKey = new NamespacedKey(this, "suddendeath_" + item.name().toLowerCase());
-                boolean isEnabled = section.getBoolean("craft-enabled") && item.getCraft() != null;
-
-                if (isEnabled) {
-                    int newHash = calculateRecipeHash(item);
-                    if (recipeCache.containsKey(recipeKey)) {
-                        int oldHash = recipeCache.get(recipeKey);
-                        if (newHash != oldHash) {
-                            getServer().removeRecipe(recipeKey);
-                            registerCraftingRecipe(item);
-                            recipeCache.put(recipeKey, newHash);
-                        }
-                    } else {
-                        registerCraftingRecipe(item);
-                        recipeCache.put(recipeKey, newHash);
-                    }
-                } else {
-                    if (recipeCache.containsKey(recipeKey)) {
-                        getServer().removeRecipe(recipeKey);
-                        recipeCache.remove(recipeKey);
-                    }
-                }
-            }
-        }
-    }
-
-    private int calculateRecipeHash(CustomItem item) {
-        return Objects.hash(item.getCraft(), item.a().getType(), item.a().getItemMeta().getDisplayName(), item.a().getItemMeta().getLore());
-    }
-
-    public void refreshFeatures() {
-        for (Feature feature : Feature.values()) {
-            feature.updateConfig();
-        }
-        if (eventManager != null) {
-            eventManager.refresh();
-        }
-    }
-
-    public void reloadConfigFiles() {
-        try {
-            savePlayerData();
-            configuration.reload();
-            messages.reload();
-            items.reload();
-            features.reload();
-            for (EntityType type : EntityType.values()) {
-                if (type.isAlive()) {
-                    ConfigFile mobConfig = new ConfigFile(this, "/customMobs", Utils.lowerCaseId(type.name()));
-                    mobConfig.setup();
-                }
-            }
-            initializeConfigFiles();
-            refreshFeatures();
-            reRegisterRecipesOptimized();
-            Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
-            Feature.reloadDescriptions();
-            Bukkit.getScheduler().runTask(this, () -> {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory pluginInventory) {
-                        if (pluginInventory instanceof AdminView || pluginInventory instanceof PlayerView) {
-                            player.closeInventory();
-                            Bukkit.getScheduler().runTaskLater(this, pluginInventory::open, 10L);
-                        }
-                    }
-                }
-            });
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aConfiguration reload completed successfully."));
-        } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Error reloading configuration files", e);
-        }
-    }
-
     private void savePlayerData() {
         PlayerData.getLoaded().forEach(data -> {
             try {
@@ -645,6 +132,14 @@ public class SuddenDeath extends JavaPlugin {
         });
     }
 
+    public void reloadConfigFiles() {
+        savePlayerData();
+        configManager.reloadAll();
+        featureManager.reloadFeatures();
+        if (eventManager != null) eventManager.refresh();
+        Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
+    }
+
     public static SuddenDeath getInstance() {
         return instance;
     }
@@ -653,8 +148,20 @@ public class SuddenDeath extends JavaPlugin {
         return players;
     }
 
+    public ConfigurationManager getConfigManager() {
+        return configManager;
+    }
+
     public ConfigFile getConfiguration() {
-        return configuration;
+        return configManager.getMainConfig();
+    }
+
+    public WorldGuardManager getWorldGuardManager() {
+        return worldGuardManager;
+    }
+
+    public WGPlugin getWorldGuard() {
+        return worldGuardManager.getProvider();
     }
 
     public EventManager getEventManager() {
