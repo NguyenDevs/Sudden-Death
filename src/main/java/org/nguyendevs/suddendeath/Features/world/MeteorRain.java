@@ -20,7 +20,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.SuddenDeath;
-import org.nguyendevs.suddendeath.Hook.worldguard.CustomFlag;
+import org.nguyendevs.suddendeath.Hook.CustomFlag;
 import org.nguyendevs.suddendeath.Managers.EventManager.WorldStatus;
 import org.nguyendevs.suddendeath.Utils.Feature;
 

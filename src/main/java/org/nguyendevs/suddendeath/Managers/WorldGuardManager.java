@@ -7,10 +7,10 @@ import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.nguyendevs.suddendeath.SuddenDeath;
-import org.nguyendevs.suddendeath.Hook.worldguard.CustomFlag;
-import org.nguyendevs.suddendeath.Hook.worldguard.WGPlugin;
-import org.nguyendevs.suddendeath.Hook.worldguard.WorldGuardOff;
-import org.nguyendevs.suddendeath.Hook.worldguard.WorldGuardOn;
+import org.nguyendevs.suddendeath.Hook.CustomFlag;
+import org.nguyendevs.suddendeath.Hook.WGPlugin;
+import org.nguyendevs.suddendeath.Hook.WorldGuardOff;
+import org.nguyendevs.suddendeath.Hook.WorldGuardOn;
 
 import java.util.logging.Level;
 

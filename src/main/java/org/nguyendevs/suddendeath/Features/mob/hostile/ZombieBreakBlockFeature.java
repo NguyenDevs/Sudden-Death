@@ -19,7 +19,7 @@ import org.bukkit.util.BlockIterator;
 import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
-import org.nguyendevs.suddendeath.Hook.worldguard.CustomFlag;
+import org.nguyendevs.suddendeath.Hook.CustomFlag;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,9 +1,8 @@
-package org.nguyendevs.suddendeath.Hook;
+package org.nguyendevs.suddendeath.Utils;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.Player.PlayerData;
-import org.nguyendevs.suddendeath.Utils.Utils;
 import org.bukkit.entity.Player;
 
 public class SuddenDeathPlaceholders extends PlaceholderExpansion {

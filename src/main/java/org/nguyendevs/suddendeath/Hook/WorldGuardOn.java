@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.Hook.worldguard;
+package org.nguyendevs.suddendeath.Hook;
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldguard.WorldGuard;

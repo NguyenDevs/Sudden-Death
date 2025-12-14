@@ -13,7 +13,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Player.PlayerData;
 import org.nguyendevs.suddendeath.Utils.*;
-import org.nguyendevs.suddendeath.Hook.worldguard.CustomFlag;
+import org.nguyendevs.suddendeath.Hook.CustomFlag;
 import org.bukkit.entity.*;
 import java.util.logging.Level;
 

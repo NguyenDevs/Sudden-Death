@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.Hook.worldguard;
+package org.nguyendevs.suddendeath.Hook;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;

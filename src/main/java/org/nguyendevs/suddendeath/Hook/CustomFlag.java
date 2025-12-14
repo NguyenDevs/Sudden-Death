@@ -1,4 +1,4 @@
-package org.nguyendevs.suddendeath.Hook.worldguard;
+package org.nguyendevs.suddendeath.Hook;
 
 public enum CustomFlag {
 	SDS_EFFECT,

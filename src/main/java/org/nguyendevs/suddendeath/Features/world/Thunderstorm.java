@@ -16,7 +16,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Managers.EventManager.WorldStatus;
-import org.nguyendevs.suddendeath.Hook.worldguard.CustomFlag;
+import org.nguyendevs.suddendeath.Hook.CustomFlag;
 
 import java.util.logging.Level;
 

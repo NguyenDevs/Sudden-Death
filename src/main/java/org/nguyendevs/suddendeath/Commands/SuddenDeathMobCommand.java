@@ -4,7 +4,6 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import org.apache.commons.lang3.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
@@ -291,7 +290,10 @@ public class SuddenDeathMobCommand implements CommandExecutor {
     private EntityType parseEntityType(Player player, String typeStr) {
         try {
             EntityType type = EntityType.valueOf(typeStr.toUpperCase().replace("-", "_"));
-            Validate.isTrue(type.isAlive(), typeStr + " is not a supported mob type.");
+            if (!type.isAlive()) {
+                player.sendMessage(translateColors(PREFIX + " " +translateColors("&c" + typeStr.toUpperCase().replace("-", "_") + " is not a supported mob type.")));
+                return null;
+            }
             return type;
         } catch (IllegalArgumentException e) {
             player.sendMessage(translateColors(PREFIX + " " +translateColors("&c" + typeStr.toUpperCase().replace("-", "_") + " is not a supported mob type.")));
