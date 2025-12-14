@@ -265,6 +265,9 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         private final Map<UUID, Set<BlockPosition>> lastSentPerPlayer = new HashMap<>();
         private final List<MeteorVoxel> meteorVoxels;
         private final int MAX_TICKS = 20 * 40;
+        private final Map<Location, Material> destroyedBlocksInFlight = new HashMap<>();
+
+
 
         private static class MeteorVoxel {
             final Vector offset;
@@ -342,6 +345,9 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     if (r != null && r.getHitPosition() != null) {
                         Block hitBlock = r.getHitBlock();
                         if (hitBlock != null && isSolidTerrain(hitBlock.getType())) {
+
+                            saveAndDestroyBlocksInPath(prev, currentLocation);
+
                             Location hit = new Location(w,
                                     r.getHitPosition().getX(),
                                     r.getHitPosition().getY(),
@@ -352,6 +358,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                             return;
                         }
                     }
+                    checkAndDestroyBlocksAlongPath();
                 }
 
                 createTrailEffect();
@@ -359,6 +366,8 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 if (tickCount % 2 == 0) renderFakeMeteor();
 
                 if (currentLocation.getBlockY() <= getGroundLevel(currentLocation)) {
+                    saveAndDestroyBlocksInPath(prev, currentLocation);
+
                     hasImpacted = true;
                     impact(currentLocation.clone());
                     cancel();
@@ -366,6 +375,77 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             } catch (Exception e) {
                 SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error in meteor task", e);
                 cancel();
+            }
+        }
+
+
+        private void checkAndDestroyBlocksAlongPath() {
+            World world = currentLocation.getWorld();
+            if (world == null) return;
+
+            int checkRadius = Math.max(2, meteorSize / 3);
+
+            for (int x = -checkRadius; x <= checkRadius; x++) {
+                for (int y = -checkRadius; y <= checkRadius; y++) {
+                    for (int z = -checkRadius; z <= checkRadius; z++) {
+                        double distance = Math.sqrt(x * x + y * y + z * z);
+
+                        if (distance <= checkRadius * 0.7) {
+                            Location blockLoc = currentLocation.clone().add(x, y, z);
+                            Block block = world.getBlockAt(blockLoc);
+
+                            if (isSolidTerrain(block.getType()) &&
+                                    block.getType() != Material.BEDROCK &&
+                                    !destroyedBlocksInFlight.containsKey(blockLoc)) {
+
+                                destroyedBlocksInFlight.put(blockLoc.clone(), block.getType());
+
+                                block.setType(Material.AIR, false);
+
+                                world.spawnParticle(Particle.BLOCK_CRACK,
+                                        blockLoc.add(0.5, 0.5, 0.5), 3,
+                                        0.3, 0.3, 0.3, 0, block.getBlockData());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void saveAndDestroyBlocksInPath(Location start, Location end) {
+            World world = start.getWorld();
+            if (world == null) return;
+
+            Vector direction = end.toVector().subtract(start.toVector());
+            double distance = direction.length();
+            direction.normalize();
+
+            int checkRadius = Math.max(2, meteorSize / 3);
+            int steps = (int) Math.ceil(distance);
+
+            for (int step = 0; step < steps; step++) {
+                Location checkLoc = start.clone().add(direction.clone().multiply(step));
+
+                for (int x = -checkRadius; x <= checkRadius; x++) {
+                    for (int y = -checkRadius; y <= checkRadius; y++) {
+                        for (int z = -checkRadius; z <= checkRadius; z++) {
+                            double blockDist = Math.sqrt(x * x + y * y + z * z);
+
+                            if (blockDist <= checkRadius * 0.7) {
+                                Location blockLoc = checkLoc.clone().add(x, y, z);
+                                Block block = world.getBlockAt(blockLoc);
+
+                                if (isSolidTerrain(block.getType()) &&
+                                        block.getType() != Material.BEDROCK &&
+                                        !destroyedBlocksInFlight.containsKey(blockLoc)) {
+
+                                    destroyedBlocksInFlight.put(blockLoc.clone(), block.getType());
+                                    block.setType(Material.AIR, false);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -566,12 +646,22 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             boolean craterRecovery = Feature.METEOR_RAIN.getBoolean("crater-recovery");
 
             if (!createCrater) {
+                if (craterRecovery && !destroyedBlocksInFlight.isEmpty()) {
+                    CraterData flightData = new CraterData(impactPoint, meteorSize);
+                    flightData.originalBlocks.putAll(destroyedBlocksInFlight);
+                    cratersToRecover.add(flightData);
+                }
                 return;
             }
 
             clearVegetationAndFloatingObjects(impactPoint);
 
             CraterData craterData = craterRecovery ? new CraterData(impactPoint, meteorSize) : null;
+
+            if (craterData != null) {
+                craterData.originalBlocks.putAll(destroyedBlocksInFlight);
+            }
+
             createInstantDrillingCraterWithTracking(impactPoint, craterData);
             createMinimalScorchedArea(impactPoint);
 
@@ -1300,7 +1390,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         int totalBlocks = craterData.originalBlocks.size();
         if (totalBlocks == 0) return;
 
-        int blocksPerTick = Math.max(1, totalBlocks / (craterData.radius * 20));
+        int blocksPerTick = Math.max(1, Math.min(5, totalBlocks / 200));
 
         List<Map.Entry<Location, Material>> blockList = new ArrayList<>(craterData.originalBlocks.entrySet());
         blockList.sort(Comparator.comparingInt(e -> e.getKey().getBlockY()));
@@ -1329,7 +1419,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
                 currentIndex = endIndex;
             }
-        }.runTaskTimer(SuddenDeath.getInstance(), 40L, 2L);
+        }.runTaskTimer(SuddenDeath.getInstance(), 200L, 10L);
     }
 
     private void startCraterRecoveryProcess() {

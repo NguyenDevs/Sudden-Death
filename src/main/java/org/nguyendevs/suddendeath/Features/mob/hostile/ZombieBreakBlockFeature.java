@@ -280,7 +280,7 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
         return null;
     }
 
-    /*
+
     private Block selectBlockToBreak(Zombie zombie, LivingEntity target, Material toolType) {
         Location zombieEyeLoc = zombie.getEyeLocation();
         Vector direction = target.getLocation().toVector().subtract(zombieEyeLoc.toVector()).normalize();
@@ -314,131 +314,6 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
 
         return null;
     }
-     */
-
-    private Block selectBlockToBreak(Zombie zombie, LivingEntity target, Material toolType) {
-        Location zombieEyeLoc = zombie.getEyeLocation();
-        Location zombieLoc = zombie.getLocation();
-        Location targetLoc = target.getLocation();
-
-        double heightDiff = targetLoc.getY() - zombieLoc.getY();
-
-        if (heightDiff > 0.8) {
-            Block stairBlock = findStairBlock(zombie, target, toolType, heightDiff);
-            if (stairBlock != null) {
-                return stairBlock;
-            }
-        }
-
-        Vector direction = targetLoc.toVector().subtract(zombieEyeLoc.toVector()).normalize();
-        boolean isSameLevel = Math.abs(heightDiff) <= 1.0;
-
-        Block playerStandingBlock = targetLoc.getBlock().getRelative(0, -1, 0);
-        Block playerBlock = targetLoc.getBlock();
-
-        BlockIterator iterator = new BlockIterator(zombie.getWorld(), zombieEyeLoc.toVector(), direction, 0, 3);
-
-        while (iterator.hasNext()) {
-            Block block = iterator.next();
-
-            if (block.getType().isSolid()) {
-                if (block.equals(playerBlock)) {
-                    continue;
-                }
-
-                if (isSameLevel && block.equals(playerStandingBlock)) {
-                    continue;
-                }
-
-                if (canBreakBlock(toolType, block.getType())) {
-                    return block;
-                } else {
-                    return null;
-                }
-            }
-
-            Block blockBelow = block.getRelative(0, -1, 0);
-            if (blockBelow.getType().isSolid() && canBreakBlock(toolType, blockBelow.getType())) {
-                if (blockBelow.equals(playerBlock)) {
-                    return null;
-                }
-
-                if (isSameLevel && blockBelow.equals(playerStandingBlock)) {
-                    return null;
-                }
-
-                if (heightDiff < -0.5 || heightDiff > 1.5) {
-                    return blockBelow;
-                }
-            }
-
-            Block blockAbove = block.getRelative(0, 1, 0);
-            if (blockAbove.getType().isSolid() && canBreakBlock(toolType, blockAbove.getType())) {
-                if (heightDiff > 0.5) {
-                    return blockAbove;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private Block findStairBlock(Zombie zombie, LivingEntity target, Material toolType, double heightDiff) {
-        Location zombieLoc = zombie.getLocation();
-        Location targetLoc = target.getLocation();
-
-        Vector horizontalDirection = targetLoc.toVector().subtract(zombieLoc.toVector());
-        horizontalDirection.setY(0);
-
-        if (horizontalDirection.lengthSquared() < 0.01) {
-            return null;
-        }
-
-        horizontalDirection.normalize();
-
-        Location checkLoc = zombieLoc.clone().add(horizontalDirection);
-
-        Block frontGround = checkLoc.getBlock().getRelative(0, -1, 0);
-        Block frontBlock = checkLoc.getBlock();
-
-        if (!frontGround.getType().isSolid() || !canBreakBlock(toolType, frontGround.getType())) {
-
-            Block blockAtEyeLevel = zombieLoc.clone().add(horizontalDirection).add(0, 1, 0).getBlock();
-
-            if (blockAtEyeLevel.getType().isSolid() && canBreakBlock(toolType, blockAtEyeLevel.getType())) {
-                Block belowEyeLevel = blockAtEyeLevel.getRelative(0, -1, 0);
-                if (belowEyeLevel.getType().isSolid()) {
-                    return blockAtEyeLevel;
-                }
-            }
-        }
-
-        if (frontBlock.getType().isSolid() && canBreakBlock(toolType, frontBlock.getType())) {
-            if (frontGround.getType().isSolid()) {
-                return frontBlock;
-            }
-        }
-
-        Block aboveFrontBlock = frontBlock.getRelative(0, 1, 0);
-        if (aboveFrontBlock.getType().isSolid() && canBreakBlock(toolType, aboveFrontBlock.getType())) {
-            if (frontBlock.getType().isSolid() && frontGround.getType().isSolid()) {
-                return aboveFrontBlock;
-            }
-        }
-
-        Location farCheckLoc = zombieLoc.clone().add(horizontalDirection.clone().multiply(2));
-        Block farBlock = farCheckLoc.getBlock();
-        Block farGround = farBlock.getRelative(0, -1, 0);
-
-        if (farBlock.getType().isSolid() && canBreakBlock(toolType, farBlock.getType())) {
-            if (!frontBlock.getType().isSolid() && frontGround.getType().isSolid()) {
-                return farBlock;
-            }
-        }
-
-        return null;
-    }
-
 
     private void startBreakingBlock(Zombie zombie, LivingEntity target, Block block, ItemStack tool, double breakTime) {
         UUID zombieUUID = zombie.getUniqueId();
