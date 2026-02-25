@@ -22,7 +22,8 @@ import java.util.logging.Level;
 public class PlayerView extends PluginInventory {
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.###");
-    private static final int[] AVAILABLE_SLOTS = {10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34};
+    private static final int[] AVAILABLE_SLOTS = { 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30,
+            31, 32, 33, 34 };
     private static final int ITEMS_PER_PAGE = 21;
     private static final int INVENTORY_SIZE = 45;
 
@@ -41,8 +42,7 @@ public class PlayerView extends PluginInventory {
             Feature.NETHER_SHIELD,
             Feature.ANGRY_SPIDERS,
             Feature.LEAPING_SPIDERS,
-            Feature.UNDEAD_RAGE
-    );
+            Feature.UNDEAD_RAGE);
 
     private static final Material[] UNDEAD_RAGE_EGGS = {
             Material.ZOMBIE_SPAWN_EGG,
@@ -84,7 +84,6 @@ public class PlayerView extends PluginInventory {
             Material.HUSK_SPAWN_EGG
     };
 
-
     private static final int ANIM_PERIOD_TICKS = 15;
     private int animIndex = 0;
     private BukkitTask visualTask = null;
@@ -94,11 +93,10 @@ public class PlayerView extends PluginInventory {
     private static final EnumSet<Feature> EVENT_SET = EnumSet.of(
             Feature.BLOOD_MOON,
             Feature.THUNDERSTORM,
-            Feature.METEOR_RAIN
-    );
+            Feature.METEOR_RAIN);
     private static final EnumSet<Feature> MOB_SET = EnumSet.of(
             Feature.ABYSSAL_VORTEX,
-            //Feature.AIM_BOT,
+            // Feature.AIM_BOT,
             Feature.ARMOR_PIERCING,
             Feature.ANGRY_SPIDERS,
             Feature.BONE_GRENADES,
@@ -120,6 +118,7 @@ public class PlayerView extends PluginInventory {
             Feature.SILVERFISHES_SUMMON,
             Feature.STRAY_FROST,
             Feature.SPIDER_WEB,
+            Feature.SPIDER_NEST,
             Feature.TANKY_MONSTERS,
             Feature.THIEF_SLIMES,
             Feature.TRIDENT_WRATH,
@@ -131,7 +130,7 @@ public class PlayerView extends PluginInventory {
             Feature.ZOMBIE_BREAK_BLOCK,
             Feature.ZOMBIE_TOOLS,
             Feature.FIREWORK_ARROWS
-            //Feature.ZOMBIE_PLACE_BLOCK
+    // Feature.ZOMBIE_PLACE_BLOCK
     );
 
     private static final EnumSet<Feature> SURVIVAL_SET = EnumSet.of(
@@ -149,8 +148,7 @@ public class PlayerView extends PluginInventory {
             Feature.REALISTIC_PICKUP,
             Feature.SNOW_SLOW,
             Feature.STONE_STIFFNESS,
-            Feature.WHISPERS_OF_THE_DESERT
-    );
+            Feature.WHISPERS_OF_THE_DESERT);
 
     private int page;
 
@@ -159,7 +157,9 @@ public class PlayerView extends PluginInventory {
     private Feature[] cachedSource = null;
     private int cachedFilterIndex = -1;
 
-    public PlayerView(Player player) { super(player); }
+    public PlayerView(Player player) {
+        super(player);
+    }
 
     private static String translateColors(String s) {
         return ChatColor.translateAlternateColorCodes('&', s);
@@ -169,24 +169,33 @@ public class PlayerView extends PluginInventory {
     public void open() {
         stopVisualAnimation();
         super.open();
-        if (visualMode) startVisualAnimation();
+        if (visualMode)
+            startVisualAnimation();
     }
 
     private void stopVisualAnimation() {
         if (visualTask != null) {
-            try { visualTask.cancel(); } catch (Throwable ignored) {}
+            try {
+                visualTask.cancel();
+            } catch (Throwable ignored) {
+            }
             visualTask = null;
         }
         lastSlotMaterial.clear();
     }
 
     private void startVisualAnimation() {
-        if (!visualMode) return;
-        if (visualTask != null) return;
+        if (!visualMode)
+            return;
+        if (visualTask != null)
+            return;
 
         visualTask = Bukkit.getScheduler().runTaskTimer(SuddenDeath.getInstance(), () -> {
             try {
-                if (player == null || !player.isOnline()) { stopVisualAnimation(); return; }
+                if (player == null || !player.isOnline()) {
+                    stopVisualAnimation();
+                    return;
+                }
                 if (player.getOpenInventory() == null
                         || player.getOpenInventory().getTopInventory() == null
                         || player.getOpenInventory().getTopInventory().getHolder() != this) {
@@ -201,24 +210,30 @@ public class PlayerView extends PluginInventory {
                 for (Map.Entry<Integer, Feature> e : slotFeatureMap.entrySet()) {
                     int slot = e.getKey();
                     Feature f = e.getValue();
-                    if (!ANIMATED_FEATURES.contains(f)) continue;
+                    if (!ANIMATED_FEATURES.contains(f))
+                        continue;
 
                     ItemStack oldItem = inv.getItem(slot);
-                    if (oldItem == null) continue;
+                    if (oldItem == null)
+                        continue;
 
                     Material newMat = getRandomAnimatedMaterialFor(f);
-                    if (newMat == null) continue;
+                    if (newMat == null)
+                        continue;
 
                     if (newMat == oldItem.getType()) {
                         Material retry = getRandomAnimatedMaterialFor(f);
-                        if (retry != null) newMat = retry;
+                        if (retry != null)
+                            newMat = retry;
                     }
                     Material lastMat = lastSlotMaterial.get(slot);
-                    if (lastMat != null && lastMat == newMat) continue;
+                    if (lastMat != null && lastMat == newMat)
+                        continue;
 
                     ItemMeta oldMeta = oldItem.getItemMeta();
                     ItemStack newItem = new ItemStack(newMat);
-                    if (oldMeta != null) newItem.setItemMeta(oldMeta);
+                    if (oldMeta != null)
+                        newItem.setItemMeta(oldMeta);
                     inv.setItem(slot, newItem);
                     lastSlotMaterial.put(slot, newMat);
                 }
@@ -231,26 +246,40 @@ public class PlayerView extends PluginInventory {
     private Material getRandomAnimatedMaterialFor(Feature f) {
         Material[] pool;
         switch (f) {
-            case NETHER_SHIELD:       pool = NETHER_SHIELD_EGGS; break;
-            case LEAPING_SPIDERS:     pool = LEAPING_SPIDERS_EGGS; break;
-            case ANGRY_SPIDERS:       pool = ANGRY_SPIDERS_EGGS; break;
-            case UNDEAD_RAGE:         pool = UNDEAD_RAGE_EGGS; break;
-            case ENDER_POWER:         pool = ENDER_POWER_EGGS; break;
-            case WHISPERS_OF_THE_DESERT: pool = WHISPER_OF_THE_DESERT_BLOCK; break;
+            case NETHER_SHIELD:
+                pool = NETHER_SHIELD_EGGS;
+                break;
+            case LEAPING_SPIDERS:
+                pool = LEAPING_SPIDERS_EGGS;
+                break;
+            case ANGRY_SPIDERS:
+                pool = ANGRY_SPIDERS_EGGS;
+                break;
+            case UNDEAD_RAGE:
+                pool = UNDEAD_RAGE_EGGS;
+                break;
+            case ENDER_POWER:
+                pool = ENDER_POWER_EGGS;
+                break;
+            case WHISPERS_OF_THE_DESERT:
+                pool = WHISPER_OF_THE_DESERT_BLOCK;
+                break;
             default:
                 return getVisualMaterial(f);
         }
-        if (pool.length == 0) return getVisualMaterial(f);
+        if (pool.length == 0)
+            return getVisualMaterial(f);
         return pool[rng.nextInt(pool.length)];
     }
-
 
     @Override
     public @NotNull Inventory getInventory() {
         Feature[] source = getFilteredFeatures();
         int maxPage = Math.max(1, (source.length + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE);
-        if (page >= maxPage) page = maxPage - 1;
-        if (page < 0) page = 0;
+        if (page >= maxPage)
+            page = maxPage - 1;
+        if (page < 0)
+            page = 0;
 
         Inventory inv = Bukkit.createInventory(this, INVENTORY_SIZE,
                 translateColors(Utils.msg("gui-player-name")) + " (" + (page + 1) + "/" + maxPage + ")");
@@ -290,15 +319,20 @@ public class PlayerView extends PluginInventory {
             List<Feature> list;
             if (filterIndex == 1) {
                 list = new ArrayList<>();
-                for (Feature f : all) if (SURVIVAL_SET.contains(f)) list.add(f);
+                for (Feature f : all)
+                    if (SURVIVAL_SET.contains(f))
+                        list.add(f);
             } else if (filterIndex == 2) {
                 list = new ArrayList<>();
-                for (Feature f : all) if (MOB_SET.contains(f)) list.add(f);
+                for (Feature f : all)
+                    if (MOB_SET.contains(f))
+                        list.add(f);
             } else if (filterIndex == 3) {
                 list = new ArrayList<>();
-                for (Feature f : all) if (EVENT_SET.contains(f)) list.add(f);
-            }
-            else {
+                for (Feature f : all)
+                    if (EVENT_SET.contains(f))
+                        list.add(f);
+            } else {
                 list = new ArrayList<>(Arrays.asList(all));
             }
 
@@ -312,7 +346,8 @@ public class PlayerView extends PluginInventory {
     }
 
     private ItemStack createFeatureItem(Feature feature) {
-        List<String> enabledWorlds = SuddenDeath.getInstance().getConfiguration().getConfig().getStringList(feature.getPath());
+        List<String> enabledWorlds = SuddenDeath.getInstance().getConfiguration().getConfig()
+                .getStringList(feature.getPath());
         boolean isEnabledInWorld = enabledWorlds.contains(player.getWorld().getName());
 
         Material material;
@@ -338,60 +373,113 @@ public class PlayerView extends PluginInventory {
 
     private Material getVisualMaterial(Feature f) {
         switch (f) {
-            case ABYSSAL_VORTEX: return Material.GUARDIAN_SPAWN_EGG;
-            //case AIM_BOT: return Material.SPECTRAL_ARROW;
-            case ARMOR_PIERCING: return Material.NETHERITE_CHESTPLATE;
-            case ANGRY_SPIDERS: return Material.SPIDER_SPAWN_EGG;
-            case BLOOD_MOON: return Material.ZOMBIE_HEAD;
-            case BONE_GRENADES: return Material.SKELETON_SPAWN_EGG;
-            case BONE_WIZARDS: return Material.SKELETON_SPAWN_EGG;
-            case BREEZE_DASH: return Material.BREEZE_SPAWN_EGG;
-            case CREEPER_REVENGE: return Material.CREEPER_SPAWN_EGG;
-            case ENDER_POWER: return Material.ENDER_DRAGON_SPAWN_EGG;
-            case EVERBURNING_BLAZES: return Material.BLAZE_SPAWN_EGG;
-            case FORCE_OF_THE_UNDEAD: return Material.SPAWNER;
-            case FIREWORK_ARROWS: return Material.PILLAGER_SPAWN_EGG;
-            case HOMING_FLAME_BARRAGE: return Material.BLAZE_SPAWN_EGG;
-            case IMMORTAL_EVOKER: return Material.EVOKER_SPAWN_EGG;
-            case LEAPING_SPIDERS: return Material.SPIDER_SPAWN_EGG;
-            case METEOR_RAIN: return Material.FIRE_CHARGE;
-            case MOB_CRITICAL_STRIKES: return Material.SPAWNER;
-            case NETHER_SHIELD: return Material.NETHERRACK;
-            case POISONED_SLIMES: return Material.SLIME_SPAWN_EGG;
-            case PHANTOM_BLADE: return Material.PHANTOM_SPAWN_EGG;
-            case QUICK_MOBS: return Material.SPAWNER;
-            case SHOCKING_SKELETON_ARROWS: return Material.SKELETON_SPAWN_EGG;
-            case SILVERFISHES_SUMMON: return Material.SILVERFISH_SPAWN_EGG;
-            case STRAY_FROST: return Material.STRAY_SPAWN_EGG;
-            case SPIDER_WEB: return Material.CAVE_SPIDER_SPAWN_EGG;
-            case TANKY_MONSTERS: return Material.SPAWNER;
-            case THIEF_SLIMES: return Material.SLIME_SPAWN_EGG;
-            case TRIDENT_WRATH: return Material.DROWNED_SPAWN_EGG;
-            case UNDEAD_GUNNERS: return Material.ZOMBIE_SPAWN_EGG;
-            case UNDEAD_RAGE: return Material.ZOMBIE_SPAWN_EGG;
-            case WITCH_SCROLLS: return Material.WITCH_SPAWN_EGG;
-            case WITHER_MACHINEGUN: return Material.WITHER_SKELETON_SPAWN_EGG;
-            case WITHER_RUSH: return Material.WITHER_SKELETON_SPAWN_EGG;
-            case ZOMBIE_BREAK_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
-           // case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
-            case ZOMBIE_TOOLS: return Material.ZOMBIE_SPAWN_EGG;
-            case ADVANCED_PLAYER_DROPS: return Material.PLAYER_HEAD;
-            case ARROW_SLOW: return Material.TIPPED_ARROW;
-            case BLEEDING: return Material.PAPER;
-            case BLOOD_SCREEN: return Material.FIRE_CORAL;
-            case DANGEROUS_COAL: return Material.COAL;
-            case ELECTRICITY_SHOCK: return Material.REDSTONE;
-            case FALL_STUN: return Material.RABBIT_FOOT;
-            case FREDDY: return Material.ENDER_EYE;
-            case HUNGER_NAUSEA: return Material.COOKED_CHICKEN;
-            case INFECTION: return Material.SUSPICIOUS_STEW;
-            case PHYSIC_ENDER_PEARL: return Material.ENDER_PEARL;
-            case REALISTIC_PICKUP: return Material.BUNDLE;
-            case SNOW_SLOW: return Material.SNOWBALL;
-            case STONE_STIFFNESS: return Material.DEEPSLATE;
-            case THUNDERSTORM: return Material.NETHER_STAR;
+            case ABYSSAL_VORTEX:
+                return Material.GUARDIAN_SPAWN_EGG;
+            // case AIM_BOT: return Material.SPECTRAL_ARROW;
+            case ARMOR_PIERCING:
+                return Material.NETHERITE_CHESTPLATE;
+            case ANGRY_SPIDERS:
+                return Material.SPIDER_SPAWN_EGG;
+            case BLOOD_MOON:
+                return Material.ZOMBIE_HEAD;
+            case BONE_GRENADES:
+                return Material.SKELETON_SPAWN_EGG;
+            case BONE_WIZARDS:
+                return Material.SKELETON_SPAWN_EGG;
+            case BREEZE_DASH:
+                return Material.BREEZE_SPAWN_EGG;
+            case CREEPER_REVENGE:
+                return Material.CREEPER_SPAWN_EGG;
+            case ENDER_POWER:
+                return Material.ENDER_DRAGON_SPAWN_EGG;
+            case EVERBURNING_BLAZES:
+                return Material.BLAZE_SPAWN_EGG;
+            case FORCE_OF_THE_UNDEAD:
+                return Material.SPAWNER;
+            case FIREWORK_ARROWS:
+                return Material.PILLAGER_SPAWN_EGG;
+            case HOMING_FLAME_BARRAGE:
+                return Material.BLAZE_SPAWN_EGG;
+            case IMMORTAL_EVOKER:
+                return Material.EVOKER_SPAWN_EGG;
+            case LEAPING_SPIDERS:
+                return Material.SPIDER_SPAWN_EGG;
+            case METEOR_RAIN:
+                return Material.FIRE_CHARGE;
+            case MOB_CRITICAL_STRIKES:
+                return Material.SPAWNER;
+            case NETHER_SHIELD:
+                return Material.NETHERRACK;
+            case POISONED_SLIMES:
+                return Material.SLIME_SPAWN_EGG;
+            case PHANTOM_BLADE:
+                return Material.PHANTOM_SPAWN_EGG;
+            case QUICK_MOBS:
+                return Material.SPAWNER;
+            case SHOCKING_SKELETON_ARROWS:
+                return Material.SKELETON_SPAWN_EGG;
+            case SILVERFISHES_SUMMON:
+                return Material.SILVERFISH_SPAWN_EGG;
+            case STRAY_FROST:
+                return Material.STRAY_SPAWN_EGG;
+            case SPIDER_WEB:
+                return Material.CAVE_SPIDER_SPAWN_EGG;
+            case SPIDER_NEST:
+                return Material.SPIDER_SPAWN_EGG;
+            case TANKY_MONSTERS:
+                return Material.SPAWNER;
+            case THIEF_SLIMES:
+                return Material.SLIME_SPAWN_EGG;
+            case TRIDENT_WRATH:
+                return Material.DROWNED_SPAWN_EGG;
+            case UNDEAD_GUNNERS:
+                return Material.ZOMBIE_SPAWN_EGG;
+            case UNDEAD_RAGE:
+                return Material.ZOMBIE_SPAWN_EGG;
+            case WITCH_SCROLLS:
+                return Material.WITCH_SPAWN_EGG;
+            case WITHER_MACHINEGUN:
+                return Material.WITHER_SKELETON_SPAWN_EGG;
+            case WITHER_RUSH:
+                return Material.WITHER_SKELETON_SPAWN_EGG;
+            case ZOMBIE_BREAK_BLOCK:
+                return Material.ZOMBIE_SPAWN_EGG;
+            // case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
+            case ZOMBIE_TOOLS:
+                return Material.ZOMBIE_SPAWN_EGG;
+            case ADVANCED_PLAYER_DROPS:
+                return Material.PLAYER_HEAD;
+            case ARROW_SLOW:
+                return Material.TIPPED_ARROW;
+            case BLEEDING:
+                return Material.PAPER;
+            case BLOOD_SCREEN:
+                return Material.FIRE_CORAL;
+            case DANGEROUS_COAL:
+                return Material.COAL;
+            case ELECTRICITY_SHOCK:
+                return Material.REDSTONE;
+            case FALL_STUN:
+                return Material.RABBIT_FOOT;
+            case FREDDY:
+                return Material.ENDER_EYE;
+            case HUNGER_NAUSEA:
+                return Material.COOKED_CHICKEN;
+            case INFECTION:
+                return Material.SUSPICIOUS_STEW;
+            case PHYSIC_ENDER_PEARL:
+                return Material.ENDER_PEARL;
+            case REALISTIC_PICKUP:
+                return Material.BUNDLE;
+            case SNOW_SLOW:
+                return Material.SNOWBALL;
+            case STONE_STIFFNESS:
+                return Material.DEEPSLATE;
+            case THUNDERSTORM:
+                return Material.NETHER_STAR;
 
-            default: return null;
+            default:
+                return null;
         }
     }
 
@@ -430,7 +518,8 @@ public class PlayerView extends PluginInventory {
     private ItemStack createFilterItem() {
         ItemStack item = new ItemStack(FILTER_MATERIAL);
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return item;
+        if (meta == null)
+            return item;
 
         meta.setDisplayName(translateColors(Utils.msg("filter-name")));
 
@@ -458,7 +547,8 @@ public class PlayerView extends PluginInventory {
 
     private boolean canToggleFilter() {
         long now = System.currentTimeMillis();
-        if (now - lastFilterClickMs < 250) return false;
+        if (now - lastFilterClickMs < 250)
+            return false;
         lastFilterClickMs = now;
         return true;
     }
@@ -467,13 +557,19 @@ public class PlayerView extends PluginInventory {
         filterIndex = (filterIndex + 1) % 4;
         page = 0;
         cachedSource = null;
-        try { player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f); } catch (Throwable ignored) {}
+        try {
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
+        } catch (Throwable ignored) {
+        }
         open();
     }
 
     private void toggleVisualRight() {
         visualMode = !visualMode;
-        try { player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, visualMode ? 1.2f : 0.9f); } catch (Throwable ignored) {}
+        try {
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, visualMode ? 1.2f : 0.9f);
+        } catch (Throwable ignored) {
+        }
         open();
     }
 
@@ -482,7 +578,8 @@ public class PlayerView extends PluginInventory {
         event.setCancelled(true);
 
         ItemStack item = event.getCurrentItem();
-        if (item == null || !item.hasItemMeta()) return;
+        if (item == null || !item.hasItemMeta())
+            return;
 
         ItemMeta meta = item.getItemMeta();
         if (meta == null) {
@@ -514,7 +611,8 @@ public class PlayerView extends PluginInventory {
             }
 
             if (event.getSlot() == FILTER_SLOT && item.getType() == FILTER_MATERIAL) {
-                if (!canToggleFilter()) return;
+                if (!canToggleFilter())
+                    return;
                 if (event.isLeftClick()) {
                     cycleFilterLeft();
                 } else if (event.isRightClick()) {
@@ -533,9 +631,10 @@ public class PlayerView extends PluginInventory {
     public static String statsInLore(Feature feature, String lore) {
         if (lore.contains("#")) {
             String[] parts = lore.split("#", 3);
-            if (parts.length >= 2) {
+            if (parts.length >= 3) {
                 String stat = parts[1];
-                return statsInLore(feature, parts[0] + ChatColor.GREEN + DECIMAL_FORMAT.format(feature.getDouble(stat)) + ChatColor.GRAY + parts[2]);
+                return statsInLore(feature, parts[0] + ChatColor.GREEN + DECIMAL_FORMAT.format(feature.getDouble(stat))
+                        + ChatColor.GRAY + parts[2]);
             }
         }
         return lore;
@@ -543,7 +642,8 @@ public class PlayerView extends PluginInventory {
 
     private int getAvailableSlot(Inventory inventory) {
         for (int slot : AVAILABLE_SLOTS) {
-            if (inventory.getItem(slot) == null) return slot;
+            if (inventory.getItem(slot) == null)
+                return slot;
         }
         return -1;
     }
