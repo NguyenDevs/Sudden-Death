@@ -96,7 +96,8 @@ public class ConfigurationManager {
 
     private void loadDefaultConfig() {
         FileConfiguration defaultConfig = new YamlConfiguration();
-        try (InputStreamReader reader = new InputStreamReader(Objects.requireNonNull(plugin.getResource("config.yml")))) {
+        try (InputStreamReader reader = new InputStreamReader(
+                Objects.requireNonNull(plugin.getResource("config.yml")))) {
             defaultConfig.load(reader);
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Failed to load default config.yml", e);
@@ -129,7 +130,8 @@ public class ConfigurationManager {
                 saveNeeded = true;
             }
         }
-        if (saveNeeded) messages.save();
+        if (saveNeeded)
+            messages.save();
     }
 
     private void initializeDefaultItems() {
@@ -171,7 +173,8 @@ public class ConfigurationManager {
                 }
             }
         }
-        if (saveNeeded) items.save();
+        if (saveNeeded)
+            items.save();
     }
 
     private void writeMaterials(ConfigurationSection section, CustomItem item) {
@@ -183,8 +186,7 @@ public class ConfigurationManager {
                 if (!trimmed.equals("AIR") && !uniqueMaterials.contains(trimmed)) {
                     String displayName = DEFAULT_MATERIAL_NAMES.getOrDefault(
                             trimmed,
-                            "&a" + trimmed.replace("_", " ")
-                    );
+                            "&a" + trimmed.replace("_", " "));
                     materials.add(trimmed + ": " + displayName);
                     uniqueMaterials.add(trimmed);
                 }
@@ -205,13 +207,12 @@ public class ConfigurationManager {
                 saveNeeded = true;
             }
         }
-        if (saveNeeded) features.save();
+        if (saveNeeded)
+            features.save();
         Feature.reloadDescriptions();
     }
 
     private void initializeItemsAndRecipes() {
-        removeAllCustomRecipes();
-        recipeCache.clear();
         for (CustomItem item : CustomItem.values()) {
             ConfigurationSection section = items.getConfig().getConfigurationSection(item.name());
             if (section == null) {
@@ -219,29 +220,50 @@ public class ConfigurationManager {
                 continue;
             }
             item.update(section);
-            if (section.getBoolean("craft-enabled") && item.getCraft() != null) {
+
+            NamespacedKey key = new NamespacedKey(plugin, "suddendeath_" + item.name().toLowerCase());
+            boolean craftEnabled = section.getBoolean("craft-enabled") && item.getCraft() != null;
+
+            if (craftEnabled) {
+                int newHash = calculateRecipeHash(item);
+                Integer cachedHash = recipeCache.get(key);
+                if (cachedHash != null && cachedHash == newHash) {
+                    // Recipe unchanged — skip remove/re-register
+                    continue;
+                }
+                // Remove old recipe if it exists, then register the new one
+                if (cachedHash != null) {
+                    plugin.getServer().removeRecipe(key);
+                }
                 try {
                     registerCraftingRecipe(item);
-                    NamespacedKey key = new NamespacedKey(plugin, "suddendeath_" + item.name().toLowerCase());
-                    recipeCache.put(key, calculateRecipeHash(item));
+                    recipeCache.put(key, newHash);
                 } catch (IllegalArgumentException e) {
                     plugin.getLogger().log(Level.WARNING, "Failed to register recipe for " + item.name(), e);
+                }
+            } else {
+                // Recipe was disabled — remove if it was registered before
+                if (recipeCache.containsKey(key)) {
+                    plugin.getServer().removeRecipe(key);
+                    recipeCache.remove(key);
                 }
             }
         }
     }
 
     private void registerCraftingRecipe(CustomItem item) {
-        if (item.getCraft() == null || item.getCraft().isEmpty()) return;
+        if (item.getCraft() == null || item.getCraft().isEmpty())
+            return;
         try {
             NamespacedKey recipeKey = new NamespacedKey(plugin, "suddendeath_" + item.name().toLowerCase());
             ShapedRecipe recipe = new ShapedRecipe(recipeKey, item.a());
             recipe.shape("ABC", "DEF", "GHI");
-            char[] chars = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'};
+            char[] chars = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I' };
             List<String> craftLines = item.getCraft();
             for (int i = 0; i < 9; i++) {
                 String materialName = craftLines.get(i / 3).split(",")[i % 3].trim();
-                if (materialName.equalsIgnoreCase("AIR") || materialName.isEmpty()) continue;
+                if (materialName.equalsIgnoreCase("AIR") || materialName.isEmpty())
+                    continue;
                 recipe.setIngredient(chars[i], Material.valueOf(materialName.toUpperCase()));
             }
             recipe.setGroup("suddendeath_items");
@@ -252,7 +274,8 @@ public class ConfigurationManager {
     }
 
     private int calculateRecipeHash(CustomItem item) {
-        return Objects.hash(item.getCraft(), item.a().getType(), item.a().getItemMeta().getDisplayName(), item.a().getItemMeta().getLore());
+        return Objects.hash(item.getCraft(), item.a().getType(), item.a().getItemMeta().getDisplayName(),
+                item.a().getItemMeta().getLore());
     }
 
     private void removeAllCustomRecipes() {
@@ -262,7 +285,8 @@ public class ConfigurationManager {
             Recipe recipe = recipes.next();
             if (recipe instanceof org.bukkit.Keyed) {
                 NamespacedKey key = ((org.bukkit.Keyed) recipe).getKey();
-                if (key.getNamespace().equals(plugin.getName().toLowerCase()) && key.getKey().startsWith("suddendeath_")) {
+                if (key.getNamespace().equals(plugin.getName().toLowerCase())
+                        && key.getKey().startsWith("suddendeath_")) {
                     toRemove.add(key);
                 }
             }
