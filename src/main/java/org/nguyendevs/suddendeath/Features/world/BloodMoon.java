@@ -67,6 +67,11 @@ public class BloodMoon extends WorldEventHandler {
 			return;
 		}
 
+		// Prevent infinite recursion: skip entities already spawned by Blood Moon
+		if (entity.hasMetadata(BLOODMOON_METADATA)) {
+			return;
+		}
+
 		try {
 			Location loc = event.getEntity().getLocation();
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT)) {
@@ -83,13 +88,8 @@ public class BloodMoon extends WorldEventHandler {
 				return;
 			}
 
-			if (!(entity instanceof Zombie)) {
-				event.setCancelled(true);
-				spawnEnhancedZombie(loc);
-			} else {
-				event.setCancelled(true);
-				spawnEnhancedZombie(loc);
-			}
+			event.setCancelled(true);
+			spawnEnhancedZombie(loc);
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error handling creature spawn in Blood Moon for world: " + getWorld().getName(), e);
@@ -180,18 +180,24 @@ public class BloodMoon extends WorldEventHandler {
 
 	private void spawnEnhancedZombie(Location location) {
 		try {
-			if (isWaterNearby(location)) return;
+			if (isWaterNearby(location))
+				return;
 
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(location, CustomFlag.SDS_EVENT)) {
 				return;
 			}
-			Zombie zombie = (Zombie) location.getWorld().spawnEntity(location, EntityType.ZOMBIE);
+			// Use the Consumer initializer so metadata is applied BEFORE CreatureSpawnEvent
+			// fires,
+			// preventing the event handler from catching our own spawned zombie and
+			// looping.
+			Zombie zombie = location.getWorld().spawn(location, Zombie.class, z -> {
+				z.setMetadata(BLOODMOON_METADATA, new FixedMetadataValue(SuddenDeath.getInstance(), true));
+			});
 			for (PotionEffectType effectType : ENHANCED_EFFECTS) {
 				int amplifier = (int) Feature.BLOOD_MOON.getDouble(
 						effectType.getName().toLowerCase().replace("_", "-"));
 				zombie.addPotionEffect(new PotionEffect(effectType, EFFECT_DURATION_TICKS, amplifier));
 			}
-			zombie.setMetadata(BLOODMOON_METADATA, new FixedMetadataValue(SuddenDeath.getInstance(), true));
 
 			new ZombieSpawnEffectTask(zombie.getLocation().clone())
 					.runTaskTimer(SuddenDeath.getInstance(), 0L, 1L);
