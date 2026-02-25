@@ -41,6 +41,7 @@ public class FeatureManager {
         register(new SkeletonFeatures());
         register(new SlimeFeatures());
         register(new SpiderFeatures());
+        register(new SpiderNestFeature());
         register(new StrayFeature());
         register(new WitchFeature());
         register(new WitherSkeletonFeature());
