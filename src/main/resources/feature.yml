@@ -235,6 +235,12 @@ features:
       - "&2Cave spider &7has a #chance-percent#% chance"
       - "to shoot a web that traps the player in place."
       - "It only disappears when the player breaks it."
+  spider-nest:
+    name: "Spider Nest"
+    lore:
+      - "&8Breaking &7a &fCobweb &7has a #chance-percent#%"
+      - "chance to spawn #min# to #max# &8Spiders"
+      - "or &8Cave Spiders &7at the broken block."
   tanky-monsters:
     name: "Tanky Monsters"
     lore:
