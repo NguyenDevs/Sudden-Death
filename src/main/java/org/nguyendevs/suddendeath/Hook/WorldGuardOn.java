@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class WorldGuardOn implements WGPlugin {
 	private final WorldGuard worldGuard;
@@ -43,14 +42,12 @@ public class WorldGuardOn implements WGPlugin {
 
 	private void registerCustomFlags() {
 		FlagRegistry registry = worldGuard.getFlagRegistry();
-		int successCount = 0;
 		for (CustomFlag customFlag : CustomFlag.values()) {
 			String flagPath = customFlag.getPath();
 			try {
 				if (registry.get(flagPath) != null) {
 					StateFlag existingFlag = (StateFlag) registry.get(flagPath);
 					customFlags.put(flagPath, existingFlag);
-					successCount++;
 				} else {
 					failedFlags.add(flagPath);
 					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
@@ -112,7 +109,8 @@ public class WorldGuardOn implements WGPlugin {
 			StateFlag.State state = regions.queryValue(worldGuardPlugin.wrapPlayer(player), flag);
 
 			// Nếu state != null -> Trả về true nếu là ALLOW, false nếu là DENY
-			// Nếu state == null (unset) -> Chỉ SDS_EFFECT là true, các flag khác (BREAK, EVENT, REMOVE) là false
+			// Nếu state == null (unset) -> Chỉ SDS_EFFECT là true, các flag khác (BREAK,
+			// EVENT, REMOVE) là false
 			if (state != null) {
 				return state == StateFlag.State.ALLOW;
 			}

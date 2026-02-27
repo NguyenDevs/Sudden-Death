@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Hook;
 
-@SuppressWarnings("deprecation")
 
 public enum CustomFlag {
 	SDS_EFFECT,

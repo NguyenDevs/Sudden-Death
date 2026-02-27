@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class PhantomFeature extends AbstractFeature {
 

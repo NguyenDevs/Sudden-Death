@@ -12,12 +12,9 @@ import org.nguyendevs.suddendeath.Utils.ConfigFile;
 import java.util.*;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class PlayerData {
 	private static final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
-	private static final String MODIFIER_PREFIX = "suddenDeath.";
-	private static final double COOLDOWN_DURATION_SECONDS = 3.0;
 	private BukkitRunnable bleedingTask;
 	private boolean isInfected;
 	private boolean isBleeding;

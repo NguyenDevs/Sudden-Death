@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("deprecation")
 
 public enum Message {
 	PREFIX("&6[&cSudden&4Death&6]"),

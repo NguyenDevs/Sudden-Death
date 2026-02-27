@@ -7,7 +7,6 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class CreeperFeature extends AbstractFeature {
     @Override

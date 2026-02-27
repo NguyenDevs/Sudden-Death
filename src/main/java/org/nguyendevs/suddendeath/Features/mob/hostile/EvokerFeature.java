@@ -16,7 +16,6 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import org.bukkit.NamespacedKey;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class EvokerFeature extends AbstractFeature {
 

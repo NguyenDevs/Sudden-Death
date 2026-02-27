@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.nguyendevs.suddendeath.Player.PlayerData;
 import org.bukkit.entity.Player;
 
-@SuppressWarnings("deprecation")
 
 public class SuddenDeathPlaceholders extends PlaceholderExpansion {
 	@Override

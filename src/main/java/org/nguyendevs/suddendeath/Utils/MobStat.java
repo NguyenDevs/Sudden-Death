@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public enum MobStat {
     HELMET(

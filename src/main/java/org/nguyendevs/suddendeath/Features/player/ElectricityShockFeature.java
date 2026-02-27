@@ -13,7 +13,6 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class ElectricityShockFeature extends AbstractFeature {
 

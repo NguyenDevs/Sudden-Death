@@ -50,7 +50,7 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
                     }
                     return true;
                 }
-                if (sender instanceof Player player) {
+                if (sender instanceof Player) {
                     sendHelpMessage(sender);
                 } else {
                     sender.sendMessage(translateColors(

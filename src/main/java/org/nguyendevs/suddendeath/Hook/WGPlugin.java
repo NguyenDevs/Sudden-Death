@@ -3,7 +3,6 @@ package org.nguyendevs.suddendeath.Hook;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-@SuppressWarnings("deprecation")
 
 public interface WGPlugin {
 

@@ -16,25 +16,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-@SuppressWarnings("deprecation")
 
 public class ZombieToolsFeature extends AbstractFeature {
 
     private enum ToolTier {
-        NETHERITE("NETHERITE", "netherite-chance"),
-        DIAMOND("DIAMOND", "diamond-chance"),
-        GOLDEN("GOLDEN", "gold-chance"),
-        IRON("IRON", "iron-chance"),
-        WOODEN("WOODEN", "wood-chance");
+        NETHERITE("NETHERITE"),
+        DIAMOND("DIAMOND"),
+        GOLDEN("GOLDEN"),
+        IRON("IRON"),
+        WOODEN("WOODEN");
+
         final String prefix;
-        final String configKey;
-        ToolTier(String prefix, String configKey) { this.prefix = prefix; this.configKey = configKey; }
+
+        ToolTier(String prefix) {
+            this.prefix = prefix;
+        }
     }
 
     private enum ToolType {
         AXE("_AXE"), PICKAXE("_PICKAXE"), SHOVEL("_SHOVEL");
+
         final String suffix;
-        ToolType(String suffix) { this.suffix = suffix; }
+
+        ToolType(String suffix) {
+            this.suffix = suffix;
+        }
     }
 
     @Override
@@ -44,20 +50,26 @@ public class ZombieToolsFeature extends AbstractFeature {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onZombieSpawn(CreatureSpawnEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie)) return;
-        if (zombie.hasMetadata("SDCustomMob")) return;
+        if (!(event.getEntity() instanceof Zombie zombie))
+            return;
+        if (zombie.hasMetadata("SDCustomMob"))
+            return;
 
-        if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie)) return;
+        if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie))
+            return;
 
         double spawnChance = Feature.ZOMBIE_TOOLS.getDouble("chance-percent") / 100.0;
-        if (RANDOM.nextDouble() > spawnChance) return;
+        if (RANDOM.nextDouble() > spawnChance)
+            return;
 
         ToolTier tier = selectTier();
-        if (tier == null) return;
+        if (tier == null)
+            return;
 
         ToolType type = ToolType.values()[RANDOM.nextInt(ToolType.values().length)];
         Material mat = Material.getMaterial(tier.prefix + type.suffix);
-        if (mat == null) return;
+        if (mat == null)
+            return;
 
         ItemStack tool = new ItemStack(mat);
         double enchantChance = Feature.ZOMBIE_TOOLS.getDouble("enchantment-chance") / 100.0;
@@ -74,11 +86,14 @@ public class ZombieToolsFeature extends AbstractFeature {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onZombieDeath(EntityDeathEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie)) return;
-        if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie)) return;
+        if (!(event.getEntity() instanceof Zombie zombie))
+            return;
+        if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie))
+            return;
 
         double dropChance = Feature.ZOMBIE_TOOLS.getDouble("drop-chance-percent") / 100.0;
-        if (RANDOM.nextDouble() > dropChance) return;
+        if (RANDOM.nextDouble() > dropChance)
+            return;
 
         ItemStack mainHand = zombie.getEquipment() != null ? zombie.getEquipment().getItemInMainHand() : null;
         if (mainHand != null && isTool(mainHand.getType())) {
@@ -103,10 +118,14 @@ public class ZombieToolsFeature extends AbstractFeature {
         double total = netherite + diamond + gold + iron + wood;
         double randomVal = RANDOM.nextDouble() * total;
 
-        if (randomVal <= netherite) return ToolTier.NETHERITE;
-        if (randomVal <= netherite + diamond) return ToolTier.DIAMOND;
-        if (randomVal <= netherite + diamond + gold) return ToolTier.GOLDEN;
-        if (randomVal <= netherite + diamond + gold + iron) return ToolTier.IRON;
+        if (randomVal <= netherite)
+            return ToolTier.NETHERITE;
+        if (randomVal <= netherite + diamond)
+            return ToolTier.DIAMOND;
+        if (randomVal <= netherite + diamond + gold)
+            return ToolTier.GOLDEN;
+        if (randomVal <= netherite + diamond + gold + iron)
+            return ToolTier.IRON;
         return ToolTier.WOODEN;
     }
 
@@ -122,12 +141,14 @@ public class ZombieToolsFeature extends AbstractFeature {
             possibleEnchants.add(Enchantment.DAMAGE_UNDEAD);
         }
         for (int i = 0; i < count; i++) {
-            if (possibleEnchants.isEmpty()) break;
+            if (possibleEnchants.isEmpty())
+                break;
             Enchantment enchant = possibleEnchants.get(RANDOM.nextInt(possibleEnchants.size()));
             int level = RANDOM.nextInt(enchant.getMaxLevel()) + enchant.getStartLevel();
             try {
                 item.addUnsafeEnchantment(enchant, level);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             possibleEnchants.remove(enchant);
         }
     }

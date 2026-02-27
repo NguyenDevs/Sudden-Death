@@ -33,10 +33,14 @@ public class ArmorPiercingFeature extends AbstractFeature {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player player)) return;
-        if (!(event.getDamager() instanceof LivingEntity damager)) return;
-        if (event.getDamage() <= 0 || player.hasMetadata("NPC")) return;
-        if (!Feature.ARMOR_PIERCING.isEnabled(player)) return;
+        if (!(event.getEntity() instanceof Player player))
+            return;
+        if (!(event.getDamager() instanceof LivingEntity damager))
+            return;
+        if (event.getDamage() <= 0 || player.hasMetadata("NPC"))
+            return;
+        if (!Feature.ARMOR_PIERCING.isEnabled(player))
+            return;
 
         try {
             double chance = Feature.ARMOR_PIERCING.getDouble(
@@ -55,12 +59,7 @@ public class ArmorPiercingFeature extends AbstractFeature {
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
         if (pendingDeathMessages.containsKey(player.getUniqueId())) {
-            String killerName = pendingDeathMessages.remove(player.getUniqueId());
-
-            String rawMsg = "You are died";
-            String finalMsg = rawMsg
-                    .replace("%player%", player.getName())
-                    .replace("%killer%", killerName);
+            pendingDeathMessages.remove(player.getUniqueId());
 
             if (!pendingDeathMessages.containsKey(player.getUniqueId())) {
                 event.setDeathMessage(null);
@@ -123,6 +122,5 @@ public class ArmorPiercingFeature extends AbstractFeature {
 
         return formatted.toString();
     }
-
 
 }

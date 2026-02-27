@@ -90,7 +90,6 @@ public class PlayerView extends PluginInventory {
     private int animIndex = 0;
     private BukkitTask visualTask = null;
     private final Map<Integer, Feature> slotFeatureMap = new HashMap<>();
-    private Inventory lastInventory;
 
     private static final EnumSet<Feature> EVENT_SET = EnumSet.of(
             Feature.BLOOD_MOON,
@@ -206,7 +205,6 @@ public class PlayerView extends PluginInventory {
                 }
 
                 Inventory inv = player.getOpenInventory().getTopInventory();
-                this.lastInventory = inv;
 
                 animIndex++;
                 for (Map.Entry<Integer, Feature> e : slotFeatureMap.entrySet()) {
@@ -310,7 +308,6 @@ public class PlayerView extends PluginInventory {
             }
 
             inv.setItem(FILTER_SLOT, createFilterItem());
-            this.lastInventory = inv;
 
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,

@@ -37,7 +37,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class BloodMoon extends WorldEventHandler {
 
@@ -403,14 +402,5 @@ public class BloodMoon extends WorldEventHandler {
 	// =========================================================================
 	private boolean isAir(Material mat) {
 		return mat == Material.AIR || mat == Material.CAVE_AIR;
-	}
-
-	private boolean hasAdjacentAir(Block block) {
-		return isAir(block.getRelative(0, 1, 0).getType())
-				|| isAir(block.getRelative(0, -1, 0).getType())
-				|| isAir(block.getRelative(1, 0, 0).getType())
-				|| isAir(block.getRelative(-1, 0, 0).getType())
-				|| isAir(block.getRelative(0, 0, 1).getType())
-				|| isAir(block.getRelative(0, 0, -1).getType());
 	}
 }

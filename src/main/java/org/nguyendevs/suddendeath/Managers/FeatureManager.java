@@ -18,7 +18,6 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("deprecation")
 
 public class FeatureManager {
     private final SuddenDeath plugin;

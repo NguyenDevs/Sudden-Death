@@ -1,0 +1,16 @@
+> Task :clean
+
+> Task :compileJava
+/home/alexisbinh/dev/Sudden-Death/src/main/java/org/nguyendevs/suddendeath/Utils/Utils.java:51: warning: [deprecation] ChatColor in org.bukkit has been deprecated
+            return message != null ? ChatColor.translateAlternateColorCodes('&', message) : "";
+                                     ^
+/home/alexisbinh/dev/Sudden-Death/src/main/java/org/nguyendevs/suddendeath/Utils/Utils.java:62: warning: [deprecation] ChatColor in org.bukkit has been deprecated
+                    .map(text -> ChatColor.translateAlternateColorCodes('&', text))
+                                 ^
+/home/alexisbinh/dev/Sudden-Death/src/main/java/org/nguyendevs/suddendeath/Utils/Utils.java:184: warning: [deprecation] getDisplayName() in ItemMeta has been deprecated
+                return itemMeta.getDisplayName();
+                               ^
+3 warnings
+
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 2 executed

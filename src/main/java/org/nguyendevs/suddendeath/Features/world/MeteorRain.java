@@ -13,7 +13,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.world.WorldUnloadEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -29,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
-public class MeteorRain extends WorldEventHandler implements Listener {
+public class MeteorRain extends WorldEventHandler {
 
     private static final int MIN_METEOR_SIZE = 3;
     private static final int MAX_METEOR_SIZE = 10;
@@ -55,17 +54,11 @@ public class MeteorRain extends WorldEventHandler implements Listener {
     private final Map<BlockPosition, Set<UUID>> phantomBlockTracking = new ConcurrentHashMap<>();
 
     private static class CraterData {
-        Location center;
         Map<Location, Material> originalBlocks;
-        int radius;
-        long impactTime;
         long recoveryStartTime;
 
-        CraterData(Location center, int radius) {
-            this.center = center;
-            this.radius = radius;
+        CraterData() {
             this.originalBlocks = new HashMap<>();
-            this.impactTime = System.currentTimeMillis();
             this.recoveryStartTime = System.currentTimeMillis() +
                     (30000 + ThreadLocalRandom.current().nextInt(60000));
         }
@@ -268,9 +261,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
     }
 
     private class MeteorTask extends BukkitRunnable {
-        private final ProtocolManager pm = ProtocolLibrary.getProtocolManager();
-        private final Location startLocation;
-        private final Location targetLocation;
         private final int meteorSize;
         private final UUID meteorId;
         private final Vector flightDirection;
@@ -295,8 +285,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         }
 
         public MeteorTask(Location start, Location target, int size, UUID meteorId) {
-            this.startLocation = start.clone();
-            this.targetLocation = target.clone();
             this.meteorSize = size;
             this.meteorId = meteorId;
             this.currentLocation = start.clone();
@@ -693,7 +681,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             if (!createCrater) {
                 if (craterRecovery && !destroyedBlocksInFlight.isEmpty()) {
-                    CraterData flightData = new CraterData(impactPoint, meteorSize);
+                    CraterData flightData = new CraterData();
                     flightData.originalBlocks.putAll(destroyedBlocksInFlight);
                     cratersToRecover.add(flightData);
                 }
@@ -702,7 +690,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             clearVegetationAndFloatingObjects(impactPoint);
 
-            CraterData craterData = craterRecovery ? new CraterData(impactPoint, meteorSize) : null;
+            CraterData craterData = craterRecovery ? new CraterData() : null;
 
             if (craterData != null) {
                 craterData.originalBlocks.putAll(destroyedBlocksInFlight);
@@ -866,22 +854,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     }
                 }
             }
-        }
-
-        private boolean isStableTerrainMaterial(Material material) {
-            return material == Material.STONE ||
-                    material == Material.DEEPSLATE ||
-                    material == Material.COBBLESTONE ||
-                    material == Material.COBBLED_DEEPSLATE ||
-                    material == Material.BLACKSTONE ||
-                    material == Material.MAGMA_BLOCK ||
-                    material == Material.BEDROCK ||
-                    material == Material.DIRT ||
-                    material == Material.GRASS_BLOCK ||
-                    material == Material.ANDESITE ||
-                    material == Material.GRANITE ||
-                    material == Material.DIORITE ||
-                    material.name().contains("_ORE");
         }
 
         private void createInstantDrillingCraterWithTracking(Location impactPoint, CraterData craterData) {
@@ -1284,7 +1256,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
         private Material selectOreMaterial() {
             double rand = ThreadLocalRandom.current().nextDouble(100);
-            double coalRate = Feature.METEOR_RAIN.getDouble("coal-ore-rate");
             double ironRate = Feature.METEOR_RAIN.getDouble("iron-ore-rate");
             double goldRate = Feature.METEOR_RAIN.getDouble("gold-ore-rate");
             double diamondRate = Feature.METEOR_RAIN.getDouble("diamond-ore-rate");

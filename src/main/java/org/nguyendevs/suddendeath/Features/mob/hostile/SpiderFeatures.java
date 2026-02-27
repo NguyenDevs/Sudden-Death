@@ -16,7 +16,6 @@ import org.nguyendevs.suddendeath.Utils.NoInteractItemEntity;
 import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class SpiderFeatures extends AbstractFeature {
 

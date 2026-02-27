@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class WhispersOfTheDesertFeature extends AbstractFeature {
 

@@ -5,7 +5,6 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.logging.Level;
 
-@SuppressWarnings("deprecation")
 
 public class ExperienceCalculator {
     private static final int LEVEL_THRESHOLD_1 = 15;
