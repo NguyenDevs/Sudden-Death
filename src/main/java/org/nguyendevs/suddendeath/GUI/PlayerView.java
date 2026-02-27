@@ -232,8 +232,12 @@ public class PlayerView extends PluginInventory {
 
                     ItemMeta oldMeta = oldItem.getItemMeta();
                     ItemStack newItem = new ItemStack(newMat);
-                    if (oldMeta != null)
-                        newItem.setItemMeta(oldMeta);
+                    ItemMeta newMeta = newItem.getItemMeta();
+                    if (oldMeta != null && newMeta != null) {
+                        newMeta.setDisplayName(oldMeta.getDisplayName());
+                        newMeta.setLore(oldMeta.getLore());
+                        newItem.setItemMeta(newMeta);
+                    }
                     inv.setItem(slot, newItem);
                     lastSlotMaterial.put(slot, newMat);
                 }
