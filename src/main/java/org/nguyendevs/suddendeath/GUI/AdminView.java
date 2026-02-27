@@ -33,6 +33,8 @@ public class AdminView extends PluginInventory {
     private int filterIndex = 0;
     private boolean visualMode = false;
     private long lastFilterClickMs = 0L;
+    private long lastShiftClickMs = 0L;
+    private static final long SHIFT_CLICK_COOLDOWN_MS = 500L;
 
     // Feature Categories
     private static final EnumSet<Feature> EVENT_SET = EnumSet.of(
@@ -562,14 +564,43 @@ public class AdminView extends PluginInventory {
                     .getStringList(feature.getPath());
             String worldName = player.getWorld().getName();
 
-            if (enabledWorlds.contains(worldName)) {
-                enabledWorlds.remove(worldName);
-                player.sendMessage(translateColors(
-                        PREFIX + " " + "&eYou disabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+            if (event.isShiftClick()) {
+                // ── Shift+Click: toggle across ALL worlds ──────────────────
+                long now = System.currentTimeMillis();
+                if (now - lastShiftClickMs < SHIFT_CLICK_COOLDOWN_MS)
+                    return;
+                lastShiftClickMs = now;
+                List<String> allWorldNames = Bukkit.getWorlds().stream()
+                        .map(w -> w.getName())
+                        .collect(java.util.stream.Collectors.toList());
+
+                boolean allDisabled = allWorldNames.stream().noneMatch(enabledWorlds::contains);
+
+                if (allDisabled) {
+                    // All currently OFF → enable all
+                    for (String w : allWorldNames) {
+                        if (!enabledWorlds.contains(w))
+                            enabledWorlds.add(w);
+                    }
+                    player.sendMessage(translateColors(
+                            PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
+                } else {
+                    // At least one ON → disable all
+                    enabledWorlds.removeAll(allWorldNames);
+                    player.sendMessage(translateColors(
+                            PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
+                }
             } else {
-                enabledWorlds.add(worldName);
-                player.sendMessage(translateColors(
-                        PREFIX + " " + "&eYou enabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+                // ── Normal click: toggle current world only ─────────────────
+                if (enabledWorlds.contains(worldName)) {
+                    enabledWorlds.remove(worldName);
+                    player.sendMessage(translateColors(
+                            PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+                } else {
+                    enabledWorlds.add(worldName);
+                    player.sendMessage(translateColors(
+                            PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+                }
             }
 
             SuddenDeath.getInstance().getConfiguration().getConfig().set(feature.getPath(), enabledWorlds);
