@@ -25,6 +25,16 @@ public class CustomMobs implements Listener {
     private static final Random RANDOM = new Random();
     private static final String METADATA_KEY = "SDCustomMob";
     private static final int EFFECT_DURATION = 9999999;
+    /** Null on servers older than 1.21 where TRIAL_SPAWNER doesn't exist. */
+    private static final CreatureSpawnEvent.SpawnReason TRIAL_SPAWNER_REASON;
+    static {
+        CreatureSpawnEvent.SpawnReason found = null;
+        try {
+            found = CreatureSpawnEvent.SpawnReason.valueOf("TRIAL_SPAWNER");
+        } catch (IllegalArgumentException ignored) {
+        }
+        TRIAL_SPAWNER_REASON = found;
+    }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
@@ -33,18 +43,25 @@ public class CustomMobs implements Listener {
             return;
         }
 
+        if (entity.hasMetadata("SDCommandSpawn")) {
+            return;
+        }
+
         try {
-            List<String> blacklist = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig().getStringList("custom-mobs-world-blacklist");
+            List<String> blacklist = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
+                    .getStringList("custom-mobs-world-blacklist");
             if (blacklist.contains(entity.getWorld().getName())) {
                 return;
             }
 
             ConfigFile mobConfigFile = SuddenDeath.getInstance().getConfigManager().getMobConfig(entity.getType());
-            if (mobConfigFile == null) return;
+            if (mobConfigFile == null)
+                return;
 
             FileConfiguration config = mobConfigFile.getConfig();
 
-            double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig().getDouble("default-spawn-coef." + entity.getType().name(), 0.0);
+            double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
+                    .getDouble("default-spawn-coef." + entity.getType().name(), 0.0);
             Map<String, Double> spawnCoefficients = new LinkedHashMap<>();
             spawnCoefficients.put("DEFAULT_KEY", defaultSpawnCoef);
 
@@ -62,10 +79,39 @@ public class CustomMobs implements Listener {
                 return;
             }
 
+            ConfigurationSection selectedSection = config.getConfigurationSection(selectedId);
+            if (selectedSection != null) {
+                String spawnType = selectedSection.getString("spawn-type", "All");
+                CreatureSpawnEvent.SpawnReason reason = event.getSpawnReason();
+                if (!isSpawnTypeAllowed(spawnType, reason)) {
+                    return;
+                }
+            }
+
             applyCustomMobProperties(entity, config, selectedId);
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling CreatureSpawnEvent for entity: " + entity.getType(), e);
+        }
+    }
+
+    private boolean isSpawnTypeAllowed(String spawnType, CreatureSpawnEvent.SpawnReason reason) {
+        switch (spawnType) {
+            case "Spawners":
+                return reason == CreatureSpawnEvent.SpawnReason.SPAWNER
+                        || (TRIAL_SPAWNER_REASON != null && reason == TRIAL_SPAWNER_REASON);
+            case "Natural Only":
+                return reason != CreatureSpawnEvent.SpawnReason.SPAWNER
+                        && (TRIAL_SPAWNER_REASON == null || reason != TRIAL_SPAWNER_REASON)
+                        && reason != CreatureSpawnEvent.SpawnReason.CUSTOM
+                        && reason != CreatureSpawnEvent.SpawnReason.COMMAND;
+            case "Spawner Only": // 1.20.4: no trial spawner
+            case "Regular Spawner Only":
+                return reason == CreatureSpawnEvent.SpawnReason.SPAWNER;
+            case "Trial Spawner Only":
+                return TRIAL_SPAWNER_REASON != null && reason == TRIAL_SPAWNER_REASON;
+            default: // "All"
+                return true;
         }
     }
 
@@ -84,7 +130,7 @@ public class CustomMobs implements Listener {
         return "";
     }
 
-    private void applyCustomMobProperties(LivingEntity entity, FileConfiguration config, String id) {
+    public static void applyCustomMobProperties(LivingEntity entity, FileConfiguration config, String id) {
         try {
             ConfigurationSection section = config.getConfigurationSection(id);
             if (section == null) {
@@ -127,7 +173,7 @@ public class CustomMobs implements Listener {
         }
     }
 
-    private void setAttribute(LivingEntity entity, Attribute attribute, double value) {
+    private static void setAttribute(LivingEntity entity, Attribute attribute, double value) {
         try {
             AttributeInstance attributeInstance = entity.getAttribute(attribute);
             if (attributeInstance != null) {
@@ -139,11 +185,13 @@ public class CustomMobs implements Listener {
         }
     }
 
-    private void applyPotionEffect(LivingEntity entity, String effectName, int amplifier) {
+    private static void applyPotionEffect(LivingEntity entity, String effectName, int amplifier) {
         try {
             PotionEffectType type = PotionEffectType.getByName(effectName.toUpperCase().replace("-", "_"));
-            if (type == null) return;
+            if (type == null)
+                return;
             entity.addPotionEffect(new PotionEffect(type, EFFECT_DURATION, Math.max(amplifier - 1, 0)));
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
     }
 }

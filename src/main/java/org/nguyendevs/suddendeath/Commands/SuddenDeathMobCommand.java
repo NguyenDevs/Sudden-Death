@@ -31,9 +31,11 @@ public class SuddenDeathMobCommand implements CommandExecutor {
     private static final String MOB_TYPES_HEADER = STRIKETHROUGH + "[&d Available Mob Types &8&m]----------------";
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+            String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(translateColors(PREFIX + " " + translateColors("&cThis command is only available for players.")));
+            sender.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cThis command is only available for players.")));
             return true;
         }
 
@@ -56,15 +58,18 @@ public class SuddenDeathMobCommand implements CommandExecutor {
                 case "create" -> handleCreateCommand(player, args);
                 case "delete" -> handleDeleteCommand(player, args);
                 case "list" -> handleListCommand(player, args);
+                case "spawn" -> handleSpawnCommand(player, args);
                 default -> {
-                    player.sendMessage(translateColors(PREFIX + " " +translateColors("&cUnknown command. Use /sdmob for help.")));
+                    player.sendMessage(
+                            translateColors(PREFIX + " " + translateColors("&cUnknown command. Use /sdmob for help.")));
                     player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
                 }
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error processing command /sdmob for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cAn error occurred while processing your command.")));
+            player.sendMessage(translateColors(
+                    PREFIX + " " + translateColors("&cAn error occurred while processing your command.")));
         }
         return true;
     }
@@ -80,6 +85,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         player.sendMessage(translateColors("&d/sdmob delete <type> <name> &fdeletes an existing monster."));
         player.sendMessage(translateColors("&d/sdmob list type &flists all supported mob types."));
         player.sendMessage(translateColors("&d/sdmob list <type> &flists all mobs from one specific type."));
+        player.sendMessage(
+                translateColors("&d/sdmob spawn <type> <name> <amount> &fspawns a custom mob at target block."));
         player.sendMessage(translateColors("&d/sdmob kill <radius> &fkills every nearby custom mob."));
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 0.5f);
     }
@@ -95,12 +102,14 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         try {
             radius = Double.parseDouble(args[1]);
             if (radius <= 0) {
-                player.sendMessage(translateColors(PREFIX + " " + translateColors("&c" + args[1] + " is not a valid positive number.")));
+                player.sendMessage(translateColors(
+                        PREFIX + " " + translateColors("&c" + args[1] + " is not a valid positive number.")));
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
                 return;
             }
         } catch (NumberFormatException e) {
-            player.sendMessage(translateColors(PREFIX + " " + translateColors("&c" + args[1] + " is not a valid number.")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&c" + args[1] + " is not a valid number.")));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
             return;
         }
@@ -113,18 +122,20 @@ public class SuddenDeathMobCommand implements CommandExecutor {
                     count++;
                 }
             }
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&eSuccessfully killed " + count + " custom mob" + (count != 1 ? "s" : "") + ".")));
+            player.sendMessage(translateColors(PREFIX + " " + translateColors(
+                    "&eSuccessfully killed " + count + " custom mob" + (count != 1 ? "s" : "") + ".")));
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error killing custom mobs for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cAn error occurred while killing custom mobs.")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cAn error occurred while killing custom mobs.")));
         }
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
     }
 
     private void handleEditCommand(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cUsage: /sdmob edit <type> <mob-id>")));
+            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cUsage: /sdmob edit <type> <mob-id>")));
             player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
             return;
         }
@@ -137,7 +148,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         String id = args[2].toUpperCase().replace("-", "_");
         ConfigFile mobs = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
         if (mobs == null || !mobs.getConfig().contains(id)) {
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cCouldn't find the mob called " + id + ".")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cCouldn't find the mob called " + id + ".")));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
             return;
         }
@@ -148,7 +160,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
 
     private void handleCreateCommand(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cUsage: /sdmob create <type> <mob-id>")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cUsage: /sdmob create <type> <mob-id>")));
             player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
             return;
         }
@@ -170,19 +183,22 @@ public class SuddenDeathMobCommand implements CommandExecutor {
                 mobs.getConfig().set(id + "." + mobStat.getPath(), mobStat.getDefaultValue());
             }
             mobs.save();
-            player.sendMessage(translateColors(PREFIX + " " + translateColors("&eYou successfully created a new mob: &f" + id + "&e!")));
+            player.sendMessage(translateColors(
+                    PREFIX + " " + translateColors("&eYou successfully created a new mob: &f" + id + "&e!")));
             new MonsterEdition(player, type, id).open();
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error creating mob " + id + " for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cAn error occurred while creating the mob.")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cAn error occurred while creating the mob.")));
         }
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
     }
 
     private void handleDeleteCommand(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cUsage: /sdmob delete <type> <mob-id>")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cUsage: /sdmob delete <type> <mob-id>")));
             player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
             return;
         }
@@ -196,7 +212,7 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         ConfigFile mobs = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
 
         if (mobs == null || !mobs.getConfig().contains(id)) {
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cThere is no mob called " + id + "!")));
+            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cThere is no mob called " + id + "!")));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
             return;
         }
@@ -204,18 +220,80 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         try {
             mobs.getConfig().set(id, null);
             mobs.save();
-            player.sendMessage(translateColors(PREFIX + " " + translateColors("&eYou successfully removed &f" + id + "&e!")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&eYou successfully removed &f" + id + "&e!")));
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error deleting mob " + id + " for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cAn error occurred while deleting the mob.")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cAn error occurred while deleting the mob.")));
         }
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
     }
 
+    private void handleSpawnCommand(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cUsage: /sdmob spawn <type> <mob-id> <amount>")));
+            player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
+            return;
+        }
+
+        EntityType type = parseEntityType(player, args[1]);
+        if (type == null)
+            return;
+
+        String id = args[2].toUpperCase().replace("-", "_");
+        ConfigFile mobs = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
+
+        if (mobs == null || !mobs.getConfig().contains(id)) {
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cCouldn't find the mob called " + id + ".")));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
+            return;
+        }
+
+        int amount;
+        try {
+            amount = Integer.parseInt(args[3]);
+            if (amount <= 0)
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            player.sendMessage(translateColors(
+                    PREFIX + " " + translateColors("&c" + args[3] + " is not a valid positive number.")));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
+            return;
+        }
+
+        org.bukkit.block.Block target = player.getTargetBlockExact(50);
+        if (target == null) {
+            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cYou are not looking at a block.")));
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
+            return;
+        }
+
+        org.bukkit.Location spawnLoc = target.getLocation().add(0.5, 1, 0.5);
+        try {
+            for (int i = 0; i < amount; i++) {
+                org.bukkit.entity.LivingEntity entity = (org.bukkit.entity.LivingEntity) spawnLoc.getWorld()
+                        .spawnEntity(spawnLoc, type);
+                entity.setMetadata("SDCommandSpawn",
+                        new org.bukkit.metadata.FixedMetadataValue(SuddenDeath.getInstance(), true));
+                org.nguyendevs.suddendeath.Features.CustomMobs.applyCustomMobProperties(entity, mobs.getConfig(), id);
+            }
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&eSpawned &6" + amount + " &e" + id + "!")));
+            player.playSound(player.getLocation(), Sound.ENTITY_CHICKEN_EGG, 1.0f, 1.0f);
+        } catch (Exception e) {
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error spawning custom mobs via command", e);
+            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cAn error occurred while spawning.")));
+        }
+    }
+
     private void handleListCommand(Player player, String[] args) {
         if (args.length < 2) {
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cUsage: /sdmob list <mob-type/'type'>")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cUsage: /sdmob list <mob-type/'type'>")));
             player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
             return;
         }
@@ -232,7 +310,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
 
         ConfigFile configFile = SuddenDeath.getInstance().getConfigManager().getMobConfig(type);
         if (configFile == null) {
-            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cFailed to load configuration for type " + type.name() + ".")));
+            player.sendMessage(translateColors(
+                    PREFIX + " " + translateColors("&cFailed to load configuration for type " + type.name() + ".")));
             return;
         }
         FileConfiguration mobs = configFile.getConfig();
@@ -242,7 +321,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
 
         try {
             if (mobs.getKeys(false).isEmpty()) {
-                player.sendMessage(translateColors(PREFIX + " " +translateColors("&eNo custom mobs found for " + type.name() + ".")));
+                player.sendMessage(translateColors(
+                        PREFIX + " " + translateColors("&eNo custom mobs found for " + type.name() + ".")));
             } else {
                 for (String mobId : mobs.getKeys(false)) {
                     String mobName = mobs.getString(mobId + ".name", mobId);
@@ -252,8 +332,10 @@ public class SuddenDeathMobCommand implements CommandExecutor {
                             .color(net.md_5.bungee.api.ChatColor.GRAY)
                             .append(mobId)
                             .color(net.md_5.bungee.api.ChatColor.WHITE)
-                            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/sdmob edit " + type.name() + " " + mobId))
-                            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(translateColors("&fClick to edit " + mobId))))
+                            .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                                    "/sdmob edit " + type.name() + " " + mobId))
+                            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                    new Text(translateColors("&fClick to edit " + mobId))))
                             .append(") ")
                             .create());
                 }
@@ -261,7 +343,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error listing mobs for type " + type.name() + " for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cAn error occurred while listing mobs.")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cAn error occurred while listing mobs.")));
         }
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
     }
@@ -275,14 +358,16 @@ public class SuddenDeathMobCommand implements CommandExecutor {
                     player.spigot().sendMessage(new ComponentBuilder(mobType.name())
                             .color(net.md_5.bungee.api.ChatColor.WHITE)
                             .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/sdmob list " + mobType.name()))
-                            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(translateColors("&fClick to see all mobs in " + mobType.name()))))
+                            .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                    new Text(translateColors("&fClick to see all mobs in " + mobType.name()))))
                             .create());
                 }
             }
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error listing mob types for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&cAn error occurred while listing mob types.")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cAn error occurred while listing mob types.")));
         }
         player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
     }
@@ -291,13 +376,16 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         try {
             EntityType type = EntityType.valueOf(typeStr.toUpperCase().replace("-", "_"));
             if (!type.isAlive()) {
-                player.sendMessage(translateColors(PREFIX + " " +translateColors("&c" + typeStr.toUpperCase().replace("-", "_") + " is not a supported mob type.")));
+                player.sendMessage(translateColors(PREFIX + " " + translateColors(
+                        "&c" + typeStr.toUpperCase().replace("-", "_") + " is not a supported mob type.")));
                 return null;
             }
             return type;
         } catch (IllegalArgumentException e) {
-            player.sendMessage(translateColors(PREFIX + " " +translateColors("&c" + typeStr.toUpperCase().replace("-", "_") + " is not a supported mob type.")));
-            player.sendMessage(translateColors(PREFIX + " " + "&cUse /sdmob list type to see all available mob types."));
+            player.sendMessage(translateColors(PREFIX + " " + translateColors(
+                    "&c" + typeStr.toUpperCase().replace("-", "_") + " is not a supported mob type.")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + "&cUse /sdmob list type to see all available mob types."));
             player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 1.5f);
             return null;
         }
@@ -318,7 +406,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         if (mobs.getConfig().contains(id)) {
-            player.sendMessage(translateColors(PREFIX + " " + translateColors("&cThere is already a mob with ID " + id + ".")));
+            player.sendMessage(
+                    translateColors(PREFIX + " " + translateColors("&cThere is already a mob with ID " + id + ".")));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.5f);
             return false;
         }
