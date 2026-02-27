@@ -12,6 +12,8 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.Set;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class StoneStiffnessFeature extends AbstractFeature {
 
     private static final Set<Material> STIFFNESS_MATERIALS = Set.of(

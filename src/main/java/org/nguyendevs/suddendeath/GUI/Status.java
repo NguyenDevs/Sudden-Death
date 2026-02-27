@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class Status extends PluginInventory {
     private static final int[] STATUS_SLOTS = {10, 11, 12, 13, 14, 15, 16};
     private static final String GUI_TITLE = translateColors(Utils.msg("gui-status-name"));

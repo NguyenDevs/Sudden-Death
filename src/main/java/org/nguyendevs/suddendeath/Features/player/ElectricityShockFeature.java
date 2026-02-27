@@ -10,7 +10,10 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Player.PlayerData;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
+
+@SuppressWarnings("deprecation")
 
 public class ElectricityShockFeature extends AbstractFeature {
 
@@ -22,20 +25,39 @@ public class ElectricityShockFeature extends AbstractFeature {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        if (player.hasMetadata("NPC") || !hasMovedBlock(event)) return;
-        if (!Feature.ELECTRICITY_SHOCK.isEnabled(player)) return;
-        if (Utils.hasCreativeGameMode(player)) return;
+        if (player.hasMetadata("NPC") || !hasMovedBlock(event))
+            return;
+        if (!Feature.ELECTRICITY_SHOCK.isEnabled(player))
+            return;
+        if (Utils.hasCreativeGameMode(player))
+            return;
 
         try {
             PlayerData data = PlayerData.get(player);
-            if (data == null) return;
-            if (data.isOnCooldown(Feature.ELECTRICITY_SHOCK)) return;
-            if (!isPoweredRedstoneBlock(player.getLocation().getBlock())) return;
+            if (data == null)
+                return;
+            if (data.isOnCooldown(Feature.ELECTRICITY_SHOCK))
+                return;
+            if (!isPoweredRedstoneBlock(player.getLocation().getBlock()))
+                return;
 
             data.applyCooldown(Feature.ELECTRICITY_SHOCK, 3);
             applyElectricityShock(player);
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in ElectricityShockFeature.onPlayerMove", e);
+        }
+    }
+
+    private void playHurtAnimationSafely(Player player) {
+        try {
+            Method m = player.getClass().getMethod("playHurtAnimation", float.class);
+            m.invoke(player, 0.002f);
+        } catch (Exception e) {
+            try {
+                Method m2 = player.getClass().getMethod("playHurtAnimation");
+                m2.invoke(player);
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -46,6 +68,7 @@ public class ElectricityShockFeature extends AbstractFeature {
 
         new BukkitRunnable() {
             int ticksPassed = 0;
+
             @Override
             public void run() {
                 try {
@@ -54,7 +77,7 @@ public class ElectricityShockFeature extends AbstractFeature {
                         cancel();
                         return;
                     }
-                    player.playHurtAnimation(0.002f);
+                    playHurtAnimationSafely(player);
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.2f);
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING,
@@ -66,7 +89,8 @@ public class ElectricityShockFeature extends AbstractFeature {
     }
 
     private boolean isPoweredRedstoneBlock(Block block) {
-        if (!block.isBlockPowered()) return false;
+        if (!block.isBlockPowered())
+            return false;
         Material type = block.getType();
         return type == Material.REDSTONE_WIRE || type == Material.COMPARATOR ||
                 type == Material.REPEATER || type == Material.REDSTONE_TORCH;

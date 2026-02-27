@@ -16,6 +16,8 @@ import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class GuardianFeature extends AbstractFeature {
 
     @Override

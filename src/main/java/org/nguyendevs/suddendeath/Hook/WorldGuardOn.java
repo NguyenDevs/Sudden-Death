@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class WorldGuardOn implements WGPlugin {
 	private final WorldGuard worldGuard;
 	private final WorldGuardPlugin worldGuardPlugin;

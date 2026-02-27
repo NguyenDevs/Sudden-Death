@@ -19,6 +19,8 @@ import org.nguyendevs.suddendeath.Utils.MobStat;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("deprecation")
+
 public class StatEditor implements Listener {
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final Pattern SPACE_PATTERN = Pattern.compile(" ");

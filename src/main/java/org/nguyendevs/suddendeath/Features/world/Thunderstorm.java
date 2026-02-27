@@ -20,6 +20,8 @@ import org.nguyendevs.suddendeath.Hook.CustomFlag;
 
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class Thunderstorm extends WorldEventHandler {
 	private static final double LIGHTNING_PROBABILITY = 0.35;
 	private static final int WEATHER_DURATION_TICKS = 200;

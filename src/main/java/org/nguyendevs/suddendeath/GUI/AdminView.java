@@ -20,6 +20,8 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class AdminView extends PluginInventory {
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.###");
@@ -223,7 +225,8 @@ public class AdminView extends PluginInventory {
             case BONE_WIZARDS:
                 return Material.SKELETON_SPAWN_EGG;
             case BREEZE_DASH:
-                return Material.BREEZE_SPAWN_EGG;
+                Material breezeEgg = Material.getMaterial("BREEZE_SPAWN_EGG");
+                return breezeEgg != null ? breezeEgg : Material.SLIME_SPAWN_EGG;
             case CREEPER_REVENGE:
                 return Material.CREEPER_SPAWN_EGG;
             case ENDER_POWER:

@@ -4,6 +4,8 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class Modifier {
 	private final String name;
 	private final Object value;

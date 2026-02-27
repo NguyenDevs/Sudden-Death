@@ -10,6 +10,8 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class ArrowSlowFeature extends AbstractFeature {
 
     @Override

@@ -13,6 +13,8 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class BreezeFeature extends AbstractFeature {
 
     private boolean isSupported;
@@ -30,7 +32,8 @@ public class BreezeFeature extends AbstractFeature {
             EntityType.valueOf(breezeTypeName);
             this.isSupported = true;
         } catch (IllegalArgumentException e) {
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aBreeze feature disabled &c(requires 1.21+)&a."));
+            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+                    "&6[&cSudden&4Death&6] &aBreeze feature disabled &c(requires 1.21+)&a."));
             this.isSupported = false;
             return;
         }
@@ -39,7 +42,8 @@ public class BreezeFeature extends AbstractFeature {
 
     @Override
     protected void onEnable() {
-        if (!isSupported) return;
+        if (!isSupported)
+            return;
 
         BukkitRunnable breezeLoop = new BukkitRunnable() {
             @Override
@@ -68,8 +72,10 @@ public class BreezeFeature extends AbstractFeature {
     }
 
     private void applyBreezeDash(Mob breeze, Player target) {
-        if (breeze == null || breeze.getHealth() <= 0 || !target.isOnline()) return;
-        if (!target.getWorld().equals(breeze.getWorld())) return;
+        if (breeze == null || breeze.getHealth() <= 0 || !target.isOnline())
+            return;
+        if (!target.getWorld().equals(breeze.getWorld()))
+            return;
 
         try {
             double chance = Feature.BREEZE_DASH.getDouble("chance-percent") / 100.0;
@@ -77,10 +83,17 @@ public class BreezeFeature extends AbstractFeature {
                 double duration = Feature.BREEZE_DASH.getDouble("duration");
                 int coefficient = (int) Feature.BREEZE_DASH.getDouble("amplifier");
 
-                breeze.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, (int) (duration * 20), coefficient - 1));
-                breeze.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, (int) (duration * 20), coefficient - 1));
-                breeze.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, (int) (duration * 20), coefficient - 1));
-                breeze.getWorld().playSound(breeze.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 1.0f, 0.5f);
+                breeze.addPotionEffect(
+                        new PotionEffect(PotionEffectType.INVISIBILITY, (int) (duration * 20), coefficient - 1));
+                breeze.addPotionEffect(
+                        new PotionEffect(PotionEffectType.SPEED, (int) (duration * 20), coefficient - 1));
+                breeze.addPotionEffect(
+                        new PotionEffect(PotionEffectType.GLOWING, (int) (duration * 20), coefficient - 1));
+                try {
+                    breeze.getWorld().playSound(breeze.getLocation(), Sound.valueOf("ENTITY_BREEZE_IDLE_AIR"), 1.0f,
+                            0.5f);
+                } catch (IllegalArgumentException ignored) {
+                }
                 breeze.getWorld().playSound(breeze.getLocation(), Sound.ENTITY_VEX_CHARGE, 1.0f, 0.1f);
 
                 breeze.setVelocity(breeze.getVelocity().setY(0));
@@ -88,6 +101,7 @@ public class BreezeFeature extends AbstractFeature {
 
                 new BukkitRunnable() {
                     int shots = 0;
+
                     @Override
                     public void run() {
                         try {
@@ -99,7 +113,8 @@ public class BreezeFeature extends AbstractFeature {
                                 Location breezeLoc = breeze.getLocation();
                                 Vector direction = target.getLocation().subtract(breezeLoc).toVector().normalize();
 
-                                Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0), EntityType.valueOf(windChargeTypeName));
+                                Entity windCharge = breeze.getWorld().spawnEntity(breezeLoc.add(0, 1, 0),
+                                        EntityType.valueOf(windChargeTypeName));
                                 windCharge.setVelocity(direction.multiply(1.5));
 
                                 new BukkitRunnable() {
@@ -109,8 +124,10 @@ public class BreezeFeature extends AbstractFeature {
                                             if (windCharge.isValid()) {
                                                 Location chargeLoc = windCharge.getLocation();
                                                 Vector velocity = windCharge.getVelocity().normalize();
-                                                Location particleLoc = chargeLoc.clone().subtract(velocity.multiply(0.5));
-                                                breeze.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, particleLoc, 1, 0, 0, 0, 0);
+                                                Location particleLoc = chargeLoc.clone()
+                                                        .subtract(velocity.multiply(0.5));
+                                                breeze.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, particleLoc,
+                                                        1, 0, 0, 0, 0);
                                             } else {
                                                 cancel();
                                             }
@@ -131,6 +148,7 @@ public class BreezeFeature extends AbstractFeature {
 
                 new BukkitRunnable() {
                     int ticks = 0;
+
                     @Override
                     public void run() {
                         try {
@@ -138,11 +156,12 @@ public class BreezeFeature extends AbstractFeature {
                                 Location loc = breeze.getLocation().add(0, 0.5, 0);
                                 Vector velocity = breeze.getVelocity().normalize();
 
-
                                 if (velocity.lengthSquared() > 0.1 && ticks < duration * 20) {
                                     Location trailLoc = loc.subtract(velocity.multiply(0.5));
-                                    Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(189, 235, 255), 1.0f);
-                                    breeze.getWorld().spawnParticle(Particle.REDSTONE, trailLoc, 2, 0.1, 0.1, 0.1, 0, dustOptions);
+                                    Particle.DustOptions dustOptions = new Particle.DustOptions(
+                                            Color.fromRGB(189, 235, 255), 1.0f);
+                                    breeze.getWorld().spawnParticle(Particle.REDSTONE, trailLoc, 2, 0.1, 0.1, 0.1, 0,
+                                            dustOptions);
                                 }
                                 ticks++;
                                 if (ticks >= duration * 20) {

@@ -13,10 +13,11 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+
+@SuppressWarnings("deprecation")
 
 public class SpigotPlugin {
 	private final JavaPlugin plugin;
@@ -31,10 +32,13 @@ public class SpigotPlugin {
 	public void checkForUpdate() {
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 			try {
-				HttpsURLConnection connection = (HttpsURLConnection) new URL("https://api.spigotmc.org/legacy/update.php?resource=" + id)
-						.openConnection();
+				HttpsURLConnection connection = (HttpsURLConnection) java.net.URI
+						.create("https://api.spigotmc.org/legacy/update.php?resource=" + id)
+						.toURL().openConnection();
 				connection.setRequestMethod("GET");
-				latestVersion = new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+					latestVersion = reader.readLine();
+				}
 			} catch (IOException e) {
 				plugin.getLogger().log(Level.WARNING, "Couldn't check the latest plugin version: " + e.getMessage());
 				return;
@@ -48,23 +52,28 @@ public class SpigotPlugin {
 
 			if (isVersionNewer(currentVersion, latestVersion)) {
 				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-						"&6[&cSudden&4Death&6] &eA new build is available: "  + latestVersion + " &6(you are running " + currentVersion + ")"));
+						"&6[&cSudden&4Death&6] &eA new build is available: " + latestVersion + " &6(you are running "
+								+ currentVersion + ")"));
 
-				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &a&oDownload it here: " + getResourceUrl()));
+				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+						"&6[&cSudden&4Death&6] &a&oDownload it here: " + getResourceUrl()));
 
 				if (plugin.getConfig().getBoolean("update-notify")) {
-					Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().registerEvents(new Listener() {
-						@EventHandler(priority = EventPriority.MONITOR)
-						public void onPlayerJoin(PlayerJoinEvent event) {
-							Player player = event.getPlayer();
-							if (player.hasPermission(plugin.getName().toLowerCase() + ".update-notify")) {
-								getOutOfDateMessage().forEach(msg -> player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg)));
-							}
-						}
-					}, plugin));
+					Bukkit.getScheduler().runTask(plugin,
+							() -> Bukkit.getPluginManager().registerEvents(new Listener() {
+								@EventHandler(priority = EventPriority.MONITOR)
+								public void onPlayerJoin(PlayerJoinEvent event) {
+									Player player = event.getPlayer();
+									if (player.hasPermission(plugin.getName().toLowerCase() + ".update-notify")) {
+										getOutOfDateMessage().forEach(msg -> player
+												.sendMessage(ChatColor.translateAlternateColorCodes('&', msg)));
+									}
+								}
+							}, plugin));
 				}
 			} else {
-				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',"&6[&cSudden&4Death&6] &aYou are running the latest version: &2" + currentVersion));
+				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+						"&6[&cSudden&4Death&6] &aYou are running the latest version: &2" + currentVersion));
 			}
 		});
 	}
@@ -89,7 +98,8 @@ public class SpigotPlugin {
 				}
 			}
 		} catch (NumberFormatException e) {
-			plugin.getLogger().log(Level.WARNING, "Invalid version format detected: Current=" + currentVersion + ", Latest=" + latestVersion);
+			plugin.getLogger().log(Level.WARNING,
+					"Invalid version format detected: Current=" + currentVersion + ", Latest=" + latestVersion);
 			return false;
 		}
 
@@ -102,8 +112,7 @@ public class SpigotPlugin {
 				"&a" + plugin.getName() + " " + latestVersion + " is available!",
 				"&a" + getResourceUrl(),
 				"&7&oYou can disable this notification in the config file.",
-				"&8--------------------------------------------"
-		);
+				"&8--------------------------------------------");
 	}
 
 	public String getResourceUrl() {

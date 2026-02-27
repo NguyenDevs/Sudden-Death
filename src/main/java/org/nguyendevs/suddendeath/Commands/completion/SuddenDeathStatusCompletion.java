@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
+
 public class SuddenDeathStatusCompletion implements TabCompleter {
 	private static final String PERMISSION_STATUS = "suddendeath.admin";
 	private static final String PERMISSION_RECIPE = "suddendeath.recipe";

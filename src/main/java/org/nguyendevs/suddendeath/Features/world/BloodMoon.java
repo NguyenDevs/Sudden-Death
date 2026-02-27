@@ -37,6 +37,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class BloodMoon extends WorldEventHandler {
 
 	private static final Random RANDOM = new Random();

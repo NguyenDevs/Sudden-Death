@@ -20,6 +20,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class ArmorPiercingFeature extends AbstractFeature {
 
     private final Map<UUID, String> pendingDeathMessages = new ConcurrentHashMap<>();

@@ -13,7 +13,10 @@ import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
+import java.lang.reflect.Method;
 import java.util.logging.Level;
+
+@SuppressWarnings("deprecation")
 
 public class DrownedFeature extends AbstractFeature {
 
@@ -44,29 +47,42 @@ public class DrownedFeature extends AbstractFeature {
         registerTask(drownedLoop.runTaskTimer(plugin, 0L, 100L));
     }
 
+    private void setPoseSafely(Drowned drowned, Pose pose) {
+        try {
+            Method setPoseMethod = drowned.getClass().getMethod("setPose", Pose.class);
+            setPoseMethod.invoke(drowned, pose);
+        } catch (Exception ignored) {
+        }
+    }
+
     private void applyTridentWrath(Drowned drowned) {
         try {
-            if (drowned == null || drowned.getHealth() <= 0 || !(drowned.getTarget() instanceof Player target)) return;
-            if (!target.getWorld().equals(drowned.getWorld()) || drowned.getEquipment().getItemInMainHand().getType() != Material.TRIDENT) return;
+            if (drowned == null || drowned.getHealth() <= 0 || !(drowned.getTarget() instanceof Player target))
+                return;
+            if (!target.getWorld().equals(drowned.getWorld())
+                    || drowned.getEquipment().getItemInMainHand().getType() != Material.TRIDENT)
+                return;
 
             double chance = Feature.TRIDENT_WRATH.getDouble("chance-percent") / 100.0;
-            if (RANDOM.nextDouble() > chance) return;
+            if (RANDOM.nextDouble() > chance)
+                return;
 
             int duration = (int) (Feature.TRIDENT_WRATH.getDouble("duration") * 20);
             double speed = Feature.TRIDENT_WRATH.getDouble("speed");
 
             drowned.getWorld().playSound(drowned.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 1.0f, 1.0f);
 
-            drowned.setPose(Pose.SPIN_ATTACK);
+            setPoseSafely(drowned, Pose.SPIN_ATTACK);
             new BukkitRunnable() {
                 int ticks = 0;
-                final Vector direction = target.getLocation().add(0, 1, 0).subtract(drowned.getLocation()).toVector().normalize();
+                final Vector direction = target.getLocation().add(0, 1, 0).subtract(drowned.getLocation()).toVector()
+                        .normalize();
 
                 @Override
                 public void run() {
                     try {
                         if (ticks >= duration || !drowned.isValid() || !target.isOnline() || drowned.isDead()) {
-                            drowned.setPose(Pose.STANDING);
+                            setPoseSafely(drowned, Pose.STANDING);
                             cancel();
                             return;
                         }
@@ -87,19 +103,22 @@ public class DrownedFeature extends AbstractFeature {
                         if (center.distanceSquared(target.getLocation()) < 2.5) {
                             if (!Utils.hasCreativeGameMode(target)) {
                                 Utils.damage(target, Feature.TRIDENT_WRATH.getDouble("damage"), true);
-                                target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT_DROWN, 1.0f, 1.0f);
-                                target.getWorld().spawnParticle(Particle.WATER_SPLASH, target.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
+                                target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_HURT_DROWN, 1.0f,
+                                        1.0f);
+                                target.getWorld().spawnParticle(Particle.WATER_SPLASH,
+                                        target.getLocation().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
                             }
-                            drowned.setPose(Pose.STANDING);
+                            setPoseSafely(drowned, Pose.STANDING);
                             cancel();
                         }
                         if (drowned.getPose() != Pose.SPIN_ATTACK) {
-                            drowned.setPose(Pose.SPIN_ATTACK);
+                            setPoseSafely(drowned, Pose.SPIN_ATTACK);
                         }
 
                         ticks++;
                     } catch (Exception e) {
-                        if (drowned != null) drowned.setPose(Pose.STANDING);
+                        if (drowned != null)
+                            setPoseSafely(drowned, Pose.STANDING);
                         cancel();
                     }
                 }

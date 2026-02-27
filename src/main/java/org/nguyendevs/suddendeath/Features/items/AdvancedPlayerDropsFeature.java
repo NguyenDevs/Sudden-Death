@@ -30,6 +30,8 @@ import java.util.UUID;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+@SuppressWarnings("deprecation")
+
 public class AdvancedPlayerDropsFeature extends AbstractFeature {
 
     private SkinsRestorer skinsRestorer;

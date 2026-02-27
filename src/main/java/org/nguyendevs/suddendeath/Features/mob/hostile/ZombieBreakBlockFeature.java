@@ -27,6 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class ZombieBreakBlockFeature extends AbstractFeature {
 
     private final Map<UUID, BukkitTask> activeBreakingTasks = new ConcurrentHashMap<>();

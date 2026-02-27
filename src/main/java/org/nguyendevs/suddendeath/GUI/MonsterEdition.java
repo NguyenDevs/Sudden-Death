@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class MonsterEdition extends PluginInventory {
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final int[] AVAILABLE_SLOTS = { 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39,

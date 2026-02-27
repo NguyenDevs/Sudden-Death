@@ -24,6 +24,8 @@ import org.nguyendevs.suddendeath.Utils.NoInteractItemEntity;
 import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class SkeletonFeatures extends AbstractFeature {
 
     private static final double TICK_INTERVAL = 0.5;
@@ -58,14 +60,19 @@ public class SkeletonFeatures extends AbstractFeature {
 
     @EventHandler
     public void onSkeletonShoot(EntityShootBowEvent event) {
-        if (!(event.getEntity() instanceof Skeleton skeleton)) return;
-        if (!(event.getProjectile() instanceof Arrow)) return;
-        if (!Feature.BONE_GRENADES.isEnabled(skeleton)) return;
-        if (!(skeleton.getTarget() instanceof Player target)) return;
+        if (!(event.getEntity() instanceof Skeleton skeleton))
+            return;
+        if (!(event.getProjectile() instanceof Arrow))
+            return;
+        if (!Feature.BONE_GRENADES.isEnabled(skeleton))
+            return;
+        if (!(skeleton.getTarget() instanceof Player target))
+            return;
 
         try {
             double chance = Feature.BONE_GRENADES.getDouble("chance-percent") / 100.0;
-            if (RANDOM.nextDouble() >= chance) return;
+            if (RANDOM.nextDouble() >= chance)
+                return;
 
             event.setCancelled(true);
             double damage = Feature.BONE_GRENADES.getDouble("damage");
@@ -78,6 +85,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
             new BukkitRunnable() {
                 double ticks = 0;
+
                 @Override
                 public void run() {
                     try {
@@ -115,14 +123,19 @@ public class SkeletonFeatures extends AbstractFeature {
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player player)) return;
-        if (!(event.getDamager() instanceof Arrow arrow)) return;
-        if (!(arrow.getShooter() instanceof Skeleton)) return;
-        if (!Feature.SHOCKING_SKELETON_ARROWS.isEnabled(player)) return;
+        if (!(event.getEntity() instanceof Player player))
+            return;
+        if (!(event.getDamager() instanceof Arrow arrow))
+            return;
+        if (!(arrow.getShooter() instanceof Skeleton))
+            return;
+        if (!Feature.SHOCKING_SKELETON_ARROWS.isEnabled(player))
+            return;
 
         try {
             double chancePercent = Feature.SHOCKING_SKELETON_ARROWS.getDouble("chance-percent");
-            if (Math.random() * 100 > chancePercent) return;
+            if (Math.random() * 100 > chancePercent)
+                return;
 
             applyShockingArrows(player);
         } catch (Exception e) {
@@ -136,6 +149,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
         new BukkitRunnable() {
             double ticks = 0;
+
             @Override
             public void run() {
                 try {
@@ -144,7 +158,8 @@ public class SkeletonFeatures extends AbstractFeature {
                         Location particleLoc = loc.clone().add(Math.cos(ticks), 1, Math.sin(ticks));
                         particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 0);
                     }
-                    if (ticks >= Math.PI * 2) cancel();
+                    if (ticks >= Math.PI * 2)
+                        cancel();
                 } catch (Exception e) {
                     cancel();
                 }
@@ -153,6 +168,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
         new BukkitRunnable() {
             int ticksPassed = 0;
+
             @Override
             public void run() {
                 try {
@@ -161,7 +177,14 @@ public class SkeletonFeatures extends AbstractFeature {
                         cancel();
                         return;
                     }
-                    player.playHurtAnimation(0.003f);
+                    try {
+                        player.getClass().getMethod("playHurtAnimation", float.class).invoke(player, 0.003f);
+                    } catch (Exception e) {
+                        try {
+                            player.getClass().getMethod("playHurtAnimation").invoke(player);
+                        } catch (Exception ignored) {
+                        }
+                    }
                 } catch (Exception e) {
                     cancel();
                 }
@@ -170,6 +193,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
         new BukkitRunnable() {
             int playCount = 0;
+
             @Override
             public void run() {
                 try {
@@ -187,8 +211,10 @@ public class SkeletonFeatures extends AbstractFeature {
     }
 
     private void loop3s_skeleton(Skeleton skeleton) {
-        if (skeleton == null || skeleton.getHealth() <= 0 || !(skeleton.getTarget() instanceof Player target)) return;
-        if (!target.getWorld().equals(skeleton.getWorld())) return;
+        if (skeleton == null || skeleton.getHealth() <= 0 || !(skeleton.getTarget() instanceof Player target))
+            return;
+        if (!target.getWorld().equals(skeleton.getWorld()))
+            return;
 
         if (RANDOM.nextDouble() < 0.5) {
             double damage = Feature.BONE_WIZARDS.getDouble("fireball-damage");
@@ -201,6 +227,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
             new BukkitRunnable() {
                 double ticks = 0;
+
                 @Override
                 public void run() {
                     try {
@@ -223,8 +250,11 @@ public class SkeletonFeatures extends AbstractFeature {
                                 }
                             }
                         }
-                        if (ticks > MAX_TICKS) cancel();
-                    } catch (Exception e) { cancel(); }
+                        if (ticks > MAX_TICKS)
+                            cancel();
+                    } catch (Exception e) {
+                        cancel();
+                    }
                 }
             }.runTaskTimer(plugin, 0, 1);
 
@@ -243,6 +273,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
             new BukkitRunnable() {
                 double ticks = 0;
+
                 @Override
                 public void run() {
                     try {
@@ -274,7 +305,9 @@ public class SkeletonFeatures extends AbstractFeature {
                             }
                             cancel();
                         }
-                    } catch (Exception e) { cancel(); }
+                    } catch (Exception e) {
+                        cancel();
+                    }
                 }
             }.runTaskTimer(plugin, 0, 1);
         } catch (Exception e) {

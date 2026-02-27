@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
+
 public class SuddenDeathMobCompletion implements TabCompleter {
     private static final String PERMISSION_OP = "suddendeath.admin";
     private static final List<String> MAIN_COMMANDS = Arrays.asList("create", "delete", "edit", "help", "kill", "list",

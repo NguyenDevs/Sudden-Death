@@ -16,6 +16,8 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.*;
 
+@SuppressWarnings("deprecation")
+
 public class CrafterInventory implements Listener {
     private static final int RECIPE_INVENTORY_SIZE = 45;
     private static final int MAIN_INVENTORY_SIZE = 9;

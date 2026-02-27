@@ -27,6 +27,8 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class SuddenDeathStatusCommand implements CommandExecutor {
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final String PERMISSION_STATUS = "suddendeath.admin";

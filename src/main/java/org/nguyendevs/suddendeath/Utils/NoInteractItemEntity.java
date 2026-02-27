@@ -12,6 +12,8 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class NoInteractItemEntity implements Listener {
 	private static final int MAX_PICKUP_DELAY = 1_000_000;
 	private final Item item;

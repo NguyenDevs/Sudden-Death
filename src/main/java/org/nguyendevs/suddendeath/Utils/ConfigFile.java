@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class ConfigFile {
     private static final boolean DEFAULT_UPDATE_NOTIFY = true;
 

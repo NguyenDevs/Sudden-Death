@@ -16,6 +16,8 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import org.bukkit.ChatColor;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class FreddyFeature extends AbstractFeature {
 
     @Override

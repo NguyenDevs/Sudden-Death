@@ -23,6 +23,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class WhispersOfTheDesertFeature extends AbstractFeature {
 
     private static final Set<String> ARID_BIOMES = Set.of(

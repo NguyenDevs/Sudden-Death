@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
+
 public enum Message {
 	PREFIX("&6[&cSudden&4Death&6]"),
 	NOW_BLEEDING("&7You are now &cbleeding&7. Quickly find a &bBandage&7 or you'll die within seconds."),

@@ -16,6 +16,8 @@ import org.nguyendevs.suddendeath.Player.ExperienceCalculator;
 import org.nguyendevs.suddendeath.Utils.*;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class SlimeFeatures extends AbstractFeature {
 
     @Override

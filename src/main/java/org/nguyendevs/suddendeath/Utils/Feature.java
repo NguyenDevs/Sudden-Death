@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public enum Feature {
 
 	ABYSSAL_VORTEX(

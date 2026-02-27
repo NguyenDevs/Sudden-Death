@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class HungerNauseaFeature extends AbstractFeature {
 
     private final Set<UUID> starvingPlayers = new HashSet<>();

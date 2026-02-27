@@ -23,6 +23,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class CustomMobs implements Listener {
     private static final Random RANDOM = new Random();
     private static final String METADATA_KEY = "SDCustomMob";

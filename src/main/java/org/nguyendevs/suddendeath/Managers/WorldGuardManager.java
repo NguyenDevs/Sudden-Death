@@ -14,6 +14,8 @@ import org.nguyendevs.suddendeath.Hook.WorldGuardOn;
 
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class WorldGuardManager {
     private final SuddenDeath plugin;
     private WGPlugin provider;

@@ -21,6 +21,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class PhysicEnderPearlFeature extends AbstractFeature {
 
     private final Set<UUID> allowed = new HashSet<>();

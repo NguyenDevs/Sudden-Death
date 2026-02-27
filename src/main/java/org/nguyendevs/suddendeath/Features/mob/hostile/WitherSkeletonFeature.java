@@ -15,6 +15,8 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.UUID;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class WitherSkeletonFeature extends AbstractFeature {
 
     @Override

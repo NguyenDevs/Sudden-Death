@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
+
 public enum CustomItem {
 	BANDAGE(
 			Material.PAPER,

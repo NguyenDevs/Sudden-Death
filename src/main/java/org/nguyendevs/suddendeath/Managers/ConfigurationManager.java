@@ -16,6 +16,8 @@ import java.io.InputStreamReader;
 import java.util.*;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class ConfigurationManager {
     private final SuddenDeath plugin;
     public ConfigFile messages;

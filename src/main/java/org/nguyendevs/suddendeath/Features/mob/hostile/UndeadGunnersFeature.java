@@ -14,6 +14,8 @@ import org.nguyendevs.suddendeath.Utils.Feature;
 
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class UndeadGunnersFeature extends AbstractFeature {
 
     private static final double TICK_INTERVAL = 0.5;

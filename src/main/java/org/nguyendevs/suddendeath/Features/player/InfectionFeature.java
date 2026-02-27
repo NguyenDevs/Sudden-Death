@@ -17,6 +17,8 @@ import org.nguyendevs.suddendeath.Hook.CustomFlag;
 import org.bukkit.entity.*;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class InfectionFeature extends AbstractFeature {
 
     @Override

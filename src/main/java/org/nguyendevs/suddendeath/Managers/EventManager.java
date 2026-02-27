@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 
+@SuppressWarnings("deprecation")
+
 public class EventManager extends BukkitRunnable {
     private static final Map<String, StatusRetriever> statusMap = new HashMap<>();
     private static final Random random = new Random();

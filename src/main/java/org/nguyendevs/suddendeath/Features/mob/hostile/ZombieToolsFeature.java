@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+@SuppressWarnings("deprecation")
+
 public class ZombieToolsFeature extends AbstractFeature {
 
     private enum ToolTier {

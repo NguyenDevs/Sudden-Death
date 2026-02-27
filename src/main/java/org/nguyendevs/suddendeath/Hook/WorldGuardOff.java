@@ -3,6 +3,8 @@ package org.nguyendevs.suddendeath.Hook;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+@SuppressWarnings("deprecation")
+
 public class WorldGuardOff implements WGPlugin {
 
 	@Override
