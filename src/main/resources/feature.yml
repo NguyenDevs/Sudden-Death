@@ -41,9 +41,11 @@ features:
     lore:
       - "&9Night &7has #chance#% chance to turn red."
       - "&fPlayers &7take #damage-percent#% more damage"
-      - "and are slowed for #slow-duration#s."
+      - "and suffer &cWeakness #weakness-amplifier#&7."
+      - "&7Players are stunned every 2 seconds for 1 second."
       - "&cMonsters &7spawn with &3Speed #speed#&7,"
       - "&6Strength #increase-damage# &7and &8Resistance #damage-resistance#&7."
+      - "Zombies have #zombie-tool-bonus-percent#% extra tool-spawn rate."
   blood-screen:
     name: "Blood Screen"
     lore:

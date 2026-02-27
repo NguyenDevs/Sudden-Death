@@ -105,20 +105,22 @@ public enum Feature {
 			new String[] {
 					"&9Night &7has #chance#% chance to turn red.",
 					"&fPlayers &7take #damage-percent#% more damage",
-					"and are slowed for #slow-duration#s.",
+					"and suffer &cWeakness #weakness-amplifier#&7.",
+					"&7Players are stunned every 2 seconds for 1 second.",
 					"&cMonsters &7spawn with &3Speed #speed#&7,",
-					"&6Strength #increase-damage# &7and &8Resistance #damage-resistance#&7."
+					"&6Strength #increase-damage# &7and &8Resistance #damage-resistance#&7.",
+					"Zombies have #zombie-tool-bonus-percent#% extra tool-spawn rate."
 			},
 			"blood-moon",
 			new Modifier[] {
 					new Modifier("chance", 2),
-					new Modifier("drowned-per-chunk", 3),
 					new Modifier("damage-percent", 60),
-					new Modifier("slow-duration", 3),
-					new Modifier("increase-damage", 2),
+					new Modifier("weakness-amplifier", 1),
 					new Modifier("speed", 2),
+					new Modifier("increase-damage", 2),
 					new Modifier("damage-resistance", 2),
-					new Modifier("max-mobs-per-chunk", 10)
+					new Modifier("stun-duration", 20),
+					new Modifier("zombie-tool-bonus-percent", 30)
 			},
 			BloodMoon::new),
 
