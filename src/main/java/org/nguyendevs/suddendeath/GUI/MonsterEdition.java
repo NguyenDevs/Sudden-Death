@@ -105,7 +105,12 @@ public class MonsterEdition extends PluginInventory {
         lore.add("");
         switch (stat.getType()) {
             case DOUBLE:
-                lore.add(translateColors("&7Current Value: &f" + config.getDouble(id + "." + stat.getPath(), 0.0)));
+                double value = config.getDouble(id + "." + stat.getPath(), 0.0);
+                lore.add(translateColors("&7Current Value: &f" + value));
+                if (stat == MobStat.SPAWN_COEFFICIENT) {
+                    double actualSpawnRate = calculateActualSpawnRate(value, config);
+                    lore.add(translateColors("&7- Actual Spawn Rate: &f" + Math.round(actualSpawnRate) + "%"));
+                }
                 lore.add("");
                 lore.add(translateColors("&e► Left click to change this value."));
                 break;
@@ -122,6 +127,23 @@ public class MonsterEdition extends PluginInventory {
                 break;
         }
         return lore;
+    }
+
+    private double calculateActualSpawnRate(double customMobWeight, FileConfiguration config) {
+        double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
+                .getDouble("default-spawn-coef." + type.name(), 0.0);
+
+        double totalWeight = defaultSpawnCoef;
+        for (String key : config.getKeys(false)) {
+            ConfigurationSection section = config.getConfigurationSection(key);
+            if (section == null || !section.contains("spawn-coef"))
+                continue;
+            totalWeight += section.getDouble("spawn-coef", 0.0);
+        }
+
+        if (totalWeight <= 0)
+            return 0.0;
+        return (customMobWeight / totalWeight) * 100.0;
     }
 
     private void addItemStackLore(List<String> lore, FileConfiguration config, MobStat stat) {
