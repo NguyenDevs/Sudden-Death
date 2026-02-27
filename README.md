@@ -96,6 +96,7 @@ Elevate your server’s challenge and excitement with these tailored monster-mak
 - `/sdmob edit <type> <mob-id>` opens the Mob Editor GUI.
 - `/sdmob list type` shows supported monster types.
 - `/sdmob list <type>` shows every custom mob of a certain type.
+- `/sdmob spawn <type> <mob-id> <amount>` spawn an amount of custom mob
 
 ## Permissions
 - `suddendeath.status` allow you to open the status GUI. (default:true)
