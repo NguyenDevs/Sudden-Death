@@ -5,6 +5,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,12 +20,23 @@ import org.nguyendevs.suddendeath.Utils.ConfigFile;
 import org.nguyendevs.suddendeath.Utils.ItemUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 public class CustomMobs implements Listener {
     private static final Random RANDOM = new Random();
     private static final String METADATA_KEY = "SDCustomMob";
     private static final int EFFECT_DURATION = 9999999;
+
+    // Config caching
+    private static final Map<EntityType, Map<String, Double>> SPAWN_COEFS_CACHE = new ConcurrentHashMap<>();
+    private static final Map<EntityType, Map<String, String>> SPAWN_TYPES_CACHE = new ConcurrentHashMap<>();
+
+    public static void clearCache() {
+        SPAWN_COEFS_CACHE.clear();
+        SPAWN_TYPES_CACHE.clear();
+    }
+
     /** Null on servers older than 1.21 where TRIAL_SPAWNER doesn't exist. */
     private static final CreatureSpawnEvent.SpawnReason TRIAL_SPAWNER_REASON;
     static {
@@ -58,36 +70,48 @@ public class CustomMobs implements Listener {
             if (mobConfigFile == null)
                 return;
 
-            FileConfiguration config = mobConfigFile.getConfig();
+            Map<String, Double> spawnCoefficients = SPAWN_COEFS_CACHE.computeIfAbsent(entity.getType(), type -> {
+                Map<String, Double> map = new LinkedHashMap<>();
+                double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
+                        .getDouble("default-spawn-coef." + type.name(), 0.0);
+                map.put("DEFAULT_KEY", defaultSpawnCoef);
 
-            double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
-                    .getDouble("default-spawn-coef." + entity.getType().name(), 0.0);
-            Map<String, Double> spawnCoefficients = new LinkedHashMap<>();
-            spawnCoefficients.put("DEFAULT_KEY", defaultSpawnCoef);
-
-            for (String key : config.getKeys(false)) {
-                ConfigurationSection section = config.getConfigurationSection(key);
-                if (section == null || !section.contains("spawn-coef")) {
-                    continue;
+                FileConfiguration c = mobConfigFile.getConfig();
+                for (String key : c.getKeys(false)) {
+                    ConfigurationSection section = c.getConfigurationSection(key);
+                    if (section == null || !section.contains("spawn-coef")) {
+                        continue;
+                    }
+                    double spawnCoef = section.getDouble("spawn-coef", 0.0);
+                    map.put(key, map.getOrDefault(key, 0.0) + spawnCoef);
                 }
-                double spawnCoef = section.getDouble("spawn-coef", 0.0);
-                spawnCoefficients.put(key, spawnCoefficients.getOrDefault(key, 0.0) + spawnCoef);
-            }
+                return map;
+            });
 
             String selectedId = selectCustomMobType(spawnCoefficients);
             if (selectedId.isEmpty() || "DEFAULT_KEY".equalsIgnoreCase(selectedId)) {
                 return;
             }
 
-            ConfigurationSection selectedSection = config.getConfigurationSection(selectedId);
-            if (selectedSection != null) {
-                String spawnType = selectedSection.getString("spawn-type", "All");
-                CreatureSpawnEvent.SpawnReason reason = event.getSpawnReason();
-                if (!isSpawnTypeAllowed(spawnType, reason)) {
-                    return;
+            Map<String, String> spawnTypes = SPAWN_TYPES_CACHE.computeIfAbsent(entity.getType(), type -> {
+                Map<String, String> map = new HashMap<>();
+                FileConfiguration c = mobConfigFile.getConfig();
+                for (String key : c.getKeys(false)) {
+                    ConfigurationSection section = c.getConfigurationSection(key);
+                    if (section != null) {
+                        map.put(key, section.getString("spawn-type", "All"));
+                    }
                 }
+                return map;
+            });
+
+            String spawnType = spawnTypes.getOrDefault(selectedId, "All");
+            CreatureSpawnEvent.SpawnReason reason = event.getSpawnReason();
+            if (!isSpawnTypeAllowed(spawnType, reason)) {
+                return;
             }
 
+            FileConfiguration config = mobConfigFile.getConfig();
             applyCustomMobProperties(entity, config, selectedId);
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,

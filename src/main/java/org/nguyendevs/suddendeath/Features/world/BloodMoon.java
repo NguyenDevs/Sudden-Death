@@ -29,6 +29,7 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Utils.Feature;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -274,52 +275,39 @@ public class BloodMoon extends WorldEventHandler {
 			if (blocks.isEmpty())
 				return;
 
-			int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
-			int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-			for (Block b : blocks) {
-				minX = Math.min(minX, b.getX());
-				maxX = Math.max(maxX, b.getX());
-				minY = Math.min(minY, b.getY());
-				maxY = Math.max(maxY, b.getY());
-				minZ = Math.min(minZ, b.getZ());
-				maxZ = Math.max(maxZ, b.getZ());
-			}
-			// Expand by 1 to catch wall blocks just outside the carved zone
-			final int fx0 = minX - 1, fy0 = minY - 1, fz0 = minZ - 1;
-			final int fx1 = maxX + 1, fy1 = maxY + 1, fz1 = maxZ + 1;
-			final World world = event.getEntity().getWorld();
-
 			// Let explosion carve normally — decorate 1 tick later
 			Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-				for (int x = fx0; x <= fx1; x++) {
-					for (int y = fy0; y <= fy1; y++) {
-						for (int z = fz0; z <= fz1; z++) {
-							Block block = world.getBlockAt(x, y, z);
-							Material type = block.getType();
+				Set<Block> craterSet = new HashSet<>(blocks);
 
-							if (isAir(type)) {
-								// --- Lava at crater bottom ---
-								// Condition: upper face = AIR, all other 5 faces = solid (not air)
-								Block above = block.getRelative(0, 1, 0);
-								Block below = block.getRelative(0, -1, 0);
-								Block north = block.getRelative(-1, 0, 0);
-								Block south = block.getRelative(1, 0, 0);
-								Block east = block.getRelative(0, 0, 1);
-								Block west = block.getRelative(0, 0, -1);
-								if (isAir(above.getType())
-										&& !isAir(below.getType())
-										&& !isAir(north.getType())
-										&& !isAir(south.getType())
-										&& !isAir(east.getType())
-										&& !isAir(west.getType())) {
-									block.setType(Material.LAVA);
-								}
-							} else {
-								// --- Crater wall decoration ---
-								// Solid block adjacent to at least one air block → 30% chance replace
-								if (RANDOM.nextDouble() < 0.30 && hasAdjacentAir(block)) {
-									block.setType(CRATER_BLOCKS[RANDOM.nextInt(CRATER_BLOCKS.length)]);
-								}
+				for (Block b : blocks) {
+					// We only check positions that just became AIR due to the explosion
+					Block current = world.getBlockAt(b.getX(), b.getY(), b.getZ());
+					if (!isAir(current.getType()))
+						continue;
+
+					// Lava logic: Needs solid blocks on 5 sides, open on top
+					Block below = current.getRelative(0, -1, 0);
+					if (!isAir(below.getType())
+							&& !isAir(current.getRelative(-1, 0, 0).getType())
+							&& !isAir(current.getRelative(1, 0, 0).getType())
+							&& !isAir(current.getRelative(0, 0, -1).getType())
+							&& !isAir(current.getRelative(0, 0, 1).getType())
+							&& isAir(current.getRelative(0, 1, 0).getType())) {
+						current.setType(Material.LAVA);
+					}
+
+					// Wall decoration logic: Look at adjacent blocks
+					Block[] neighbors = {
+							current.getRelative(0, -1, 0), current.getRelative(0, 1, 0),
+							current.getRelative(-1, 0, 0), current.getRelative(1, 0, 0),
+							current.getRelative(0, 0, -1), current.getRelative(0, 0, 1)
+					};
+
+					for (Block neighbor : neighbors) {
+						if (!isAir(neighbor.getType()) && !craterSet.contains(neighbor)) {
+							// It's a solid block adjacent to the blast, try to decorate
+							if (RANDOM.nextDouble() < 0.30) {
+								neighbor.setType(CRATER_BLOCKS[RANDOM.nextInt(CRATER_BLOCKS.length)]);
 							}
 						}
 					}

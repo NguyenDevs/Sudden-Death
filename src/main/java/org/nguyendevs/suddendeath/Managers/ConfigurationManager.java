@@ -74,6 +74,7 @@ public class ConfigurationManager {
         features.reload();
 
         loadMobConfigs();
+        org.nguyendevs.suddendeath.Features.CustomMobs.clearCache();
 
         initializeDefaultMessages();
         initializeDefaultItems();
