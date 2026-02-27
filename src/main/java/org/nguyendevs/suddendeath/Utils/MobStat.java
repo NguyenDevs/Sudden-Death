@@ -84,7 +84,18 @@ public enum MobStat {
             "Spawn Coefficient",
             new String[]{
                     "Spawn Coefficient determines the frequency",
-                    "at which your monster spawns."
+                    "at which your monster spawns.",
+                    "",
+                    "Formula:",
+                    "Chance = (This Mob's Weight) / (Total Weight)",
+                    "Total Weight = Vanilla Weight + All Custom Mobs' Weights",
+                    "",
+                    "Example:",
+                    "- Vanilla Zombie Weight: 20",
+                    "- Custom Zombie Weight: 50",
+                    "",
+                    "> Custom Zombie Spawn Chance = 50 / (20 + 50) = 50/70",
+                    "> Approximately 71% chance to spawn instead of Vanilla."
             }
     ),
     MAXIMUM_HEALTH(
