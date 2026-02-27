@@ -106,10 +106,10 @@ public class MonsterEdition extends PluginInventory {
         switch (stat.getType()) {
             case DOUBLE:
                 double value = config.getDouble(id + "." + stat.getPath(), 0.0);
-                lore.add(translateColors("&7Current Value: &f" + value));
+                lore.add(translateColors("&7Current Value: &a" + value));
                 if (stat == MobStat.SPAWN_COEFFICIENT) {
                     double actualSpawnRate = calculateActualSpawnRate(value, config);
-                    lore.add(translateColors("&7- Actual Spawn Rate: &f" + Math.round(actualSpawnRate) + "%"));
+                    lore.add(translateColors("&7Actual Spawn Rate: &b" + Math.round(actualSpawnRate) + "%"));
                 }
                 lore.add("");
                 lore.add(translateColors("&e► Left click to change this value."));
@@ -118,7 +118,7 @@ public class MonsterEdition extends PluginInventory {
                 addItemStackLore(lore, config, stat);
                 break;
             case STRING:
-                lore.add(translateColors("&7Current Value: &f" + config.getString(id + "." + stat.getPath(), "")));
+                lore.add(translateColors("&7Current Value: &a" + config.getString(id + "." + stat.getPath(), "")));
                 lore.add("");
                 lore.add(translateColors("&e► Left click to change this value."));
                 break;
