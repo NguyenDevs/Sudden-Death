@@ -29,6 +29,14 @@ repositories {
         name 'codemc'
         url 'https://repo.codemc.org/repository/maven-public/'
     }
+    maven {
+        name 'jitpack'
+        url 'https://jitpack.io'
+    }
+    maven {
+        name 'bg-software'
+        url 'https://repo.bg-software.com/repository/api/'
+    }
 }
 
 dependencies {
@@ -42,6 +50,12 @@ dependencies {
     compileOnly 'me.clip:placeholderapi:2.11.6'
     implementation 'org.apache.logging.log4j:log4j-api:2.23.1'
     implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+
+    // Claim protection hooks (optional runtime dependencies)
+    compileOnly 'com.github.angeschossen:LandsAPI:7.6.1'
+    compileOnly('com.github.SaberLLC:Saber-Factions:2.8.8-STABLE') { transitive = false }
+    compileOnly 'com.bgsoftware:SuperiorSkyblockAPI:2024.2'
+    compileOnly('com.github.TechFortress:GriefPrevention:16.18.6') { transitive = false }
 }
 
 def targetJavaVersion = 17

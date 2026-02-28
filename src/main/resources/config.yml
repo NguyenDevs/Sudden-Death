@@ -1,3 +1,18 @@
 #SETTING FOR SUDDEN DEATH
 update-notify: true
+
+# CLAIM PROTECTION HOOKS
+# Enable integration with claiming plugins to protect claimed areas
+# from Sudden Death features (zombie block breaking, meteor rain, etc.)
+# The plugin will auto-detect available hooks at startup.
+claim-protection:
+  # Master toggle - set to false to disable all claim checks
+  enabled: true
+  # Individual hook toggles - only checked if the plugin is present on the server
+  lands: true
+  saber-factions: true
+  superior-skyblock: true
+  grief-prevention: true
+  # WorldGuard is handled separately via the existing flag system (sds-break, sds-event, etc.)
+
 #WORLD SETTING FOR SUDDEN DEATH

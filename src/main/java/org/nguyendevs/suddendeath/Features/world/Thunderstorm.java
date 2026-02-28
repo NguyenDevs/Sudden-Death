@@ -51,6 +51,12 @@ public class Thunderstorm extends WorldEventHandler {
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
 				return;
 			}
+
+			// Check claim protection - don't amplify damage in claimed areas
+			if (SuddenDeath.getInstance().getClaimProtection() != null
+					&& SuddenDeath.getInstance().getClaimProtection().isProtected(player.getLocation())) {
+				return;
+			}
 			double damageMultiplier = 1 + (Feature.THUNDERSTORM.getDouble("damage-percent") / 100.0);
 			event.setDamage(event.getDamage() * damageMultiplier);
 		} catch (Exception e) {
@@ -69,7 +75,14 @@ public class Thunderstorm extends WorldEventHandler {
 			LightningStrike strike = event.getLightning();
 			Location strikeLocation = strike.getLocation();
 
-			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(strikeLocation, CustomFlag.SDS_EVENT)) {
+			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowedAtLocation(strikeLocation,
+					CustomFlag.SDS_EVENT)) {
+				return;
+			}
+
+			// Check claim protection - don't apply custom effects in claimed areas
+			if (SuddenDeath.getInstance().getClaimProtection() != null
+					&& SuddenDeath.getInstance().getClaimProtection().isProtected(strikeLocation)) {
 				return;
 			}
 
@@ -110,6 +123,12 @@ public class Thunderstorm extends WorldEventHandler {
 				}
 
 				if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT)) {
+					continue;
+				}
+
+				// Check claim protection - don't target players in claimed areas
+				if (SuddenDeath.getInstance().getClaimProtection() != null
+						&& SuddenDeath.getInstance().getClaimProtection().isProtected(player.getLocation())) {
 					continue;
 				}
 

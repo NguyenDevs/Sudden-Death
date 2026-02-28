@@ -14,6 +14,8 @@ import org.nguyendevs.suddendeath.Commands.completion.SuddenDeathMobCompletion;
 import org.nguyendevs.suddendeath.Commands.completion.SuddenDeathStatusCompletion;
 import org.nguyendevs.suddendeath.Utils.SuddenDeathPlaceholders;
 import org.nguyendevs.suddendeath.Hook.WGPlugin;
+import org.nguyendevs.suddendeath.Hook.WorldGuardOff;
+import org.nguyendevs.suddendeath.Hook.claim.ClaimProtectionManager;
 import org.nguyendevs.suddendeath.Features.CustomMobs;
 import org.nguyendevs.suddendeath.GUI.listener.GuiListener;
 import org.nguyendevs.suddendeath.Managers.ConfigurationManager;
@@ -42,12 +44,18 @@ public class SuddenDeath extends JavaPlugin {
     private WorldGuardManager worldGuardManager;
     private FeatureManager featureManager;
     private EventManager eventManager;
+    private ClaimProtectionManager claimProtectionManager;
 
     @Override
     public void onLoad() {
         instance = this;
-        this.worldGuardManager = new WorldGuardManager(this);
-        this.worldGuardManager.registerFlags();
+        try {
+            this.worldGuardManager = new WorldGuardManager(this);
+            this.worldGuardManager.registerFlags();
+        } catch (NoClassDefFoundError e) {
+            // WorldGuard is not installed — manager will be created lazily in onEnable
+            this.worldGuardManager = null;
+        }
     }
 
     @Override
@@ -61,7 +69,19 @@ public class SuddenDeath extends JavaPlugin {
             this.configManager = new ConfigurationManager(this);
             this.configManager.initialize();
 
-            this.worldGuardManager.initialize();
+            if (this.worldGuardManager == null) {
+                try {
+                    this.worldGuardManager = new WorldGuardManager(this);
+                } catch (NoClassDefFoundError ignored) {
+                    // WorldGuard classes not available at all
+                }
+            }
+            if (this.worldGuardManager != null) {
+                this.worldGuardManager.initialize();
+            }
+
+            this.claimProtectionManager = new ClaimProtectionManager(this);
+            this.claimProtectionManager.initialize();
 
             registerListeners();
             hookIntoPlaceholderAPI();
@@ -195,11 +215,18 @@ public class SuddenDeath extends JavaPlugin {
     }
 
     public WGPlugin getWorldGuard() {
+        if (worldGuardManager == null) {
+            return new WorldGuardOff();
+        }
         return worldGuardManager.getProvider();
     }
 
     public EventManager getEventManager() {
         return eventManager;
+    }
+
+    public ClaimProtectionManager getClaimProtection() {
+        return claimProtectionManager;
     }
 
     public void printLogo() {

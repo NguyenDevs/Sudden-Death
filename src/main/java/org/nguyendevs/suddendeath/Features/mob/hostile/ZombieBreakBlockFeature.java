@@ -21,6 +21,7 @@ import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Hook.CustomFlag;
+import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -64,8 +65,10 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                                 long randomDelay = ThreadLocalRandom.current().nextLong(0, 5);
                                 Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, () -> {
                                     try {
-                                        if (zombie.isValid() && (zombie.getTarget() instanceof Player || zombie.getTarget() instanceof Villager)) {
-                                            if (plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(), CustomFlag.SDS_BREAK)) {
+                                        if (zombie.isValid() && (zombie.getTarget() instanceof Player
+                                                || zombie.getTarget() instanceof Villager)) {
+                                            if (plugin.getWorldGuard().isFlagAllowedAtLocation(zombie.getLocation(),
+                                                    CustomFlag.SDS_BREAK)) {
                                                 processZombieBreakBlock(zombie);
                                             }
                                         }
@@ -145,7 +148,8 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityTarget(EntityTargetEvent event) {
-        if (!(event.getEntity() instanceof Zombie zombie)) return;
+        if (!(event.getEntity() instanceof Zombie zombie))
+            return;
         UUID zombieUUID = zombie.getUniqueId();
 
         if (event.getTarget() instanceof Player player) {
@@ -161,13 +165,15 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
             UUID targetUUID = persistentTargets.get(zombieUUID);
             Player persistentPlayer = Bukkit.getPlayer(targetUUID);
             if (persistentPlayer != null && persistentPlayer.isOnline()) {
-                if (persistentPlayer.getGameMode() != GameMode.SURVIVAL && persistentPlayer.getGameMode() != GameMode.ADVENTURE) {
+                if (persistentPlayer.getGameMode() != GameMode.SURVIVAL
+                        && persistentPlayer.getGameMode() != GameMode.ADVENTURE) {
                     persistentTargets.remove(zombieUUID);
                     return;
                 }
 
                 if (zombie.getWorld().equals(persistentPlayer.getWorld()) &&
-                        zombie.getLocation().distanceSquared(persistentPlayer.getLocation()) <= getMaxTargetDistanceSquared()) {
+                        zombie.getLocation()
+                                .distanceSquared(persistentPlayer.getLocation()) <= getMaxTargetDistanceSquared()) {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         if (zombie.isValid() && zombie.getTarget() == null) {
                             zombie.setTarget(persistentPlayer);
@@ -180,7 +186,8 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
     }
 
     private void searchForNearbyPlayers(Zombie zombie) {
-        if (!zombie.isValid()) return;
+        if (!zombie.isValid())
+            return;
 
         UUID zombieUUID = zombie.getUniqueId();
         Long lastSearch = lastTargetSearchTime.get(zombieUUID);
@@ -204,8 +211,10 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
 
         Location zombieLoc = zombie.getLocation();
         for (Player player : zombie.getWorld().getPlayers()) {
-            if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) continue;
-            if (!player.isOnline() || player.isDead()) continue;
+            if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE)
+                continue;
+            if (!player.isOnline() || player.isDead())
+                continue;
 
             double distSq = zombieLoc.distanceSquared(player.getLocation());
             if (distSq < closestDistanceSq) {
@@ -231,10 +240,12 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
     private void maintainPersistentTargets() {
         persistentTargets.entrySet().removeIf(entry -> {
             Entity zombieEntity = Bukkit.getEntity(entry.getKey());
-            if (!(zombieEntity instanceof Zombie zombie) || !zombie.isValid()) return true;
+            if (!(zombieEntity instanceof Zombie zombie) || !zombie.isValid())
+                return true;
 
             Player target = Bukkit.getPlayer(entry.getValue());
-            if (target == null || !target.isOnline()) return true;
+            if (target == null || !target.isOnline())
+                return true;
 
             if (target.getGameMode() != GameMode.SURVIVAL && target.getGameMode() != GameMode.ADVENTURE) {
                 zombie.setTarget(null);
@@ -251,36 +262,51 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                 return true;
             }
 
-            if (zombie.getTarget() == null) zombie.setTarget(target);
+            if (zombie.getTarget() == null)
+                zombie.setTarget(target);
             return false;
         });
     }
 
     private void processZombieBreakBlock(Zombie zombie) {
         UUID zombieUUID = zombie.getUniqueId();
-        if (activeBreakingTasks.containsKey(zombieUUID)) return;
+        if (activeBreakingTasks.containsKey(zombieUUID))
+            return;
         Bukkit.getScheduler().runTask(plugin, () -> applyZombieBreakBlock(zombie));
     }
 
     private void applyZombieBreakBlock(Zombie zombie) {
-        if (zombie == null || zombie.getHealth() <= 0) return;
+        if (zombie == null || zombie.getHealth() <= 0)
+            return;
         UUID zombieUUID = zombie.getUniqueId();
-        if (activeBreakingTasks.containsKey(zombieUUID)) return;
+        if (activeBreakingTasks.containsKey(zombieUUID))
+            return;
 
         LivingEntity target = getZombieTarget(zombie);
-        if (target == null) return;
+        if (target == null)
+            return;
 
-        if (!target.getWorld().equals(zombie.getWorld())) return;
+        if (!target.getWorld().equals(zombie.getWorld()))
+            return;
 
         ItemStack itemInHand = zombie.getEquipment().getItemInMainHand();
         Material toolType = itemInHand != null ? itemInHand.getType() : Material.AIR;
-        if (!isValidTool(toolType)) return;
+        if (!isValidTool(toolType))
+            return;
 
         Block targetBlock = selectBlockToBreak(zombie, target, toolType);
-        if (targetBlock == null) return;
+        if (targetBlock == null)
+            return;
+
+        // Check claim protection - don't break blocks in claimed areas
+        if (SuddenDeath.getInstance().getClaimProtection() != null
+                && SuddenDeath.getInstance().getClaimProtection().isProtected(targetBlock.getLocation())) {
+            return;
+        }
 
         double breakTimeTicks = calculateBreakTime(toolType, targetBlock.getType()) * 0.25;
-        if (breakTimeTicks < 5) breakTimeTicks = 5;
+        if (breakTimeTicks < 5)
+            breakTimeTicks = 5;
 
         startBreakingBlock(zombie, target, targetBlock, itemInHand, breakTimeTicks);
     }
@@ -291,17 +317,20 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
             Player persistentPlayer = Bukkit.getPlayer(persistentTargetUUID);
             if (persistentPlayer != null && persistentPlayer.isOnline() &&
                     zombie.getWorld().equals(persistentPlayer.getWorld()) &&
-                    zombie.getLocation().distanceSquared(persistentPlayer.getLocation()) <= getMaxTargetDistanceSquared()) {
-                if (persistentPlayer.getGameMode() == GameMode.SURVIVAL || persistentPlayer.getGameMode() == GameMode.ADVENTURE) {
+                    zombie.getLocation()
+                            .distanceSquared(persistentPlayer.getLocation()) <= getMaxTargetDistanceSquared()) {
+                if (persistentPlayer.getGameMode() == GameMode.SURVIVAL
+                        || persistentPlayer.getGameMode() == GameMode.ADVENTURE) {
                     return persistentPlayer;
                 }
             }
         }
-        if (zombie.getTarget() instanceof Player) return (Player) zombie.getTarget();
-        if (zombie.getTarget() instanceof Villager) return (Villager) zombie.getTarget();
+        if (zombie.getTarget() instanceof Player)
+            return (Player) zombie.getTarget();
+        if (zombie.getTarget() instanceof Villager)
+            return (Villager) zombie.getTarget();
         return null;
     }
-
 
     private Block selectBlockToBreak(Zombie zombie, LivingEntity target, Material toolType) {
         Location zombieEyeLoc = zombie.getEyeLocation();
@@ -318,7 +347,8 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                 if (blockInFrontHead.getType().isSolid() && canBreakBlock(toolType, blockInFrontHead.getType())) {
                     return blockInFrontHead;
                 }
-                if (blockInFrontAboveHead.getType().isSolid() && canBreakBlock(toolType, blockInFrontAboveHead.getType())) {
+                if (blockInFrontAboveHead.getType().isSolid()
+                        && canBreakBlock(toolType, blockInFrontAboveHead.getType())) {
                     return blockInFrontAboveHead;
                 }
                 return null;
@@ -392,13 +422,16 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
     }
 
     private boolean isValidVector(Vector vec) {
-        if (vec == null) return false;
+        if (vec == null)
+            return false;
         double x = vec.getX();
         double y = vec.getY();
         double z = vec.getZ();
 
-        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z)) return false;
-        if (Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z)) return false;
+        if (Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z))
+            return false;
+        if (Double.isInfinite(x) || Double.isInfinite(y) || Double.isInfinite(z))
+            return false;
 
         return vec.lengthSquared() > 0.0001;
     }
@@ -438,11 +471,13 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                         int destroyStage = Math.min(9, (int) ((ticksElapsed / breakTime) * 10));
                         sendBreakAnimation(target, entityId, block, destroyStage);
 
-                        if (ticksElapsed % 2 == 0) zombie.swingMainHand();
+                        if (ticksElapsed % 2 == 0)
+                            zombie.swingMainHand();
 
                         if (ticksElapsed % 4 == 0) {
                             Sound hitSound = block.getType().createBlockData().getSoundGroup().getHitSound();
-                            zombie.getWorld().playSound(block.getLocation(), hitSound, 1.0f, 1.5f + (float)(Math.random() * 0.5));
+                            zombie.getWorld().playSound(block.getLocation(), hitSound, 1.0f,
+                                    1.5f + (float) (Math.random() * 0.5));
                         }
                         return;
                     }
@@ -451,7 +486,8 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                     Sound breakSound = block.getType().createBlockData().getSoundGroup().getBreakSound();
                     zombie.getWorld().playSound(block.getLocation(), breakSound, 1.2f, 1.2f);
                     sendBreakAnimation(target, entityId, block, -1);
-                    zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, block.getLocation().add(0.5, 0.5, 0.5), 50, 0.4, 0.4, 0.4, 0.1, block.getBlockData());
+                    zombie.getWorld().spawnParticle(Particle.BLOCK_CRACK, block.getLocation().add(0.5, 0.5, 0.5), 50,
+                            0.4, 0.4, 0.4, 0.1, block.getBlockData());
 
                     boolean shouldDrop = Feature.ZOMBIE_BREAK_BLOCK.getBoolean("drop-blocks");
 
@@ -519,11 +555,13 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                     packet.getBlockPositionModifier().write(0, new BlockPosition(b.getX(), b.getY(), b.getZ()));
                     packet.getIntegers().write(1, stage);
                     for (Player nearbyPlayer : b.getWorld().getPlayers()) {
-                        if (nearbyPlayer.isOnline() && nearbyPlayer.getLocation().distanceSquared(b.getLocation()) <= 1024) {
+                        if (nearbyPlayer.isOnline()
+                                && nearbyPlayer.getLocation().distanceSquared(b.getLocation()) <= 1024) {
                             protocolManager.sendServerPacket(nearbyPlayer, packet);
                         }
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
         };
 
@@ -546,7 +584,8 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
     private void cleanupZombieBreaking(Zombie zombie) {
         UUID uuid = zombie.getUniqueId();
         BukkitTask task = activeBreakingTasks.remove(uuid);
-        if (task != null) task.cancel();
+        if (task != null)
+            task.cancel();
         recentlyBrokenBlocks.remove(uuid);
         breakAttempts.remove(uuid);
         lastBreakTime.remove(uuid);
@@ -570,23 +609,33 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
     }
 
     private boolean canBreakBlock(Material tool, Material block) {
-        if (block.getHardness() < 0) return false;
-        String modifierKey = isPickaxe(tool) ? "breakable-pickaxe-blocks" : isShovel(tool) ? "breakable-shovel-blocks" : "breakable-axe-blocks";
+        if (block.getHardness() < 0)
+            return false;
+        String modifierKey = isPickaxe(tool) ? "breakable-pickaxe-blocks"
+                : isShovel(tool) ? "breakable-shovel-blocks" : "breakable-axe-blocks";
         String blockListString = Feature.ZOMBIE_BREAK_BLOCK.getString(modifierKey);
-        if (blockListString == null || blockListString.isEmpty()) return false;
+        if (blockListString == null || blockListString.isEmpty())
+            return false;
         return blockListString.contains(block.name());
     }
 
     private double calculateBreakTime(Material tool, Material block) {
         float blockHardness = block.getHardness();
-        if (blockHardness < 0) return -1;
+        if (blockHardness < 0)
+            return -1;
         float toolMultiplier = 1.0f;
-        if (tool.name().contains("DIAMOND")) toolMultiplier = 8.0f;
-        else if (tool.name().contains("IRON")) toolMultiplier = 6.0f;
-        else if (tool.name().contains("STONE")) toolMultiplier = 4.0f;
-        else if (tool.name().contains("WOODEN")) toolMultiplier = 2.0f;
-        else if (tool.name().contains("GOLDEN")) toolMultiplier = 12.0f;
-        else if (tool.name().contains("NETHERITE")) toolMultiplier = 9.0f;
+        if (tool.name().contains("DIAMOND"))
+            toolMultiplier = 8.0f;
+        else if (tool.name().contains("IRON"))
+            toolMultiplier = 6.0f;
+        else if (tool.name().contains("STONE"))
+            toolMultiplier = 4.0f;
+        else if (tool.name().contains("WOODEN"))
+            toolMultiplier = 2.0f;
+        else if (tool.name().contains("GOLDEN"))
+            toolMultiplier = 12.0f;
+        else if (tool.name().contains("NETHERITE"))
+            toolMultiplier = 9.0f;
 
         return blockHardness * 1.5f / toolMultiplier * 20.0;
     }

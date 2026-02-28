@@ -94,6 +94,9 @@ public class BloodMoon extends WorldEventHandler {
 					continue;
 				if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT))
 					continue;
+				if (SuddenDeath.getInstance().getClaimProtection() != null
+						&& SuddenDeath.getInstance().getClaimProtection().isProtected(player.getLocation()))
+					continue;
 
 				// Stun — Nausea 6s (120 ticks); task period 180t → natural 3s gap
 				player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION,
@@ -159,6 +162,9 @@ public class BloodMoon extends WorldEventHandler {
 		try {
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT))
 				return;
+			if (SuddenDeath.getInstance().getClaimProtection() != null
+					&& SuddenDeath.getInstance().getClaimProtection().isProtected(player.getLocation()))
+				return;
 			double reduction = Feature.BLOOD_MOON.getDouble("weakness-percent") / 100.0;
 			event.setDamage(event.getDamage() * (1.0 - reduction));
 		} catch (Exception e) {
@@ -178,6 +184,9 @@ public class BloodMoon extends WorldEventHandler {
 
 		try {
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT))
+				return;
+			if (SuddenDeath.getInstance().getClaimProtection() != null
+					&& SuddenDeath.getInstance().getClaimProtection().isProtected(player.getLocation()))
 				return;
 			double multiplier = 1.0 + (Feature.BLOOD_MOON.getDouble("damage-percent") / 100.0);
 			event.setDamage(event.getDamage() * multiplier);
@@ -205,6 +214,9 @@ public class BloodMoon extends WorldEventHandler {
 
 		try {
 			if (!SuddenDeath.getInstance().getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EVENT))
+				return;
+			if (SuddenDeath.getInstance().getClaimProtection() != null
+					&& SuddenDeath.getInstance().getClaimProtection().isProtected(player.getLocation()))
 				return;
 
 			// Only mark if not already marked
@@ -245,6 +257,9 @@ public class BloodMoon extends WorldEventHandler {
 			if (!SuddenDeath.getInstance().getWorldGuard()
 					.isFlagAllowedAtLocation(event.getEntity().getLocation(), CustomFlag.SDS_EVENT))
 				return;
+			if (SuddenDeath.getInstance().getClaimProtection() != null
+					&& SuddenDeath.getInstance().getClaimProtection().isProtected(event.getEntity().getLocation()))
+				return;
 
 			double multiplier = Feature.BLOOD_MOON.getDouble("creeper-explosion-multiplier");
 			event.setRadius((float) (event.getRadius() * multiplier));
@@ -267,6 +282,11 @@ public class BloodMoon extends WorldEventHandler {
 		try {
 			if (!SuddenDeath.getInstance().getWorldGuard()
 					.isFlagAllowedAtLocation(event.getLocation(), CustomFlag.SDS_EVENT))
+				return;
+
+			// Check claim protection - don't decorate craters in claimed areas
+			if (SuddenDeath.getInstance().getClaimProtection() != null
+					&& SuddenDeath.getInstance().getClaimProtection().isProtected(event.getLocation()))
 				return;
 
 			// Compute bounding box of the explosion from blockList
