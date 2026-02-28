@@ -75,6 +75,16 @@ public class BloodScreenFeature extends AbstractFeature {
         player.setWorldBorder(fakeBorder);
     }
 
+
+    private void spawnBleedingParticles(Player player) {
+        double offsetX = (RANDOM.nextDouble() - 0.5) * 0.4;
+        double offsetY = 1.0 + (RANDOM.nextDouble() - 0.5) * 0.5;
+        double offsetZ = (RANDOM.nextDouble() - 0.5) * 2.0;
+        player.getWorld().spawnParticle(Particle.BLOCK, player.getLocation().add(offsetX, offsetY, offsetZ),
+                30, Material.REDSTONE_BLOCK.createBlockData());
+    }
+
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
@@ -92,17 +102,8 @@ public class BloodScreenFeature extends AbstractFeature {
             } else if (mode == FadingType.HEALTH) {
                 fakeDistance *= Math.max((int) (Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getValue() - player.getHealth()), 1);
             }
-
-            if (player.getVelocity().getY() == 0 && !Utils.hasCreativeGameMode(player)) {
-                double offsetX = (RANDOM.nextDouble() - 0.5) * 0.4;
-                double offsetY = 1.0 + (RANDOM.nextDouble() - 0.5) * 0.5;
-                double offsetZ = (RANDOM.nextDouble() - 0.5) * 2.0;
-                player.getWorld().spawnParticle(Particle.BLOCK,
-                        player.getLocation().add(offsetX, offsetY, offsetZ),
-                        30, Material.REDSTONE_BLOCK.createBlockData());
-            }
-
             plugin.getPlayers().put(player, Math.abs(fakeDistance));
+            spawnBleedingParticles(player);
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in BloodScreenFeature.onEntityDamage", e);
         }

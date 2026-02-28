@@ -37,9 +37,11 @@ public class BleedingFeature extends AbstractFeature {
                         PlayerData data = PlayerData.get(player);
                         if (data == null) continue;
                         if (Feature.BLEEDING.isEnabled(player) && data.isBleeding() &&
-                                plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT) &&
-                                player.getHealth() >= Feature.BLEEDING.getDouble("health-min")) {
-                            Utils.damage(player, Feature.BLEEDING.getDouble("dps") * 3, Feature.BLEEDING.getBoolean("tug"));
+                                plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT)) {
+                            spawnBleedingParticles(player);
+                            if (player.getHealth() >= Feature.BLEEDING.getDouble("health-min")) {
+                                Utils.damage(player, Feature.BLEEDING.getDouble("dps") * 3, Feature.BLEEDING.getBoolean("tug"));
+                            }
                         }
                     }
                 } catch (Exception e) {
@@ -116,7 +118,7 @@ public class BleedingFeature extends AbstractFeature {
         sendMsg(player, "now-bleeding");
         player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
-        spawnBleedingParticles(player);
+
 
         BukkitRunnable task = new BukkitRunnable() {
             @Override

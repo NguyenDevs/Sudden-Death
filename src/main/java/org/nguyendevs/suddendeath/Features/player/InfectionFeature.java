@@ -43,9 +43,23 @@ public class InfectionFeature extends AbstractFeature {
                         if (player.getHealth() < Feature.INFECTION.getDouble("health-min"))
                             continue;
 
+                        Location loc = player.getLocation().add(0, 1, 0);
+                        World world = player.getWorld();
+
+                        for (int i = 0; i < 6; i++) {
+                            double x = (RANDOM.nextDouble() - 0.5) * 1.2;
+                            double y = RANDOM.nextDouble() * 1.5;
+                            double z = (RANDOM.nextDouble() - 0.5) * 1.2;
+                            world.spawnParticle(
+                                    Particle.RAID_OMEN,
+                                    loc.clone().add(x, y, z),
+                                    1, 0.02, -0.03, 0.02, 0.01);
+                        }
+
                         Utils.damage(player, Feature.INFECTION.getDouble("dps") * 3,
                                 Feature.INFECTION.getBoolean("tug"));
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 600, 0));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 100, 0));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 80, 0));
                         if (Feature.INFECTION.getBoolean("sound")) {
                             player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_AMBIENT, 666.0f, 0.1f);
                         }
