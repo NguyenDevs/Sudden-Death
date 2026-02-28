@@ -7,7 +7,7 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
 
-public class CreeperFeature extends AbstractFeature {
+public class CreeperRevengeFeature extends AbstractFeature {
     @Override
     public String getName() {
         return "Creeper Revenge";

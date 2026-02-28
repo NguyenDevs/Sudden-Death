@@ -29,10 +29,7 @@ import org.nguyendevs.suddendeath.Utils.MobStat;
 import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 
 public class MonsterEdition extends PluginInventory {
@@ -79,7 +76,7 @@ public class MonsterEdition extends PluginInventory {
             return item;
         meta.displayName(color("&a" + stat.getName()));
         meta.addItemFlags(ItemFlag.values());
-        meta.getPersistentDataContainer().set(Utils.nsk("mobStatId"), PersistentDataType.STRING, stat.name());
+        meta.getPersistentDataContainer().set(Objects.requireNonNull(Utils.nsk("mobStatId")), PersistentDataType.STRING, stat.name());
         meta.lore(createMobStatLore(stat, config));
         item.setItemMeta(meta);
         return item;
@@ -117,10 +114,9 @@ public class MonsterEdition extends PluginInventory {
     }
 
     private double calculateActualSpawnRate(double customMobWeight, FileConfiguration config) {
-        double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
-                .getDouble("default-spawn-coef." + type.name(), 0.0);
 
-        double totalWeight = defaultSpawnCoef;
+        double totalWeight = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
+                .getDouble("default-spawn-coef." + type.name(), 0.0);
         for (String key : config.getKeys(false)) {
             ConfigurationSection section = config.getConfigurationSection(key);
             if (section == null || !section.contains("spawn-coef"))
@@ -142,8 +138,8 @@ public class MonsterEdition extends PluginInventory {
         if (deserialized.hasItemMeta() && deserialized.getItemMeta() != null) {
             if (deserialized.getType().name().startsWith("LEATHER_")) {
                 LeatherArmorMeta leatherMeta = (LeatherArmorMeta) deserialized.getItemMeta();
-                if (leatherMeta.getColor() != null)
-                    lore.add(color("&b* Dye color: " + leatherMeta.getColor().asRGB()));
+                leatherMeta.getColor();
+                lore.add(color("&b* Dye color: " + leatherMeta.getColor().asRGB()));
             }
             if (deserialized.getItemMeta().hasEnchants()) {
                 for (Enchantment ench : deserialized.getItemMeta().getEnchants().keySet()) {
@@ -181,7 +177,7 @@ public class MonsterEdition extends PluginInventory {
             return item;
         meta.displayName(color("&aSPAWN TYPE"));
         meta.addItemFlags(ItemFlag.values());
-        meta.getPersistentDataContainer().set(Utils.nsk("spawnTypeItem"), PersistentDataType.STRING, "SPAWN_TYPE");
+        meta.getPersistentDataContainer().set(Objects.requireNonNull(Utils.nsk("spawnTypeItem")), PersistentDataType.STRING, "SPAWN_TYPE");
         String currentType = config.getString(id + ".spawn-type", "All");
         List<Component> lore = new ArrayList<>();
         lore.add(color("&7Spawn type for this mob"));
@@ -239,7 +235,7 @@ public class MonsterEdition extends PluginInventory {
     public void whenClicked(InventoryClickEvent event) {
         Inventory clickedInv = event.getClickedInventory();
         Inventory topInv = event.getView().getTopInventory();
-        if (clickedInv == null || topInv == null)
+        if (clickedInv == null)
             return;
         if (clickedInv.equals(topInv)) {
             if (!isAvailableSlot(event.getSlot()) && event.getSlot() != 4 && event.getSlot() != SPAWN_TYPE_SLOT) {
@@ -277,12 +273,12 @@ public class MonsterEdition extends PluginInventory {
             }
         }
         ItemStack item = event.getCurrentItem();
-        if (item == null || !Utils.isPluginItem(item, false))
+        if (!Utils.isPluginItem(item, false))
             return;
         ItemMeta meta = item.getItemMeta();
         if (meta == null || meta.displayName() == null)
             return;
-        String tag = meta.getPersistentDataContainer().get(Utils.nsk("mobStatId"), PersistentDataType.STRING);
+        String tag = meta.getPersistentDataContainer().get(Objects.requireNonNull(Utils.nsk("mobStatId")), PersistentDataType.STRING);
         if (tag == null || tag.isEmpty())
             return;
         event.setCancelled(true);
@@ -317,7 +313,7 @@ public class MonsterEdition extends PluginInventory {
         if (event.getAction() == InventoryAction.SWAP_WITH_CURSOR || event.getAction() == InventoryAction.PLACE_ALL
                 || event.getAction() == InventoryAction.PLACE_SOME) {
             ItemStack cursorItem = event.getCursor();
-            if (cursorItem != null && cursorItem.getType() != Material.AIR) {
+            if (cursorItem.getType() != Material.AIR) {
                 String serialized = ItemUtils.serialize(cursorItem);
                 PlayerCoreFeature.cancelNextDrop(player);
                 config.getConfig().set(id + "." + stat.getPath(), serialized);
@@ -377,7 +373,7 @@ public class MonsterEdition extends PluginInventory {
             public void run() {
                 try {
                     player.sendMessage(color("&f► &eType 'cancel' to abort editing the mob."));
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
             }
         }.runTaskLater(SuddenDeath.getInstance(), 0);

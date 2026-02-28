@@ -29,15 +29,18 @@ public class CustomMobs implements Listener {
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity entity = event.getEntity();
-        if (!entity.getType().isAlive() || entity.hasMetadata("SDCommandSpawn")) return;
+        if (!entity.getType().isAlive() || entity.hasMetadata("SDCommandSpawn"))
+            return;
 
         try {
             List<String> blacklist = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
                     .getStringList("custom-mobs-world-blacklist");
-            if (blacklist.contains(entity.getWorld().getName())) return;
+            if (blacklist.contains(entity.getWorld().getName()))
+                return;
 
             ConfigFile mobConfigFile = SuddenDeath.getInstance().getConfigManager().getMobConfig(entity.getType());
-            if (mobConfigFile == null) return;
+            if (mobConfigFile == null)
+                return;
 
             FileConfiguration config = mobConfigFile.getConfig();
 
@@ -49,17 +52,20 @@ public class CustomMobs implements Listener {
 
             for (String key : config.getKeys(false)) {
                 ConfigurationSection section = config.getConfigurationSection(key);
-                if (section == null || !section.contains("spawn-coef")) continue;
+                if (section == null || !section.contains("spawn-coef"))
+                    continue;
                 spawnCoefficients.merge(key, section.getDouble("spawn-coef", 0.0), Double::sum);
             }
 
             String selectedId = selectCustomMobType(spawnCoefficients);
-            if (selectedId.isEmpty() || "DEFAULT_KEY".equalsIgnoreCase(selectedId)) return;
+            if (selectedId.isEmpty() || "DEFAULT_KEY".equalsIgnoreCase(selectedId))
+                return;
 
             ConfigurationSection selectedSection = config.getConfigurationSection(selectedId);
             if (selectedSection != null) {
                 String spawnType = selectedSection.getString("spawn-type", "All");
-                if (!isSpawnTypeAllowed(spawnType, event.getSpawnReason())) return;
+                if (!isSpawnTypeAllowed(spawnType, event.getSpawnReason()))
+                    return;
             }
 
             applyCustomMobProperties(entity, config, selectedId);
@@ -89,7 +95,8 @@ public class CustomMobs implements Listener {
         double cumulative = 0.0;
         for (Map.Entry<String, Double> entry : spawnCoefficients.entrySet()) {
             cumulative += entry.getValue();
-            if (index <= cumulative) return entry.getKey();
+            if (index <= cumulative)
+                return entry.getKey();
         }
         return "";
     }
@@ -97,7 +104,8 @@ public class CustomMobs implements Listener {
     public static void applyCustomMobProperties(LivingEntity entity, FileConfiguration config, String id) {
         try {
             ConfigurationSection section = config.getConfigurationSection(id);
-            if (section == null) return;
+            if (section == null)
+                return;
 
             String name = section.getString("name", "");
             if (!name.isEmpty() && !name.equalsIgnoreCase("none")) {
@@ -139,7 +147,8 @@ public class CustomMobs implements Listener {
     private static void setAttribute(LivingEntity entity, Attribute attribute, double value) {
         try {
             AttributeInstance instance = entity.getAttribute(attribute);
-            if (instance != null) instance.setBaseValue(value);
+            if (instance != null)
+                instance.setBaseValue(value);
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error setting attribute " + attribute + " for entity: " + entity.getType(), e);
@@ -148,9 +157,12 @@ public class CustomMobs implements Listener {
 
     private static void applyPotionEffect(LivingEntity entity, String effectName, int amplifier) {
         try {
-            PotionEffectType type = PotionEffectType.getByName(effectName.toUpperCase().replace("-", "_"));
-            if (type == null) return;
+            PotionEffectType type = org.bukkit.Registry.POTION_EFFECT_TYPE
+                    .get(org.bukkit.NamespacedKey.minecraft(effectName.toLowerCase().replace("-", "_")));
+            if (type == null)
+                return;
             entity.addPotionEffect(new PotionEffect(type, EFFECT_DURATION, Math.max(amplifier - 1, 0)));
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 }

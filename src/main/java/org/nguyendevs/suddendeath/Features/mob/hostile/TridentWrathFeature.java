@@ -16,7 +16,7 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.logging.Level;
 
-public class DrownedFeature extends AbstractFeature {
+public class TridentWrathFeature extends AbstractFeature {
 
     @Override
     public String getName() {

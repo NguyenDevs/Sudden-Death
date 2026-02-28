@@ -126,8 +126,9 @@ public class StatEditor implements Listener {
             return;
         }
 
-        String effectName = split[0].replace("-", "_").toUpperCase();
-        PotionEffectType effect = PotionEffectType.getByName(effectName);
+        String effectName = split[0].replace("-", "_").toLowerCase();
+        org.bukkit.potion.PotionEffectType effect = org.bukkit.Registry.POTION_EFFECT_TYPE
+                .get(org.bukkit.NamespacedKey.minecraft(effectName));
         if (effect == null) {
             player.sendMessage(color(PREFIX + " &c" + split[0] + " is not a valid potion effect!"));
             player.sendMessage(color(

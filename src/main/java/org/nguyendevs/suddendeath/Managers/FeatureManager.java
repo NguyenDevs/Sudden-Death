@@ -31,20 +31,21 @@ public class FeatureManager {
 
         register(new BlazeFeatures());
         register(new BreezeFeature());
-        register(new CreeperFeature());
-        register(new DrownedFeature());
+        register(new CreeperRevengeFeature());
+        register(new TridentWrathFeature());
         register(new EnderFeatures());
         register(new EvokerFeature());
-        register(new GuardianFeature());
+        register(new AbyssalVortexFeature());
         register(new PhantomFeature());
         register(new SilverfishFeature());
         register(new SkeletonFeatures());
         register(new SlimeFeatures());
         register(new SpiderFeatures());
         register(new SpiderNestFeature());
-        register(new StrayFeature());
-        register(new WitchFeature());
-        register(new WitherSkeletonFeature());
+        register(new StrayFrostFeature());
+        register(new WitchScrollsFeature());
+        register(new WitherRushFeature());
+        register(new WitherMachineGunFeature());
         register(new UndeadRageFeature());
         register(new UndeadGunnersFeature());
         register(new ZombieBreakBlockFeature());
@@ -99,8 +100,9 @@ public class FeatureManager {
                     saveNeeded = true;
                 } else if (mod.type() == Modifier.Type.EACH_MOB) {
                     for (EntityType type : Utils.getLivingEntityTypes()) {
-                        if (!modifiers.getConfig().contains(mod.name() + "." + type.name())) {
-                            modifiers.getConfig().set(mod.name() + "." + type.name(), mod.value());
+                        String path = mod.name() + "." + type.name();
+                        if (!modifiers.getConfig().contains(path)) {
+                            modifiers.getConfig().set(path, mod.value());
                             saveNeeded = true;
                         }
                     }

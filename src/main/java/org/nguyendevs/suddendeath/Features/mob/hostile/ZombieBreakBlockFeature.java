@@ -34,7 +34,6 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
     private final Map<UUID, UUID> persistentTargets = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastTargetSearchTime = new ConcurrentHashMap<>();
 
-    private static final long MEMORY_DURATION = 2000;
     private static final long TARGET_SEARCH_COOLDOWN = 2000;
 
     private double getMaxTargetDistanceSquared() {
@@ -373,7 +372,7 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
 
                     if (ticksElapsed < breakTime) {
                         int destroyStage = Math.min(9, (int) ((ticksElapsed / breakTime) * 10));
-                        sendBreakAnimation(target, entityId, block, destroyStage);
+                        sendBreakAnimation(entityId, block, destroyStage);
                         if (ticksElapsed % 2 == 0) zombie.swingMainHand();
                         if (ticksElapsed % 4 == 0) {
                             zombie.getWorld().playSound(block.getLocation(),
@@ -386,12 +385,12 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
                     zombie.swingMainHand();
                     zombie.getWorld().playSound(block.getLocation(),
                             block.getType().createBlockData().getSoundGroup().getBreakSound(), 1.2f, 1.2f);
-                    sendBreakAnimation(target, entityId, block, -1);
+                    sendBreakAnimation(entityId, block, -1);
                     zombie.getWorld().spawnParticle(Particle.BLOCK, block.getLocation().add(0.5, 0.5, 0.5),
                             50, 0.4, 0.4, 0.4, 0.1, block.getBlockData());
 
                     if (Feature.ZOMBIE_BREAK_BLOCK.getBoolean("drop-blocks")) {
-                        handleBlockDrop(zombie, zombieUUID, block, tool);
+                        handleBlockDrop(zombieUUID, block, tool);
                     } else {
                         block.setType(Material.AIR);
                     }
@@ -407,11 +406,11 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
 
             private void cleanup() {
                 activeBreakingTasks.remove(zombieUUID);
-                sendBreakAnimation(target, entityId, block, -1);
+                sendBreakAnimation(entityId, block, -1);
                 cancel();
             }
 
-            private void sendBreakAnimation(LivingEntity entity, int id, Block b, int stage) {
+            private void sendBreakAnimation(int id, Block b, int stage) {
                 try {
                     PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.BLOCK_BREAK_ANIMATION);
                     packet.getIntegers().write(0, id);
@@ -430,7 +429,7 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
         activeBreakingTasks.put(zombieUUID, task);
     }
 
-    private void handleBlockDrop(Zombie zombie, UUID zombieUUID, Block block, ItemStack tool) {
+    private void handleBlockDrop(UUID zombieUUID, Block block, ItemStack tool) {
         Location dropLoc = block.getLocation().add(0.5, 0.5, 0.5);
         Set<UUID> existingItems = new HashSet<>();
         for (Entity entity : dropLoc.getWorld().getNearbyEntities(dropLoc, 1.5, 1.5, 1.5)) {
@@ -515,16 +514,4 @@ public class ZombieBreakBlockFeature extends AbstractFeature {
         else if (tool.name().contains("NETHERITE")) toolMultiplier = 9.0f;
         return blockHardness * 1.5f / toolMultiplier * 20.0;
     }
-
-    /*
-    private void rememberBrokenBlock(UUID uuid, Block block) {
-        recentlyBrokenBlocks.computeIfAbsent(uuid, k -> ConcurrentHashMap.newKeySet()).add(block.getLocation());
-        lastBreakTime.put(uuid, System.currentTimeMillis());
-    }
-
-    private boolean wasRecentlyBroken(UUID uuid, Block block) {
-        Set<Location> broken = recentlyBrokenBlocks.get(uuid);
-        return broken != null && broken.contains(block.getLocation());
-    }
-    */
 }

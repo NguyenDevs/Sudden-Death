@@ -15,7 +15,7 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.logging.Level;
 
-public class WitchFeature extends AbstractFeature {
+public class WitchScrollsFeature extends AbstractFeature {
 
     @Override
     public String getName() {
@@ -30,7 +30,7 @@ public class WitchFeature extends AbstractFeature {
                 try {
                     for (World world : org.bukkit.Bukkit.getWorlds()) {
                         if (!Feature.WITCH_SCROLLS.isEnabled(world)) continue;
-                        world.getEntitiesByClass(Witch.class).forEach(WitchFeature.this::loop4s_witch);
+                        world.getEntitiesByClass(Witch.class).forEach(WitchScrollsFeature.this::loop4s_witch);
                     }
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING, "Error in Witch loop", e);

@@ -60,9 +60,4 @@ public class PlayerCoreFeature extends AbstractFeature {
         if (player == null) return;
         noDropPlayers.add(player.getUniqueId());
     }
-
-    public static void allowNextDrop(Player player) {
-        if (player == null) return;
-        noDropPlayers.remove(player.getUniqueId());
-    }
 }

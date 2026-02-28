@@ -18,7 +18,7 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.logging.Level;
 
-public class GuardianFeature extends AbstractFeature {
+public class AbyssalVortexFeature extends AbstractFeature {
 
     @Override
     public String getName() {

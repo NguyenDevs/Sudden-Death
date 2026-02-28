@@ -39,7 +39,7 @@ public class HungerNauseaFeature extends AbstractFeature {
                             continue;
                         }
                         if (Feature.HUNGER_NAUSEA.isEnabled(player) && player.getFoodLevel() < 8) {
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 300, 0));
+                            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 180, 0));
                             if (starvingPlayers.add(player.getUniqueId())) {
                                 sendMsg(player, "hunger-nausea");
                             }

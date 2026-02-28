@@ -63,7 +63,7 @@ public class BreezeFeature extends AbstractFeature {
             breeze.setVelocity(breeze.getVelocity().setY(0));
             breeze.setGravity(true);
 
-            startShootTask(breeze, target, duration);
+            startShootTask(breeze, target);
             startTrailTask(breeze, duration);
 
         } catch (Exception e) {
@@ -71,7 +71,7 @@ public class BreezeFeature extends AbstractFeature {
         }
     }
 
-    private void startShootTask(Breeze breeze, Player target, double duration) {
+    private void startShootTask(Breeze breeze, Player target) {
         int maxShots = (int) Feature.BREEZE_DASH.getDouble("shoot-amount");
 
         new BukkitRunnable() {

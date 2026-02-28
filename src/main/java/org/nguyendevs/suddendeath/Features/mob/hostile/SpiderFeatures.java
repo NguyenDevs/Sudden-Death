@@ -75,17 +75,15 @@ public class SpiderFeatures extends AbstractFeature {
                 int amplifier = (int) Feature.ANGRY_SPIDERS.getDouble("amplifier");
 
                 spider.getWorld().playSound(spider.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1, 0);
-                shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 0.4, item -> {
-                    item.getEntity().getNearbyEntities(1, 1, 1).stream()
-                            .filter(e -> e instanceof Player)
-                            .map(e -> (Player) e)
-                            .findFirst()
-                            .ifPresent(hitPlayer -> {
-                                item.close();
-                                hitPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, duration, amplifier));
-                                Utils.damage(hitPlayer, damage, true);
-                            });
-                });
+                shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 0.4, item -> item.getEntity().getNearbyEntities(1, 1, 1).stream()
+                        .filter(e -> e instanceof Player)
+                        .map(e -> (Player) e)
+                        .findFirst()
+                        .ifPresent(hitPlayer -> {
+                            item.close();
+                            hitPlayer.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, duration, amplifier));
+                            Utils.damage(hitPlayer, damage, true);
+                        }));
                 return;
             }
 
@@ -122,16 +120,14 @@ public class SpiderFeatures extends AbstractFeature {
 
     private void shootSingleWeb(CaveSpider spider, Player target, int amount) {
         spider.getWorld().playSound(spider.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1, 0);
-        shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 1.0, item -> {
-            item.getEntity().getNearbyEntities(1, 1, 1).stream()
-                    .filter(e -> e instanceof Player)
-                    .map(e -> (Player) e)
-                    .findFirst()
-                    .ifPresent(hitPlayer -> {
-                        item.close();
-                        placeCobwebsAroundPlayer(hitPlayer, amount);
-                    });
-        });
+        shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 1.0, item -> item.getEntity().getNearbyEntities(1, 1, 1).stream()
+                .filter(e -> e instanceof Player)
+                .map(e -> (Player) e)
+                .findFirst()
+                .ifPresent(hitPlayer -> {
+                    item.close();
+                    placeCobwebsAroundPlayer(hitPlayer, amount);
+                }));
     }
 
     private void shootContinuousWebs(CaveSpider spider, Player target, int totalAmount) {
@@ -146,17 +142,15 @@ public class SpiderFeatures extends AbstractFeature {
                 }
                 try {
                     spider.getWorld().playSound(spider.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1, 0);
-                    shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 1.0, item -> {
-                        item.getEntity().getNearbyEntities(1, 1, 1).stream()
-                                .filter(e -> e instanceof Player)
-                                .map(e -> (Player) e)
-                                .findFirst()
-                                .ifPresent(hitPlayer -> {
-                                    item.close();
-                                    placeCobwebsAroundPlayer(hitPlayer, 1);
-                                    shotsFired++;
-                                });
-                    });
+                    shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 1.0, item -> item.getEntity().getNearbyEntities(1, 1, 1).stream()
+                            .filter(e -> e instanceof Player)
+                            .map(e -> (Player) e)
+                            .findFirst()
+                            .ifPresent(hitPlayer -> {
+                                item.close();
+                                placeCobwebsAroundPlayer(hitPlayer, 1);
+                                shotsFired++;
+                            }));
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING, "Error shooting continuous web", e);
                 }
