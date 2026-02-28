@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Features.player;
 
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,7 +10,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -19,7 +17,6 @@ import java.util.logging.Level;
 
 public class HungerNauseaFeature extends AbstractFeature {
 
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private final Set<UUID> starvingPlayers = new HashSet<>();
 
     @Override
@@ -61,7 +58,7 @@ public class HungerNauseaFeature extends AbstractFeature {
     }
 
     private void sendMsg(Player player, String key) {
-        player.sendMessage(LEGACY.deserialize(Utils.msg("prefix") + " " + Utils.msg(key)));
+        player.sendMessage(Utils.color(Utils.msg("prefix") + " " + Utils.msg(key)));
     }
 
     @EventHandler
