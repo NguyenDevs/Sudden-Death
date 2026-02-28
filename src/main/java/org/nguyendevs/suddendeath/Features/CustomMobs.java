@@ -16,6 +16,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Utils.ConfigFile;
 import org.nguyendevs.suddendeath.Utils.ItemUtils;
+import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.*;
 import java.util.logging.Level;
@@ -109,8 +110,7 @@ public class CustomMobs implements Listener {
 
             String name = section.getString("name", "");
             if (!name.isEmpty() && !name.equalsIgnoreCase("none")) {
-                entity.customName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
-                        .legacyAmpersand().deserialize(name));
+                entity.customName(Utils.color(name));
                 entity.setCustomNameVisible(true);
             } else {
                 entity.setCustomNameVisible(false);
