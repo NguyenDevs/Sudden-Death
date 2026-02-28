@@ -39,11 +39,11 @@ public class PillagerFireworkFeature extends AbstractFeature {
             if (RANDOM.nextDouble() > chance) return;
 
             Vector velocity = arrow.getVelocity().clone();
-            velocity.setY(velocity.getY() * 0.7);
+            velocity.setY(velocity.getY() * 0.3 - 0.15);
 
             Location spawnLoc = pillager.getEyeLocation()
                     .add(pillager.getLocation().getDirection().multiply(0.5))
-                    .subtract(0, 0.2, 0);
+                    .subtract(0, 0.8, 0);
 
             event.setCancelled(true);
 

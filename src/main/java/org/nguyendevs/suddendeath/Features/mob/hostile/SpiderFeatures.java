@@ -75,7 +75,7 @@ public class SpiderFeatures extends AbstractFeature {
                 int amplifier = (int) Feature.ANGRY_SPIDERS.getDouble("amplifier");
 
                 spider.getWorld().playSound(spider.getLocation(), Sound.ENTITY_SPIDER_AMBIENT, 1, 0);
-                shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 0.4, item -> item.getEntity().getNearbyEntities(1, 1, 1).stream()
+                shootWebProjectile(spider.getLocation().add(0, 1, 0), target, 1.2, item -> item.getEntity().getNearbyEntities(1, 1, 1).stream()
                         .filter(e -> e instanceof Player)
                         .map(e -> (Player) e)
                         .findFirst()
@@ -175,7 +175,7 @@ public class SpiderFeatures extends AbstractFeature {
             public void run() {
                 try {
                     ti++;
-                    if (ti > 20 || item.getEntity().isDead()) {
+                    if (ti > 60 || item.getEntity().isDead()) {
                         item.close();
                         cancel();
                         return;

@@ -525,6 +525,12 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     && !isVegetation(material);
         }
 
+        private boolean isExcavatable(Material material) {
+            if (material == Material.BEDROCK) return false;
+            if (material == Material.AIR || material == Material.CAVE_AIR || material == Material.VOID_AIR) return false;
+            return true;
+        }
+
         private boolean isVegetation(Material material) {
             return switch (material) {
                 case SHORT_GRASS, TALL_GRASS, FERN, LARGE_FERN, DEAD_BUSH,
@@ -575,235 +581,195 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 return;
             }
 
-            clearVegetationAndFloatingObjects(impactPoint);
-
             CraterData craterData = craterRecovery ? new CraterData(impactPoint, meteorSize) : null;
 
             if (craterData != null) {
                 craterData.originalBlocks.putAll(destroyedBlocksInFlight);
-                trackScorchedAreaBlocks(impactPoint, craterData);
             }
 
-            createInstantDrillingCraterWithTracking(impactPoint, craterData);
-            createMinimalScorchedArea(impactPoint, craterData);
+            excavateCraterAlongFlightPath(impactPoint, craterData);
 
             Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-                performFinalCleanup(impactPoint, craterData);
+                performPostCraterWork(impactPoint, craterData);
                 if (craterRecovery && craterData != null && !craterData.originalBlocks.isEmpty()) {
                     cratersToRecover.add(craterData);
                 }
-            }, 60L);
+            }, 80L);
         }
 
-        private void trackScorchedAreaBlocks(Location center, CraterData craterData) {
-            World world = center.getWorld();
-            if (world == null) return;
 
-            int radius = Math.max(6, meteorSize + 4);
-
-            for (int x = -radius; x <= radius; x++) {
-                for (int z = -radius; z <= radius; z++) {
-                    if (Math.sqrt(x * x + z * z) > radius) continue;
-                    int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
-                    for (int y = 0; y >= -2; y--) {
-                        Location blockLoc = new Location(world, center.getBlockX() + x, groundY + y, center.getBlockZ() + z);
-                        Block block = world.getBlockAt(blockLoc);
-                        if (block.getType().isSolid() && block.getType() != Material.BEDROCK
-                                && !craterData.originalBlocks.containsKey(blockLoc)) {
-                            craterData.originalBlocks.put(blockLoc.clone(), block.getType());
-                        }
-                    }
-                }
-            }
-        }
-
-        private void performFinalCleanup(Location impactPoint, CraterData craterData) {
+        private void excavateCraterAlongFlightPath(Location impactPoint, CraterData craterData) {
             World world = impactPoint.getWorld();
             if (world == null) return;
 
-            int radius = Math.max(8, meteorSize + 6);
-
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -15; y <= 10; y++) {
-                    for (int z = -radius; z <= radius; z++) {
-                        if (Math.sqrt(x * x + z * z) > radius) continue;
-                        Location loc = impactPoint.clone().add(x, y, z);
-                        Block block = world.getBlockAt(loc);
-                        if ((block.getType() == Material.FIRE || block.getType() == Material.SOUL_FIRE)
-                                && !world.getBlockAt(loc.clone().subtract(0, 1, 0)).getType().isSolid()) {
-                            block.setType(Material.AIR, false);
-                        }
-                    }
-                }
+            int totalSpheres = meteorSize * 2 + 6;
+            double maxRadius = meteorSize * 1.3;
+            if (craterData != null) {
+                preScanCraterVolume(impactPoint, totalSpheres, maxRadius, craterData);
             }
-            smoothCraterEdges(impactPoint, craterData);
-        }
-
-        private void smoothCraterEdges(Location center, CraterData craterData) {
-            World world = center.getWorld();
-            if (world == null) return;
-
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-            double smoothRadius = meteorSize * 1.5;
-
-            for (double angle = 0; angle < 2 * Math.PI; angle += 0.1) {
-                for (double r = smoothRadius * 0.8; r <= smoothRadius * 1.2; r += 0.3) {
-                    Location edgeLoc = center.clone().add(Math.cos(angle) * r, 0, Math.sin(angle) * r);
-                    int groundY = world.getHighestBlockYAt(edgeLoc);
-
-                    boolean isEdge = false;
-                    for (int checkY = groundY - 1; checkY >= groundY - 5; checkY--) {
-                        if (world.getBlockAt(edgeLoc.getBlockX(), checkY, edgeLoc.getBlockZ()).getType().isAir()) {
-                            isEdge = true;
-                            break;
-                        }
-                    }
-
-                    if (!isEdge || random.nextDouble() >= 0.6) continue;
-
-                    for (int step = 0; step < 3; step++) {
-                        Location stepLoc = new Location(world, edgeLoc.getBlockX(), groundY - step, edgeLoc.getBlockZ());
-                        Block stepBlock = world.getBlockAt(stepLoc);
-                        if (!stepBlock.getType().isAir() || random.nextDouble() >= 0.4) continue;
-
-                        if (craterData != null) craterData.originalBlocks.putIfAbsent(stepLoc.clone(), Material.AIR);
-                        stepBlock.setType(step == 0
-                                ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
-                                : METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)], false);
-                    }
-                }
-            }
-        }
-
-        private void clearVegetationAndFloatingObjects(Location center) {
-            World world = center.getWorld();
-            int radius = Math.max(6, meteorSize + 4);
-
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -12; y <= 12; y++) {
-                    for (int z = -radius; z <= radius; z++) {
-                        if (Math.sqrt(x * x + z * z) > radius) continue;
-                        Block block = world.getBlockAt(center.clone().add(x, y, z));
-                        Material type = block.getType();
-                        if (isVegetation(type) || type == Material.FIRE || type == Material.SOUL_FIRE
-                                || type.name().contains("TORCH") || type.name().contains("SIGN")
-                                || type.name().contains("BANNER") || type == Material.SNOW
-                                || type == Material.POWDER_SNOW
-                                || (!type.isSolid() && type != Material.AIR && type != Material.WATER)) {
-                            block.setType(Material.AIR, false);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void createInstantDrillingCraterWithTracking(Location impactPoint, CraterData craterData) {
-            World world = impactPoint.getWorld();
-            if (world == null) return;
-
-            Vector direction = flightDirection.clone().normalize();
-            int totalDepth = meteorSize * 2 + 8;
-            double maxRadius = meteorSize * 1.2;
 
             new BukkitRunnable() {
-                int currentDepth = 0;
-                double rotationAngle = 0;
-                boolean craterComplete = false;
+                int sphereIndex = 0;
+                boolean meteorPlaced = false;
 
                 @Override
                 public void run() {
-                    if (currentDepth >= totalDepth) {
-                        if (!craterComplete) {
-                            placeMeteorWithCrust(impactPoint, direction, totalDepth, craterData);
-                            craterComplete = true;
+                    if (sphereIndex >= totalSpheres) {
+                        if (!meteorPlaced) {
+                            double depthRatio = 1.0;
+                            Location sphereCenter = computeSphereCenterAlongPath(impactPoint, sphereIndex - 1, totalSpheres);
+                            double yaw = Math.atan2(-flightDirection.getX(), flightDirection.getZ());
+                            double pitch = Math.atan2(-flightDirection.getY(),
+                                    Math.sqrt(flightDirection.getX() * flightDirection.getX() + flightDirection.getZ() * flightDirection.getZ()));
+                            placeMeteorCore(sphereCenter, yaw, pitch, craterData);
+                            meteorPlaced = true;
                         }
                         cancel();
                         return;
                     }
 
-                    for (int layer = 0; layer < 4 && currentDepth < totalDepth; layer++) {
-                        double depthRatio = (double) currentDepth / totalDepth;
-                        double currentRadius = Math.max(1.0, maxRadius * (1.0 - depthRatio * 0.7));
-                        drillCraterLayerWithTracking(impactPoint, direction, currentDepth, currentRadius, rotationAngle, craterData);
-                        currentDepth++;
-                        rotationAngle += 0.15;
-                    }
+                    for (int batch = 0; batch < 3 && sphereIndex < totalSpheres; batch++) {
+                        double depthRatio = (double) sphereIndex / totalSpheres;
 
-                    if (currentDepth < 4 && craterData != null) {
-                        addCrustAndScorchedMaterials(
-                                impactPoint.clone().add(direction.clone().multiply(currentDepth * 0.8)),
-                                maxRadius * 1.8, currentDepth, craterData);
-                    }
+                        double currentRadius = maxRadius * Math.sqrt(1.0 - depthRatio * 0.75);
+                        currentRadius = Math.max(1.5, currentRadius);
 
-                    if (currentDepth % 6 == 0) {
-                        Location drillPoint = impactPoint.clone().add(direction.clone().multiply(currentDepth * 0.8));
-                        world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, drillPoint, 2, 0.4, 0.4, 0.4, 0.01);
-                        for (Player player : world.getPlayers()) {
-                            if (player.getLocation().distance(drillPoint) <= 20) {
-                                player.playSound(drillPoint, Sound.BLOCK_GRINDSTONE_USE, SoundCategory.AMBIENT, 0.15f, 1.9f);
+                        Location sphereCenter = computeSphereCenterAlongPath(impactPoint, sphereIndex, totalSpheres);
+
+                        excavateSphere(world, sphereCenter, currentRadius, depthRatio, craterData);
+
+                        if (sphereIndex % 5 == 0) {
+                            for (Player player : world.getPlayers()) {
+                                if (player.getLocation().distanceSquared(sphereCenter) <= 400) {
+                                    player.playSound(sphereCenter, Sound.BLOCK_GRINDSTONE_USE,
+                                            SoundCategory.AMBIENT, 0.12f, 1.8f);
+                                }
+                            }
+                        }
+
+                        sphereIndex++;
+                    }
+                }
+            }.runTaskTimer(SuddenDeath.getInstance(), 2L, 1L);
+        }
+
+        private Location computeSphereCenterAlongPath(Location impactPoint, int index, int totalSpheres) {
+            double stepDistance = 0.85;
+            return impactPoint.clone().add(flightDirection.clone().multiply(index * stepDistance));
+        }
+
+        private void excavateSphere(World world, Location center, double radius, double depthRatio, CraterData craterData) {
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            int r = (int) Math.ceil(radius) + 1;
+            double shellThickness = 1.5;
+
+            for (int x = -r; x <= r; x++) {
+                for (int y = -r; y <= r; y++) {
+                    for (int z = -r; z <= r; z++) {
+                        double dist = Math.sqrt(x * x + y * y + z * z);
+
+                        if (dist > radius) continue;
+
+                        Location blockLoc = center.clone().add(x, y, z);
+                        Block block = world.getBlockAt(blockLoc);
+                        Material type = block.getType();
+
+                        if (type == Material.BEDROCK) continue;
+
+                        boolean isShell = dist >= (radius - shellThickness);
+                        boolean isCore = !isShell;
+
+                        if (isCore) {
+                            if (type != Material.AIR && type != Material.CAVE_AIR && type != Material.VOID_AIR) {
+                                if (craterData != null) craterData.originalBlocks.putIfAbsent(blockLoc.clone(), type);
+
+                                if (type.isSolid() && random.nextDouble() < 0.15) {
+                                    world.spawnParticle(Particle.BLOCK, blockLoc.clone().add(0.5, 0.5, 0.5),
+                                            2, 0.2, 0.2, 0.2, 0, type.createBlockData());
+                                }
+                                block.setType(Material.AIR, false);
+                            }
+                        } else {
+                            if (!type.isSolid() && type != Material.WATER && type != Material.LAVA) continue;
+
+                            if (craterData != null) craterData.originalBlocks.putIfAbsent(blockLoc.clone(), type);
+
+                            double scorchedChance = 0.55 + depthRatio * 0.3;
+                            if (random.nextDouble() >= scorchedChance) continue;
+
+                            Material wallMaterial = selectWallMaterial(random, depthRatio, dist, radius);
+                            block.setType(wallMaterial, false);
+                        }
+                    }
+                }
+            }
+        }
+
+        private Material selectWallMaterial(ThreadLocalRandom random, double depthRatio, double dist, double radius) {
+            double normalizedDist = dist / radius;
+
+            if (depthRatio > 0.7) {
+                double roll = random.nextDouble();
+                if (roll < 0.25) return Material.MAGMA_BLOCK;
+                if (roll < 0.5) return Material.BLACKSTONE;
+                return Material.COBBLED_DEEPSLATE;
+            } else if (depthRatio > 0.3) {
+                double roll = random.nextDouble();
+                if (roll < 0.15) return Material.MAGMA_BLOCK;
+                if (roll < 0.35) return Material.DEEPSLATE;
+                if (roll < 0.6) return Material.BLACKSTONE;
+                return Material.COBBLESTONE;
+            } else {
+                double roll = random.nextDouble();
+                if (roll < 0.08) return Material.MAGMA_BLOCK;
+                if (roll < 0.20) return Material.GILDED_BLACKSTONE;
+                if (roll < 0.45) return Material.COBBLESTONE;
+                if (roll < 0.7) return Material.DEEPSLATE;
+                return METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)];
+            }
+        }
+
+        private void preScanCraterVolume(Location impactPoint, int totalSpheres, double maxRadius, CraterData craterData) {
+            World world = impactPoint.getWorld();
+            if (world == null) return;
+
+            for (int i = 0; i < totalSpheres; i++) {
+                double depthRatio = (double) i / totalSpheres;
+                double currentRadius = maxRadius * Math.sqrt(1.0 - depthRatio * 0.75);
+                currentRadius = Math.max(1.5, currentRadius);
+                Location sphereCenter = computeSphereCenterAlongPath(impactPoint, i, totalSpheres);
+
+                int r = (int) Math.ceil(currentRadius) + 1;
+                for (int x = -r; x <= r; x++) {
+                    for (int y = -r; y <= r; y++) {
+                        for (int z = -r; z <= r; z++) {
+                            if (Math.sqrt(x * x + y * y + z * z) > currentRadius + 1.5) continue;
+                            Location blockLoc = sphereCenter.clone().add(x, y, z);
+                            Block block = world.getBlockAt(blockLoc);
+                            Material type = block.getType();
+                            if (type != Material.AIR && type != Material.CAVE_AIR
+                                    && type != Material.VOID_AIR && type != Material.BEDROCK) {
+                                craterData.originalBlocks.putIfAbsent(blockLoc.clone(), type);
                             }
                         }
                     }
                 }
-            }.runTaskTimer(SuddenDeath.getInstance(), 3L, 1L);
-        }
-
-        private void drillCraterLayerWithTracking(Location impactPoint, Vector direction, int depth,
-                                                  double radius, double rotation, CraterData craterData) {
-            World world = impactPoint.getWorld();
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-            Location layerCenter = impactPoint.clone().add(direction.clone().multiply(depth * 0.8));
-
-            if (depth < 4) addCrustAndScorchedMaterials(layerCenter, radius * 1.8, depth, craterData);
-
-            Vector right = new Vector(-direction.getZ(), 0, direction.getX()).normalize();
-            Vector up = direction.clone().crossProduct(right).normalize();
-
-            int numPoints = Math.max(12, (int) (radius * 4));
-            for (int i = 0; i < numPoints; i++) {
-                double angle = (2.0 * Math.PI * i / numPoints) + rotation;
-                for (double r = 0; r <= radius; r += 0.5) {
-                    Vector offset = right.clone().multiply(Math.cos(angle) * r).add(up.clone().multiply(Math.sin(angle) * r));
-                    Location blockLoc = layerCenter.clone().add(offset);
-                    Block block = world.getBlockAt(blockLoc);
-                    if (block.getType() == Material.BEDROCK || !block.getType().isSolid()) continue;
-
-                    if (craterData != null) craterData.originalBlocks.putIfAbsent(blockLoc.clone(), block.getType());
-                    if (random.nextDouble() < 0.4) {
-                        world.spawnParticle(Particle.BLOCK, blockLoc.clone().add(0.5, 0.5, 0.5),
-                                2, 0.2, 0.2, 0.2, 0, block.getBlockData());
-                    }
-                    block.setType(depth <= 2 && random.nextDouble() < 0.2
-                            ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
-                            : Material.AIR, false);
-                }
-            }
-
-            for (int x = -2; x <= 2; x++) {
-                for (int y = -2; y <= 2; y++) {
-                    Location centerBlockLoc = layerCenter.clone().add(
-                            right.clone().multiply(x * 0.5).add(up.clone().multiply(y * 0.5)));
-                    Block centerBlock = world.getBlockAt(centerBlockLoc);
-                    if (centerBlock.getType() == Material.BEDROCK || !centerBlock.getType().isSolid()) continue;
-
-                    if (craterData != null) craterData.originalBlocks.putIfAbsent(centerBlockLoc.clone(), centerBlock.getType());
-                    centerBlock.setType(depth <= 3 && random.nextDouble() < 0.3
-                            ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
-                            : Material.AIR, false);
-                }
             }
         }
-
-        private void createMeteorCrust(Location center, double yaw, double pitch, CraterData craterData) {
+        
+        private void placeMeteorCore(Location center, double yaw, double pitch, CraterData craterData) {
             World world = center.getWorld();
+            if (world == null) return;
+
             ThreadLocalRandom random = ThreadLocalRandom.current();
-            double crustRadius = meteorSize * 0.7;
+            double crustRadius = meteorSize * 0.65;
 
             for (double x = -crustRadius; x <= crustRadius; x += 0.8) {
                 for (double y = -crustRadius; y <= crustRadius; y += 0.8) {
                     for (double z = -crustRadius; z <= crustRadius; z += 0.8) {
                         double distance = Math.sqrt(x * x + y * y + z * z);
-                        if (distance < crustRadius * 0.4 || distance > crustRadius || random.nextDouble() >= 0.8) continue;
+                        if (distance < crustRadius * 0.35 || distance > crustRadius) continue;
+                        if (random.nextDouble() >= 0.75) continue;
 
                         Location blockLoc = center.clone().add(rotateOffset(new Vector(x, y, z), yaw, pitch));
                         Block block = world.getBlockAt(blockLoc);
@@ -811,51 +777,15 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
                         double materialRoll = random.nextDouble();
                         Material crustMaterial;
-                        if (materialRoll < 0.15) {
-                            crustMaterial = Material.MAGMA_BLOCK;
-                        } else if (materialRoll < 0.25) {
-                            crustMaterial = Material.GILDED_BLACKSTONE;
-                        } else {
-                            crustMaterial = METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)];
-                        }
+                        if (materialRoll < 0.15) crustMaterial = Material.MAGMA_BLOCK;
+                        else if (materialRoll < 0.25) crustMaterial = Material.GILDED_BLACKSTONE;
+                        else crustMaterial = METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)];
+
                         block.setType(crustMaterial, false);
                         if (craterData != null) craterData.originalBlocks.remove(blockLoc);
                     }
                 }
             }
-        }
-
-        private void addCrustAndScorchedMaterials(Location center, double radius, int depth, CraterData craterData) {
-            World world = center.getWorld();
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-
-            for (double angle = 0; angle < 2 * Math.PI; angle += 0.3) {
-                for (double r = radius * 0.6; r <= radius * 1.2; r += 0.5) {
-                    double x = Math.cos(angle) * r;
-                    double z = Math.sin(angle) * r;
-                    for (int y = -1; y <= 1; y++) {
-                        Location loc = center.clone().add(x, y + random.nextInt(2), z);
-                        Block block = world.getBlockAt(loc);
-                        if (!block.getType().isSolid() || block.getType() == Material.BEDROCK) continue;
-
-                        if (craterData != null) craterData.originalBlocks.putIfAbsent(loc.clone(), block.getType());
-                        if (random.nextDouble() >= (depth == 0 ? 0.4 : 0.25)) continue;
-                        block.setType(random.nextDouble() < 0.6
-                                ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
-                                : METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)], false);
-                    }
-                }
-            }
-        }
-
-        private void placeMeteorWithCrust(Location impactPoint, Vector direction, int depth, CraterData craterData) {
-            World world = impactPoint.getWorld();
-            Location meteorCenter = impactPoint.clone().add(direction.clone().multiply(depth * 0.8));
-            double yaw = Math.atan2(-direction.getX(), direction.getZ());
-            double pitch = Math.atan2(-direction.getY(), Math.sqrt(direction.getX() * direction.getX() + direction.getZ() * direction.getZ()));
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-
-            createMeteorCrust(meteorCenter, yaw, pitch, craterData);
 
             int coreVoxelsToPlace = (int) (meteorVoxels.size() * 0.6);
             double coreThreshold = meteorSize * 0.4;
@@ -864,7 +794,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 MeteorVoxel voxel = meteorVoxels.get(i);
                 if (voxel.offset.length() > coreThreshold) continue;
 
-                Location blockLoc = meteorCenter.clone().add(rotateOffset(voxel.offset.clone(), yaw, pitch));
+                Location blockLoc = center.clone().add(rotateOffset(voxel.offset.clone(), yaw, pitch));
                 Block block = world.getBlockAt(blockLoc);
                 if (block.getType() == Material.BEDROCK) continue;
 
@@ -873,52 +803,94 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 if (craterData != null) craterData.originalBlocks.remove(blockLoc);
             }
 
-            world.spawnParticle(Particle.END_ROD, meteorCenter, 10, 0.8, 0.8, 0.8, 0.01);
-            world.spawnParticle(Particle.FLAME, meteorCenter, 8, 0.6, 0.6, 0.6, 0.03);
+            world.spawnParticle(Particle.END_ROD, center, 10, 0.8, 0.8, 0.8, 0.01);
+            world.spawnParticle(Particle.FLAME, center, 8, 0.6, 0.6, 0.6, 0.03);
         }
 
-        private void createMinimalScorchedArea(Location center, CraterData craterData) {
+        private void performPostCraterWork(Location impactPoint, CraterData craterData) {
+            World world = impactPoint.getWorld();
+            if (world == null) return;
+
+            clearVegetationAndFloatingObjects(impactPoint);
+            createScorchedSurface(impactPoint, craterData);
+            cleanupFloatingBlocks(impactPoint);
+        }
+
+        private void clearVegetationAndFloatingObjects(Location center) {
             World world = center.getWorld();
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-            int radius = Math.max(3, meteorSize / 2);
+            int radius = Math.max(6, meteorSize + 4);
+            int craterDepth = meteorSize * 2 + 8;
 
             for (int x = -radius; x <= radius; x++) {
-                for (int z = -radius; z <= radius; z++) {
-                    double distance = Math.sqrt(x * x + z * z);
-                    if (distance > radius) continue;
+                for (int y = -craterDepth; y <= radius; y++) {
+                    for (int z = -radius; z <= radius; z++) {
+                        if (Math.sqrt(x * x + z * z) > radius) continue;
+                        Block block = world.getBlockAt(center.clone().add(x, y, z));
+                        Material type = block.getType();
 
-                    if (random.nextDouble() < (distance <= radius * 0.5 ? 0.15 : 0.05)) {
-                        int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
-                        for (int y = 0; y >= -1; y--) {
-                            Location blockLoc = new Location(world, center.getBlockX() + x, groundY + y, center.getBlockZ() + z);
-                            Block block = blockLoc.getBlock();
-                            if (!block.getType().isSolid() || block.getType() == Material.BEDROCK) continue;
+                        boolean shouldClear = isVegetation(type)
+                                || type == Material.FIRE || type == Material.SOUL_FIRE
+                                || type.name().contains("TORCH") || type.name().contains("SIGN")
+                                || type.name().contains("BANNER")
+                                || type == Material.SNOW || type == Material.POWDER_SNOW;
 
-                            if (craterData != null) craterData.originalBlocks.putIfAbsent(blockLoc.clone(), block.getType());
-                            if (random.nextDouble() >= (y == 0 ? 0.6 : 0.3)) continue;
-
-                            Material scorchedMaterial;
-                            if (distance <= radius * 0.3) {
-                                double rand = random.nextDouble();
-                                if (rand < 0.3) scorchedMaterial = Material.MAGMA_BLOCK;
-                                else if (rand < 0.6) scorchedMaterial = Material.DEEPSLATE;
-                                else scorchedMaterial = Material.COBBLESTONE;
-                            } else {
-                                scorchedMaterial = random.nextDouble() < 0.7 ? Material.COBBLESTONE : Material.DEEPSLATE;
-                            }
-                            block.setType(scorchedMaterial, false);
+                        if (shouldClear) {
+                            block.setType(Material.AIR, false);
                         }
                     }
+                }
+            }
+        }
 
-                    if (random.nextDouble() < 0.08 && distance <= radius * 0.6) {
-                        int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
-                        Location fireLoc = new Location(world, center.getBlockX() + x, groundY + 1, center.getBlockZ() + z);
+        private void createScorchedSurface(Location center, CraterData craterData) {
+            World world = center.getWorld();
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            int outerRadius = Math.max(4, (int) (meteorSize * 1.4));
+
+            for (int x = -outerRadius; x <= outerRadius; x++) {
+                for (int z = -outerRadius; z <= outerRadius; z++) {
+                    double distance = Math.sqrt(x * x + z * z);
+                    if (distance > outerRadius) continue;
+
+                    double chance = 0.7 * (1.0 - distance / outerRadius);
+                    if (random.nextDouble() >= chance) continue;
+
+                    int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
+                    for (int dy = 0; dy >= -2; dy--) {
+                        Location blockLoc = new Location(world, center.getBlockX() + x, groundY + dy, center.getBlockZ() + z);
+                        Block block = world.getBlockAt(blockLoc);
+                        Material type = block.getType();
+
+                        if (!type.isSolid() || type == Material.BEDROCK) continue;
+                        if (craterData != null) craterData.originalBlocks.putIfAbsent(blockLoc.clone(), type);
+
+                        if (random.nextDouble() >= (dy == 0 ? 0.7 : 0.35)) continue;
+
+                        double roll = random.nextDouble();
+                        Material scorchedMat;
+                        if (distance <= outerRadius * 0.4) {
+                            if (roll < 0.25) scorchedMat = Material.MAGMA_BLOCK;
+                            else if (roll < 0.5) scorchedMat = Material.BLACKSTONE;
+                            else scorchedMat = Material.DEEPSLATE;
+                        } else if (distance <= outerRadius * 0.7) {
+                            if (roll < 0.12) scorchedMat = Material.MAGMA_BLOCK;
+                            else if (roll < 0.35) scorchedMat = Material.DEEPSLATE;
+                            else scorchedMat = Material.COBBLESTONE;
+                        } else {
+                            scorchedMat = roll < 0.7 ? Material.COBBLESTONE : Material.DEEPSLATE;
+                        }
+                        block.setType(scorchedMat, false);
+                    }
+
+                    if (distance <= outerRadius * 0.6 && random.nextDouble() < 0.1) {
+                        int groundY2 = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
+                        Location fireLoc = new Location(world, center.getBlockX() + x, groundY2 + 1, center.getBlockZ() + z);
                         Block fireBlock = world.getBlockAt(fireLoc);
-                        Block belowFire = world.getBlockAt(center.getBlockX() + x, groundY, center.getBlockZ() + z);
+                        Block below = world.getBlockAt(center.getBlockX() + x, groundY2, center.getBlockZ() + z);
 
-                        if (fireBlock.getType().isAir() && belowFire.getType().isSolid()) {
+                        if (fireBlock.getType().isAir() && below.getType().isSolid()) {
                             fireBlock.setType(Material.FIRE, false);
-                            int burnTime = 200 + random.nextInt(400);
+                            int burnTime = 150 + random.nextInt(350);
                             Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
                                 if (fireBlock.getType() != Material.FIRE) return;
                                 if (!world.getBlockAt(fireBlock.getLocation().subtract(0, 1, 0)).getType().isSolid()) {
@@ -931,51 +903,53 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     }
                 }
             }
+        }
 
-            int fireRadius = radius + 2;
-            for (int x = -fireRadius; x <= fireRadius; x++) {
-                for (int z = -fireRadius; z <= fireRadius; z++) {
-                    double distance = Math.sqrt(x * x + z * z);
-                    if (distance <= radius || distance > fireRadius || random.nextDouble() >= 0.04) continue;
+        private void cleanupFloatingBlocks(Location center) {
+            World world = center.getWorld();
+            if (world == null) return;
 
-                    int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
-                    Location groundLoc = new Location(world, center.getBlockX() + x, groundY, center.getBlockZ() + z);
-                    Block groundBlock = world.getBlockAt(groundLoc);
+            int scanRadius = (int) (meteorSize * 1.4) + 2;
+            int scanDepth = meteorSize * 2 + 10;
 
-                    if (groundBlock.getType().isSolid() && random.nextDouble() < 0.2) {
-                        if (craterData != null) craterData.originalBlocks.putIfAbsent(groundLoc.clone(), groundBlock.getType());
-                        groundBlock.setType(random.nextDouble() < 0.8 ? Material.COBBLESTONE : Material.DEEPSLATE, false);
-                    }
+            for (int x = -scanRadius; x <= scanRadius; x++) {
+                for (int y = -scanDepth; y <= 2; y++) {
+                    for (int z = -scanRadius; z <= scanRadius; z++) {
+                        if (Math.sqrt(x * x + z * z) > scanRadius) continue;
 
-                    if (!groundBlock.getType().isSolid()) continue;
-                    Location fireLoc = groundLoc.clone().add(0, 1, 0);
-                    Block fireBlock = world.getBlockAt(fireLoc);
-                    if (!fireBlock.getType().isAir()) continue;
+                        Location blockLoc = center.clone().add(x, y, z);
+                        Block block = world.getBlockAt(blockLoc);
+                        Material type = block.getType();
 
-                    if (checkNearbyVegetation(fireLoc) || random.nextDouble() < 0.3) {
-                        fireBlock.setType(Material.FIRE, false);
-                        Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-                            if (fireBlock.getType() == Material.FIRE
-                                    && !world.getBlockAt(fireBlock.getLocation().subtract(0, 1, 0)).getType().isSolid()) {
-                                fireBlock.setType(Material.AIR, false);
+                        if (!type.isSolid() || type == Material.BEDROCK) continue;
+                        if (isMeteorMaterial(type)) continue;
+
+                        int airNeighbors = 0;
+                        int[][] offsets = {{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
+                        for (int[] off : offsets) {
+                            Material neighbor = world.getBlockAt(
+                                    blockLoc.getBlockX() + off[0],
+                                    blockLoc.getBlockY() + off[1],
+                                    blockLoc.getBlockZ() + off[2]).getType();
+                            if (neighbor == Material.AIR || neighbor == Material.CAVE_AIR) {
+                                airNeighbors++;
                             }
-                        }, 20L);
+                        }
+
+                        if (airNeighbors >= 5) {
+                            block.setType(Material.AIR, false);
+                        }
                     }
                 }
             }
         }
 
-        private boolean checkNearbyVegetation(Location fireLoc) {
-            World world = fireLoc.getWorld();
-            for (int dx = -2; dx <= 2; dx++) {
-                for (int dz = -2; dz <= 2; dz++) {
-                    for (int dy = -1; dy <= 2; dy++) {
-                        String name = world.getBlockAt(fireLoc.clone().add(dx, dy, dz)).getType().name();
-                        if (name.contains("LEAVES") || name.contains("LOG") || name.contains("WOOD")) return true;
-                    }
-                }
-            }
-            return false;
+        private boolean isMeteorMaterial(Material material) {
+            return switch (material) {
+                case DEEPSLATE, BLACKSTONE, COBBLED_DEEPSLATE, MAGMA_BLOCK, GILDED_BLACKSTONE,
+                     DIAMOND_ORE, EMERALD_ORE, ANCIENT_DEBRIS, GOLD_ORE, IRON_ORE, COAL_ORE -> true;
+                default -> false;
+            };
         }
 
         private Vector rotateOffset(Vector o, double yaw, double pitch) {

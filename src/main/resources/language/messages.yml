@@ -82,11 +82,11 @@ gui-features-disabled: '&c✘ &7Disabled in this world.'
 # Filters
 filter-name:        '<#FFFF55>Filter Options'
 filter-lore-desc:   '&7Click to filter categories'
-filter-lore-default: '&f&nAll Features'
-filter-lore-mob:     '&c⚔ Mob Abilities'
-filter-lore-survival: '&6⛏ Survival Mechanics'
-filter-lore-event:   '&4⚠ World Events'
-filter-lore-visual:  '&b✨ Visual Effects'
+filter-lore-default: '&fAll Features'
+filter-lore-mob:     '&cMob Abilities'
+filter-lore-survival: '&6Survival Mechanics'
+filter-lore-event:   '&4World Events'
+filter-lore-visual:  '&bVisual Effects ✨'
 
 # Item Transactions
 give-item:    '&8[&a+&8] &7You gave &f#player# &e#item# &8x&e#amount#'
