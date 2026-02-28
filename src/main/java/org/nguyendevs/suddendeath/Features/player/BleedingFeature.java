@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Features.player;
 
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,7 +20,6 @@ import java.util.logging.Level;
 
 public class BleedingFeature extends AbstractFeature {
 
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     @Override
     public String getName() {
@@ -142,7 +140,7 @@ public class BleedingFeature extends AbstractFeature {
     }
 
     private void sendMsg(Player player, String key) {
-        player.sendMessage(LEGACY.deserialize(Utils.msg("prefix") + " " + Utils.msg(key)));
+        player.sendMessage(Utils.color(Utils.msg("prefix") + " " + Utils.msg(key)));
     }
 
     private void consumeItem(Player player) {
