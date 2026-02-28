@@ -1,0 +1,79 @@
+# General Prefix
+prefix: '&6[&cSudden&4Death&6]'
+
+# Status Messages
+now-bleeding:      '&7You are now &cbleeding&7. Find a &bBandage&7 quickly or you''ll die in seconds!'
+no-longer-bleeding: '&7You are &ano longer bleeding&7.'
+
+now-infected:      '&7You''re starting to feel very &8strange &7and &5sick&7...'
+use-strange-brew:  '&7You are no longer &5infected&7. The strange feeling is gone.'
+no-longer-hunger:  '&7Feeling full again feels &agreat&7, doesn''t it?'
+
+hunger-nausea:     '&7Your blood sugar is low... you start feeling &cdizzy &7and &7nauseous&7.'
+
+# Item Usage
+use-bandage:       '&7You''ve &ahealed all your wounds&7.'
+
+# Special Events
+freddy-summoned:   '&7You summoned &0Freddy&7!'
+blood-moon:        '&4&lThe Blood Moon is rising...'
+thunderstorm:      '&4&lThe air around you grows freezing cold...'
+meteor-rain:       '&4&lSomething massive just entered the atmosphere!'
+
+# Experience Loss
+lost-exp:          '&7You just lost &c#exp# EXP&7!'
+
+# Permission Error
+not-enough-perms:  '&cYou don''t have permission to do that.'
+
+# GUI Titles
+gui-status-name:          '&8Your Status'
+gui-recipe-name:          '&8Recipes'
+gui-recipe-close:         '&cClose'
+gui-crafter-name:         '&8Recipe:'
+gui-crafter-back:         '&aBack'
+
+gui-bleeding-name:        '&cBleeding'
+gui-bleeding-lore:
+  - '&7You''re slowly losing health!'
+  - '&7Find or craft a &bBandage &7to stop it!'
+
+gui-infected-name:        '&5Infected'
+gui-infected-lore:
+  - '&7You feel very strange and unwell...'
+  - '&7Drink a &dStrange Brew &7to cure it.'
+
+gui-no-special-status-name: '&aNo special status'
+gui-no-special-status-lore:
+  - '&7You''re clean... for now.'
+  - '&7Stay safe.'
+
+gui-admin-name:           '&8SuddenDeath Admin GUI'
+gui-player-name:          '&8Player GUI'
+
+gui-next:     '&aNext'
+gui-previous: '&aPrevious'
+
+# Feature Status
+gui-features:          '&7This feature is enabled in:'
+gui-features-enabled:  '&aThis feature is &aenabled &ain this world.'
+gui-features-disabled: '&cThis feature is &cdisabled &cin this world.'
+
+# Filters
+filter-name:        '&aFilters'
+filter-lore-desc:   '&7Filter options'
+filter-lore-default: '&fDefault'
+filter-lore-mob:     '&cMob Abilities'
+filter-lore-survival: '&6Survival Features'
+filter-lore-event:   '&4Event Features'
+filter-lore-visual:  '&bVisual Effects'
+
+# Item Transactions
+give-item:    '&eYou gave &f#player# &e#item##amount#'
+receive-item: '&eYou received &f#item##amount#'
+
+# PlaceholderAPI (for display / scoreboard / etc.)
+papi-infected:     '&cInfected'
+papi-not-infected: '&aClean'
+papi-bleeding:     '&cBleeding'
+papi-not-bleeding: '&aHealthy'
