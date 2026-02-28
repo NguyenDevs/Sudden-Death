@@ -1,7 +1,6 @@
 package org.nguyendevs.suddendeath.GUI;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -20,9 +19,8 @@ import java.util.List;
 import java.util.logging.Level;
 
 public class Status extends PluginInventory {
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final int[] STATUS_SLOTS = { 10, 11, 12, 13, 14, 15, 16 };
-    private static final Component GUI_TITLE = LEGACY.deserialize(Utils.msg("gui-status-name"));
+    private static Component GUI_TITLE = Utils.color(Utils.msg("gui-status-name"));
     private final PlayerData data;
 
     public Status(Player player) {
@@ -66,10 +64,10 @@ public class Status extends PluginInventory {
             return item;
         }
 
-        meta.displayName(LEGACY.deserialize("&a" + Utils.msg(nameKey)));
+        meta.displayName(Utils.color("&a" + Utils.msg(nameKey)));
         List<Component> lore = new ArrayList<>();
         for (String line : Utils.msgList(loreKey)) {
-            lore.add(LEGACY.deserialize("&7" + line));
+            lore.add(Utils.color("&7" + line));
         }
         meta.lore(lore);
         item.setItemMeta(meta);
