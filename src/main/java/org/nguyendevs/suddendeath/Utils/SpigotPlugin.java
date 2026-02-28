@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Utils;
 
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,6 +16,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import static org.nguyendevs.suddendeath.Utils.Utils.color;
 
 public class SpigotPlugin {
 	private final JavaPlugin plugin;
@@ -48,11 +48,10 @@ public class SpigotPlugin {
 			}
 
 			if (isVersionNewer(currentVersion, latestVersion)) {
-				var legacy = LegacyComponentSerializer.legacyAmpersand();
-				Bukkit.getConsoleSender().sendMessage(legacy.deserialize(
+				Bukkit.getConsoleSender().sendMessage(color(
 						"&6[&cSudden&4Death&6] &eA new build is available: " + latestVersion + " &6(you are running "
 								+ currentVersion + ")"));
-				Bukkit.getConsoleSender().sendMessage(legacy.deserialize(
+				Bukkit.getConsoleSender().sendMessage(color(
 						"&6[&cSudden&4Death&6] &a&oDownload it here: " + getResourceUrl()));
 
 				if (plugin.getConfig().getBoolean("update-notify")) {
@@ -63,13 +62,13 @@ public class SpigotPlugin {
 									Player player = event.getPlayer();
 									if (player.hasPermission(plugin.getName().toLowerCase() + ".update-notify")) {
 										getOutOfDateMessage().forEach(msg -> player.sendMessage(
-												LegacyComponentSerializer.legacyAmpersand().deserialize(msg)));
+												color(msg)));
 									}
 								}
 							}, plugin));
 				}
 			} else {
-				Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
+				Bukkit.getConsoleSender().sendMessage(color(
 						"&6[&cSudden&4Death&6] &aYou are running the latest version: &2" + currentVersion));
 			}
 		});
