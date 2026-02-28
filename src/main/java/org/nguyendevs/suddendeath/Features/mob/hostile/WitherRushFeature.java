@@ -28,10 +28,11 @@ public class WitherRushFeature extends AbstractFeature {
             public void run() {
                 try {
                     for (World world : Bukkit.getWorlds()) {
-                        if (!Feature.WITHER_RUSH.isEnabled(world)) continue;
+                        if (!Feature.WITHER_RUSH.isEnabled(world))
+                            continue;
                         for (WitherSkeleton ws : world.getEntitiesByClass(WitherSkeleton.class)) {
                             if (ws.getTarget() instanceof Player player) {
-                                if (!Feature.WITHER_MACHINEGUN.isEnabled(ws) || Math.random() >= 0.5) {
+                                if (Math.random() * 100 <= Feature.WITHER_RUSH.getDouble("chance-percent")) {
                                     performRush(ws, player);
                                 }
                             }
@@ -79,7 +80,8 @@ public class WitherRushFeature extends AbstractFeature {
                                 start.clone().add(direction.getX() * j, direction.getY() * j, direction.getZ() * j), 0);
                     }
 
-                    witherSkeleton.getWorld().playSound(witherSkeleton.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 2.0f, 0.0f);
+                    witherSkeleton.getWorld().playSound(witherSkeleton.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP,
+                            2.0f, 0.0f);
                     witherSkeleton.teleport(target.getLocation());
                     Utils.damage(target, damage, true);
 

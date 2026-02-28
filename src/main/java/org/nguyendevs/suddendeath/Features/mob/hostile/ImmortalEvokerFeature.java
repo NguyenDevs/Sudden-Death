@@ -18,7 +18,7 @@ import org.bukkit.NamespacedKey;
 import java.util.Objects;
 import java.util.logging.Level;
 
-public class EvokerFeature extends AbstractFeature {
+public class ImmortalEvokerFeature extends AbstractFeature {
 
     private NamespacedKey totemUsed;
 

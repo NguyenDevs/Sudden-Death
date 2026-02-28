@@ -29,10 +29,11 @@ public class WitherMachineGunFeature extends AbstractFeature {
             public void run() {
                 try {
                     for (World world : Bukkit.getWorlds()) {
-                        if (!Feature.WITHER_MACHINEGUN.isEnabled(world)) continue;
+                        if (!Feature.WITHER_MACHINEGUN.isEnabled(world))
+                            continue;
                         for (WitherSkeleton ws : world.getEntitiesByClass(WitherSkeleton.class)) {
                             if (ws.getTarget() instanceof Player player) {
-                                if (Math.random() < 0.5) {
+                                if (Math.random() * 100 <= Feature.WITHER_MACHINEGUN.getDouble("chance-percent")) {
                                     performMachineGun(ws, player);
                                 }
                             }
@@ -52,7 +53,8 @@ public class WitherMachineGunFeature extends AbstractFeature {
             new BukkitRunnable() {
                 @Override
                 public void run() {
-                    if (witherSkeleton.isDead()) return;
+                    if (witherSkeleton.isDead())
+                        return;
 
                     target.getWorld().playSound(target.getLocation(), Sound.ENTITY_SKELETON_DEATH, 1.0F, 2.0F);
 

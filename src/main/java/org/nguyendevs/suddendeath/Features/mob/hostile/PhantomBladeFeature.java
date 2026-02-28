@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-public class PhantomFeature extends AbstractFeature {
+public class PhantomBladeFeature extends AbstractFeature {
 
     private NamespacedKey phantomVanishKey;
     private NamespacedKey phantomOffsetKey;

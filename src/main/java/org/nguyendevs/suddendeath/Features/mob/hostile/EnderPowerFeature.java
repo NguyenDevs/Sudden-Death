@@ -17,7 +17,7 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.logging.Level;
 
-public class EnderFeatures extends AbstractFeature {
+public class EnderPowerFeature extends AbstractFeature {
 
     @Override
     public String getName() {

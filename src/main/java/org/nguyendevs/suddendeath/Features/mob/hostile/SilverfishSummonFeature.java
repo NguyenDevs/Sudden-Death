@@ -7,7 +7,7 @@ import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
-public class SilverfishFeature extends AbstractFeature {
+public class SilverfishSummonFeature extends AbstractFeature {
     @Override
     public String getName() {
         return "Silverfish Summon";

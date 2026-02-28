@@ -11,7 +11,7 @@ import org.nguyendevs.suddendeath.Utils.Feature;
 
 import java.util.logging.Level;
 
-public class BreezeFeature extends AbstractFeature {
+public class BreezeDashFeature extends AbstractFeature {
 
     @Override
     public String getName() {

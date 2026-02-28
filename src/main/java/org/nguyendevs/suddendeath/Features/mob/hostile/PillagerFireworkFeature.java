@@ -18,7 +18,7 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 
 import java.util.logging.Level;
 
-public class PillagerFireWorkFeature extends AbstractFeature {
+public class PillagerFireworkFeature extends AbstractFeature {
 
     private static final String FIREWORK_ARROW_KEY = "SD_FireworkArrow";
 

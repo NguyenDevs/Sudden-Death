@@ -29,17 +29,19 @@ public class FeatureManager {
     public void registerAllFeatures() {
         register(new PlayerCoreFeature());
 
-        register(new BlazeFeatures());
-        register(new BreezeFeature());
+        register(new EverburningBlazesFeature());
+        register(new HomingFlameBarrageFeature());
+        register(new BreezeDashFeature());
         register(new CreeperRevengeFeature());
         register(new TridentWrathFeature());
-        register(new EnderFeatures());
-        register(new EvokerFeature());
+        register(new EnderPowerFeature());
+        register(new ImmortalEvokerFeature());
         register(new AbyssalVortexFeature());
-        register(new PhantomFeature());
-        register(new SilverfishFeature());
+        register(new PhantomBladeFeature());
+        register(new SilverfishSummonFeature());
         register(new SkeletonFeatures());
-        register(new SlimeFeatures());
+        register(new ThiefSlimesFeature());
+        register(new PoisonedSlimesFeature());
         register(new SpiderFeatures());
         register(new SpiderNestFeature());
         register(new StrayFrostFeature());
@@ -50,7 +52,7 @@ public class FeatureManager {
         register(new UndeadGunnersFeature());
         register(new ZombieBreakBlockFeature());
         register(new ZombieToolsFeature());
-        register(new PillagerFireWorkFeature());
+        register(new PillagerFireworkFeature());
 
         register(new ForceOfUndeadFeature());
         register(new QuickMobsFeature());

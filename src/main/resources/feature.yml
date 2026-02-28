@@ -298,13 +298,13 @@ features:
   wither-machinegun:
     name: "Wither Machinegun"
     lore:
-      - "&8◆ &8Wither Skeletons &7rapidly throw coal at players"
+      - "&8◆ &8Wither Skeletons &7have a &f#chance-percent#% &7chance to rapidly throw coal at players"
       - "&8◆ &7Each piece of coal deals &c#damage# &7damage"
 
   wither-rush:
     name: "Wither Rush"
     lore:
-      - "&8◆ &8Wither Skeletons &7blink to the player's location"
+      - "&8◆ &8Wither Skeletons &7have a &f#chance-percent#% &7chance to blink to the player's location"
       - "&8◆ &7Deals &c#damage# &7damage on arrival"
 
   whispers-of-the-desert:

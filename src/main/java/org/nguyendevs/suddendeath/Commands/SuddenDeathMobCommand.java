@@ -30,14 +30,14 @@ public class SuddenDeathMobCommand implements CommandExecutor {
 
     private static final String PERMISSION_ADMIN = "suddendeath.admin";
 
-    private static final String DIVIDER         = "&8&m---------------";
-    private static final String HEADER_HELP      = DIVIDER + "[&d Sudden Death Help Page &8&m]---------------";
-    private static final String HEADER_MOB_LIST  = DIVIDER + "[&d Mob List &8&m]---------------------";
+    private static final String DIVIDER = "&8&m---------------";
+    private static final String HEADER_HELP = DIVIDER + "[&d Sudden Death Help Page &8&m]---------------";
+    private static final String HEADER_MOB_LIST = DIVIDER + "[&d Mob List &8&m]---------------------";
     private static final String HEADER_MOB_TYPES = DIVIDER + "[&d Available Mob Types &8&m]----------------";
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
-                             @NotNull String label, String[] args) {
+            @NotNull String label, String[] args) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(color("&6[&cSudden&4Death&6] &cThis command is only available for players."));
             return true;
@@ -56,13 +56,13 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             }
 
             switch (args[0].toLowerCase()) {
-                case "help"   -> sendHelpMessage(player);
-                case "kill"   -> handleKill(player, args);
-                case "edit"   -> handleEdit(player, args);
+                case "help" -> sendHelpMessage(player);
+                case "kill" -> handleKill(player, args);
+                case "edit" -> handleEdit(player, args);
                 case "create" -> handleCreate(player, args);
                 case "delete" -> handleDelete(player, args);
-                case "list"   -> handleList(player, args);
-                case "spawn"  -> handleSpawn(player, args);
+                case "list" -> handleList(player, args);
+                case "spawn" -> handleSpawn(player, args);
                 default -> {
                     msg(player, Utils.msg("prefix") + " " + "&cUnknown command. Use /sdmob for help.");
                     sound(player, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.5f);
@@ -102,7 +102,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         double radius;
         try {
             radius = Double.parseDouble(args[1]);
-            if (radius <= 0) throw new NumberFormatException();
+            if (radius <= 0)
+                throw new NumberFormatException();
         } catch (NumberFormatException e) {
             msg(player, Utils.msg("prefix") + " " + "&c" + args[1] + " is not a valid positive number.");
             sound(player, Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f);
@@ -117,7 +118,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             }
         }
 
-        msg(player, Utils.msg("prefix") + " " + "&eSuccessfully killed " + count + " custom mob" + (count != 1 ? "s" : "") + ".");
+        msg(player, Utils.msg("prefix") + " " + "&eSuccessfully killed " + count + " custom mob"
+                + (count != 1 ? "s" : "") + ".");
         sound(player, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.5f);
     }
 
@@ -129,11 +131,13 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         EntityType type = parseEntityType(player, args[1]);
-        if (type == null) return;
+        if (type == null)
+            return;
 
         String id = normalizeId(args[2]);
         ConfigFile mobs = getMobConfig(player, type);
-        if (mobs == null) return;
+        if (mobs == null)
+            return;
 
         if (!mobs.getConfig().contains(id)) {
             msg(player, Utils.msg("prefix") + " " + "&cCouldn't find the mob called " + id + ".");
@@ -153,11 +157,13 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         EntityType type = parseEntityType(player, args[1]);
-        if (type == null) return;
+        if (type == null)
+            return;
 
         String id = normalizeId(args[2]);
         ConfigFile mobs = getMobConfig(player, type);
-        if (mobs == null || !isValidId(player, id, mobs)) return;
+        if (mobs == null || !isValidId(player, id, mobs))
+            return;
 
         try {
             for (MobStat stat : MobStat.values()) {
@@ -182,11 +188,13 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         EntityType type = parseEntityType(player, args[1]);
-        if (type == null) return;
+        if (type == null)
+            return;
 
         String id = normalizeId(args[2]);
         ConfigFile mobs = getMobConfig(player, type);
-        if (mobs == null) return;
+        if (mobs == null)
+            return;
 
         if (!mobs.getConfig().contains(id)) {
             msg(player, Utils.msg("prefix") + " " + "&cThere is no mob called " + id + "!");
@@ -214,11 +222,13 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         EntityType type = parseEntityType(player, args[1]);
-        if (type == null) return;
+        if (type == null)
+            return;
 
         String id = normalizeId(args[2]);
         ConfigFile mobs = getMobConfig(player, type);
-        if (mobs == null) return;
+        if (mobs == null)
+            return;
 
         if (!mobs.getConfig().contains(id)) {
             msg(player, Utils.msg("prefix") + " " + "&cCouldn't find the mob called " + id + ".");
@@ -229,7 +239,8 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         int amount;
         try {
             amount = Integer.parseInt(args[3]);
-            if (amount <= 0) throw new NumberFormatException();
+            if (amount <= 0)
+                throw new NumberFormatException();
         } catch (NumberFormatException e) {
             msg(player, Utils.msg("prefix") + " " + "&c" + args[3] + " is not a valid positive number.");
             sound(player, Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f);
@@ -273,10 +284,12 @@ public class SuddenDeathMobCommand implements CommandExecutor {
         }
 
         EntityType type = parseEntityType(player, args[1]);
-        if (type == null) return;
+        if (type == null)
+            return;
 
         ConfigFile configFile = getMobConfig(player, type);
-        if (configFile == null) return;
+        if (configFile == null)
+            return;
 
         FileConfiguration mobs = configFile.getConfig();
 
@@ -290,11 +303,12 @@ public class SuddenDeathMobCommand implements CommandExecutor {
             } else {
                 for (String mobId : mobs.getKeys(false)) {
                     String mobName = mobs.getString(mobId + ".name", mobId);
-                    Component entry = Component.text(mobName, NamedTextColor.WHITE)
+                    Component entry = color(mobName)
                             .append(Component.text(" (", NamedTextColor.GRAY))
                             .append(Component.text(mobId, NamedTextColor.WHITE)
                                     .clickEvent(ClickEvent.runCommand("/sdmob edit " + type.name() + " " + mobId))
-                                    .hoverEvent(HoverEvent.showText(Component.text("Click to edit " + mobId))))
+                                    .hoverEvent(HoverEvent.showText(
+                                            Component.text("Click to edit " + mobId).color(NamedTextColor.GRAY))))
                             .append(Component.text(")", NamedTextColor.GRAY));
                     player.sendMessage(entry);
                 }

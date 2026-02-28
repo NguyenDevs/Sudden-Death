@@ -59,9 +59,6 @@ public class AbyssalVortexFeature extends AbstractFeature {
             final Location fixedGuardianLoc = guardian.getEyeLocation().clone();
             final Vector fixedDirection = target.getLocation().toVector()
                     .subtract(fixedGuardianLoc.toVector()).normalize();
-            final double vortexLength = 20;
-            final double maxRadius = 1.5;
-            final double baseRadius = 0.2;
 
             guardian.setAI(false);
             guardian.setInvulnerable(true);

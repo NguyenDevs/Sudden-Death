@@ -89,91 +89,25 @@ public final class Utils {
                 .toList();
     }
 
-    public static int romanToInt(String number) {
-        if (number == null || number.isEmpty()) {
-            return 0;
-        }
-        try {
-            number = number.toUpperCase();
-            if (number.startsWith("CD"))
-                return 400 + romanToInt(number.substring(2));
-            if (number.startsWith("C"))
-                return 100 + romanToInt(number.substring(1));
-            if (number.startsWith("XC"))
-                return 90 + romanToInt(number.substring(2));
-            if (number.startsWith("L"))
-                return 50 + romanToInt(number.substring(1));
-            if (number.startsWith("XL"))
-                return 40 + romanToInt(number.substring(2));
-            if (number.startsWith("X"))
-                return 10 + romanToInt(number.substring(1));
-            if (number.startsWith("IX"))
-                return 9 + romanToInt(number.substring(2));
-            if (number.startsWith("V"))
-                return 5 + romanToInt(number.substring(1));
-            if (number.startsWith("IV"))
-                return 4 + romanToInt(number.substring(2));
-            if (number.startsWith("I"))
-                return 1 + romanToInt(number.substring(1));
-            return -1;
-        } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error converting Roman numeral: " + number, e);
-            return -1;
-        }
-    }
-
     public static String intToRoman(int input) {
         if (input < 1 || input > 499) {
             return ">499";
         }
-        try {
-            StringBuilder result = new StringBuilder();
-            while (input >= 400) {
-                result.append("CD");
-                input -= 400;
-            }
-            while (input >= 100) {
-                result.append("C");
-                input -= 100;
-            }
-            while (input >= 90) {
-                result.append("XC");
-                input -= 90;
-            }
-            while (input >= 50) {
-                result.append("L");
-                input -= 50;
-            }
-            while (input >= 40) {
-                result.append("XL");
-                input -= 40;
-            }
-            while (input >= 10) {
-                result.append("X");
-                input -= 10;
-            }
-            while (input >= 9) {
-                result.append("IX");
-                input -= 9;
-            }
-            while (input >= 5) {
-                result.append("V");
-                input -= 5;
-            }
-            while (input >= 4) {
-                result.append("IV");
-                input -= 4;
-            }
-            while (input >= 1) {
-                result.append("I");
-                input -= 1;
-            }
-            return result.toString();
-        } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error converting integer to Roman numeral: " + input, e);
-            return ">499";
-        }
+
+        StringBuilder result = new StringBuilder();
+
+        while (input >= 400) { result.append("CD"); input -= 400; }
+        while (input >= 100) { result.append("C");  input -= 100; }
+        while (input >= 90)  { result.append("XC"); input -= 90;  }
+        while (input >= 50)  { result.append("L");  input -= 50;  }
+        while (input >= 40)  { result.append("XL"); input -= 40;  }
+        while (input >= 10)  { result.append("X");  input -= 10;  }
+        while (input >= 9)   { result.append("IX"); input -= 9;   }
+        while (input >= 5)   { result.append("V");  input -= 5;   }
+        while (input >= 4)   { result.append("IV"); input -= 4;   }
+        while (input >= 1)   { result.append("I");  input -= 1;   }
+
+        return result.toString();
     }
 
     public static String caseOnWords(String str) {
@@ -188,11 +122,7 @@ public final class Utils {
                 if (isLastSpace && ch >= 'a' && ch <= 'z') {
                     builder.setCharAt(i, (char) (ch - 32));
                     isLastSpace = false;
-                } else if (ch != ' ') {
-                    isLastSpace = false;
-                } else {
-                    isLastSpace = true;
-                }
+                } else isLastSpace = ch == ' ';
             }
             return builder.toString();
         } catch (Exception e) {
