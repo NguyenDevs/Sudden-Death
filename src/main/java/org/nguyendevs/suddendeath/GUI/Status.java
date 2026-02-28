@@ -20,7 +20,6 @@ import java.util.logging.Level;
 
 public class Status extends PluginInventory {
     private static final int[] STATUS_SLOTS = { 10, 11, 12, 13, 14, 15, 16 };
-    private static Component GUI_TITLE = Utils.color(Utils.msg("gui-status-name"));
     private final PlayerData data;
 
     public Status(Player player) {
@@ -30,7 +29,7 @@ public class Status extends PluginInventory {
 
     @Override
     public @NotNull Inventory getInventory() {
-        Inventory inventory = Bukkit.createInventory(this, 27, GUI_TITLE);
+        Inventory inventory = Bukkit.createInventory(this, 27, Utils.color(Utils.msg("gui-status-name")));
 
         try {
             if (Feature.BLEEDING.isEnabled(player) && data.isBleeding()) {
