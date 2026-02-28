@@ -217,6 +217,8 @@ public final class Utils {
             return Component.empty();
         }
 
+        str = str.replace('§', '&');
+
         char[] chars = str.toCharArray();
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < chars.length; i++) {
