@@ -1,7 +1,6 @@
 package org.nguyendevs.suddendeath.Features.items;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.skinsrestorer.api.SkinsRestorer;
 import net.skinsrestorer.api.SkinsRestorerProvider;
 import net.skinsrestorer.api.property.SkinProperty;
@@ -21,10 +20,10 @@ import org.nguyendevs.suddendeath.Player.PlayerData;
 import org.nguyendevs.suddendeath.Utils.CustomItem;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
-
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
+import static org.nguyendevs.suddendeath.Utils.Utils.color;
 
 public class AdvancedPlayerDropsFeature extends AbstractFeature {
 
@@ -37,8 +36,7 @@ public class AdvancedPlayerDropsFeature extends AbstractFeature {
             try {
                 skinsRestorer = SkinsRestorerProvider.get();
                 Bukkit.getConsoleSender().sendMessage(
-                        LegacyComponentSerializer.legacyAmpersand()
-                                .deserialize("&6[&cSudden&4Death&6] &aHooked into SkinsRestorer"));
+                        color("&6[&cSudden&4Death&6] &aHooked into SkinsRestorer"));
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to hook into SkinsRestorer: " + e.getMessage());
                 skinsRestorer = null;

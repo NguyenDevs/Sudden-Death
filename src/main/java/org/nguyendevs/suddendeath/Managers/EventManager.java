@@ -1,7 +1,6 @@
 package org.nguyendevs.suddendeath.Managers;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -21,7 +20,6 @@ import java.util.Random;
 import java.util.logging.Level;
 
 public class EventManager extends BukkitRunnable {
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final Map<String, StatusRetriever> statusMap = new HashMap<>();
     private static final Random random = new Random();
     private static final long TICK_INTERVAL = 80L;
@@ -52,8 +50,8 @@ public class EventManager extends BukkitRunnable {
 
                 applyStatus(world, feature.generateWorldEventHandler(world));
                 String messageKey = feature.name().toLowerCase().replace("_", "-");
-                Component message = LEGACY.deserialize(Utils.msg(messageKey));
-                Component prefix = LEGACY.deserialize(Utils.msg("prefix"));
+                Component message = Utils.color(Utils.msg(messageKey));
+                Component prefix = Utils.color(Utils.msg("prefix"));
                 for (Player player : world.getPlayers()) {
                     try {
                         player.sendMessage(prefix.append(Component.text(" ")).append(message));

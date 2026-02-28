@@ -1,0 +1,99 @@
+# ==========================================================
+#                  Sudden Death Messages
+# ==========================================================
+# Note: From v1.21 onwards, plugins support MiniMessage format
+# for text formatting. You can use standard MiniMessage tags or
+# the old legacy color codes (e.g. &a, &c, &l).
+#
+# Some cool formatting examples:
+# - Hex Colors: <#FF5555>This is red text</#FF5555>
+# - Gradients: <gradient:#FF5555:#5555FF>This text fades from red to blue</gradient>
+# - Formatting: <bold><italic>This is bold and italic</italic></bold>
+#
+# For more info on MiniMessage, visit:
+# https://docs.advntr.dev/minimessage/format.html
+# ==========================================================
+
+# General Prefix
+prefix: '<gradient:#FFAA00:#FF5555>Sudden</gradient><gradient:#AA0000:#550000>Death</gradient> &8» '
+
+# ==========================================================
+# Status Messages
+# ==========================================================
+now-bleeding:      '&8[&c!&8] <#FF5555>You are bleeding! &7Find a &cBandage&7 quickly or you will die!'
+now-infected:      '&8[&5!&8] <#AA00AA>You feel a strange sickness taking over...&7'
+no-longer-bleeding: '&8[&a!&8] <#55FF55>You are no longer bleeding.&7'
+no-longer-hunger:  '&8[&a!&8] &7Your hunger has been satiated. You feel &afull&7 again.'
+hunger-nausea:     '&8[&c!&8] &7Your blood sugar is critically low... you feel &cdizzy&7 and &enauseous&7.'
+
+# Item Usage
+use-bandage:       '&8[&a!&8] &7You used a bandage and &ahealed your wounds&7.'
+use-strange-brew:  '&8[&d!&8] <#FF55FF>The infection has been cured.&7'
+
+# ==========================================================
+# Special Events
+# ==========================================================
+freddy-summoned:   '&8[&0&l!&8] &c&lFreddy has been summoned!'
+blood-moon:        '<gradient:#FF0000:#550000>&lThe Blood Moon is rising...</gradient>'
+thunderstorm:      '<gradient:#00AAAA:#0055AA>&lThe air around you grows freezing cold...</gradient>'
+meteor-rain:       '<gradient:#FFAA00:#FF5555>&lSomething massive just entered the atmosphere!</gradient>'
+
+# Experience Loss
+lost-exp:          '&8[&c-&8] &7You lost &c#exp# EXP&7!'
+
+# Permission Error
+not-enough-perms:  '&c&l✗ &7You don''t have permission to do that.'
+
+# ==========================================================
+# GUI Titles & Text
+# ==========================================================
+gui-status-name:          '<#FFAA00>Character Status'
+gui-recipe-name:          '<#55FF55>Available Recipes'
+gui-recipe-close:         '&c&l[ Close ]'
+gui-crafter-name:         '<#FFFF55>Recipe Viewer:'
+gui-crafter-back:         '&a&l[ Back ]'
+
+gui-bleeding-name:        '<#FF5555>&lBleeding'
+gui-bleeding-lore:
+  - '&7You are slowly losing health!'
+  - '&7Find or craft a &cBandage &7to stop the bleeding!'
+
+gui-infected-name:        '<#AA00AA>&lInfected'
+gui-infected-lore:
+  - '&7You feel very strange and unwell...'
+  - '&7Drink a &dStrange Brew &7to cure the infection.'
+
+gui-no-special-status-name: '<#55FF55>Healthy'
+gui-no-special-status-lore:
+  - '&7You have no negative status effects.'
+  - '&7Stay safe out there!'
+
+gui-admin-name:           '<gradient:#FF5555:#FFAA00>Admin Control Panel</gradient>'
+gui-player-name:          '<gradient:#55FF55:#55FFFF>Player Menu</gradient>'
+
+gui-next:     '&a&lNext Page &r&a→'
+gui-previous: '&a← &r&a&lPrevious Page'
+
+# Feature Status
+gui-features:          '&7This feature is active in:'
+gui-features-enabled:  '&a✔ &7Enabled in this world.'
+gui-features-disabled: '&c✘ &7Disabled in this world.'
+
+# Filters
+filter-name:        '<#FFFF55>Filter Options'
+filter-lore-desc:   '&7Click to filter categories'
+filter-lore-default: '&f&nAll Features'
+filter-lore-mob:     '&c⚔ Mob Abilities'
+filter-lore-survival: '&6⛏ Survival Mechanics'
+filter-lore-event:   '&4⚠ World Events'
+filter-lore-visual:  '&b✨ Visual Effects'
+
+# Item Transactions
+give-item:    '&8[&a+&8] &7You gave &f#player# &e#item# &8x&e#amount#'
+receive-item: '&8[&a+&8] &7You received &e#item# &8x&e#amount#'
+
+# PlaceholderAPI (for display / scoreboard / etc.)
+papi-infected:     '<#AA00AA>Infected'
+papi-not-infected: '<#55FF55>Clean'
+papi-bleeding:     '<#FF5555>Bleeding'
+papi-not-bleeding: '<#55FF55>Healthy'

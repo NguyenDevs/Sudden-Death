@@ -55,7 +55,18 @@ public class ConfigFile {
             }
 
             if (!configFile.exists()) {
-                if (name.equals("config") && path.isEmpty()) {
+                String resourcePath = (path.startsWith("/") ? path.substring(1) : path) + name + ".yml";
+                if (plugin.getResource(resourcePath) != null) {
+                    try {
+                        plugin.saveResource(resourcePath, false);
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().log(Level.WARNING, "Failed to copy " + resourcePath + " from resources", e);
+                        if (!configFile.createNewFile()) {
+                            plugin.getLogger().log(Level.WARNING,
+                                    "Failed to create configuration file: " + name + ".yml");
+                        }
+                    }
+                } else if (name.equals("config") && path.isEmpty()) {
                     try {
                         plugin.saveResource("config.yml", false);
                     } catch (IllegalArgumentException e) {

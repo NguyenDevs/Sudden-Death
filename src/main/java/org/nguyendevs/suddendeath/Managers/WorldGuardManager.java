@@ -4,7 +4,6 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Hook.CustomFlag;
@@ -13,9 +12,9 @@ import org.nguyendevs.suddendeath.Hook.WorldGuardOff;
 import org.nguyendevs.suddendeath.Hook.WorldGuardOn;
 
 import java.util.logging.Level;
+import static org.nguyendevs.suddendeath.Utils.Utils.color;
 
 public class WorldGuardManager {
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     private final SuddenDeath plugin;
     private WGPlugin provider;
@@ -38,7 +37,7 @@ public class WorldGuardManager {
                     registry.register(flag);
                 }
             }
-            Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+            Bukkit.getConsoleSender().sendMessage(color(
                     "&6[&cSudden&4Death&6] &aWorldGuard flag registration completed."));
         } catch (FlagConflictException e) {
             plugin.getLogger().warning("Flag conflict: " + e.getMessage());
@@ -52,7 +51,7 @@ public class WorldGuardManager {
             if (plugin.getServer().getPluginManager().getPlugin("WorldGuard") != null) {
                 org.bukkit.plugin.Plugin wgInfo = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
                 assert wgInfo != null;
-                Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                Bukkit.getConsoleSender().sendMessage(color(
                         "&6[&cSudden&4Death&6] &aWorldGuard version: " + wgInfo.getPluginMeta().getVersion()));
 
                 this.provider = new WorldGuardOn();
@@ -60,19 +59,19 @@ public class WorldGuardManager {
                 WorldGuardOn wgOn = (WorldGuardOn) provider;
                 if (wgOn.isReady()) {
                     isReady = true;
-                    Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                    Bukkit.getConsoleSender().sendMessage(color(
                             "&6[&cSudden&4Death&6] &aWorldGuard integration ready immediately."));
                 } else {
                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                         if (wgOn.isReady()) {
                             isReady = true;
-                            Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                            Bukkit.getConsoleSender().sendMessage(color(
                                     "&6[&cSudden&4Death&6] &aWorldGuard integration ready delayed."));
                         }
                     }, 40L);
                 }
             } else {
-                Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                Bukkit.getConsoleSender().sendMessage(color(
                         "&6[&cSudden&4Death&6] &6WorldGuard not found, using fallback."));
                 this.provider = new WorldGuardOff();
                 isReady = true;

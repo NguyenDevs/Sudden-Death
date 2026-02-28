@@ -2,7 +2,6 @@ package org.nguyendevs.suddendeath;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import static org.nguyendevs.suddendeath.Utils.Utils.color;
 
 public class SuddenDeath extends JavaPlugin {
     private static SuddenDeath instance;
@@ -78,7 +78,7 @@ public class SuddenDeath extends JavaPlugin {
             printLogo();
             new SpigotPlugin(119526, this).checkForUpdate();
 
-            Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
+            Bukkit.getConsoleSender().sendMessage(color(
                     "&6[&cSudden&4Death&6] &aSuddenDeath plugin enabled successfully!"));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Failed to enable SuddenDeath plugin.", e);
@@ -96,7 +96,7 @@ public class SuddenDeath extends JavaPlugin {
                 eventManager.cancel();
             }
             savePlayerData();
-            Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
+            Bukkit.getConsoleSender().sendMessage(color(
                     "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error while disabling plugin", e);
@@ -122,7 +122,7 @@ public class SuddenDeath extends JavaPlugin {
     private void hookIntoPlaceholderAPI() {
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new SuddenDeathPlaceholders().register();
-            Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
+            Bukkit.getConsoleSender().sendMessage(color(
                     "&6[&cSudden&4Death&6] &aHooked into PlaceholderAPI"));
         }
     }
@@ -204,25 +204,24 @@ public class SuddenDeath extends JavaPlugin {
 
     public void printLogo() {
         var s = Bukkit.getConsoleSender();
-        var legacy = LegacyComponentSerializer.legacyAmpersand();
-        s.sendMessage(legacy.deserialize(""));
-        s.sendMessage(legacy.deserialize("&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
-        s.sendMessage(legacy.deserialize("&c   ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝████╗  ██║"));
-        s.sendMessage(legacy.deserialize("&c   ███████╗██║   ██║██║  ██║██║  ██║█████╗  ██╔██╗ ██║"));
-        s.sendMessage(legacy.deserialize("&c   ╚════██║██║   ██║██║  ██║██║  ██║██╔══╝  ██║╚██╗██║"));
-        s.sendMessage(legacy.deserialize("&c   ███████║╚██████╔╝██████╔╝██████╔╝███████╗██║ ╚████║"));
-        s.sendMessage(legacy.deserialize("&c   ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝"));
-        s.sendMessage(legacy.deserialize(""));
-        s.sendMessage(legacy.deserialize("&4   ██████╗ ███████╗ █████╗ ████████╗██╗  ██╗"));
-        s.sendMessage(legacy.deserialize("&4   ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║"));
-        s.sendMessage(legacy.deserialize("&4   ██║  ██║█████╗  ███████║   ██║   ███████║"));
-        s.sendMessage(legacy.deserialize("&4   ██║  ██║██╔══╝  ██╔══██║   ██║   ██╔══██║"));
-        s.sendMessage(legacy.deserialize("&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
-        s.sendMessage(legacy.deserialize("&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
-        s.sendMessage(legacy.deserialize(""));
-        s.sendMessage(legacy.deserialize("&4         Sudden Death"));
-        s.sendMessage(legacy.deserialize("&6         Version " + getDescription().getVersion()));
-        s.sendMessage(legacy.deserialize("&b         Development by NguyenDevs"));
-        s.sendMessage(legacy.deserialize(""));
+        s.sendMessage(color(""));
+        s.sendMessage(color("&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
+        s.sendMessage(color("&c   ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝████╗  ██║"));
+        s.sendMessage(color("&c   ███████╗██║   ██║██║  ██║██║  ██║█████╗  ██╔██╗ ██║"));
+        s.sendMessage(color("&c   ╚════██║██║   ██║██║  ██║██║  ██║██╔══╝  ██║╚██╗██║"));
+        s.sendMessage(color("&c   ███████║╚██████╔╝██████╔╝██████╔╝███████╗██║ ╚████║"));
+        s.sendMessage(color("&c   ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝"));
+        s.sendMessage(color(""));
+        s.sendMessage(color("&4   ██████╗ ███████╗ █████╗ ████████╗██╗  ██╗"));
+        s.sendMessage(color("&4   ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║"));
+        s.sendMessage(color("&4   ██║  ██║█████╗  ███████║   ██║   ███████║"));
+        s.sendMessage(color("&4   ██║  ██║██╔══╝  ██╔══██║   ██║   ██╔══██║"));
+        s.sendMessage(color("&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
+        s.sendMessage(color("&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
+        s.sendMessage(color(""));
+        s.sendMessage(color("&4         Sudden Death"));
+        s.sendMessage(color("&6         Version " + getDescription().getVersion()));
+        s.sendMessage(color("&b         Development by NguyenDevs"));
+        s.sendMessage(color(""));
     }
 }

@@ -104,7 +104,7 @@ public enum Feature {
 					"&8◆ &fPlayers &7take &c#damage-percent#% &7more damage and deal &c#weakness-percent#% &7less damage",
 					"&8◆ &fPlayers &7are stunned every &e3 seconds &7for &e6 seconds",
 					"&8◆ &cMonsters &7spawn with &3Speed #speed#&7, &6Strength #increase-damage# &7and &8Resistance #damage-resistance#",
-					"&8◆ &8Skeleton &7arrows mark players, dealing &cInstant Damage II &7after 3s &8(#skeleton-mark-chance#%)",
+					"&8◆ &8Skeleton &7arrows mark players, dealing &cInstant Damage I &7after 3s &8(#skeleton-mark-chance#%)",
 					"&8◆ &aCreepers &7gain extra speed, &cx#creeper-explosion-multiplier# explosion&7, leaving a crater of magma & fire",
 					"&8◆ &2Zombies &7have &f#zombie-tool-bonus-percent#% &7extra tool-spawn rate"
 			},

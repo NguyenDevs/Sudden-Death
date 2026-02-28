@@ -4,7 +4,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.commons.lang3.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -33,9 +32,9 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
     private static final String PERMISSION_RECIPE = "suddendeath.recipe";
     private static final String PERMISSION_VIEW = "suddendeath.status";
 
-    private static final String DIVIDER = "&8&m---------------";
-    private static final String HEADER_HELP = DIVIDER + "[&d Sudden Death Help Page &8&m]---------------";
-    private static final String HEADER_ITEM_LIST = DIVIDER + "[&d Sudden Death Items &8&m]-----------------";
+    private static final String DIVIDER = "&8&m---------------[&r";
+    private static final String HEADER_HELP = DIVIDER + "&d Sudden Death Help Page &8&m]---------------";
+    private static final String HEADER_ITEM_LIST = DIVIDER + "&d Sudden Death Items &8&m]-----------------";
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -390,6 +389,6 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
     }
 
     private Component color(String message) {
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(message);
+        return Utils.color(message);
     }
 }

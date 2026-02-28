@@ -26,11 +26,13 @@ public class FreddyFeature extends AbstractFeature {
     @EventHandler
     public void onPlayerBedLeave(PlayerBedLeaveEvent event) {
         Player player = event.getPlayer();
-        if (!Feature.FREDDY.isEnabled(player) || Utils.hasCreativeGameMode(player)) return;
+        if (!Feature.FREDDY.isEnabled(player) || Utils.hasCreativeGameMode(player))
+            return;
 
         try {
             double chance = Feature.FREDDY.getDouble("chance-percent") / 100.0;
-            if (RANDOM.nextDouble() >= chance) return;
+            if (RANDOM.nextDouble() >= chance)
+                return;
 
             Enderman freddy = (Enderman) player.getWorld().spawnEntity(player.getLocation(), EntityType.ENDERMAN);
             freddy.customName(net.kyori.adventure.text.Component.text("Freddy"));
@@ -41,8 +43,7 @@ public class FreddyFeature extends AbstractFeature {
             setAttribute(freddy, Attribute.GENERIC_ATTACK_DAMAGE, 1.35);
 
             freddy.setTarget(player);
-            player.sendMessage(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
-                    .legacyAmpersand().deserialize(Utils.msg("prefix") + " " + Utils.msg("freddy-summoned")));
+            player.sendMessage(Utils.color(Utils.msg("prefix") + " " + Utils.msg("freddy-summoned")));
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_DEATH, 2.0f, 0.0f);
             player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0));
         } catch (Exception e) {
@@ -52,6 +53,7 @@ public class FreddyFeature extends AbstractFeature {
 
     private void setAttribute(Enderman entity, Attribute attr, double multiplier) {
         AttributeInstance instance = entity.getAttribute(attr);
-        if (instance != null) instance.setBaseValue(instance.getBaseValue() * multiplier);
+        if (instance != null)
+            instance.setBaseValue(instance.getBaseValue() * multiplier);
     }
 }

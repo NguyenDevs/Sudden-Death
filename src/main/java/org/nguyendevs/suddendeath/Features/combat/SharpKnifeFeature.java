@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Features.combat;
 
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -10,7 +9,6 @@ import org.nguyendevs.suddendeath.Player.PlayerData;
 import org.nguyendevs.suddendeath.Utils.CustomItem;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
-
 import java.util.logging.Level;
 
 public class SharpKnifeFeature extends AbstractFeature {
@@ -22,23 +20,28 @@ public class SharpKnifeFeature extends AbstractFeature {
 
     @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player player)) return;
-        if (!(event.getDamager() instanceof Player damager)) return;
-        if (event.getDamage() <= 0 || player.hasMetadata("NPC")) return;
-        if (!Feature.INFECTION.isEnabled(player)) return;
+        if (!(event.getEntity() instanceof Player player))
+            return;
+        if (!(event.getDamager() instanceof Player damager))
+            return;
+        if (event.getDamage() <= 0 || player.hasMetadata("NPC"))
+            return;
+        if (!Feature.INFECTION.isEnabled(player))
+            return;
 
         try {
             ItemStack item = damager.getInventory().getItemInMainHand();
-            if (!Utils.isPluginItem(item, false) || !item.isSimilar(CustomItem.SHARP_KNIFE.a())) return;
+            if (!Utils.isPluginItem(item, false) || !item.isSimilar(CustomItem.SHARP_KNIFE.a()))
+                return;
 
             PlayerData data = PlayerData.get(player);
-            if (data == null || data.isBleeding()) return;
+            if (data == null || data.isBleeding())
+                return;
 
             double chance = Feature.BLEEDING.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() <= chance) {
                 data.setBleeding(true);
-                player.sendMessage(LegacyComponentSerializer.legacyAmpersand()
-                        .deserialize(Utils.msg("prefix") + " " + Utils.msg("now-bleeding")));
+                player.sendMessage(Utils.color(Utils.msg("prefix") + " " + Utils.msg("now-bleeding")));
             }
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,

@@ -9,7 +9,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -44,7 +43,7 @@ public class PlayerView extends BaseFeatureView {
         if (meta == null)
             return item;
 
-        meta.displayName(color("&6" + feature.getName()));
+        meta.displayName(Utils.color("&6" + feature.getName()));
         meta.lore(createFeatureLore(feature, enabledWorlds, isEnabledInWorld));
         item.setItemMeta(meta);
         return item;
@@ -56,19 +55,19 @@ public class PlayerView extends BaseFeatureView {
         List<String> featureLore = feature.getLore();
         if (featureLore != null) {
             for (String line : featureLore) {
-                lore.add(color("&7" + statsInLore(feature, line)));
+                lore.add(Utils.color("&7" + statsInLore(feature, line)));
             }
         }
         if (!enabledWorlds.isEmpty()) {
             lore.add(Component.empty());
-            lore.add(color(Utils.msg("gui-features")));
+            lore.add(Utils.color(Utils.msg("gui-features")));
             for (String world : enabledWorlds) {
-                lore.add(color("&f► &2" + world));
+                lore.add(Utils.color("&f► &2" + world));
             }
         }
         lore.add(Component.empty());
-        lore.add(isEnabledInWorld ? color(Utils.msg("gui-features-enabled"))
-                : color(Utils.msg("gui-features-disabled")));
+        lore.add(isEnabledInWorld ? Utils.color(Utils.msg("gui-features-enabled"))
+                : Utils.color(Utils.msg("gui-features-disabled")));
         return lore;
     }
 
@@ -83,7 +82,7 @@ public class PlayerView extends BaseFeatureView {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName(), e);
-            player.sendMessage(color(PREFIX + " &eAn error occurred while navigating the GUI."));
+            player.sendMessage(Utils.color(PREFIX + " &eAn error occurred while navigating the GUI."));
         }
     }
 }

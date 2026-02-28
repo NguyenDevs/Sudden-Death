@@ -51,7 +51,7 @@ public class AdminView extends BaseFeatureView {
         if (meta == null)
             return item;
 
-        meta.displayName(color("&6" + feature.getName()));
+        meta.displayName(Utils.color("&6" + feature.getName()));
         meta.getPersistentDataContainer().set(Objects.requireNonNull(Utils.nsk("featureId")), PersistentDataType.STRING, feature.name());
         meta.lore(createFeatureLore(feature, enabledWorlds, isEnabledInWorld));
         item.setItemMeta(meta);
@@ -64,21 +64,21 @@ public class AdminView extends BaseFeatureView {
         List<String> featureLore = feature.getLore();
         if (featureLore != null) {
             for (String line : featureLore) {
-                lore.add(color("&7" + statsInLore(feature, line)));
+                lore.add(Utils.color("&7" + statsInLore(feature, line)));
             }
         }
 
         if (!enabledWorlds.isEmpty()) {
             lore.add(Component.empty());
-            lore.add(color(Utils.msg("gui-features")));
+            lore.add(Utils.color(Utils.msg("gui-features")));
             for (String world : enabledWorlds) {
-                lore.add(color("&f► &2" + world));
+                lore.add(Utils.color("&f► &2" + world));
             }
         }
         lore.add(Component.empty());
-        lore.add(isEnabledInWorld ? color(Utils.msg("gui-features-enabled"))
-                : color(Utils.msg("gui-features-disabled")));
-        lore.add(color("&eClick to " + (isEnabledInWorld ? "disable." : "enable.")));
+        lore.add(isEnabledInWorld ? Utils.color(Utils.msg("gui-features-enabled"))
+                : Utils.color(Utils.msg("gui-features-disabled")));
+        lore.add(Utils.color("&eClick to " + (isEnabledInWorld ? "disable." : "enable.")));
         return lore;
     }
 
@@ -124,21 +124,21 @@ public class AdminView extends BaseFeatureView {
                             enabledWorlds.add(w);
                     }
                     player.sendMessage(
-                            color(PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
+                            Utils.color(PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
                 } else {
                     enabledWorlds.removeAll(allWorldNames);
                     player.sendMessage(
-                            color(PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
+                            Utils.color(PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
                 }
             } else {
                 if (enabledWorlds.contains(worldName)) {
                     enabledWorlds.remove(worldName);
                     player.sendMessage(
-                            color(PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+                            Utils.color(PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
                 } else {
                     enabledWorlds.add(worldName);
                     player.sendMessage(
-                            color(PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+                            Utils.color(PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
                 }
             }
 
@@ -149,7 +149,7 @@ public class AdminView extends BaseFeatureView {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName(), e);
-            player.sendMessage(color(PREFIX + " An error occurred while processing your action."));
+            player.sendMessage(Utils.color(PREFIX + " An error occurred while processing your action."));
         }
     }
 }
