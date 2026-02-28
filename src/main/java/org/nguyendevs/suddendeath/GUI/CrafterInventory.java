@@ -1,7 +1,6 @@
 package org.nguyendevs.suddendeath.GUI;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -21,7 +20,6 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.*;
 
 public class CrafterInventory implements Listener {
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final int RECIPE_INVENTORY_SIZE = 45;
     private static final int MAIN_INVENTORY_SIZE = 9;
 
@@ -33,18 +31,14 @@ public class CrafterInventory implements Listener {
 
     private volatile boolean isClosing = false;
 
-    private static Component color(String message) {
-        return message != null ? LEGACY.deserialize(message) : Component.empty();
-    }
-
     private static Component getMainInventoryTitle() {
         String title = Utils.msg("gui-recipe-name");
-        return color(title);
+        return Utils.color(title);
     }
 
     private static Component getRecipeTitlePrefix(String itemName) {
         String prefix = Utils.msg("gui-crafter-name");
-        return LEGACY.deserialize(LEGACY.serialize(color(prefix + " ")) + itemName);
+        return Utils.color(prefix + " " + itemName);
     }
 
     public CrafterInventory(Player player) {
@@ -105,7 +99,7 @@ public class CrafterInventory implements Listener {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(color(displayName));
+            meta.displayName(Utils.color(displayName));
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
             NamespacedKey key = Utils.nsk("secure_gui_item");
             if (key != null) {
@@ -148,7 +142,8 @@ public class CrafterInventory implements Listener {
                 handleRecipeInventoryClick(event);
                 return;
             }
-            Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> clickedPlayer.setItemOnCursor(new ItemStack(Material.AIR)));
+            Bukkit.getScheduler().runTask(SuddenDeath.getInstance(),
+                    () -> clickedPlayer.setItemOnCursor(new ItemStack(Material.AIR)));
             return;
         }
 
@@ -199,7 +194,8 @@ public class CrafterInventory implements Listener {
         for (int slot : event.getRawSlots()) {
             if (slot < topInventory.getSize() && isOurInventory(topInventory)) {
                 event.setCancelled(true);
-                Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> player.setItemOnCursor(new ItemStack(Material.AIR)));
+                Bukkit.getScheduler().runTask(SuddenDeath.getInstance(),
+                        () -> player.setItemOnCursor(new ItemStack(Material.AIR)));
                 return;
             }
         }
@@ -314,7 +310,7 @@ public class CrafterInventory implements Listener {
                     ItemMeta meta = item.getItemMeta();
                     if (meta != null) {
                         String itemName = materialNames.getOrDefault(trimmedMaterial, mat.name().replace("_", " "));
-                        meta.displayName(color(itemName));
+                        meta.displayName(Utils.color(itemName));
                         item.setItemMeta(meta);
                     }
                 } else {
