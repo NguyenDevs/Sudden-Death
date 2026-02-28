@@ -221,7 +221,11 @@ public final class Utils {
         try {
             var itemMeta = item.getItemMeta();
             if (itemMeta != null && itemMeta.hasDisplayName()) {
-                return itemMeta.getDisplayName();
+                net.kyori.adventure.text.Component component = itemMeta.displayName();
+                if (component != null) {
+                    return net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection()
+                            .serialize(component);
+                }
             }
             return caseOnWords(item.getType().name().replace("_", " "));
         } catch (Exception e) {
