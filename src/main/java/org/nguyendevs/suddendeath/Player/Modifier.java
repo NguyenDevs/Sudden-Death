@@ -4,11 +4,7 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.logging.Level;
 
-public class Modifier {
-	private final String name;
-	private final Object value;
-	private final Type type;
-
+public record Modifier(String name, Object value, Type type) {
 	public Modifier(String name, double value) {
 		this(name, value, Type.NONE);
 	}
@@ -25,7 +21,7 @@ public class Modifier {
 		this(name, value, Type.NONE);
 	}
 
-	public Modifier(String name, Object value, Type type) {
+	public Modifier {
 		if (name == null || name.trim().isEmpty()) {
 			SuddenDeath.getInstance().getLogger().log(Level.SEVERE,
 					"Modifier name cannot be null or empty");
@@ -36,22 +32,8 @@ public class Modifier {
 					"Modifier type cannot be null for modifier: " + name);
 			throw new IllegalArgumentException("Modifier type cannot be null");
 		}
-		this.name = name;
-		this.value = value;
-		this.type = type;
 	}
 
-	public String getName() {
-		return name;
-	}
-
-	public Object getValue() {
-		return value;
-	}
-
-	public Type getType() {
-		return type;
-	}
 
 	public enum Type {
 		NONE,

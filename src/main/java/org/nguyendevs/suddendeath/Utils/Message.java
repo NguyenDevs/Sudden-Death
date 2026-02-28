@@ -38,9 +38,9 @@ public enum Message {
 			"a Strange Brew to stop that."
 	)),
 	GUI_NO_SPECIAL_STATUS_NAME("No special status"),
-	GUI_NO_SPECIAL_STATUS_LORE(Arrays.asList(
-			"You seem clean... for now."
-	)),
+	GUI_NO_SPECIAL_STATUS_LORE(List.of(
+            "You seem clean... for now."
+    )),
 
 	GUI_ADMIN_NAME("&8SD Admin GUI"),
 	GUI_PLAYER_NAME("&8SD Player GUI"),
@@ -68,7 +68,7 @@ public enum Message {
 	private final Object value;
 
 	Message(Object value) {
-		if (value == null || !(value instanceof String || value instanceof List)) {
+		if (!(value instanceof String || value instanceof List)) {
 			throw new IllegalArgumentException("Message value must be a String or List<String>");
 		}
 		if (value instanceof List) {

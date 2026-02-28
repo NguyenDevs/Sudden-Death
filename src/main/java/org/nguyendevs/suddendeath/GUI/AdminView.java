@@ -1,7 +1,8 @@
 package org.nguyendevs.suddendeath.GUI;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -90,8 +91,10 @@ public class AdminView extends PluginInventory {
         super(player);
     }
 
-    private static String translateColors(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
+
+    private static Component color(String message) {
+        return LEGACY.deserialize(message);
     }
 
     @Override
@@ -121,7 +124,7 @@ public class AdminView extends PluginInventory {
 
         visualTask = Bukkit.getScheduler().runTaskTimer(SuddenDeath.getInstance(), () -> {
             try {
-                if (player == null || !player.isOnline()) {
+                if (!player.isOnline()) {
                     stopVisualAnimation();
                     return;
                 }
@@ -214,13 +217,11 @@ public class AdminView extends PluginInventory {
                 return Material.GUARDIAN_SPAWN_EGG;
             case ARMOR_PIERCING:
                 return Material.NETHERITE_CHESTPLATE;
-            case ANGRY_SPIDERS:
+            case ANGRY_SPIDERS, LEAPING_SPIDERS, SPIDER_NEST:
                 return Material.SPIDER_SPAWN_EGG;
             case BLOOD_MOON:
                 return Material.ZOMBIE_HEAD;
-            case BONE_GRENADES:
-                return Material.SKELETON_SPAWN_EGG;
-            case BONE_WIZARDS:
+            case BONE_GRENADES, BONE_WIZARDS, SHOCKING_SKELETON_ARROWS:
                 return Material.SKELETON_SPAWN_EGG;
             case BREEZE_DASH:
                 return Material.BREEZE_SPAWN_EGG;
@@ -228,61 +229,38 @@ public class AdminView extends PluginInventory {
                 return Material.CREEPER_SPAWN_EGG;
             case ENDER_POWER:
                 return Material.ENDER_DRAGON_SPAWN_EGG;
-            case EVERBURNING_BLAZES:
+            case EVERBURNING_BLAZES, HOMING_FLAME_BARRAGE:
                 return Material.BLAZE_SPAWN_EGG;
-            case FORCE_OF_THE_UNDEAD:
+            case FORCE_OF_THE_UNDEAD, TANKY_MONSTERS, QUICK_MOBS:
                 return Material.SPAWNER;
             case FIREWORK_ARROWS:
                 return Material.PILLAGER_SPAWN_EGG;
-            case HOMING_FLAME_BARRAGE:
-                return Material.BLAZE_SPAWN_EGG;
             case IMMORTAL_EVOKER:
                 return Material.EVOKER_SPAWN_EGG;
-            case LEAPING_SPIDERS:
-                return Material.SPIDER_SPAWN_EGG;
             case METEOR_RAIN:
                 return Material.FIRE_CHARGE;
             case MOB_CRITICAL_STRIKES:
                 return Material.SPAWNER;
             case NETHER_SHIELD:
                 return Material.NETHERRACK;
-            case POISONED_SLIMES:
+            case POISONED_SLIMES, THIEF_SLIMES:
                 return Material.SLIME_SPAWN_EGG;
             case PHANTOM_BLADE:
                 return Material.PHANTOM_SPAWN_EGG;
-            case QUICK_MOBS:
-                return Material.SPAWNER;
-            case SHOCKING_SKELETON_ARROWS:
-                return Material.SKELETON_SPAWN_EGG;
             case SILVERFISHES_SUMMON:
                 return Material.SILVERFISH_SPAWN_EGG;
             case STRAY_FROST:
                 return Material.STRAY_SPAWN_EGG;
             case SPIDER_WEB:
                 return Material.CAVE_SPIDER_SPAWN_EGG;
-            case SPIDER_NEST:
-                return Material.SPIDER_SPAWN_EGG;
-            case TANKY_MONSTERS:
-                return Material.SPAWNER;
-            case THIEF_SLIMES:
-                return Material.SLIME_SPAWN_EGG;
             case TRIDENT_WRATH:
                 return Material.DROWNED_SPAWN_EGG;
-            case UNDEAD_GUNNERS:
-                return Material.ZOMBIE_SPAWN_EGG;
-            case UNDEAD_RAGE:
+            case UNDEAD_GUNNERS, ZOMBIE_BREAK_BLOCK, ZOMBIE_TOOLS, UNDEAD_RAGE:
                 return Material.ZOMBIE_SPAWN_EGG;
             case WITCH_SCROLLS:
                 return Material.WITCH_SPAWN_EGG;
-            case WITHER_MACHINEGUN:
+            case WITHER_MACHINEGUN, WITHER_RUSH:
                 return Material.WITHER_SKELETON_SPAWN_EGG;
-            case WITHER_RUSH:
-                return Material.WITHER_SKELETON_SPAWN_EGG;
-            case ZOMBIE_BREAK_BLOCK:
-                return Material.ZOMBIE_SPAWN_EGG;
-            case ZOMBIE_TOOLS:
-                return Material.ZOMBIE_SPAWN_EGG;
-            // case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ADVANCED_PLAYER_DROPS:
                 return Material.PLAYER_HEAD;
             case ARROW_SLOW:
@@ -328,7 +306,7 @@ public class AdminView extends PluginInventory {
             page = 0;
 
         Inventory inventory = Bukkit.createInventory(this, INVENTORY_SIZE,
-                translateColors(Utils.msg("gui-admin-name")) + " (" + (page + 1) + "/" + maxPage + ")");
+                color(Utils.msg("gui-admin-name") + " (" + (page + 1) + "/" + maxPage + ")"));
         this.slotFeatureMap.clear();
 
         try {
@@ -342,10 +320,10 @@ public class AdminView extends PluginInventory {
                 this.slotFeatureMap.put(slot, f);
             }
             if (page > 0) {
-                inventory.setItem(18, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-previous"))));
+                inventory.setItem(18, createNavigationItem(Material.ARROW, Utils.msg("gui-previous")));
             }
             if (endIndex < source.length) {
-                inventory.setItem(26, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-next"))));
+                inventory.setItem(26, createNavigationItem(Material.ARROW, Utils.msg("gui-next")));
             }
 
             inventory.setItem(FILTER_SLOT, createFilterItem());
@@ -408,31 +386,31 @@ public class AdminView extends PluginInventory {
                     "ItemMeta is null for feature: " + feature.getName());
             return item;
         }
-        meta.setDisplayName(ChatColor.GOLD + feature.getName());
+        meta.displayName(color("&6" + feature.getName()));
         meta.getPersistentDataContainer().set(Utils.nsk("featureId"), PersistentDataType.STRING, feature.name());
-        meta.setLore(createFeatureLore(feature, enabledWorlds, isEnabledInWorld));
+        meta.lore(createFeatureLore(feature, enabledWorlds, isEnabledInWorld));
         item.setItemMeta(meta);
         return item;
     }
 
-    private List<String> createFeatureLore(Feature feature, List<String> enabledWorlds, boolean isEnabledInWorld) {
-        List<String> lore = new ArrayList<>();
-        lore.add("");
+    private List<Component> createFeatureLore(Feature feature, List<String> enabledWorlds, boolean isEnabledInWorld) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
         for (String line : feature.getLore()) {
-            lore.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', statsInLore(feature, line)));
+            lore.add(color("&7" + statsInLore(feature, line)));
         }
 
         if (!enabledWorlds.isEmpty()) {
-            lore.add("");
-            lore.add(translateColors(Utils.msg("gui-features")));
+            lore.add(Component.empty());
+            lore.add(color(Utils.msg("gui-features")));
             for (String world : enabledWorlds) {
-                lore.add(ChatColor.WHITE + "► " + ChatColor.DARK_GREEN + world);
+                lore.add(color("&f► &2" + world));
             }
         }
-        lore.add("");
-        lore.add(isEnabledInWorld ? translateColors(Utils.msg("gui-features-enabled"))
-                : translateColors(Utils.msg("gui-features-disabled")));
-        lore.add(ChatColor.YELLOW + "Click to " + (isEnabledInWorld ? "disable." : "enable."));
+        lore.add(Component.empty());
+        lore.add(isEnabledInWorld ? color(Utils.msg("gui-features-enabled"))
+                : color(Utils.msg("gui-features-disabled")));
+        lore.add(color("&eClick to " + (isEnabledInWorld ? "disable." : "enable.")));
         return lore;
     }
 
@@ -443,7 +421,7 @@ public class AdminView extends PluginInventory {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING, "ItemMeta is null for navigation item: " + name);
             return item;
         }
-        meta.setDisplayName(name);
+        meta.displayName(color(name));
         item.setItemMeta(meta);
         return item;
     }
@@ -454,26 +432,26 @@ public class AdminView extends PluginInventory {
         if (meta == null)
             return item;
 
-        meta.setDisplayName(translateColors(Utils.msg("filter-name")));
+        meta.displayName(color(Utils.msg("filter-name")));
 
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + translateColors(Utils.msg("filter-lore-desc")));
-        lore.add("");
+        List<Component> lore = new ArrayList<>();
+        lore.add(color("&7" + Utils.msg("filter-lore-desc")));
+        lore.add(Component.empty());
 
         String defColor = (filterIndex == 0) ? "&a" : "&f";
         String srvColor = (filterIndex == 1) ? "&a" : "&f";
         String mobColor = (filterIndex == 2) ? "&a" : "&f";
         String eventColor = (filterIndex == 3) ? "&a" : "&f";
-        lore.add(translateColors("&6► " + defColor + Utils.msg("filter-lore-default")));
-        lore.add(translateColors("&6► " + srvColor + Utils.msg("filter-lore-survival")));
-        lore.add(translateColors("&6► " + mobColor + Utils.msg("filter-lore-mob")));
-        lore.add(translateColors("&6► " + eventColor + Utils.msg("filter-lore-event")));
+        lore.add(color("&6► " + defColor + Utils.msg("filter-lore-default")));
+        lore.add(color("&6► " + srvColor + Utils.msg("filter-lore-survival")));
+        lore.add(color("&6► " + mobColor + Utils.msg("filter-lore-mob")));
+        lore.add(color("&6► " + eventColor + Utils.msg("filter-lore-event")));
 
-        lore.add("");
+        lore.add(Component.empty());
         String visColor = visualMode ? "&6" : "&f";
-        lore.add(translateColors("&e► " + visColor + Utils.msg("filter-lore-visual")));
+        lore.add(color("&e► " + visColor + Utils.msg("filter-lore-visual")));
 
-        meta.setLore(lore);
+        meta.lore(lore);
         item.setItemMeta(meta);
         return item;
     }
@@ -513,7 +491,7 @@ public class AdminView extends PluginInventory {
             return;
         }
         ItemStack item = event.getCurrentItem();
-        if (item == null || !Utils.isPluginItem(item, false)) {
+        if (!Utils.isPluginItem(item, false)) {
             return;
         }
         ItemMeta meta = item.getItemMeta();
@@ -523,11 +501,11 @@ public class AdminView extends PluginInventory {
             return;
         }
         try {
-            String displayName = meta.getDisplayName();
+            int slot = event.getSlot();
             Feature[] source = getFilteredFeatures();
             int maxPage = Math.max(1, (source.length + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE);
 
-            if (translateColors(Utils.msg("gui-next")).equals(displayName)) {
+            if (slot == 26) {
                 if (page + 1 < maxPage) {
                     page++;
                     open();
@@ -535,7 +513,7 @@ public class AdminView extends PluginInventory {
                 }
                 return;
             }
-            if (translateColors(Utils.msg("gui-previous")).equals(displayName)) {
+            if (slot == 18) {
                 if (page > 0) {
                     page--;
                     open();
@@ -577,29 +555,26 @@ public class AdminView extends PluginInventory {
                 boolean allDisabled = allWorldNames.stream().noneMatch(enabledWorlds::contains);
 
                 if (allDisabled) {
-                    // All currently OFF → enable all
                     for (String w : allWorldNames) {
                         if (!enabledWorlds.contains(w))
                             enabledWorlds.add(w);
                     }
-                    player.sendMessage(translateColors(
-                            PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
+                    player.sendMessage(
+                            color(PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
                 } else {
-                    // At least one ON → disable all
                     enabledWorlds.removeAll(allWorldNames);
-                    player.sendMessage(translateColors(
-                            PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
+                    player.sendMessage(
+                            color(PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6ALL &eworlds."));
                 }
             } else {
-                // ── Normal click: toggle current world only ─────────────────
                 if (enabledWorlds.contains(worldName)) {
                     enabledWorlds.remove(worldName);
-                    player.sendMessage(translateColors(
-                            PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+                    player.sendMessage(
+                            color(PREFIX + " &eYou disabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
                 } else {
                     enabledWorlds.add(worldName);
-                    player.sendMessage(translateColors(
-                            PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
+                    player.sendMessage(
+                            color(PREFIX + " &eYou enabled &6" + feature.getName() + " &ein &6" + worldName + "&e."));
                 }
             }
 
@@ -612,7 +587,7 @@ public class AdminView extends PluginInventory {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " + "An error occurred while processing your action."));
+            player.sendMessage(color(PREFIX + " An error occurred while processing your action."));
         }
     }
 
@@ -621,8 +596,8 @@ public class AdminView extends PluginInventory {
             String[] parts = lore.split("#", 3);
             if (parts.length >= 3) {
                 String stat = parts[1];
-                return statsInLore(feature, parts[0] + ChatColor.GREEN + DECIMAL_FORMAT.format(feature.getDouble(stat))
-                        + ChatColor.GRAY + parts[2]);
+                return statsInLore(feature, parts[0] + "&a" + DECIMAL_FORMAT.format(feature.getDouble(stat))
+                        + "&7" + parts[2]);
             }
         }
         return lore;

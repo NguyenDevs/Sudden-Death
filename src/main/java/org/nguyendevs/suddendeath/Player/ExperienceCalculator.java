@@ -24,11 +24,11 @@ public class ExperienceCalculator {
         try {
             int level = player.getLevel();
             float expProgress = player.getExp();
-            int experience = 0;
+            int experience;
             int requiredExperience;
 
             if (level >= 0 && level <= LEVEL_THRESHOLD_1) {
-                experience = (int) Math.ceil(level * level + 6 * level);
+                experience = (int) (double) (level * level + 6 * level);
                 requiredExperience = 2 * level + 7;
             } else if (level <= LEVEL_THRESHOLD_2) {
                 experience = (int) Math.ceil(2.5 * level * level - 40.5 * level + 360);
@@ -87,7 +87,7 @@ public class ExperienceCalculator {
 
             int remainder = xp - xpForLevel;
             experience = (float) remainder / experienceNeeded;
-            experience = round(experience, 2);
+            experience = round(experience);
 
             player.setLevel(level);
             player.setExp(experience);
@@ -97,9 +97,9 @@ public class ExperienceCalculator {
         }
     }
 
-    private float round(float value, int decimalPlaces) {
+    private float round(float value) {
         try {
-            float pow = (float) Math.pow(10, decimalPlaces);
+            float pow = (float) Math.pow(10, 2);
             return Math.round(value * pow) / pow;
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,

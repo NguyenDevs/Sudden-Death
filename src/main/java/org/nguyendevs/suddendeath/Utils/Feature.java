@@ -693,41 +693,35 @@ public enum Feature {
 					new Modifier("max-target-distance", 150.0),
 					new Modifier("drop-blocks", true),
 					new Modifier("drop-remove-interval", 15.0),
-					new Modifier("breakable-pickaxe-blocks", String.join(",", new String[] {
-							"STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE",
-							"COBBLED_DEEPSLATE", "COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE",
-							"LAPIS_ORE", "REDSTONE_ORE", "COPPER_ORE", "NETHER_QUARTZ_ORE", "NETHER_GOLD_ORE",
-							"DEEPSLATE_COAL_ORE", "DEEPSLATE_IRON_ORE", "DEEPSLATE_GOLD_ORE", "DEEPSLATE_DIAMOND_ORE",
-							"DEEPSLATE_EMERALD_ORE", "DEEPSLATE_LAPIS_ORE", "DEEPSLATE_REDSTONE_ORE",
-							"DEEPSLATE_COPPER_ORE", "OBSIDIAN", "STONE_BRICKS", "MOSSY_STONE_BRICKS",
-							"CRACKED_STONE_BRICKS", "CHISELED_STONE_BRICKS", "DEEPSLATE_BRICKS",
-							"CRACKED_DEEPSLATE_BRICKS", "CHISELED_DEEPSLATE", "POLISHED_DEEPSLATE", "SMOOTH_STONE",
-							"SANDSTONE", "RED_SANDSTONE", "CHISELED_SANDSTONE", "SMOOTH_SANDSTONE",
-							"CHISELED_RED_SANDSTONE", "SMOOTH_RED_SANDSTONE"
-					})),
-					new Modifier("breakable-shovel-blocks", String.join(",", new String[] {
-							"DIRT", "GRASS_BLOCK", "PODZOL", "MYCELIUM", "DIRT_PATH", "COARSE_DIRT", "ROOTED_DIRT",
-							"SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL", "SNOW", "SNOW_BLOCK",
-							"FARMLAND", "MUD", "MUDDY_MANGROVE_ROOTS"
-					})),
-					new Modifier("breakable-axe-blocks", String.join(",", new String[] {
-							"OAK_LOG", "BIRCH_LOG", "SPRUCE_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG",
-							"MANGROVE_LOG", "CHERRY_LOG", "STRIPPED_OAK_LOG", "STRIPPED_BIRCH_LOG",
-							"STRIPPED_SPRUCE_LOG",
-							"STRIPPED_JUNGLE_LOG", "STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG",
-							"STRIPPED_MANGROVE_LOG",
-							"STRIPPED_CHERRY_LOG", "OAK_WOOD", "BIRCH_WOOD", "SPRUCE_WOOD", "JUNGLE_WOOD",
-							"ACACIA_WOOD",
-							"DARK_OAK_WOOD", "MANGROVE_WOOD", "CHERRY_WOOD", "STRIPPED_OAK_WOOD", "STRIPPED_BIRCH_WOOD",
-							"STRIPPED_SPRUCE_WOOD", "STRIPPED_JUNGLE_WOOD", "STRIPPED_ACACIA_WOOD",
-							"STRIPPED_DARK_OAK_WOOD",
-							"STRIPPED_MANGROVE_WOOD", "STRIPPED_CHERRY_WOOD", "OAK_PLANKS", "BIRCH_PLANKS",
-							"SPRUCE_PLANKS",
-							"JUNGLE_PLANKS", "ACACIA_PLANKS", "DARK_OAK_PLANKS", "MANGROVE_PLANKS", "CHERRY_PLANKS",
-							"CRIMSON_STEM", "WARPED_STEM", "STRIPPED_CRIMSON_STEM", "STRIPPED_WARPED_STEM",
-							"CRIMSON_HYPHAE", "WARPED_HYPHAE", "STRIPPED_CRIMSON_HYPHAE", "STRIPPED_WARPED_HYPHAE",
-							"CRIMSON_PLANKS", "WARPED_PLANKS"
-					}))
+					new Modifier("breakable-pickaxe-blocks", String.join(",", "STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE",
+                            "COBBLED_DEEPSLATE", "COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE",
+                            "LAPIS_ORE", "REDSTONE_ORE", "COPPER_ORE", "NETHER_QUARTZ_ORE", "NETHER_GOLD_ORE",
+                            "DEEPSLATE_COAL_ORE", "DEEPSLATE_IRON_ORE", "DEEPSLATE_GOLD_ORE", "DEEPSLATE_DIAMOND_ORE",
+                            "DEEPSLATE_EMERALD_ORE", "DEEPSLATE_LAPIS_ORE", "DEEPSLATE_REDSTONE_ORE",
+                            "DEEPSLATE_COPPER_ORE", "OBSIDIAN", "STONE_BRICKS", "MOSSY_STONE_BRICKS",
+                            "CRACKED_STONE_BRICKS", "CHISELED_STONE_BRICKS", "DEEPSLATE_BRICKS",
+                            "CRACKED_DEEPSLATE_BRICKS", "CHISELED_DEEPSLATE", "POLISHED_DEEPSLATE", "SMOOTH_STONE",
+                            "SANDSTONE", "RED_SANDSTONE", "CHISELED_SANDSTONE", "SMOOTH_SANDSTONE",
+                            "CHISELED_RED_SANDSTONE", "SMOOTH_RED_SANDSTONE")),
+					new Modifier("breakable-shovel-blocks", String.join(",", "DIRT", "GRASS_BLOCK", "PODZOL", "MYCELIUM", "DIRT_PATH", "COARSE_DIRT", "ROOTED_DIRT",
+                            "SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL", "SNOW", "SNOW_BLOCK",
+                            "FARMLAND", "MUD", "MUDDY_MANGROVE_ROOTS")),
+					new Modifier("breakable-axe-blocks", String.join(",", "OAK_LOG", "BIRCH_LOG", "SPRUCE_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG",
+                            "MANGROVE_LOG", "CHERRY_LOG", "STRIPPED_OAK_LOG", "STRIPPED_BIRCH_LOG",
+                            "STRIPPED_SPRUCE_LOG",
+                            "STRIPPED_JUNGLE_LOG", "STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG",
+                            "STRIPPED_MANGROVE_LOG",
+                            "STRIPPED_CHERRY_LOG", "OAK_WOOD", "BIRCH_WOOD", "SPRUCE_WOOD", "JUNGLE_WOOD",
+                            "ACACIA_WOOD",
+                            "DARK_OAK_WOOD", "MANGROVE_WOOD", "CHERRY_WOOD", "STRIPPED_OAK_WOOD", "STRIPPED_BIRCH_WOOD",
+                            "STRIPPED_SPRUCE_WOOD", "STRIPPED_JUNGLE_WOOD", "STRIPPED_ACACIA_WOOD",
+                            "STRIPPED_DARK_OAK_WOOD",
+                            "STRIPPED_MANGROVE_WOOD", "STRIPPED_CHERRY_WOOD", "OAK_PLANKS", "BIRCH_PLANKS",
+                            "SPRUCE_PLANKS",
+                            "JUNGLE_PLANKS", "ACACIA_PLANKS", "DARK_OAK_PLANKS", "MANGROVE_PLANKS", "CHERRY_PLANKS",
+                            "CRIMSON_STEM", "WARPED_STEM", "STRIPPED_CRIMSON_STEM", "STRIPPED_WARPED_STEM",
+                            "CRIMSON_HYPHAE", "WARPED_HYPHAE", "STRIPPED_CRIMSON_HYPHAE", "STRIPPED_WARPED_HYPHAE",
+                            "CRIMSON_PLANKS", "WARPED_PLANKS"))
 			});
 
 	private String name;
@@ -838,8 +832,7 @@ public enum Feature {
 
 	public StatusRetriever generateWorldEventHandler(World world) {
 		if (isEvent()) {
-			WorldEventHandler handler = event.apply(world);
-			return handler;
+            return event.apply(world);
 		}
 		return null;
 	}

@@ -91,16 +91,16 @@ public class FeatureManager {
             ConfigFile modifiers = feature.getConfigFile();
             boolean saveNeeded = false;
             for (Modifier mod : feature.getModifiers()) {
-                if (modifiers.getConfig().contains(mod.getName())) {
+                if (modifiers.getConfig().contains(mod.name())) {
                     continue;
                 }
-                if (mod.getType() == Modifier.Type.NONE) {
-                    modifiers.getConfig().set(mod.getName(), mod.getValue());
+                if (mod.type() == Modifier.Type.NONE) {
+                    modifiers.getConfig().set(mod.name(), mod.value());
                     saveNeeded = true;
-                } else if (mod.getType() == Modifier.Type.EACH_MOB) {
+                } else if (mod.type() == Modifier.Type.EACH_MOB) {
                     for (EntityType type : Utils.getLivingEntityTypes()) {
-                        if (!modifiers.getConfig().contains(mod.getName() + "." + type.name())) {
-                            modifiers.getConfig().set(mod.getName() + "." + type.name(), mod.getValue());
+                        if (!modifiers.getConfig().contains(mod.name() + "." + type.name())) {
+                            modifiers.getConfig().set(mod.name() + "." + type.name(), mod.value());
                             saveNeeded = true;
                         }
                     }

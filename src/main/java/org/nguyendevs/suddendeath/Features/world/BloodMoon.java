@@ -148,7 +148,7 @@ public class BloodMoon extends WorldEventHandler {
 				if (!player.isOnline() || !player.getWorld().equals(getWorld()) || player.isDead()) return;
 				double chance = Feature.BLOOD_MOON.getDouble("skeleton-mark-chance") / 100.0;
 				if (RANDOM.nextDouble() < chance) {
-					player.addPotionEffect(new PotionEffect(PotionEffectType.INSTANT_DAMAGE, 1, 1, false, false, true));
+					player.addPotionEffect(new PotionEffect(PotionEffectType.INSTANT_DAMAGE, 1, 0, false, false, true));
 				}
 			}, 60L);
 		} catch (Exception e) {

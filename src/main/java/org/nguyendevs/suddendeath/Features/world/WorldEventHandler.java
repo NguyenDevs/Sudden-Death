@@ -36,7 +36,7 @@ public abstract class WorldEventHandler extends BukkitRunnable implements Listen
 	}
 
 	@Override
-	public WorldStatus getStatus() {
+	public WorldStatus status() {
 		return status;
 	}
 

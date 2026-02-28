@@ -4,8 +4,8 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Hook.CustomFlag;
 import org.nguyendevs.suddendeath.Hook.WGPlugin;
@@ -15,6 +15,8 @@ import org.nguyendevs.suddendeath.Hook.WorldGuardOn;
 import java.util.logging.Level;
 
 public class WorldGuardManager {
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
+
     private final SuddenDeath plugin;
     private WGPlugin provider;
     private boolean isReady = false;
@@ -24,7 +26,8 @@ public class WorldGuardManager {
     }
 
     public void registerFlags() {
-        if (plugin.getServer().getPluginManager().getPlugin("WorldGuard") == null) return;
+        if (plugin.getServer().getPluginManager().getPlugin("WorldGuard") == null)
+            return;
         try {
             FlagRegistry registry = WorldGuard.getInstance().getFlagRegistry();
             for (CustomFlag customFlag : CustomFlag.values()) {
@@ -35,7 +38,8 @@ public class WorldGuardManager {
                     registry.register(flag);
                 }
             }
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard flag registration completed."));
+            Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                    "&6[&cSudden&4Death&6] &aWorldGuard flag registration completed."));
         } catch (FlagConflictException e) {
             plugin.getLogger().warning("Flag conflict: " + e.getMessage());
         } catch (Exception e) {
@@ -47,26 +51,29 @@ public class WorldGuardManager {
         try {
             if (plugin.getServer().getPluginManager().getPlugin("WorldGuard") != null) {
                 org.bukkit.plugin.Plugin wgInfo = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
-                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard version: " + wgInfo.getDescription().getVersion()));
+                assert wgInfo != null;
+                Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                        "&6[&cSudden&4Death&6] &aWorldGuard version: " + wgInfo.getPluginMeta().getVersion()));
 
                 this.provider = new WorldGuardOn();
 
-                if (provider instanceof WorldGuardOn) {
-                    WorldGuardOn wgOn = (WorldGuardOn) provider;
-                    if (wgOn.isReady()) {
-                        isReady = true;
-                        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard integration ready immediately."));
-                    } else {
-                        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                            if (wgOn.isReady()) {
-                                isReady = true;
-                                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aWorldGuard integration ready delayed."));
-                            }
-                        }, 40L);
-                    }
+                WorldGuardOn wgOn = (WorldGuardOn) provider;
+                if (wgOn.isReady()) {
+                    isReady = true;
+                    Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                            "&6[&cSudden&4Death&6] &aWorldGuard integration ready immediately."));
+                } else {
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                        if (wgOn.isReady()) {
+                            isReady = true;
+                            Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                                    "&6[&cSudden&4Death&6] &aWorldGuard integration ready delayed."));
+                        }
+                    }, 40L);
                 }
             } else {
-                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &6WorldGuard not found, using fallback."));
+                Bukkit.getConsoleSender().sendMessage(LEGACY.deserialize(
+                        "&6[&cSudden&4Death&6] &6WorldGuard not found, using fallback."));
                 this.provider = new WorldGuardOff();
                 isReady = true;
             }

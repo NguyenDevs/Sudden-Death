@@ -95,7 +95,7 @@ public class SkeletonFeatures extends AbstractFeature {
                             Location loc = grenadeEntity.getLocation();
                             World world = grenadeEntity.getWorld();
                             grenade.close();
-                            world.spawnParticle(Particle.POOF, loc, 24, 3, 3, 3, 0);
+                            world.spawnParticle(Particle.EXPLOSION, loc, 24, 3, 3, 3, 0);
                             world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
                             for (Entity nearby : grenadeEntity.getNearbyEntities(6, 6, 6)) {
                                 if (nearby instanceof Player player) {

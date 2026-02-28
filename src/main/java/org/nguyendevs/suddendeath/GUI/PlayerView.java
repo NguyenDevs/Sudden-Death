@@ -1,7 +1,8 @@
 package org.nguyendevs.suddendeath.GUI;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -85,10 +86,8 @@ public class PlayerView extends PluginInventory {
     };
 
     private static final int ANIM_PERIOD_TICKS = 15;
-    private int animIndex = 0;
     private BukkitTask visualTask = null;
     private final Map<Integer, Feature> slotFeatureMap = new HashMap<>();
-    private Inventory lastInventory;
 
     private static final EnumSet<Feature> EVENT_SET = EnumSet.of(
             Feature.BLOOD_MOON,
@@ -96,7 +95,6 @@ public class PlayerView extends PluginInventory {
             Feature.METEOR_RAIN);
     private static final EnumSet<Feature> MOB_SET = EnumSet.of(
             Feature.ABYSSAL_VORTEX,
-            // Feature.AIM_BOT,
             Feature.ARMOR_PIERCING,
             Feature.ANGRY_SPIDERS,
             Feature.BONE_GRENADES,
@@ -129,9 +127,7 @@ public class PlayerView extends PluginInventory {
             Feature.WITHER_RUSH,
             Feature.ZOMBIE_BREAK_BLOCK,
             Feature.ZOMBIE_TOOLS,
-            Feature.FIREWORK_ARROWS
-    // Feature.ZOMBIE_PLACE_BLOCK
-    );
+            Feature.FIREWORK_ARROWS);
 
     private static final EnumSet<Feature> SURVIVAL_SET = EnumSet.of(
             Feature.ADVANCED_PLAYER_DROPS,
@@ -161,8 +157,10 @@ public class PlayerView extends PluginInventory {
         super(player);
     }
 
-    private static String translateColors(String s) {
-        return ChatColor.translateAlternateColorCodes('&', s);
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
+
+    private static Component color(String s) {
+        return LEGACY.deserialize(s);
     }
 
     @Override
@@ -192,21 +190,17 @@ public class PlayerView extends PluginInventory {
 
         visualTask = Bukkit.getScheduler().runTaskTimer(SuddenDeath.getInstance(), () -> {
             try {
-                if (player == null || !player.isOnline()) {
+                if (!player.isOnline()) {
                     stopVisualAnimation();
                     return;
                 }
-                if (player.getOpenInventory() == null
-                        || player.getOpenInventory().getTopInventory() == null
-                        || player.getOpenInventory().getTopInventory().getHolder() != this) {
+                player.getOpenInventory();
+                if (player.getOpenInventory().getTopInventory().getHolder() != this) {
                     stopVisualAnimation();
                     return;
                 }
 
                 Inventory inv = player.getOpenInventory().getTopInventory();
-                this.lastInventory = inv;
-
-                animIndex++;
                 for (Map.Entry<Integer, Feature> e : slotFeatureMap.entrySet()) {
                     int slot = e.getKey();
                     Feature f = e.getValue();
@@ -234,8 +228,8 @@ public class PlayerView extends PluginInventory {
                     ItemStack newItem = new ItemStack(newMat);
                     ItemMeta newMeta = newItem.getItemMeta();
                     if (oldMeta != null && newMeta != null) {
-                        newMeta.setDisplayName(oldMeta.getDisplayName());
-                        newMeta.setLore(oldMeta.getLore());
+                        newMeta.displayName(oldMeta.displayName());
+                        newMeta.lore(oldMeta.lore());
                         newItem.setItemMeta(newMeta);
                     }
                     inv.setItem(slot, newItem);
@@ -286,7 +280,7 @@ public class PlayerView extends PluginInventory {
             page = 0;
 
         Inventory inv = Bukkit.createInventory(this, INVENTORY_SIZE,
-                translateColors(Utils.msg("gui-player-name")) + " (" + (page + 1) + "/" + maxPage + ")");
+                color(Utils.msg("gui-player-name") + " (" + (page + 1) + "/" + maxPage + ")"));
 
         this.slotFeatureMap.clear();
 
@@ -301,15 +295,13 @@ public class PlayerView extends PluginInventory {
                 this.slotFeatureMap.put(slot, f);
             }
             if (page > 0) {
-                inv.setItem(18, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-previous"))));
+                inv.setItem(18, createNavigationItem(Material.ARROW, Utils.msg("gui-previous")));
             }
             if (end < source.length) {
-                inv.setItem(26, createNavigationItem(Material.ARROW, translateColors(Utils.msg("gui-next"))));
+                inv.setItem(26, createNavigationItem(Material.ARROW, Utils.msg("gui-next")));
             }
 
             inv.setItem(FILTER_SLOT, createFilterItem());
-            this.lastInventory = inv;
-
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error creating PlayerView inventory for player: " + player.getName(), e);
@@ -369,8 +361,8 @@ public class PlayerView extends PluginInventory {
                     "ItemMeta is null for feature: " + feature.getName());
             return item;
         }
-        meta.setDisplayName(ChatColor.GOLD + feature.getName());
-        meta.setLore(createFeatureLore(feature, enabledWorlds, isEnabledInWorld));
+        meta.displayName(color("&6" + feature.getName()));
+        meta.lore(createFeatureLore(feature, enabledWorlds, isEnabledInWorld));
         item.setItemMeta(meta);
         return item;
     }
@@ -379,7 +371,6 @@ public class PlayerView extends PluginInventory {
         switch (f) {
             case ABYSSAL_VORTEX:
                 return Material.GUARDIAN_SPAWN_EGG;
-            // case AIM_BOT: return Material.SPECTRAL_ARROW;
             case ARMOR_PIERCING:
                 return Material.NETHERITE_CHESTPLATE;
             case ANGRY_SPIDERS:
@@ -448,7 +439,6 @@ public class PlayerView extends PluginInventory {
                 return Material.WITHER_SKELETON_SPAWN_EGG;
             case ZOMBIE_BREAK_BLOCK:
                 return Material.ZOMBIE_SPAWN_EGG;
-            // case ZOMBIE_PLACE_BLOCK: return Material.ZOMBIE_SPAWN_EGG;
             case ZOMBIE_TOOLS:
                 return Material.ZOMBIE_SPAWN_EGG;
             case ADVANCED_PLAYER_DROPS:
@@ -481,28 +471,27 @@ public class PlayerView extends PluginInventory {
                 return Material.DEEPSLATE;
             case THUNDERSTORM:
                 return Material.NETHER_STAR;
-
             default:
                 return null;
         }
     }
 
-    private List<String> createFeatureLore(Feature feature, List<String> enabledWorlds, boolean isEnabledInWorld) {
-        List<String> lore = new ArrayList<>();
-        lore.add("");
+    private List<Component> createFeatureLore(Feature feature, List<String> enabledWorlds, boolean isEnabledInWorld) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.empty());
         for (String line : feature.getLore()) {
-            lore.add(ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', statsInLore(feature, line)));
+            lore.add(color("&7" + statsInLore(feature, line)));
         }
         if (!enabledWorlds.isEmpty()) {
-            lore.add("");
-            lore.add(translateColors(Utils.msg("gui-features")));
+            lore.add(Component.empty());
+            lore.add(color(Utils.msg("gui-features")));
             for (String world : enabledWorlds) {
-                lore.add(ChatColor.WHITE + "► " + ChatColor.DARK_GREEN + world);
+                lore.add(color("&f► &2" + world));
             }
         }
-        lore.add("");
-        lore.add(isEnabledInWorld ? translateColors(Utils.msg("gui-features-enabled"))
-                : translateColors(Utils.msg("gui-features-disabled")));
+        lore.add(Component.empty());
+        lore.add(isEnabledInWorld ? color(Utils.msg("gui-features-enabled"))
+                : color(Utils.msg("gui-features-disabled")));
         return lore;
     }
 
@@ -514,7 +503,7 @@ public class PlayerView extends PluginInventory {
                     "ItemMeta is null for navigation item: " + name);
             return item;
         }
-        meta.setDisplayName(name);
+        meta.displayName(color(name));
         item.setItemMeta(meta);
         return item;
     }
@@ -525,26 +514,26 @@ public class PlayerView extends PluginInventory {
         if (meta == null)
             return item;
 
-        meta.setDisplayName(translateColors(Utils.msg("filter-name")));
+        meta.displayName(color(Utils.msg("filter-name")));
 
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GRAY + translateColors(Utils.msg("filter-lore-desc")));
-        lore.add("");
+        List<Component> lore = new ArrayList<>();
+        lore.add(color("&7" + Utils.msg("filter-lore-desc")));
+        lore.add(Component.empty());
 
         String defColor = (filterIndex == 0) ? "&a" : "&f";
         String srvColor = (filterIndex == 1) ? "&a" : "&f";
         String mobColor = (filterIndex == 2) ? "&a" : "&f";
         String eventColor = (filterIndex == 3) ? "&a" : "&f";
-        lore.add(translateColors("&6► " + defColor + Utils.msg("filter-lore-default")));
-        lore.add(translateColors("&6► " + srvColor + Utils.msg("filter-lore-survival")));
-        lore.add(translateColors("&6► " + mobColor + Utils.msg("filter-lore-mob")));
-        lore.add(translateColors("&6► " + eventColor + Utils.msg("filter-lore-event")));
+        lore.add(color("&6► " + defColor + Utils.msg("filter-lore-default")));
+        lore.add(color("&6► " + srvColor + Utils.msg("filter-lore-survival")));
+        lore.add(color("&6► " + mobColor + Utils.msg("filter-lore-mob")));
+        lore.add(color("&6► " + eventColor + Utils.msg("filter-lore-event")));
 
-        lore.add("");
+        lore.add(Component.empty());
         String visColor = visualMode ? "&6" : "&f";
-        lore.add(translateColors("&e► " + visColor + Utils.msg("filter-lore-visual")));
+        lore.add(color("&e► " + visColor + Utils.msg("filter-lore-visual")));
 
-        meta.setLore(lore);
+        meta.lore(lore);
         item.setItemMeta(meta);
         return item;
     }
@@ -592,11 +581,10 @@ public class PlayerView extends PluginInventory {
             return;
         }
         try {
-            String displayName = meta.getDisplayName();
             Feature[] source = getFilteredFeatures();
             int maxPage = Math.max(1, (source.length + ITEMS_PER_PAGE - 1) / ITEMS_PER_PAGE);
-
-            if (translateColors(Utils.msg("gui-next")).equals(displayName)) {
+            int slot = event.getSlot();
+            if (slot == 26) {
                 if (page + 1 < maxPage) {
                     page++;
                     open();
@@ -605,7 +593,7 @@ public class PlayerView extends PluginInventory {
                 return;
             }
 
-            if (translateColors(Utils.msg("gui-previous")).equals(displayName)) {
+            if (slot == 18) {
                 if (page > 0) {
                     page--;
                     open();
@@ -628,7 +616,7 @@ public class PlayerView extends PluginInventory {
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error handling InventoryClickEvent for player: " + player.getName(), e);
-            player.sendMessage(translateColors(PREFIX + " " + "&eAn error occurred while navigating the GUI."));
+            player.sendMessage(color(PREFIX + " &eAn error occurred while navigating the GUI."));
         }
     }
 
@@ -637,8 +625,8 @@ public class PlayerView extends PluginInventory {
             String[] parts = lore.split("#", 3);
             if (parts.length >= 3) {
                 String stat = parts[1];
-                return statsInLore(feature, parts[0] + ChatColor.GREEN + DECIMAL_FORMAT.format(feature.getDouble(stat))
-                        + ChatColor.GRAY + parts[2]);
+                return statsInLore(feature, parts[0] + "&a" + DECIMAL_FORMAT.format(feature.getDouble(stat))
+                        + "&7" + parts[2]);
             }
         }
         return lore;

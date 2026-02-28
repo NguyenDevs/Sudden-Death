@@ -3,9 +3,6 @@ package org.nguyendevs.suddendeath.Utils;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.nguyendevs.suddendeath.SuddenDeath;
-
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -141,7 +138,7 @@ public enum MobStat {
         this.defaultValue = defaultValue;
         this.type = type;
         this.name = name;
-        this.lore = Collections.unmodifiableList(Arrays.asList(lore));
+        this.lore = List.of(lore);
     }
 
     public String getPath() {

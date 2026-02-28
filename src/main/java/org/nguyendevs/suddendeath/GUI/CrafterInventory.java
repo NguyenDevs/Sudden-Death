@@ -1,5 +1,7 @@
 package org.nguyendevs.suddendeath.GUI;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -17,10 +19,13 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.*;
 
 public class CrafterInventory implements Listener {
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final int RECIPE_INVENTORY_SIZE = 45;
     private static final int MAIN_INVENTORY_SIZE = 9;
-    private static final String MAIN_INVENTORY_TITLE = translateColors(Utils.msg("gui-recipe-name") != null ? Utils.msg("gui-recipe-name") : "&5SuddenDeath Recipes");
-    private static final String RECIPE_TITLE_PREFIX = translateColors(Utils.msg("gui-crafter-name") != null ? Utils.msg("gui-crafter-name") + " " : "&8Recipe: ");
+    private static final Component MAIN_INVENTORY_TITLE = color(
+            Utils.msg("gui-recipe-name") != null ? Utils.msg("gui-recipe-name") : "&5SuddenDeath Recipes");
+    private static final Component RECIPE_TITLE_PREFIX = color(
+            Utils.msg("gui-crafter-name") != null ? Utils.msg("gui-crafter-name") + " " : "&8Recipe: ");
 
     private final Player player;
     private final UUID playerUUID;
@@ -31,8 +36,8 @@ public class CrafterInventory implements Listener {
     private volatile boolean isClosing = false;
     private Inventory currentOpenInventory = null;
 
-    private static String translateColors(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
+    private static Component color(String message) {
+        return LEGACY.deserialize(message);
     }
 
     public CrafterInventory(Player player) {
@@ -63,17 +68,9 @@ public class CrafterInventory implements Listener {
     }
 
     private boolean isOurInventory(Inventory inventory) {
-        if (inventory == null) return false;
-        if (trackedInventories.contains(inventory)) return true;
-        String title = "";
-        try {
-            if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory().equals(inventory)) {
-                title = player.getOpenInventory().getTitle();
-            }
-        } catch (Exception e) {
-        }
-        return title.equals(MAIN_INVENTORY_TITLE) ||
-                title.startsWith(RECIPE_TITLE_PREFIX) ||
+        if (inventory == null)
+            return false;
+        return trackedInventories.contains(inventory) ||
                 inventory.getSize() == MAIN_INVENTORY_SIZE ||
                 inventory.getSize() == RECIPE_INVENTORY_SIZE;
     }
@@ -108,14 +105,13 @@ public class CrafterInventory implements Listener {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(translateColors(displayName));
+            meta.displayName(color(displayName));
             if (isSecure) {
                 meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
                 meta.getPersistentDataContainer().set(
                         new NamespacedKey(SuddenDeath.getInstance(), "secure_gui_item"),
                         org.bukkit.persistence.PersistentDataType.BYTE,
-                        (byte) 1
-                );
+                        (byte) 1);
             }
             item.setItemMeta(meta);
         }
@@ -123,19 +119,22 @@ public class CrafterInventory implements Listener {
     }
 
     private boolean isSecureGUIItem(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return false;
+        if (item == null || !item.hasItemMeta())
+            return false;
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return false;
+        if (meta == null)
+            return false;
         return meta.getPersistentDataContainer().has(
                 new NamespacedKey(SuddenDeath.getInstance(), "secure_gui_item"),
-                org.bukkit.persistence.PersistentDataType.BYTE
-        );
+                org.bukkit.persistence.PersistentDataType.BYTE);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (isClosing) return;
-        if (!isOurGUIClick(event)) return;
+        if (isClosing)
+            return;
+        if (!isOurGUIClick(event))
+            return;
         Player clickedPlayer = (Player) event.getWhoClicked();
         Inventory clickedInventory = event.getClickedInventory();
         if (clickedInventory != null && clickedInventory.equals(mainInventory)) {
@@ -218,7 +217,8 @@ public class CrafterInventory implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (isClosing) return;
+        if (isClosing)
+            return;
         if (event.getWhoClicked().getUniqueId().equals(playerUUID)) {
             for (int slot : event.getRawSlots()) {
                 if (slot < event.getView().getTopInventory().getSize() &&
@@ -249,7 +249,8 @@ public class CrafterInventory implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!event.getPlayer().getUniqueId().equals(playerUUID)) return;
+        if (!event.getPlayer().getUniqueId().equals(playerUUID))
+            return;
         if (isOurInventory(event.getInventory())) {
             Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
                 if (!isPlayerInOurGUI()) {
@@ -270,7 +271,8 @@ public class CrafterInventory implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {
-        if (!event.getPlayer().getUniqueId().equals(playerUUID)) return;
+        if (!event.getPlayer().getUniqueId().equals(playerUUID))
+            return;
         if (isSecureGUIItem(event.getItemDrop().getItemStack())) {
             event.setCancelled(true);
             cleanupPlayerInventory();
@@ -290,10 +292,11 @@ public class CrafterInventory implements Listener {
     private void openRecipeInventory(CustomItem customItem) {
         FileConfiguration itemsConfig = SuddenDeath.getInstance().items.getConfig();
         String itemKey = customItem.name();
-        String title = translateColors(RECIPE_TITLE_PREFIX + Utils.displayName(customItem.a()));
-        Inventory recipeInventory = Bukkit.createInventory(null, RECIPE_INVENTORY_SIZE, title);
+        String itemDisplayName = Utils.displayName(customItem.a());
+        Component titleComponent = LEGACY.deserialize(LEGACY.serialize(RECIPE_TITLE_PREFIX) + itemDisplayName);
+        Inventory recipeInventory = Bukkit.createInventory(null, RECIPE_INVENTORY_SIZE, titleComponent);
         trackedInventories.add(recipeInventory);
-        int[] graySlots = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 37, 38, 39, 40, 41, 42, 43};
+        int[] graySlots = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 37, 38, 39, 40, 41, 42, 43 };
         ItemStack grayPane = createSecureItem(Material.GRAY_STAINED_GLASS_PANE, "&7 ", true);
         for (int slot : graySlots) {
             recipeInventory.setItem(slot, grayPane);
@@ -301,7 +304,7 @@ public class CrafterInventory implements Listener {
         ItemStack limePane = createSecureItem(Material.ARROW,
                 Utils.msg("gui-crafter-back") != null ? Utils.msg("gui-crafter-back") : "&aBack", true);
         recipeInventory.setItem(44, limePane);
-        int[] craftingSlots = {11, 12, 13, 20, 21, 22, 29, 30, 31};
+        int[] craftingSlots = { 11, 12, 13, 20, 21, 22, 29, 30, 31 };
         List<String> recipe = itemsConfig.getStringList(itemKey + ".craft");
         Map<String, String> materialNames = new HashMap<>();
         List<String> materialsList = itemsConfig.getStringList(itemKey + ".materials");
@@ -333,11 +336,10 @@ public class CrafterInventory implements Listener {
                     item = new ItemStack(mat);
                     ItemMeta meta = item.getItemMeta();
                     if (meta != null) {
-                        String displayName = materialNames.getOrDefault(
+                        String itemName = materialNames.getOrDefault(
                                 trimmedMaterial.toUpperCase(),
-                                translateColors(mat.name().replace("_", " "))
-                        );
-                        meta.setDisplayName(translateColors(displayName));
+                                mat.name().replace("_", " "));
+                        meta.displayName(color(itemName));
                         item.setItemMeta(meta);
                     }
                 } else {

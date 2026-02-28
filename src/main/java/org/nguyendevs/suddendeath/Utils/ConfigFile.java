@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Utils;
 
-import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
@@ -60,7 +59,8 @@ public class ConfigFile {
                     try {
                         plugin.saveResource("config.yml", false);
                     } catch (IllegalArgumentException e) {
-                        plugin.getLogger().log(Level.WARNING, "Failed to copy config.yml from resources, creating empty file with defaults", e);
+                        plugin.getLogger().log(Level.WARNING,
+                                "Failed to copy config.yml from resources, creating empty file with defaults", e);
                         setDefaultConfigValues();
                         save();
                     }
@@ -95,7 +95,6 @@ public class ConfigFile {
         }
     }
 
-
     public void reload() {
         try {
             if (configFile.exists()) {
@@ -121,30 +120,4 @@ public class ConfigFile {
     public FileConfiguration getConfig() {
         return config;
     }
-
-    public String getColoredString(String path, String defaultValue) {
-        try {
-            String value = getConfig().getString(path, defaultValue);
-            return value != null ? ChatColor.translateAlternateColorCodes('&', value) : defaultValue;
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING,
-                    "Error reading string '" + path + "' from " + name + ".yml. Using default value: " + defaultValue, e);
-            return ChatColor.translateAlternateColorCodes('&', defaultValue);
-        }
-    }
-
-    public boolean getUpdateNotify() {
-        if (!name.equals("config")) {
-            plugin.getLogger().log(Level.WARNING, "getUpdateNotify is only applicable for config.yml, not " + name + ".yml");
-            return DEFAULT_UPDATE_NOTIFY;
-        }
-        try {
-            return getConfig().getBoolean("update-notify", DEFAULT_UPDATE_NOTIFY);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING,
-                    "Error reading update-notify from config.yml. Using default value: " + DEFAULT_UPDATE_NOTIFY, e);
-            return DEFAULT_UPDATE_NOTIFY;
-        }
-    }
-
 }

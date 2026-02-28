@@ -1,6 +1,7 @@
 package org.nguyendevs.suddendeath.Utils;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
@@ -14,45 +15,38 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 public enum CustomItem {
 	BANDAGE(
 			Material.PAPER,
 			"&fBandage",
-			new String[]{"Stops Bleeding."},
-			new String[]{"AIR,AIR,AIR", "PAPER,STICK,PAPER", "AIR,AIR,AIR"}
-	),
+			new String[] { "Stops Bleeding." },
+			new String[] { "AIR,AIR,AIR", "PAPER,STICK,PAPER", "AIR,AIR,AIR" }),
 	STRANGE_BREW(
 			Material.SUSPICIOUS_STEW,
 			"&fStrange Brew",
-			new String[]{"Stops Infection."},
-			new String[]{"AIR,AIR,AIR", "GLOW_INK_SAC,BOWL,BROWN_MUSHROOM", "AIR,AIR,AIR"}
-	),
+			new String[] { "Stops Infection." },
+			new String[] { "AIR,AIR,AIR", "GLOW_INK_SAC,BOWL,BROWN_MUSHROOM", "AIR,AIR,AIR" }),
 	RAW_HUMAN_FLESH(
 			Material.BEEF,
 			"Human Flesh",
-			new String[]{"Some fresh human meat.", "I wonder if I can cook it?"},
-			null
-	),
+			new String[] { "Some fresh human meat.", "I wonder if I can cook it?" },
+			null),
 	HUMAN_BONE(
 			Material.BONE,
 			"Human Bone",
-			new String[]{},
-			null
-	),
+			new String[] {},
+			null),
 	COOKED_HUMAN_FLESH(
 			Material.COOKED_BEEF,
 			"Cooked Human Flesh",
-			new String[]{"Looks tasty!"},
-			null
-	),
+			new String[] { "Looks tasty!" },
+			null),
 	SHARP_KNIFE(
 			Material.IRON_SWORD,
 			"Sharp Knife",
-			new String[]{"A super sharp knife.", "Hit someone to make them bleed."},
-			null
-	);
+			new String[] { "A super sharp knife.", "Hit someone to make them bleed." },
+			null);
 
 	private static final NamespacedKey CUSTOM_ITEM_KEY = new NamespacedKey(SuddenDeath.getInstance(), "custom_item_id");
 
@@ -67,10 +61,10 @@ public enum CustomItem {
 		}
 		this.material = material;
 		this.name = name;
-		this.lore = Collections.unmodifiableList(Arrays.stream(lore)
-				.map(line -> line == null ? "" : line)
-				.collect(Collectors.toList()));
-		this.craft = craft == null ? null : Collections.unmodifiableList(Arrays.asList(craft));
+		this.lore = Arrays.stream(lore)
+                .map(line -> line == null ? "" : line)
+                .toList();
+		this.craft = craft == null ? null : List.of(craft);
 	}
 
 	public void update(ConfigurationSection config) {
@@ -96,7 +90,8 @@ public enum CustomItem {
 					this.craft = Collections.unmodifiableList(configCraft);
 				} else {
 					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-							"Invalid craft format for " + name() + ": Expected 3 lines with 3 materials each, got " + configCraft);
+							"Invalid craft format for " + name() + ": Expected 3 lines with 3 materials each, got "
+									+ configCraft);
 				}
 			}
 		} catch (Exception e) {
@@ -114,13 +109,8 @@ public enum CustomItem {
 	}
 
 	public String getName() {
-		try {
-			return ChatColor.RESET + "" + ChatColor.WHITE + ChatColor.translateAlternateColorCodes('&', name);
-		} catch (Exception e) {
-			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-					"Error translating name for CustomItem: " + name(), e);
-			return name;
-		}
+		return LegacyComponentSerializer.legacyAmpersand().serialize(
+				LegacyComponentSerializer.legacyAmpersand().deserialize("&f" + name));
 	}
 
 	public List<String> getLore() {
@@ -141,13 +131,13 @@ public enum CustomItem {
 				return item;
 			}
 
-			meta.setDisplayName(getName());
+			meta.displayName(LegacyComponentSerializer.legacyAmpersand().deserialize("&f" + name));
 			meta.addItemFlags(ItemFlag.values());
 			if (!lore.isEmpty()) {
-				List<String> formattedLore = lore.stream()
-						.map(line -> ChatColor.GRAY + ChatColor.translateAlternateColorCodes('&', line))
-						.collect(Collectors.toList());
-				meta.setLore(formattedLore);
+				var formattedLore = lore.stream()
+						.<Component>map(line -> LegacyComponentSerializer.legacyAmpersand().deserialize("&7" + line))
+						.toList();
+				meta.lore(formattedLore);
 			}
 			meta.getPersistentDataContainer().set(CUSTOM_ITEM_KEY, PersistentDataType.STRING, this.name());
 			item.setItemMeta(meta);

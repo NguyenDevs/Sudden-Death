@@ -1,7 +1,8 @@
 package org.nguyendevs.suddendeath.GUI;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -19,13 +20,11 @@ import java.util.List;
 import java.util.logging.Level;
 
 public class Status extends PluginInventory {
-    private static final int[] STATUS_SLOTS = {10, 11, 12, 13, 14, 15, 16};
-    private static final String GUI_TITLE = translateColors(Utils.msg("gui-status-name"));
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
+    private static final int[] STATUS_SLOTS = { 10, 11, 12, 13, 14, 15, 16 };
+    private static final Component GUI_TITLE = LEGACY.deserialize(Utils.msg("gui-status-name"));
     private final PlayerData data;
 
-    private static String translateColors(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
-    }
     public Status(Player player) {
         super(player);
         this.data = PlayerData.get(player);
@@ -37,12 +36,12 @@ public class Status extends PluginInventory {
 
         try {
             if (Feature.BLEEDING.isEnabled(player) && data.isBleeding()) {
-                inventory.setItem(getAvailableSlot(inventory, STATUS_SLOTS),
+                inventory.setItem(getAvailableSlot(inventory),
                         createStatusItem(Material.RED_DYE, "gui-bleeding-name", "gui-bleeding-lore"));
             }
 
             if (Feature.INFECTION.isEnabled(player) && data.isInfected()) {
-                inventory.setItem(getAvailableSlot(inventory, STATUS_SLOTS),
+                inventory.setItem(getAvailableSlot(inventory),
                         createStatusItem(Material.ROTTEN_FLESH, "gui-infected-name", "gui-infected-lore"));
             }
 
@@ -67,18 +66,18 @@ public class Status extends PluginInventory {
             return item;
         }
 
-        meta.setDisplayName(ChatColor.GREEN + Utils.msg(nameKey));
-        List<String> lore = new ArrayList<>();
+        meta.displayName(LEGACY.deserialize("&a" + Utils.msg(nameKey)));
+        List<Component> lore = new ArrayList<>();
         for (String line : Utils.msgList(loreKey)) {
-            lore.add(ChatColor.GRAY + line);
+            lore.add(LEGACY.deserialize("&7" + line));
         }
-        meta.setLore(lore);
+        meta.lore(lore);
         item.setItemMeta(meta);
         return item;
     }
 
-    private int getAvailableSlot(Inventory inventory, int[] slots) {
-        for (int slot : slots) {
+    private int getAvailableSlot(Inventory inventory) {
+        for (int slot : Status.STATUS_SLOTS) {
             if (inventory.getItem(slot) == null) {
                 return slot;
             }

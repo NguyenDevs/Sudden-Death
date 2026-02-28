@@ -12,21 +12,19 @@ import org.bukkit.entity.Player;
 import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.logging.Level;
 
 public class WorldGuardOn implements WGPlugin {
 	private final WorldGuard worldGuard;
 	private final WorldGuardPlugin worldGuardPlugin;
-	private final Map<String, StateFlag> customFlags;
-	private final Set<String> failedFlags; // Track flags that failed to register
+	private final Map<String, StateFlag> customFlags = new HashMap<>();
+	private final Set<String> failedFlags = new HashSet<>();
 	private volatile boolean flagsRegistered = false;
 
 	public WorldGuardOn() {
-		this.customFlags = new HashMap<>();
-		this.failedFlags = new HashSet<>();
 		this.worldGuard = WorldGuard.getInstance();
 
 		WorldGuardPlugin plugin = (WorldGuardPlugin) SuddenDeath.getInstance().getServer()
@@ -41,15 +39,13 @@ public class WorldGuardOn implements WGPlugin {
 
 	private void registerCustomFlags() {
 		FlagRegistry registry = worldGuard.getFlagRegistry();
-		int successCount = 0;
-		for (CustomFlag customFlag : CustomFlag.values()) {
+        for (CustomFlag customFlag : CustomFlag.values()) {
 			String flagPath = customFlag.getPath();
 			try {
 				if (registry.get(flagPath) != null) {
 					StateFlag existingFlag = (StateFlag) registry.get(flagPath);
 					customFlags.put(flagPath, existingFlag);
-					successCount++;
-				} else {
+                } else {
 					failedFlags.add(flagPath);
 					SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 							"Custom flag not found in registry: " + flagPath);
@@ -88,13 +84,11 @@ public class WorldGuardOn implements WGPlugin {
 			throw new IllegalArgumentException("CustomFlag cannot be null");
 		}
 		if (!flagsRegistered) {
-			// SỬA: Nếu chưa load xong, chỉ SDS_EFFECT là true, còn lại false
 			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 
 		String flagPath = customFlag.getPath();
 		if (failedFlags.contains(flagPath)) {
-			// SỬA: Flag lỗi, fallback tương tự
 			return customFlag == CustomFlag.SDS_EFFECT;
 		}
 		try {
@@ -102,15 +96,11 @@ public class WorldGuardOn implements WGPlugin {
 			StateFlag flag = customFlags.get(flagPath);
 
 			if (flag == null) {
-				if (!failedFlags.contains(flagPath)) {
-					failedFlags.add(flagPath);
-				}
+                failedFlags.add(flagPath);
 				return customFlag == CustomFlag.SDS_EFFECT;
 			}
 			StateFlag.State state = regions.queryValue(worldGuardPlugin.wrapPlayer(player), flag);
 
-			// Nếu state != null -> Trả về true nếu là ALLOW, false nếu là DENY
-			// Nếu state == null (unset) -> Chỉ SDS_EFFECT là true, các flag khác (BREAK, EVENT, REMOVE) là false
 			if (state != null) {
 				return state == StateFlag.State.ALLOW;
 			}
@@ -178,7 +168,4 @@ public class WorldGuardOn implements WGPlugin {
 		return flagsRegistered;
 	}
 
-	public Map<String, StateFlag> getRegisteredFlags() {
-		return new HashMap<>(customFlags);
-	}
 }
