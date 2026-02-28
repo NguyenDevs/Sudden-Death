@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import static org.nguyendevs.suddendeath.Utils.Utils.color;
 
 public enum CustomItem {
 	BANDAGE(
@@ -110,7 +111,7 @@ public enum CustomItem {
 
 	public String getName() {
 		return LegacyComponentSerializer.legacyAmpersand().serialize(
-				LegacyComponentSerializer.legacyAmpersand().deserialize("&f" + name));
+				color("&f" + name));
 	}
 
 	public List<String> getLore() {
@@ -131,11 +132,11 @@ public enum CustomItem {
 				return item;
 			}
 
-			meta.displayName(LegacyComponentSerializer.legacyAmpersand().deserialize("&f" + name));
+			meta.displayName(color("&f" + name));
 			meta.addItemFlags(ItemFlag.values());
 			if (!lore.isEmpty()) {
 				var formattedLore = lore.stream()
-						.<Component>map(line -> LegacyComponentSerializer.legacyAmpersand().deserialize("&7" + line))
+						.<Component>map(line -> color("&7" + line))
 						.toList();
 				meta.lore(formattedLore);
 			}
