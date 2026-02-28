@@ -626,22 +626,24 @@ public enum Feature {
 	WITHER_MACHINEGUN(
 			"Wither Machinegun",
 			new String[] {
-					"&8◆ &8Wither Skeletons &7rapidly throw coal at players",
+					"&8◆ &8Wither Skeletons &7have a &f#chance-percent#% &7chance to rapidly throw coal at players",
 					"&8◆ &7Each piece of coal deals &c#damage# &7damage"
 			},
 			"wither-machinegun",
 			new Modifier[] {
+					new Modifier("chance-percent", 60.0),
 					new Modifier("damage", 2)
 			}),
 
 	WITHER_RUSH(
 			"Wither Rush",
 			new String[] {
-					"&8◆ &8Wither Skeletons &7blink to the player's location",
+					"&8◆ &8Wither Skeletons &7have a &f#chance-percent#% &7chance to blink to the player's location",
 					"&8◆ &7Deals &c#damage# &7damage on arrival"
 			},
 			"wither-rush",
 			new Modifier[] {
+					new Modifier("chance-percent", 30.0),
 					new Modifier("damage", 3.0)
 			}),
 
@@ -693,8 +695,8 @@ public enum Feature {
 					new Modifier("max-target-distance", 150.0),
 					new Modifier("drop-blocks", true),
 					new Modifier("drop-remove-interval", 15.0),
-					new Modifier("breakable-pickaxe-blocks", String.join(",", new String[] {
-							"STONE", "COBBLESTONE", "ANDESITE", "DIORITE", "GRANITE", "TUFF", "DEEPSLATE",
+					new Modifier("breakable-pickaxe-blocks", String.join(",", "STONE", "COBBLESTONE", "ANDESITE",
+							"DIORITE", "GRANITE", "TUFF", "DEEPSLATE",
 							"COBBLED_DEEPSLATE", "COAL_ORE", "IRON_ORE", "GOLD_ORE", "DIAMOND_ORE", "EMERALD_ORE",
 							"LAPIS_ORE", "REDSTONE_ORE", "COPPER_ORE", "NETHER_QUARTZ_ORE", "NETHER_GOLD_ORE",
 							"DEEPSLATE_COAL_ORE", "DEEPSLATE_IRON_ORE", "DEEPSLATE_GOLD_ORE", "DEEPSLATE_DIAMOND_ORE",
@@ -703,15 +705,13 @@ public enum Feature {
 							"CRACKED_STONE_BRICKS", "CHISELED_STONE_BRICKS", "DEEPSLATE_BRICKS",
 							"CRACKED_DEEPSLATE_BRICKS", "CHISELED_DEEPSLATE", "POLISHED_DEEPSLATE", "SMOOTH_STONE",
 							"SANDSTONE", "RED_SANDSTONE", "CHISELED_SANDSTONE", "SMOOTH_SANDSTONE",
-							"CHISELED_RED_SANDSTONE", "SMOOTH_RED_SANDSTONE"
-					})),
-					new Modifier("breakable-shovel-blocks", String.join(",", new String[] {
-							"DIRT", "GRASS_BLOCK", "PODZOL", "MYCELIUM", "DIRT_PATH", "COARSE_DIRT", "ROOTED_DIRT",
+							"CHISELED_RED_SANDSTONE", "SMOOTH_RED_SANDSTONE")),
+					new Modifier("breakable-shovel-blocks", String.join(",", "DIRT", "GRASS_BLOCK", "PODZOL",
+							"MYCELIUM", "DIRT_PATH", "COARSE_DIRT", "ROOTED_DIRT",
 							"SAND", "RED_SAND", "GRAVEL", "CLAY", "SOUL_SAND", "SOUL_SOIL", "SNOW", "SNOW_BLOCK",
-							"FARMLAND", "MUD", "MUDDY_MANGROVE_ROOTS"
-					})),
-					new Modifier("breakable-axe-blocks", String.join(",", new String[] {
-							"OAK_LOG", "BIRCH_LOG", "SPRUCE_LOG", "JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG",
+							"FARMLAND", "MUD", "MUDDY_MANGROVE_ROOTS")),
+					new Modifier("breakable-axe-blocks", String.join(",", "OAK_LOG", "BIRCH_LOG", "SPRUCE_LOG",
+							"JUNGLE_LOG", "ACACIA_LOG", "DARK_OAK_LOG",
 							"MANGROVE_LOG", "CHERRY_LOG", "STRIPPED_OAK_LOG", "STRIPPED_BIRCH_LOG",
 							"STRIPPED_SPRUCE_LOG",
 							"STRIPPED_JUNGLE_LOG", "STRIPPED_ACACIA_LOG", "STRIPPED_DARK_OAK_LOG",
@@ -726,8 +726,7 @@ public enum Feature {
 							"JUNGLE_PLANKS", "ACACIA_PLANKS", "DARK_OAK_PLANKS", "MANGROVE_PLANKS", "CHERRY_PLANKS",
 							"CRIMSON_STEM", "WARPED_STEM", "STRIPPED_CRIMSON_STEM", "STRIPPED_WARPED_STEM",
 							"CRIMSON_HYPHAE", "WARPED_HYPHAE", "STRIPPED_CRIMSON_HYPHAE", "STRIPPED_WARPED_HYPHAE",
-							"CRIMSON_PLANKS", "WARPED_PLANKS"
-					}))
+							"CRIMSON_PLANKS", "WARPED_PLANKS"))
 			});
 
 	private String name;
@@ -838,8 +837,7 @@ public enum Feature {
 
 	public StatusRetriever generateWorldEventHandler(World world) {
 		if (isEvent()) {
-			WorldEventHandler handler = event.apply(world);
-			return handler;
+			return event.apply(world);
 		}
 		return null;
 	}

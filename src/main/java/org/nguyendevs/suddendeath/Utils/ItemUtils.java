@@ -41,11 +41,10 @@ public final class ItemUtils {
 
 				if (meta.hasEnchants()) {
 					StringBuilder enchFormat = new StringBuilder();
-					meta.getEnchants().forEach((enchantment, level) ->
-							enchFormat.append(";")
-									.append(enchantment.getKey().getKey())
-									.append(":")
-									.append(level));
+					meta.getEnchants().forEach((enchantment, level) -> enchFormat.append(";")
+							.append(enchantment.getKey().getKey())
+							.append(":")
+							.append(level));
 					format.append(",enchants=").append(enchFormat.substring(1));
 				}
 			}

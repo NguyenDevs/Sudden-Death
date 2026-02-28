@@ -29,27 +29,30 @@ public class FeatureManager {
     public void registerAllFeatures() {
         register(new PlayerCoreFeature());
 
-        register(new BlazeFeatures());
-        register(new BreezeFeature());
-        register(new CreeperFeature());
-        register(new DrownedFeature());
-        register(new EnderFeatures());
-        register(new EvokerFeature());
-        register(new GuardianFeature());
-        register(new PhantomFeature());
-        register(new SilverfishFeature());
+        register(new EverburningBlazesFeature());
+        register(new HomingFlameBarrageFeature());
+        register(new BreezeDashFeature());
+        register(new CreeperRevengeFeature());
+        register(new TridentWrathFeature());
+        register(new EnderPowerFeature());
+        register(new ImmortalEvokerFeature());
+        register(new AbyssalVortexFeature());
+        register(new PhantomBladeFeature());
+        register(new SilverfishSummonFeature());
         register(new SkeletonFeatures());
-        register(new SlimeFeatures());
+        register(new ThiefSlimesFeature());
+        register(new PoisonedSlimesFeature());
         register(new SpiderFeatures());
         register(new SpiderNestFeature());
-        register(new StrayFeature());
-        register(new WitchFeature());
-        register(new WitherSkeletonFeature());
+        register(new StrayFrostFeature());
+        register(new WitchScrollsFeature());
+        register(new WitherRushFeature());
+        register(new WitherMachineGunFeature());
         register(new UndeadRageFeature());
         register(new UndeadGunnersFeature());
         register(new ZombieBreakBlockFeature());
         register(new ZombieToolsFeature());
-        register(new PillagerFireWorkFeature());
+        register(new PillagerFireworkFeature());
 
         register(new ForceOfUndeadFeature());
         register(new QuickMobsFeature());
@@ -91,16 +94,17 @@ public class FeatureManager {
             ConfigFile modifiers = feature.getConfigFile();
             boolean saveNeeded = false;
             for (Modifier mod : feature.getModifiers()) {
-                if (modifiers.getConfig().contains(mod.getName())) {
+                if (modifiers.getConfig().contains(mod.name())) {
                     continue;
                 }
-                if (mod.getType() == Modifier.Type.NONE) {
-                    modifiers.getConfig().set(mod.getName(), mod.getValue());
+                if (mod.type() == Modifier.Type.NONE) {
+                    modifiers.getConfig().set(mod.name(), mod.value());
                     saveNeeded = true;
-                } else if (mod.getType() == Modifier.Type.EACH_MOB) {
+                } else if (mod.type() == Modifier.Type.EACH_MOB) {
                     for (EntityType type : Utils.getLivingEntityTypes()) {
-                        if (!modifiers.getConfig().contains(mod.getName() + "." + type.name())) {
-                            modifiers.getConfig().set(mod.getName() + "." + type.name(), mod.getValue());
+                        String path = mod.name() + "." + type.name();
+                        if (!modifiers.getConfig().contains(path)) {
+                            modifiers.getConfig().set(path, mod.value());
                             saveNeeded = true;
                         }
                     }

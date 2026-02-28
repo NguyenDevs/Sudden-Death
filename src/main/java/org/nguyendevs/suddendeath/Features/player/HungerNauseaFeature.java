@@ -1,7 +1,7 @@
 package org.nguyendevs.suddendeath.Features.player;
 
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -19,6 +19,7 @@ import java.util.logging.Level;
 
 public class HungerNauseaFeature extends AbstractFeature {
 
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private final Set<UUID> starvingPlayers = new HashSet<>();
 
     @Override
@@ -33,16 +34,14 @@ public class HungerNauseaFeature extends AbstractFeature {
             public void run() {
                 try {
                     for (Player player : Bukkit.getOnlinePlayers()) {
-                        if (player == null || Utils.hasCreativeGameMode(player)) {
+                        if (Utils.hasCreativeGameMode(player)) {
                             handleRecovery(player);
                             continue;
                         }
-
                         if (Feature.HUNGER_NAUSEA.isEnabled(player) && player.getFoodLevel() < 8) {
-                            player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 300, 0));
-                            if (!starvingPlayers.contains(player.getUniqueId())) {
-                                player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("hunger-nausea")));
-                                starvingPlayers.add(player.getUniqueId());
+                            player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 180, 0));
+                            if (starvingPlayers.add(player.getUniqueId())) {
+                                sendMsg(player, "hunger-nausea");
                             }
                         } else {
                             handleRecovery(player);
@@ -56,10 +55,13 @@ public class HungerNauseaFeature extends AbstractFeature {
     }
 
     private void handleRecovery(Player player) {
-        if (starvingPlayers.contains(player.getUniqueId())) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("no-longer-hunger")));
-            starvingPlayers.remove(player.getUniqueId());
+        if (starvingPlayers.remove(player.getUniqueId())) {
+            sendMsg(player, "no-longer-hunger");
         }
+    }
+
+    private void sendMsg(Player player, String key) {
+        player.sendMessage(LEGACY.deserialize(Utils.msg("prefix") + " " + Utils.msg(key)));
     }
 
     @EventHandler

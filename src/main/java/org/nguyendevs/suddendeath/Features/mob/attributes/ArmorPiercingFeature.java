@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Features.mob.attributes;
 
-import org.bukkit.EntityEffect;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
@@ -16,6 +15,7 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -37,9 +37,7 @@ public class ArmorPiercingFeature extends AbstractFeature {
         if (!Feature.ARMOR_PIERCING.isEnabled(player)) return;
 
         try {
-            double chance = Feature.ARMOR_PIERCING.getDouble(
-                    "chance-percent." + damager.getType().name());
-
+            double chance = Feature.ARMOR_PIERCING.getDouble("chance-percent." + damager.getType().name());
             if (RANDOM.nextDouble() * 100 < chance) {
                 performTrueDamage(event, player, damager);
             }
@@ -52,26 +50,17 @@ public class ArmorPiercingFeature extends AbstractFeature {
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
-        if (pendingDeathMessages.containsKey(player.getUniqueId())) {
-            String killerName = pendingDeathMessages.remove(player.getUniqueId());
-
-            String rawMsg = "You are died";
-            String finalMsg = rawMsg
-                    .replace("%player%", player.getName())
-                    .replace("%killer%", killerName);
-
-            if (!pendingDeathMessages.containsKey(player.getUniqueId())) {
-                event.setDeathMessage(null);
-            }
+        String killerName = pendingDeathMessages.remove(player.getUniqueId());
+        if (killerName != null) {
+            event.deathMessage(null);
         }
-
     }
 
     private void performTrueDamage(EntityDamageByEntityEvent event, Player player, LivingEntity damager) {
         double rawDamage = getRawDamage(damager);
         event.setCancelled(true);
-        double currentHealth = player.getHealth();
-        double newHealth = currentHealth - rawDamage;
+
+        double newHealth = player.getHealth() - rawDamage;
 
         if (Feature.ARMOR_PIERCING.getBoolean("visual-particles")) {
             player.getWorld().spawnParticle(Particle.CRIT,
@@ -84,18 +73,21 @@ public class ArmorPiercingFeature extends AbstractFeature {
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 0.8f);
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.0f);
         }
-        Vector knockback = player.getLocation().toVector().subtract(damager.getLocation().toVector()).normalize();
+
+        Vector knockback = player.getLocation().toVector()
+                .subtract(damager.getLocation().toVector()).normalize();
         if (Double.isFinite(knockback.getX()) && Double.isFinite(knockback.getZ())) {
             player.setVelocity(knockback.multiply(0.4).setY(0.3));
         }
 
-        player.playEffect(EntityEffect.HURT);
+        player.playHurtAnimation(damager.getLocation().getYaw());
+
         if (newHealth <= 0) {
-            String mobName = damager.getCustomName() != null
-                    ? damager.getCustomName()
+            String mobName = damager.customName() != null
+                    ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                    .serialize(Objects.requireNonNull(damager.customName()))
                     : formatMobName(damager.getType().name());
             pendingDeathMessages.put(player.getUniqueId(), mobName);
-
             player.setHealth(0);
         } else {
             player.setHealth(newHealth);
@@ -103,24 +95,16 @@ public class ArmorPiercingFeature extends AbstractFeature {
     }
 
     private double getRawDamage(LivingEntity mob) {
-        AttributeInstance damageAttr = mob.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
-        return damageAttr != null ? damageAttr.getValue() : 2.0;
+        AttributeInstance attr = mob.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE);
+        return attr != null ? attr.getValue() : 2.0;
     }
 
     private String formatMobName(String mobType) {
-        String[] words = mobType.toLowerCase().split("_");
         StringBuilder formatted = new StringBuilder();
-
-        for (String word : words) {
-            if (formatted.length() > 0) {
-                formatted.append(" ");
-            }
-            formatted.append(Character.toUpperCase(word.charAt(0)))
-                    .append(word.substring(1));
+        for (String word : mobType.toLowerCase().split("_")) {
+            if (!formatted.isEmpty()) formatted.append(" ");
+            formatted.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
         }
-
         return formatted.toString();
     }
-
-
 }

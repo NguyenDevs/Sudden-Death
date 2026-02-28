@@ -1,7 +1,7 @@
 package org.nguyendevs.suddendeath.Utils;
 
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -31,7 +31,8 @@ public class SpigotPlugin {
 	public void checkForUpdate() {
 		Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
 			try {
-				HttpsURLConnection connection = (HttpsURLConnection) new URL("https://api.spigotmc.org/legacy/update.php?resource=" + id)
+				HttpsURLConnection connection = (HttpsURLConnection) new URL(
+						"https://api.spigotmc.org/legacy/update.php?resource=" + id)
 						.openConnection();
 				connection.setRequestMethod("GET");
 				latestVersion = new BufferedReader(new InputStreamReader(connection.getInputStream())).readLine();
@@ -40,31 +41,36 @@ public class SpigotPlugin {
 				return;
 			}
 
-			String currentVersion = plugin.getDescription().getVersion();
+			String currentVersion = plugin.getPluginMeta().getVersion();
 			if (latestVersion == null || latestVersion.isEmpty()) {
 				plugin.getLogger().log(Level.WARNING, "Received invalid version from SpigotMC API.");
 				return;
 			}
 
 			if (isVersionNewer(currentVersion, latestVersion)) {
-				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-						"&6[&cSudden&4Death&6] &eA new build is available: "  + latestVersion + " &6(you are running " + currentVersion + ")"));
-
-				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &a&oDownload it here: " + getResourceUrl()));
+				var legacy = LegacyComponentSerializer.legacyAmpersand();
+				Bukkit.getConsoleSender().sendMessage(legacy.deserialize(
+						"&6[&cSudden&4Death&6] &eA new build is available: " + latestVersion + " &6(you are running "
+								+ currentVersion + ")"));
+				Bukkit.getConsoleSender().sendMessage(legacy.deserialize(
+						"&6[&cSudden&4Death&6] &a&oDownload it here: " + getResourceUrl()));
 
 				if (plugin.getConfig().getBoolean("update-notify")) {
-					Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().registerEvents(new Listener() {
-						@EventHandler(priority = EventPriority.MONITOR)
-						public void onPlayerJoin(PlayerJoinEvent event) {
-							Player player = event.getPlayer();
-							if (player.hasPermission(plugin.getName().toLowerCase() + ".update-notify")) {
-								getOutOfDateMessage().forEach(msg -> player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg)));
-							}
-						}
-					}, plugin));
+					Bukkit.getScheduler().runTask(plugin,
+							() -> Bukkit.getPluginManager().registerEvents(new Listener() {
+								@EventHandler(priority = EventPriority.MONITOR)
+								public void onPlayerJoin(PlayerJoinEvent event) {
+									Player player = event.getPlayer();
+									if (player.hasPermission(plugin.getName().toLowerCase() + ".update-notify")) {
+										getOutOfDateMessage().forEach(msg -> player.sendMessage(
+												LegacyComponentSerializer.legacyAmpersand().deserialize(msg)));
+									}
+								}
+							}, plugin));
 				}
 			} else {
-				Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',"&6[&cSudden&4Death&6] &aYou are running the latest version: &2" + currentVersion));
+				Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
+						"&6[&cSudden&4Death&6] &aYou are running the latest version: &2" + currentVersion));
 			}
 		});
 	}
@@ -89,7 +95,8 @@ public class SpigotPlugin {
 				}
 			}
 		} catch (NumberFormatException e) {
-			plugin.getLogger().log(Level.WARNING, "Invalid version format detected: Current=" + currentVersion + ", Latest=" + latestVersion);
+			plugin.getLogger().log(Level.WARNING,
+					"Invalid version format detected: Current=" + currentVersion + ", Latest=" + latestVersion);
 			return false;
 		}
 
@@ -102,8 +109,7 @@ public class SpigotPlugin {
 				"&a" + plugin.getName() + " " + latestVersion + " is available!",
 				"&a" + getResourceUrl(),
 				"&7&oYou can disable this notification in the config file.",
-				"&8--------------------------------------------"
-		);
+				"&8--------------------------------------------");
 	}
 
 	public String getResourceUrl() {

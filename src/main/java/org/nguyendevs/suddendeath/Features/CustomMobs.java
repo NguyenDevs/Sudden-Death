@@ -1,6 +1,5 @@
 package org.nguyendevs.suddendeath.Features;
 
-import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.ConfigurationSection;
@@ -22,37 +21,22 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class CustomMobs implements Listener {
+
     private static final Random RANDOM = new Random();
     private static final String METADATA_KEY = "SDCustomMob";
     private static final int EFFECT_DURATION = 9999999;
-    /** Null on servers older than 1.21 where TRIAL_SPAWNER doesn't exist. */
-    private static final CreatureSpawnEvent.SpawnReason TRIAL_SPAWNER_REASON;
-    static {
-        CreatureSpawnEvent.SpawnReason found = null;
-        try {
-            found = CreatureSpawnEvent.SpawnReason.valueOf("TRIAL_SPAWNER");
-        } catch (IllegalArgumentException ignored) {
-        }
-        TRIAL_SPAWNER_REASON = found;
-    }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         LivingEntity entity = event.getEntity();
-        if (!entity.getType().isAlive()) {
+        if (!entity.getType().isAlive() || entity.hasMetadata("SDCommandSpawn"))
             return;
-        }
-
-        if (entity.hasMetadata("SDCommandSpawn")) {
-            return;
-        }
 
         try {
             List<String> blacklist = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
                     .getStringList("custom-mobs-world-blacklist");
-            if (blacklist.contains(entity.getWorld().getName())) {
+            if (blacklist.contains(entity.getWorld().getName()))
                 return;
-            }
 
             ConfigFile mobConfigFile = SuddenDeath.getInstance().getConfigManager().getMobConfig(entity.getType());
             if (mobConfigFile == null)
@@ -62,30 +46,26 @@ public class CustomMobs implements Listener {
 
             double defaultSpawnCoef = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
                     .getDouble("default-spawn-coef." + entity.getType().name(), 0.0);
+
             Map<String, Double> spawnCoefficients = new LinkedHashMap<>();
             spawnCoefficients.put("DEFAULT_KEY", defaultSpawnCoef);
 
             for (String key : config.getKeys(false)) {
                 ConfigurationSection section = config.getConfigurationSection(key);
-                if (section == null || !section.contains("spawn-coef")) {
+                if (section == null || !section.contains("spawn-coef"))
                     continue;
-                }
-                double spawnCoef = section.getDouble("spawn-coef", 0.0);
-                spawnCoefficients.put(key, spawnCoefficients.getOrDefault(key, 0.0) + spawnCoef);
+                spawnCoefficients.merge(key, section.getDouble("spawn-coef", 0.0), Double::sum);
             }
 
             String selectedId = selectCustomMobType(spawnCoefficients);
-            if (selectedId.isEmpty() || "DEFAULT_KEY".equalsIgnoreCase(selectedId)) {
+            if (selectedId.isEmpty() || "DEFAULT_KEY".equalsIgnoreCase(selectedId))
                 return;
-            }
 
             ConfigurationSection selectedSection = config.getConfigurationSection(selectedId);
             if (selectedSection != null) {
                 String spawnType = selectedSection.getString("spawn-type", "All");
-                CreatureSpawnEvent.SpawnReason reason = event.getSpawnReason();
-                if (!isSpawnTypeAllowed(spawnType, reason)) {
+                if (!isSpawnTypeAllowed(spawnType, event.getSpawnReason()))
                     return;
-                }
             }
 
             applyCustomMobProperties(entity, config, selectedId);
@@ -96,36 +76,27 @@ public class CustomMobs implements Listener {
     }
 
     private boolean isSpawnTypeAllowed(String spawnType, CreatureSpawnEvent.SpawnReason reason) {
-        switch (spawnType) {
-            case "Spawners":
-                return reason == CreatureSpawnEvent.SpawnReason.SPAWNER
-                        || (TRIAL_SPAWNER_REASON != null && reason == TRIAL_SPAWNER_REASON);
-            case "Natural Only":
-                return reason != CreatureSpawnEvent.SpawnReason.SPAWNER
-                        && (TRIAL_SPAWNER_REASON == null || reason != TRIAL_SPAWNER_REASON)
-                        && reason != CreatureSpawnEvent.SpawnReason.CUSTOM
-                        && reason != CreatureSpawnEvent.SpawnReason.COMMAND;
-            case "Spawner Only": // 1.20.4: no trial spawner
-            case "Regular Spawner Only":
-                return reason == CreatureSpawnEvent.SpawnReason.SPAWNER;
-            case "Trial Spawner Only":
-                return TRIAL_SPAWNER_REASON != null && reason == TRIAL_SPAWNER_REASON;
-            default: // "All"
-                return true;
-        }
+        return switch (spawnType) {
+            case "Spawners" -> reason == CreatureSpawnEvent.SpawnReason.SPAWNER
+                    || reason == CreatureSpawnEvent.SpawnReason.TRIAL_SPAWNER;
+            case "Natural Only" -> reason != CreatureSpawnEvent.SpawnReason.SPAWNER
+                    && reason != CreatureSpawnEvent.SpawnReason.TRIAL_SPAWNER
+                    && reason != CreatureSpawnEvent.SpawnReason.CUSTOM
+                    && reason != CreatureSpawnEvent.SpawnReason.COMMAND;
+            case "Spawner Only", "Regular Spawner Only" -> reason == CreatureSpawnEvent.SpawnReason.SPAWNER;
+            case "Trial Spawner Only" -> reason == CreatureSpawnEvent.SpawnReason.TRIAL_SPAWNER;
+            default -> true;
+        };
     }
 
     private String selectCustomMobType(Map<String, Double> spawnCoefficients) {
         double total = spawnCoefficients.values().stream().mapToDouble(Double::doubleValue).sum();
         double index = RANDOM.nextDouble() * total;
         double cumulative = 0.0;
-        List<String> keys = new ArrayList<>(spawnCoefficients.keySet());
-
-        for (int i = 0; i < keys.size(); i++) {
-            cumulative += spawnCoefficients.get(keys.get(i));
-            if (index <= cumulative) {
-                return keys.get(i);
-            }
+        for (Map.Entry<String, Double> entry : spawnCoefficients.entrySet()) {
+            cumulative += entry.getValue();
+            if (index <= cumulative)
+                return entry.getKey();
         }
         return "";
     }
@@ -133,13 +104,13 @@ public class CustomMobs implements Listener {
     public static void applyCustomMobProperties(LivingEntity entity, FileConfiguration config, String id) {
         try {
             ConfigurationSection section = config.getConfigurationSection(id);
-            if (section == null) {
+            if (section == null)
                 return;
-            }
 
-            String name = ChatColor.translateAlternateColorCodes('&', section.getString("name", ""));
-            if (!name.isEmpty() && !name.equals("None") && !name.equals("none")) {
-                entity.setCustomName(name);
+            String name = section.getString("name", "");
+            if (!name.isEmpty() && !name.equalsIgnoreCase("none")) {
+                entity.customName(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+                        .legacyAmpersand().deserialize(name));
                 entity.setCustomNameVisible(true);
             } else {
                 entity.setCustomNameVisible(false);
@@ -175,10 +146,9 @@ public class CustomMobs implements Listener {
 
     private static void setAttribute(LivingEntity entity, Attribute attribute, double value) {
         try {
-            AttributeInstance attributeInstance = entity.getAttribute(attribute);
-            if (attributeInstance != null) {
-                attributeInstance.setBaseValue(value);
-            }
+            AttributeInstance instance = entity.getAttribute(attribute);
+            if (instance != null)
+                instance.setBaseValue(value);
         } catch (Exception e) {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING,
                     "Error setting attribute " + attribute + " for entity: " + entity.getType(), e);
@@ -187,7 +157,8 @@ public class CustomMobs implements Listener {
 
     private static void applyPotionEffect(LivingEntity entity, String effectName, int amplifier) {
         try {
-            PotionEffectType type = PotionEffectType.getByName(effectName.toUpperCase().replace("-", "_"));
+            PotionEffectType type = org.bukkit.Registry.POTION_EFFECT_TYPE
+                    .get(org.bukkit.NamespacedKey.minecraft(effectName.toLowerCase().replace("-", "_")));
             if (type == null)
                 return;
             entity.addPotionEffect(new PotionEffect(type, EFFECT_DURATION, Math.max(amplifier - 1, 0)));

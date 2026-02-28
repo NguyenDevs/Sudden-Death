@@ -1,7 +1,9 @@
 package org.nguyendevs.suddendeath.Managers;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -19,11 +21,12 @@ import java.util.Random;
 import java.util.logging.Level;
 
 public class EventManager extends BukkitRunnable {
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final Map<String, StatusRetriever> statusMap = new HashMap<>();
     private static final Random random = new Random();
     private static final long TICK_INTERVAL = 80L;
     private static final long INITIAL_DELAY = 20L;
-    private static final Feature[] EVENT_FEATURES = {Feature.THUNDERSTORM, Feature.BLOOD_MOON, Feature.METEOR_RAIN};
+    private static final Feature[] EVENT_FEATURES = { Feature.THUNDERSTORM, Feature.BLOOD_MOON, Feature.METEOR_RAIN };
 
     public EventManager() {
         runTaskTimer(SuddenDeath.getInstance(), INITIAL_DELAY, TICK_INTERVAL);
@@ -49,23 +52,30 @@ public class EventManager extends BukkitRunnable {
 
                 applyStatus(world, feature.generateWorldEventHandler(world));
                 String messageKey = feature.name().toLowerCase().replace("_", "-");
-                String message = translateColors(Utils.msg(messageKey));
-                    for (Player player : world.getPlayers()) {
-                        try {
-                            player.sendMessage(Utils.msg("prefix") + " " + message);
-                            player.sendTitle("", message, 10, 40, 10);
-                            if (feature == Feature.BLOOD_MOON) {
-                                player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_INFECT, 1.0f, 0.1f);
-                            } else if (feature == Feature.THUNDERSTORM) {
-                                player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.1f);
-                            } else {
-                                player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 0.1f);
-                            }
-                        } catch (Exception e) {
-                            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                                    "Error sending event notification to player: " + player.getName(), e);
+                Component message = LEGACY.deserialize(Utils.msg(messageKey));
+                Component prefix = LEGACY.deserialize(Utils.msg("prefix"));
+                for (Player player : world.getPlayers()) {
+                    try {
+                        player.sendMessage(prefix.append(Component.text(" ")).append(message));
+                        player.showTitle(Title.title(
+                                Component.empty(),
+                                message,
+                                Title.Times.times(
+                                        java.time.Duration.ofMillis(500),
+                                        java.time.Duration.ofSeconds(2),
+                                        java.time.Duration.ofMillis(500))));
+                        if (feature == Feature.BLOOD_MOON) {
+                            player.playSound(player.getLocation(), Sound.ENTITY_ZOMBIE_INFECT, 1.0f, 0.1f);
+                        } else if (feature == Feature.THUNDERSTORM) {
+                            player.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.1f);
+                        } else {
+                            player.playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1.0f, 0.1f);
                         }
+                    } catch (Exception e) {
+                        SuddenDeath.getInstance().getLogger().log(Level.WARNING,
+                                "Error sending event notification to player: " + player.getName(), e);
                     }
+                }
 
                 return;
             }
@@ -99,21 +109,21 @@ public class EventManager extends BukkitRunnable {
         }
     }
 
-    public void refresh(){
-        try{
-            for(World world : Bukkit.getWorlds()){
-                if(world.getEnvironment() != Environment.NORMAL){
+    public void refresh() {
+        try {
+            for (World world : Bukkit.getWorlds()) {
+                if (world.getEnvironment() != Environment.NORMAL) {
                     continue;
                 }
                 StatusRetriever currentRetriever = statusMap.get(world.getName());
-                WorldStatus currentStatus = currentRetriever != null ? currentRetriever.getStatus() : WorldStatus.DAY;
-                if(currentRetriever instanceof WorldEventHandler){
+                WorldStatus currentStatus = currentRetriever != null ? currentRetriever.status() : WorldStatus.DAY;
+                if (currentRetriever instanceof WorldEventHandler) {
                     Feature feature = null;
-                    if(currentStatus == WorldStatus.BLOOD_MOON){
+                    if (currentStatus == WorldStatus.BLOOD_MOON) {
                         feature = Feature.BLOOD_MOON;
-                    } else if(currentStatus == WorldStatus.THUNDER_STORM){
+                    } else if (currentStatus == WorldStatus.THUNDER_STORM) {
                         feature = Feature.THUNDERSTORM;
-                    } else if(currentStatus == WorldStatus.METEOR_RAIN){
+                    } else if (currentStatus == WorldStatus.METEOR_RAIN) {
                         feature = Feature.METEOR_RAIN;
                     }
                     if (feature != null && !feature.isEnabled(world)) {
@@ -121,14 +131,15 @@ public class EventManager extends BukkitRunnable {
                         applyStatus(world, WorldStatus.DAY);
                     }
                 }
-                if(isDay(world)){
+                if (isDay(world)) {
                     applyStatus(world, WorldStatus.DAY);
 
-                } else if(currentStatus == WorldStatus.DAY){
-                    for(Feature feature : EVENT_FEATURES){
-                        if(feature.isEnabled(world) && random.nextDouble() <= feature.getDouble("chance")/100.0) {
+                } else if (currentStatus == WorldStatus.DAY) {
+                    for (Feature feature : EVENT_FEATURES) {
+                        if (feature.isEnabled(world) && random.nextDouble() <= feature.getDouble("chance") / 100.0) {
                             applyStatus(world, feature.generateWorldEventHandler(world));
-                            SuddenDeath.getInstance().getLogger().info("Started event " + feature.getName() + " in world " + world.getName() + " after config refresh");
+                            SuddenDeath.getInstance().getLogger().info("Started event " + feature.getName()
+                                    + " in world " + world.getName() + " after config refresh");
                             break;
                         }
                     }
@@ -138,7 +149,7 @@ public class EventManager extends BukkitRunnable {
                 }
             }
         } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.SEVERE,"Error refreshing EventManager", e);
+            SuddenDeath.getInstance().getLogger().log(Level.SEVERE, "Error refreshing EventManager", e);
         }
     }
 
@@ -151,7 +162,7 @@ public class EventManager extends BukkitRunnable {
             return WorldStatus.DAY;
         }
         StatusRetriever retriever = statusMap.get(world.getName());
-        return retriever != null ? retriever.getStatus() : WorldStatus.DAY;
+        return retriever != null ? retriever.status() : WorldStatus.DAY;
     }
 
     public boolean isDay(World world) {
@@ -198,22 +209,11 @@ public class EventManager extends BukkitRunnable {
         }
     }
 
-    public static class SimpleStatusRetriever implements StatusRetriever {
-        private final WorldStatus status;
-
-        public SimpleStatusRetriever(WorldStatus status) {
+    public record SimpleStatusRetriever(WorldStatus status) implements StatusRetriever {
+        public SimpleStatusRetriever {
             if (status == null) {
                 throw new IllegalArgumentException("WorldStatus cannot be null");
             }
-            this.status = status;
         }
-
-        @Override
-        public WorldStatus getStatus() {
-            return status;
         }
-    }
-    private String translateColors(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
-    }
 }

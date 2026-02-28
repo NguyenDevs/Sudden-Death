@@ -2,8 +2,8 @@ package org.nguyendevs.suddendeath;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.nguyendevs.suddendeath.GUI.AdminView;
@@ -78,7 +78,7 @@ public class SuddenDeath extends JavaPlugin {
             printLogo();
             new SpigotPlugin(119526, this).checkForUpdate();
 
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+            Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
                     "&6[&cSudden&4Death&6] &aSuddenDeath plugin enabled successfully!"));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Failed to enable SuddenDeath plugin.", e);
@@ -96,7 +96,7 @@ public class SuddenDeath extends JavaPlugin {
                 eventManager.cancel();
             }
             savePlayerData();
-            Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
+            Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
                     "&6[&cSudden&4Death&6] &cSuddenDeath plugin disabled.!"));
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Error while disabling plugin", e);
@@ -122,8 +122,8 @@ public class SuddenDeath extends JavaPlugin {
     private void hookIntoPlaceholderAPI() {
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new SuddenDeathPlaceholders().register();
-            Bukkit.getConsoleSender().sendMessage(
-                    ChatColor.translateAlternateColorCodes('&', "&6[&cSudden&4Death&6] &aHooked into PlaceholderAPI"));
+            Bukkit.getConsoleSender().sendMessage(LegacyComponentSerializer.legacyAmpersand().deserialize(
+                    "&6[&cSudden&4Death&6] &aHooked into PlaceholderAPI"));
         }
     }
 
@@ -140,16 +140,17 @@ public class SuddenDeath extends JavaPlugin {
     }
 
     public void reloadConfigFiles() {
-        // Close open plugin GUIs before reload to prevent stale-state crashes
         List<Player> adminViewPlayers = new ArrayList<>();
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.getOpenInventory() != null
-                    && p.getOpenInventory().getTopInventory().getHolder() instanceof AdminView) {
+            p.getOpenInventory();
+            if (p.getOpenInventory().getTopInventory().getHolder() instanceof AdminView) {
                 adminViewPlayers.add(p);
                 p.closeInventory();
-            } else if (p.getOpenInventory() != null
-                    && p.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory) {
-                p.closeInventory();
+            } else {
+                p.getOpenInventory();
+                if (p.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory) {
+                    p.closeInventory();
+                }
             }
         }
 
@@ -160,7 +161,6 @@ public class SuddenDeath extends JavaPlugin {
             eventManager.refresh();
         Bukkit.getOnlinePlayers().forEach(PlayerData::setup);
 
-        // Reopen AdminView for players who had it open
         for (Player p : adminViewPlayers) {
             if (p.isOnline()) {
                 Bukkit.getScheduler().runTask(this, () -> {
@@ -203,38 +203,26 @@ public class SuddenDeath extends JavaPlugin {
     }
 
     public void printLogo() {
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&c   ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝████╗  ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&c   ███████╗██║   ██║██║  ██║██║  ██║█████╗  ██╔██╗ ██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&c   ╚════██║██║   ██║██║  ██║██║  ██║██╔══╝  ██║╚██╗██║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&c   ███████║╚██████╔╝██████╔╝██████╔╝███████╗██║ ╚████║"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',
-                "&c   ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', "&4   ██████╗ ███████╗ █████╗ ████████╗██╗  ██╗"));
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', "&4   ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║"));
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║█████╗  ███████║   ██║   ███████║"));
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', "&4   ██║  ██║██╔══╝  ██╔══██║   ██║   ██╔══██║"));
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', "&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', "&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&4         Sudden Death"));
-        Bukkit.getConsoleSender().sendMessage(
-                ChatColor.translateAlternateColorCodes('&', "&6         Version " + getDescription().getVersion()));
-        Bukkit.getConsoleSender()
-                .sendMessage(ChatColor.translateAlternateColorCodes('&', "&b         Development by NguyenDevs"));
-        Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', ""));
+        var s = Bukkit.getConsoleSender();
+        var legacy = LegacyComponentSerializer.legacyAmpersand();
+        s.sendMessage(legacy.deserialize(""));
+        s.sendMessage(legacy.deserialize("&c   ███████╗██╗   ██╗██████╗ ██████╗ ███████╗███╗   ██╗"));
+        s.sendMessage(legacy.deserialize("&c   ██╔════╝██║   ██║██╔══██╗██╔══██╗██╔════╝████╗  ██║"));
+        s.sendMessage(legacy.deserialize("&c   ███████╗██║   ██║██║  ██║██║  ██║█████╗  ██╔██╗ ██║"));
+        s.sendMessage(legacy.deserialize("&c   ╚════██║██║   ██║██║  ██║██║  ██║██╔══╝  ██║╚██╗██║"));
+        s.sendMessage(legacy.deserialize("&c   ███████║╚██████╔╝██████╔╝██████╔╝███████╗██║ ╚████║"));
+        s.sendMessage(legacy.deserialize("&c   ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝"));
+        s.sendMessage(legacy.deserialize(""));
+        s.sendMessage(legacy.deserialize("&4   ██████╗ ███████╗ █████╗ ████████╗██╗  ██╗"));
+        s.sendMessage(legacy.deserialize("&4   ██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██║  ██║"));
+        s.sendMessage(legacy.deserialize("&4   ██║  ██║█████╗  ███████║   ██║   ███████║"));
+        s.sendMessage(legacy.deserialize("&4   ██║  ██║██╔══╝  ██╔══██║   ██║   ██╔══██║"));
+        s.sendMessage(legacy.deserialize("&4   ██████╔╝███████╗██║  ██║   ██║   ██║  ██║"));
+        s.sendMessage(legacy.deserialize("&4   ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝"));
+        s.sendMessage(legacy.deserialize(""));
+        s.sendMessage(legacy.deserialize("&4         Sudden Death"));
+        s.sendMessage(legacy.deserialize("&6         Version " + getDescription().getVersion()));
+        s.sendMessage(legacy.deserialize("&b         Development by NguyenDevs"));
+        s.sendMessage(legacy.deserialize(""));
     }
 }

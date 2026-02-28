@@ -14,7 +14,7 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
 
-public class StrayFeature extends AbstractFeature {
+public class StrayFrostFeature extends AbstractFeature {
 
     @Override
     public String getName() {

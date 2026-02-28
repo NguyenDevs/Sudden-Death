@@ -14,8 +14,6 @@ import java.util.logging.Level;
 
 public class PlayerData {
 	private static final Map<UUID, PlayerData> playerDataMap = new HashMap<>();
-	private static final String MODIFIER_PREFIX = "suddenDeath.";
-	private static final double COOLDOWN_DURATION_SECONDS = 3.0;
 	private BukkitRunnable bleedingTask;
 	private boolean isInfected;
 	private boolean isBleeding;
@@ -73,10 +71,6 @@ public class PlayerData {
 		return this;
 	}
 
-	public OfflinePlayer getOfflinePlayer() {
-		return offlinePlayer;
-	}
-
 	public UUID getUniqueId() {
 		return offlinePlayer.getUniqueId();
 	}
@@ -97,7 +91,7 @@ public class PlayerData {
 		this.isInfected = value;
 		if (!value && player != null) {
 			try {
-				player.removePotionEffect(PotionEffectType.CONFUSION);
+				player.removePotionEffect(PotionEffectType.NAUSEA);
 			} catch (Exception e) {
 				SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 						"Error removing confusion effect for player: " + player.getName(), e);

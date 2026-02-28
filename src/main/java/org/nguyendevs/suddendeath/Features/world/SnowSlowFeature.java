@@ -29,7 +29,7 @@ public class SnowSlowFeature extends AbstractFeature {
             if (Feature.SNOW_SLOW.isEnabled(player) && !Utils.hasCreativeGameMode(player) &&
                     player.getLocation().getBlock().getType() == Material.SNOW &&
                     !isWearingLeatherBoots(player)) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 0));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0));
             }
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in SnowSlowFeature", e);
@@ -39,7 +39,7 @@ public class SnowSlowFeature extends AbstractFeature {
     private boolean hasMovedBlock(PlayerMoveEvent event) {
         Location from = event.getFrom();
         Location to = event.getTo();
-        return to != null && (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ());
+        return from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ();
     }
 
     private boolean isWearingLeatherBoots(Player player) {

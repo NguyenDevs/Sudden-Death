@@ -22,7 +22,7 @@ public class SuddenDeathStatusCompletion implements TabCompleter {
 	private static final String PERMISSION_STATUS_VIEW = "suddendeath.status";
 	private static final List<String> STATUS_COMMAND = Arrays.asList("menu", "status");
 	private static final List<String> MAIN_COMMANDS = Arrays.asList("admin", "clean", "give", "help", "menu" ,"itemlist", "recipe", "reload", "start", "stop", "status");
-	private static final List<String> RECIPE_COMMAND = Arrays.asList("recipe");
+	private static final List<String> RECIPE_COMMAND = List.of("recipe");
 	private static final List<String> QUANTITY_SUGGESTIONS = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "16", "32", "64");
 
 	@Override

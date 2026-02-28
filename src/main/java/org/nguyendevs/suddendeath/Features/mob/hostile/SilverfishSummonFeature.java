@@ -7,7 +7,7 @@ import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import java.util.logging.Level;
-public class SilverfishFeature extends AbstractFeature {
+public class SilverfishSummonFeature extends AbstractFeature {
     @Override
     public String getName() {
         return "Silverfish Summon";
@@ -33,7 +33,7 @@ public class SilverfishFeature extends AbstractFeature {
                         RANDOM.nextDouble() - 0.5,
                         RANDOM.nextDouble() - 0.5,
                         RANDOM.nextDouble() - 0.5);
-                entity.getWorld().spawnParticle(Particle.SMOKE_LARGE, entity.getLocation(), 0);
+                entity.getWorld().spawnParticle(Particle.LARGE_SMOKE, entity.getLocation(), 0);
                 entity.getWorld().spawnEntity(entity.getLocation(), EntityType.SILVERFISH)
                         .setVelocity(velocity);
             }

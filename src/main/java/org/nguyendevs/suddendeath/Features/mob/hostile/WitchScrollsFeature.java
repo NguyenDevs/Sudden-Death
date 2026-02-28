@@ -12,10 +12,10 @@ import org.bukkit.util.Vector;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
-import java.util.Objects;
+
 import java.util.logging.Level;
 
-public class WitchFeature extends AbstractFeature {
+public class WitchScrollsFeature extends AbstractFeature {
 
     @Override
     public String getName() {
@@ -29,9 +29,8 @@ public class WitchFeature extends AbstractFeature {
             public void run() {
                 try {
                     for (World world : org.bukkit.Bukkit.getWorlds()) {
-                        if (Feature.WITCH_SCROLLS.isEnabled(world)) {
-                            world.getEntitiesByClass(Witch.class).forEach(WitchFeature.this::loop4s_witch);
-                        }
+                        if (!Feature.WITCH_SCROLLS.isEnabled(world)) continue;
+                        world.getEntitiesByClass(Witch.class).forEach(WitchScrollsFeature.this::loop4s_witch);
                     }
                 } catch (Exception e) {
                     plugin.getLogger().log(Level.WARNING, "Error in Witch loop", e);
@@ -43,21 +42,25 @@ public class WitchFeature extends AbstractFeature {
     private void loop4s_witch(Witch witch) {
         if (witch == null || witch.getHealth() <= 0) return;
         try {
+            int slowDuration = (int) (Feature.WITCH_SCROLLS.getDouble("slow-duration") * 20);
+            int weakDuration = (int) (Feature.WITCH_SCROLLS.getDouble("weak-duration") * 20);
+            double damage = Feature.WITCH_SCROLLS.getDouble("damage");
+
             for (Entity entity : witch.getNearbyEntities(10, 10, 10)) {
-                if (!(entity instanceof Player player) || Utils.hasCreativeGameMode(player) || !witch.hasLineOfSight(player)) continue;
+                if (!(entity instanceof Player player)) continue;
+                if (Utils.hasCreativeGameMode(player) || !witch.hasLineOfSight(player)) continue;
 
                 witch.getWorld().playSound(witch.getLocation(), Sound.ENTITY_EVOKER_FANGS_ATTACK, 1.0f, 2.0f);
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, (int) (Feature.WITCH_SCROLLS.getDouble("slow-duration") * 20), 1));
-                player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, (int) (Feature.WITCH_SCROLLS.getDouble("weak-duration") * 20), 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, slowDuration, 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, weakDuration, 1));
+                Utils.damage(player, damage, true);
 
-                Utils.damage(player, Feature.WITCH_SCROLLS.getDouble("damage"), true);
-
-                Location loc = entity.getLocation().add(0.0D, 1.0D, 0.0D);
-                Location loc1 = witch.getLocation().add(0.0D, 1.0D, 0.0D);
-                for(double j = 0.0D; j < 1.0D; j += 0.04D) {
-                    Vector d = loc1.toVector().subtract(loc.toVector());
-                    Location loc2 = loc.clone().add(d.multiply(j));
-                    ((World)Objects.requireNonNull(loc2.getWorld())).spawnParticle(Particle.SPELL_WITCH, loc2, 4, 0.1D, 0.1D, 0.1D, 0.0D);
+                Location playerLoc = entity.getLocation().add(0, 1, 0);
+                Location witchLoc = witch.getLocation().add(0, 1, 0);
+                Vector direction = witchLoc.toVector().subtract(playerLoc.toVector());
+                for (double j = 0; j < 1.0; j += 0.04) {
+                    Location particleLoc = playerLoc.clone().add(direction.clone().multiply(j));
+                    particleLoc.getWorld().spawnParticle(Particle.WITCH, particleLoc, 4, 0.1, 0.1, 0.1, 0);
                 }
             }
         } catch (Exception e) {
@@ -89,18 +92,25 @@ public class WitchFeature extends AbstractFeature {
 
         new BukkitRunnable() {
             double step = 0;
+
             @Override
             public void run() {
                 try {
-                    for (double j = 0; j < 3; j++) {
+                    for (int j = 0; j < 3; j++) {
                         step += Math.PI / 20;
                         for (double i = 0; i < Math.PI * 2; i += Math.PI / 16) {
-                            Location particleLoc = loc.clone().add(radius * Math.cos(i) * Math.sin(step), radius * (1 + Math.cos(step)), radius * Math.sin(i) * Math.sin(step));
-                            particleLoc.getWorld().spawnParticle(Particle.REDSTONE, particleLoc, 0, new Particle.DustOptions(Color.WHITE, 1));
+                            Location particleLoc = loc.clone().add(
+                                    radius * Math.cos(i) * Math.sin(step),
+                                    radius * (1 + Math.cos(step)),
+                                    radius * Math.sin(i) * Math.sin(step));
+                            particleLoc.getWorld().spawnParticle(Particle.DUST, particleLoc, 0,
+                                    new Particle.DustOptions(Color.WHITE, 1));
                         }
                     }
                     if (step >= Math.PI * 2) cancel();
-                } catch (Exception e) { cancel(); }
+                } catch (Exception e) {
+                    cancel();
+                }
             }
         }.runTaskTimer(plugin, 0, 1);
     }

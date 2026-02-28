@@ -1,5 +1,7 @@
 package org.nguyendevs.suddendeath.GUI;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -7,7 +9,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.*;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.nguyendevs.suddendeath.SuddenDeath;
@@ -17,10 +21,9 @@ import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.*;
 
 public class CrafterInventory implements Listener {
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final int RECIPE_INVENTORY_SIZE = 45;
     private static final int MAIN_INVENTORY_SIZE = 9;
-    private static final String MAIN_INVENTORY_TITLE = translateColors(Utils.msg("gui-recipe-name") != null ? Utils.msg("gui-recipe-name") : "&5SuddenDeath Recipes");
-    private static final String RECIPE_TITLE_PREFIX = translateColors(Utils.msg("gui-crafter-name") != null ? Utils.msg("gui-crafter-name") + " " : "&8Recipe: ");
 
     private final Player player;
     private final UUID playerUUID;
@@ -29,16 +32,25 @@ public class CrafterInventory implements Listener {
     private final Map<Integer, ItemStack> originalPlayerItems = new HashMap<>();
 
     private volatile boolean isClosing = false;
-    private Inventory currentOpenInventory = null;
 
-    private static String translateColors(String message) {
-        return ChatColor.translateAlternateColorCodes('&', message);
+    private static Component color(String message) {
+        return message != null ? LEGACY.deserialize(message) : Component.empty();
+    }
+
+    private static Component getMainInventoryTitle() {
+        String title = Utils.msg("gui-recipe-name");
+        return color(title);
+    }
+
+    private static Component getRecipeTitlePrefix(String itemName) {
+        String prefix = Utils.msg("gui-crafter-name");
+        return LEGACY.deserialize(LEGACY.serialize(color(prefix + " ")) + itemName);
     }
 
     public CrafterInventory(Player player) {
         this.player = player;
         this.playerUUID = player.getUniqueId();
-        this.mainInventory = Bukkit.createInventory(null, MAIN_INVENTORY_SIZE, MAIN_INVENTORY_TITLE);
+        this.mainInventory = Bukkit.createInventory(null, MAIN_INVENTORY_SIZE, getMainInventoryTitle());
         this.trackedInventories.add(mainInventory);
         storeOriginalPlayerInventory();
 
@@ -58,24 +70,11 @@ public class CrafterInventory implements Listener {
     }
 
     private void openInventorySafely(Inventory inventory) {
-        currentOpenInventory = inventory;
         player.openInventory(inventory);
     }
 
     private boolean isOurInventory(Inventory inventory) {
-        if (inventory == null) return false;
-        if (trackedInventories.contains(inventory)) return true;
-        String title = "";
-        try {
-            if (player.getOpenInventory() != null && player.getOpenInventory().getTopInventory().equals(inventory)) {
-                title = player.getOpenInventory().getTitle();
-            }
-        } catch (Exception e) {
-        }
-        return title.equals(MAIN_INVENTORY_TITLE) ||
-                title.startsWith(RECIPE_TITLE_PREFIX) ||
-                inventory.getSize() == MAIN_INVENTORY_SIZE ||
-                inventory.getSize() == RECIPE_INVENTORY_SIZE;
+        return inventory != null && trackedInventories.contains(inventory);
     }
 
     private boolean isOurGUIClick(InventoryClickEvent event) {
@@ -91,31 +90,27 @@ public class CrafterInventory implements Listener {
         FileConfiguration itemsConfig = SuddenDeath.getInstance().items.getConfig();
         int slot = 0;
         for (CustomItem customItem : CustomItem.values()) {
-            String itemKey = customItem.name();
-            if (itemsConfig.getBoolean(itemKey + ".craft-enabled", false)) {
-                if (slot >= MAIN_INVENTORY_SIZE - 1) {
+            if (itemsConfig.getBoolean(customItem.name() + ".craft-enabled", false)) {
+                if (slot >= MAIN_INVENTORY_SIZE - 1)
                     break;
-                }
                 mainInventory.setItem(slot++, customItem.a());
             }
         }
-        ItemStack closePane = createSecureItem(Material.ARROW,
-                Utils.msg("gui-recipe-close") != null ? Utils.msg("gui-recipe-close") : "&cClose", true);
+        String closeText = Utils.msg("gui-recipe-close");
+        ItemStack closePane = createSecureItem(Material.ARROW, closeText);
         mainInventory.setItem(8, closePane);
     }
 
-    private ItemStack createSecureItem(Material material, String displayName, boolean isSecure) {
+    private ItemStack createSecureItem(Material material, String displayName) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(translateColors(displayName));
-            if (isSecure) {
-                meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
-                meta.getPersistentDataContainer().set(
-                        new NamespacedKey(SuddenDeath.getInstance(), "secure_gui_item"),
-                        org.bukkit.persistence.PersistentDataType.BYTE,
-                        (byte) 1
-                );
+            meta.displayName(color(displayName));
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
+            NamespacedKey key = Utils.nsk("secure_gui_item");
+            if (key != null) {
+                meta.getPersistentDataContainer().set(key, org.bukkit.persistence.PersistentDataType.BYTE,
+                        (byte) 1);
             }
             item.setItemMeta(meta);
         }
@@ -123,59 +118,40 @@ public class CrafterInventory implements Listener {
     }
 
     private boolean isSecureGUIItem(ItemStack item) {
-        if (item == null || !item.hasItemMeta()) return false;
+        if (item == null || !item.hasItemMeta())
+            return false;
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return false;
-        return meta.getPersistentDataContainer().has(
-                new NamespacedKey(SuddenDeath.getInstance(), "secure_gui_item"),
-                org.bukkit.persistence.PersistentDataType.BYTE
-        );
+        if (meta == null)
+            return false;
+        NamespacedKey key = Utils.nsk("secure_gui_item");
+        return key != null
+                && meta.getPersistentDataContainer().has(key, org.bukkit.persistence.PersistentDataType.BYTE);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
-        if (isClosing) return;
-        if (!isOurGUIClick(event)) return;
+        if (isClosing || !isOurGUIClick(event))
+            return;
+
         Player clickedPlayer = (Player) event.getWhoClicked();
         Inventory clickedInventory = event.getClickedInventory();
+
         if (clickedInventory != null && clickedInventory.equals(mainInventory)) {
             event.setCancelled(true);
             handleMainInventoryClick(event);
             return;
         }
-        if (clickedInventory != null &&
-                clickedInventory.getSize() == RECIPE_INVENTORY_SIZE &&
-                isOurInventory(clickedInventory)) {
-            if (event.getSlot() == 44 &&
-                    (event.getClick() == ClickType.LEFT || event.getClick() == ClickType.RIGHT)) {
-                event.setCancelled(true);
+
+        if (isOurInventory(clickedInventory) && !clickedInventory.equals(mainInventory)) {
+            event.setCancelled(true);
+            if (event.getSlot() == 44 && (event.getClick() == ClickType.LEFT || event.getClick() == ClickType.RIGHT)) {
                 handleRecipeInventoryClick(event);
                 return;
             }
-            if (event.getAction() == InventoryAction.PICKUP_ALL ||
-                    event.getAction() == InventoryAction.PICKUP_SOME ||
-                    event.getAction() == InventoryAction.PICKUP_HALF ||
-                    event.getAction() == InventoryAction.PICKUP_ONE ||
-                    event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY ||
-                    event.getAction() == InventoryAction.COLLECT_TO_CURSOR ||
-                    event.getAction() == InventoryAction.PLACE_ALL ||
-                    event.getAction() == InventoryAction.PLACE_SOME ||
-                    event.getAction() == InventoryAction.PLACE_ONE ||
-                    event.getAction() == InventoryAction.SWAP_WITH_CURSOR ||
-                    event.getAction() == InventoryAction.DROP_ALL_CURSOR ||
-                    event.getAction() == InventoryAction.DROP_ONE_CURSOR ||
-                    event.getAction() == InventoryAction.DROP_ALL_SLOT ||
-                    event.getAction() == InventoryAction.DROP_ONE_SLOT ||
-                    event.getClick().isShiftClick()) {
-                event.setCancelled(true);
-                Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> {
-                    clickedPlayer.setItemOnCursor(new ItemStack(Material.AIR));
-                });
-                return;
-            }
-            event.setCancelled(true);
+            Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> clickedPlayer.setItemOnCursor(new ItemStack(Material.AIR)));
             return;
         }
+
         ItemStack cursor = event.getCursor();
         ItemStack current = event.getCurrentItem();
         if (isSecureGUIItem(cursor) || isSecureGUIItem(current)) {
@@ -191,7 +167,7 @@ public class CrafterInventory implements Listener {
         Player clickedPlayer = (Player) event.getWhoClicked();
         int slot = event.getSlot();
         if (slot == 8) {
-            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
+            playSound(player, Sound.UI_BUTTON_CLICK);
             closeGUI();
             return;
         }
@@ -208,35 +184,31 @@ public class CrafterInventory implements Listener {
     }
 
     private void handleRecipeInventoryClick(InventoryClickEvent event) {
-        Player clickedPlayer = (Player) event.getWhoClicked();
-        int slot = event.getSlot();
-        if (slot == 44) {
-            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.05f);
+        if (event.getSlot() == 44) {
+            playSound(player, Sound.UI_BUTTON_CLICK);
             openInventorySafely(mainInventory);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (isClosing) return;
-        if (event.getWhoClicked().getUniqueId().equals(playerUUID)) {
-            for (int slot : event.getRawSlots()) {
-                if (slot < event.getView().getTopInventory().getSize() &&
-                        isOurInventory(event.getView().getTopInventory())) {
-                    event.setCancelled(true);
-                    Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> {
-                        player.setItemOnCursor(new ItemStack(Material.AIR));
-                    });
-                    return;
-                }
-            }
-            if (isSecureGUIItem(event.getOldCursor()) || isSecureGUIItem(event.getCursor())) {
+        if (isClosing || !event.getWhoClicked().getUniqueId().equals(playerUUID))
+            return;
+
+        Inventory topInventory = event.getView().getTopInventory();
+        for (int slot : event.getRawSlots()) {
+            if (slot < topInventory.getSize() && isOurInventory(topInventory)) {
                 event.setCancelled(true);
-                Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> {
-                    player.setItemOnCursor(new ItemStack(Material.AIR));
-                    cleanupPlayerInventory();
-                });
+                Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> player.setItemOnCursor(new ItemStack(Material.AIR)));
+                return;
             }
+        }
+        if (isSecureGUIItem(event.getOldCursor()) || isSecureGUIItem(event.getCursor())) {
+            event.setCancelled(true);
+            Bukkit.getScheduler().runTask(SuddenDeath.getInstance(), () -> {
+                player.setItemOnCursor(new ItemStack(Material.AIR));
+                cleanupPlayerInventory();
+            });
         }
     }
 
@@ -249,7 +221,8 @@ public class CrafterInventory implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!event.getPlayer().getUniqueId().equals(playerUUID)) return;
+        if (!event.getPlayer().getUniqueId().equals(playerUUID))
+            return;
         if (isOurInventory(event.getInventory())) {
             Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
                 if (!isPlayerInOurGUI()) {
@@ -261,16 +234,17 @@ public class CrafterInventory implements Listener {
 
     private boolean isPlayerInOurGUI() {
         try {
-            return player.getOpenInventory() != null &&
-                    isOurInventory(player.getOpenInventory().getTopInventory());
-        } catch (Exception e) {
+            InventoryView view = player.getOpenInventory();
+            return isOurInventory(view.getTopInventory());
+        } catch (Exception ignored) {
             return false;
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerDropItem(org.bukkit.event.player.PlayerDropItemEvent event) {
-        if (!event.getPlayer().getUniqueId().equals(playerUUID)) return;
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (!event.getPlayer().getUniqueId().equals(playerUUID))
+            return;
         if (isSecureGUIItem(event.getItemDrop().getItemStack())) {
             event.setCancelled(true);
             cleanupPlayerInventory();
@@ -290,73 +264,74 @@ public class CrafterInventory implements Listener {
     private void openRecipeInventory(CustomItem customItem) {
         FileConfiguration itemsConfig = SuddenDeath.getInstance().items.getConfig();
         String itemKey = customItem.name();
-        String title = translateColors(RECIPE_TITLE_PREFIX + Utils.displayName(customItem.a()));
-        Inventory recipeInventory = Bukkit.createInventory(null, RECIPE_INVENTORY_SIZE, title);
+        String itemDisplayName = Utils.displayName(customItem.a());
+        if (itemDisplayName == null)
+            itemDisplayName = customItem.a().getType().name();
+
+        Inventory recipeInventory = Bukkit.createInventory(null, RECIPE_INVENTORY_SIZE,
+                getRecipeTitlePrefix(itemDisplayName));
         trackedInventories.add(recipeInventory);
-        int[] graySlots = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 37, 38, 39, 40, 41, 42, 43};
-        ItemStack grayPane = createSecureItem(Material.GRAY_STAINED_GLASS_PANE, "&7 ", true);
-        for (int slot : graySlots) {
+
+        ItemStack grayPane = createSecureItem(Material.GRAY_STAINED_GLASS_PANE, "&7 ");
+        for (int slot : new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 17, 18, 26, 27, 35, 36, 37, 38, 39, 40, 41, 42,
+                43 }) {
             recipeInventory.setItem(slot, grayPane);
         }
-        ItemStack limePane = createSecureItem(Material.ARROW,
-                Utils.msg("gui-crafter-back") != null ? Utils.msg("gui-crafter-back") : "&aBack", true);
+
+        String backText = Utils.msg("gui-crafter-back");
+        ItemStack limePane = createSecureItem(Material.ARROW, backText);
         recipeInventory.setItem(44, limePane);
-        int[] craftingSlots = {11, 12, 13, 20, 21, 22, 29, 30, 31};
+
+        int[] craftingSlots = { 11, 12, 13, 20, 21, 22, 29, 30, 31 };
         List<String> recipe = itemsConfig.getStringList(itemKey + ".craft");
+        if (recipe.size() != 3)
+            return;
+
         Map<String, String> materialNames = new HashMap<>();
-        List<String> materialsList = itemsConfig.getStringList(itemKey + ".materials");
-        for (String materialEntry : materialsList) {
+        for (String materialEntry : itemsConfig.getStringList(itemKey + ".materials")) {
             String[] parts = materialEntry.split(":", 2);
             if (parts.length == 2) {
-                String materialKey = parts[0].trim().toUpperCase();
-                String displayName = parts[1].trim();
-                materialNames.put(materialKey, displayName);
+                materialNames.put(parts[0].trim().toUpperCase(), parts[1].trim());
             }
         }
-        if (recipe.size() != 3) {
-            return;
-        }
+
         int slotIndex = 0;
         for (String row : recipe) {
             String[] materials = row.split(",");
-            if (materials.length != 3) {
+            if (materials.length != 3)
                 return;
-            }
+
             for (String material : materials) {
-                if (slotIndex >= craftingSlots.length) {
+                if (slotIndex >= craftingSlots.length)
                     break;
-                }
-                String trimmedMaterial = material.trim();
-                Material mat = Material.getMaterial(trimmedMaterial.toUpperCase());
+
+                String trimmedMaterial = material.trim().toUpperCase();
+                Material mat = Material.getMaterial(trimmedMaterial);
                 ItemStack item;
+
                 if (mat != null && mat != Material.AIR) {
                     item = new ItemStack(mat);
                     ItemMeta meta = item.getItemMeta();
                     if (meta != null) {
-                        String displayName = materialNames.getOrDefault(
-                                trimmedMaterial.toUpperCase(),
-                                translateColors(mat.name().replace("_", " "))
-                        );
-                        meta.setDisplayName(translateColors(displayName));
+                        String itemName = materialNames.getOrDefault(trimmedMaterial, mat.name().replace("_", " "));
+                        meta.displayName(color(itemName));
                         item.setItemMeta(meta);
                     }
                 } else {
-                    item = createSecureItem(Material.BLACK_STAINED_GLASS_PANE, " ", true);
+                    item = createSecureItem(Material.BLACK_STAINED_GLASS_PANE, " ");
                 }
-                recipeInventory.setItem(craftingSlots[slotIndex], item);
-                slotIndex++;
+                recipeInventory.setItem(craftingSlots[slotIndex++], item);
             }
         }
 
-        ItemStack resultItem = customItem.a().clone();
-        recipeInventory.setItem(24, resultItem);
+        recipeInventory.setItem(24, customItem.a().clone());
         openInventorySafely(recipeInventory);
     }
 
-    private void playSound(Player player, Sound sound) {
+    private void playSound(Player p, Sound sound) {
         try {
-            player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
-        } catch (Exception e) {
+            p.playSound(p.getLocation(), sound, 1.0f, 1.0f);
+        } catch (Exception ignored) {
         }
     }
 
@@ -373,10 +348,9 @@ public class CrafterInventory implements Listener {
         cleanupPlayerInventory();
         trackedInventories.clear();
         originalPlayerItems.clear();
-        currentOpenInventory = null;
         try {
             org.bukkit.event.HandlerList.unregisterAll(this);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
     }
 }

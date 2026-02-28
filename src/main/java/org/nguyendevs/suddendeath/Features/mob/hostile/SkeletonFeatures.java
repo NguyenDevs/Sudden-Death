@@ -22,6 +22,8 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.NoInteractItemEntity;
 import org.nguyendevs.suddendeath.Utils.Utils;
+
+import java.util.Objects;
 import java.util.logging.Level;
 
 public class SkeletonFeatures extends AbstractFeature {
@@ -41,11 +43,10 @@ public class SkeletonFeatures extends AbstractFeature {
             public void run() {
                 try {
                     for (World world : org.bukkit.Bukkit.getWorlds()) {
-                        if (Feature.BONE_WIZARDS.isEnabled(world)) {
-                            for (Skeleton skeleton : world.getEntitiesByClass(Skeleton.class)) {
-                                if (skeleton.getTarget() instanceof Player && isBoneWizard(skeleton)) {
-                                    loop3s_skeleton(skeleton);
-                                }
+                        if (!Feature.BONE_WIZARDS.isEnabled(world)) continue;
+                        for (Skeleton skeleton : world.getEntitiesByClass(Skeleton.class)) {
+                            if (skeleton.getTarget() instanceof Player && isBoneWizard(skeleton)) {
+                                loop3s_skeleton(skeleton);
                             }
                         }
                     }
@@ -78,6 +79,7 @@ public class SkeletonFeatures extends AbstractFeature {
 
             new BukkitRunnable() {
                 double ticks = 0;
+
                 @Override
                 public void run() {
                     try {
@@ -88,13 +90,13 @@ public class SkeletonFeatures extends AbstractFeature {
                             cancel();
                             return;
                         }
-                        grenadeEntity.getWorld().spawnParticle(Particle.SMOKE_NORMAL, grenadeEntity.getLocation(), 0);
+                        grenadeEntity.getWorld().spawnParticle(Particle.SMOKE, grenadeEntity.getLocation(), 0);
                         if (grenadeEntity.isOnGround()) {
+                            Location loc = grenadeEntity.getLocation();
+                            World world = grenadeEntity.getWorld();
                             grenade.close();
-                            grenadeEntity.getWorld().spawnParticle(Particle.EXPLOSION_LARGE,
-                                    grenadeEntity.getLocation(), 24, 3, 3, 3, 0);
-                            grenadeEntity.getWorld().playSound(grenadeEntity.getLocation(),
-                                    Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
+                            world.spawnParticle(Particle.EXPLOSION, loc, 24, 3, 3, 3, 0);
+                            world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
                             for (Entity nearby : grenadeEntity.getNearbyEntities(6, 6, 6)) {
                                 if (nearby instanceof Player player) {
                                     Utils.damage(player, damage, true);
@@ -123,7 +125,6 @@ public class SkeletonFeatures extends AbstractFeature {
         try {
             double chancePercent = Feature.SHOCKING_SKELETON_ARROWS.getDouble("chance-percent");
             if (Math.random() * 100 > chancePercent) return;
-
             applyShockingArrows(player);
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error applying Shocking Skeleton Arrows", e);
@@ -133,16 +134,18 @@ public class SkeletonFeatures extends AbstractFeature {
     private void applyShockingArrows(Player player) {
         double duration = Feature.SHOCKING_SKELETON_ARROWS.getDouble("shock-duration");
         Location loc = player.getLocation();
+        int durationTicks = (int) (duration * 20);
 
         new BukkitRunnable() {
             double ticks = 0;
+
             @Override
             public void run() {
                 try {
                     for (int j = 0; j < 3; j++) {
                         ticks += Math.PI / 15;
-                        Location particleLoc = loc.clone().add(Math.cos(ticks), 1, Math.sin(ticks));
-                        particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 0);
+                        loc.getWorld().spawnParticle(Particle.SMOKE,
+                                loc.clone().add(Math.cos(ticks), 1, Math.sin(ticks)), 0);
                     }
                     if (ticks >= Math.PI * 2) cancel();
                 } catch (Exception e) {
@@ -153,32 +156,16 @@ public class SkeletonFeatures extends AbstractFeature {
 
         new BukkitRunnable() {
             int ticksPassed = 0;
+
             @Override
             public void run() {
                 try {
-                    ticksPassed++;
-                    if (ticksPassed > duration * 20) {
+                    if (ticksPassed++ > durationTicks) {
                         cancel();
                         return;
                     }
                     player.playHurtAnimation(0.003f);
-                } catch (Exception e) {
-                    cancel();
-                }
-            }
-        }.runTaskTimer(plugin, 0, 2);
-
-        new BukkitRunnable() {
-            int playCount = 0;
-            @Override
-            public void run() {
-                try {
-                    if (playCount >= duration * 20) {
-                        cancel();
-                        return;
-                    }
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.2f);
-                    playCount++;
                 } catch (Exception e) {
                     cancel();
                 }
@@ -187,47 +174,12 @@ public class SkeletonFeatures extends AbstractFeature {
     }
 
     private void loop3s_skeleton(Skeleton skeleton) {
-        if (skeleton == null || skeleton.getHealth() <= 0 || !(skeleton.getTarget() instanceof Player target)) return;
+        if (skeleton == null || skeleton.getHealth() <= 0) return;
+        if (!(skeleton.getTarget() instanceof Player target)) return;
         if (!target.getWorld().equals(skeleton.getWorld())) return;
 
         if (RANDOM.nextDouble() < 0.5) {
-            double damage = Feature.BONE_WIZARDS.getDouble("fireball-damage");
-            double duration = Feature.BONE_WIZARDS.getDouble("fireball-duration");
-            skeleton.getWorld().playSound(skeleton.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 2.0f, 0.0f);
-
-            Vector direction = target.getLocation().add(0, 0.5, 0).toVector()
-                    .subtract(skeleton.getLocation().add(0, 0.75, 0).toVector()).normalize().multiply(TICK_INTERVAL);
-            Location loc = skeleton.getEyeLocation();
-
-            new BukkitRunnable() {
-                double ticks = 0;
-                @Override
-                public void run() {
-                    try {
-                        for (int j = 0; j < 2; j++) {
-                            ticks += TICK_INTERVAL;
-                            loc.add(direction);
-                            loc.getWorld().spawnParticle(Particle.FLAME, loc, 4, 0.1, 0.1, 0.1, 0);
-                            loc.getWorld().spawnParticle(Particle.LAVA, loc, 0);
-
-                            for (Player player : skeleton.getWorld().getPlayers()) {
-                                if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 1.7 * 1.7) {
-                                    loc.getWorld().spawnParticle(Particle.EXPLOSION_LARGE, loc, 0);
-                                    loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
-                                    Utils.damage(player, damage, true);
-                                    if (duration > 0) {
-                                        player.setFireTicks((int) (duration * 20));
-                                    }
-                                    cancel();
-                                    return;
-                                }
-                            }
-                        }
-                        if (ticks > MAX_TICKS) cancel();
-                    } catch (Exception e) { cancel(); }
-                }
-            }.runTaskTimer(plugin, 0, 1);
-
+            spawnFireball(skeleton, target);
         } else {
             double damage = Feature.BONE_WIZARDS.getDouble("frost-curse-damage");
             double duration = Feature.BONE_WIZARDS.getDouble("frost-curse-duration");
@@ -236,45 +188,86 @@ public class SkeletonFeatures extends AbstractFeature {
         }
     }
 
+    private void spawnFireball(Skeleton skeleton, Player target) {
+        double damage = Feature.BONE_WIZARDS.getDouble("fireball-damage");
+        double duration = Feature.BONE_WIZARDS.getDouble("fireball-duration");
+        skeleton.getWorld().playSound(skeleton.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_BLAST, 2.0f, 0.0f);
+
+        Vector direction = target.getLocation().add(0, 0.5, 0).toVector()
+                .subtract(skeleton.getLocation().add(0, 0.75, 0).toVector())
+                .normalize().multiply(TICK_INTERVAL);
+        Location loc = skeleton.getEyeLocation();
+
+        new BukkitRunnable() {
+            double ticks = 0;
+
+            @Override
+            public void run() {
+                try {
+                    for (int j = 0; j < 2; j++) {
+                        ticks += TICK_INTERVAL;
+                        loc.add(direction);
+                        loc.getWorld().spawnParticle(Particle.FLAME, loc, 4, 0.1, 0.1, 0.1, 0);
+                        loc.getWorld().spawnParticle(Particle.LAVA, loc, 0);
+
+                        for (Player player : skeleton.getWorld().getPlayers()) {
+                            if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < 1.7 * 1.7) {
+                                loc.getWorld().spawnParticle(Particle.EXPLOSION, loc, 0);
+                                loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 1.0f);
+                                Utils.damage(player, damage, true);
+                                if (duration > 0) player.setFireTicks((int) (duration * 20));
+                                cancel();
+                                return;
+                            }
+                        }
+                    }
+                    if (ticks > MAX_TICKS) cancel();
+                } catch (Exception e) {
+                    cancel();
+                }
+            }
+        }.runTaskTimer(plugin, 0, 1);
+    }
+
     private void applyFrostCurse(Skeleton skeleton, Player target, double damage, double duration, double amplifier) {
         try {
             Location loc = target.getLocation();
             double radius = 4.0;
+            double radiusSquared = radius * radius;
 
             new BukkitRunnable() {
                 double ticks = 0;
+
                 @Override
                 public void run() {
                     try {
-                        ticks += 1;
-                        loc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, loc, 0);
+                        ticks++;
+                        loc.getWorld().spawnParticle(Particle.SMOKE, loc, 0);
                         loc.getWorld().playSound(loc, Sound.BLOCK_FIRE_EXTINGUISH, 2.0f, 2.0f);
 
                         if (ticks > 27) {
                             loc.getWorld().playSound(loc, Sound.BLOCK_GLASS_BREAK, 2.0f, 0.0f);
 
                             for (double j = 0; j < Math.PI * 2; j += Math.PI / 36) {
-                                Location circleLoc = loc.clone().add(Math.cos(j) * radius, 0.1, Math.sin(j) * radius);
-                                loc.getWorld().spawnParticle(Particle.CLOUD, circleLoc, 0);
+                                loc.getWorld().spawnParticle(Particle.CLOUD,
+                                        loc.clone().add(Math.cos(j) * radius, 0.1, Math.sin(j) * radius), 0);
                             }
 
                             for (Player player : skeleton.getWorld().getPlayers()) {
-                                if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < radius * radius) {
+                                if (loc.distanceSquared(player.getLocation().add(0, 1, 0)) < radiusSquared) {
                                     Utils.damage(player, damage, true);
-
-                                    player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
+                                    player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
                                             (int) (duration * 20), (int) amplifier));
-
-                                    int freezeTicks = 140 + (int) (duration * 20);
-                                    player.setFreezeTicks(freezeTicks);
-
+                                    player.setFreezeTicks(140 + (int) (duration * 20));
                                     cancel();
                                     return;
                                 }
                             }
                             cancel();
                         }
-                    } catch (Exception e) { cancel(); }
+                    } catch (Exception e) {
+                        cancel();
+                    }
                 }
             }.runTaskTimer(plugin, 0, 1);
         } catch (Exception e) {
@@ -283,6 +276,7 @@ public class SkeletonFeatures extends AbstractFeature {
     }
 
     private boolean isBoneWizard(Skeleton skeleton) {
-        return skeleton.getCustomName() != null && skeleton.getCustomName().equalsIgnoreCase("Bone Wizard");
+        return skeleton.customName() != null &&
+                Objects.equals(skeleton.customName(), net.kyori.adventure.text.Component.text("Bone Wizard"));
     }
 }

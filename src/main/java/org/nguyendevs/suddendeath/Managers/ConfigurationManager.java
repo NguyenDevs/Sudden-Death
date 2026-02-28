@@ -6,7 +6,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
-import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.Material;
 import org.nguyendevs.suddendeath.SuddenDeath;
@@ -274,25 +273,7 @@ public class ConfigurationManager {
     }
 
     private int calculateRecipeHash(CustomItem item) {
-        return Objects.hash(item.getCraft(), item.a().getType(), item.a().getItemMeta().getDisplayName(),
-                item.a().getItemMeta().getLore());
-    }
-
-    private void removeAllCustomRecipes() {
-        Iterator<Recipe> recipes = plugin.getServer().recipeIterator();
-        List<NamespacedKey> toRemove = new ArrayList<>();
-        while (recipes.hasNext()) {
-            Recipe recipe = recipes.next();
-            if (recipe instanceof org.bukkit.Keyed) {
-                NamespacedKey key = ((org.bukkit.Keyed) recipe).getKey();
-                if (key.getNamespace().equals(plugin.getName().toLowerCase())
-                        && key.getKey().startsWith("suddendeath_")) {
-                    toRemove.add(key);
-                }
-            }
-        }
-        for (NamespacedKey key : toRemove) {
-            plugin.getServer().removeRecipe(key);
-        }
+        return Objects.hash(item.getCraft(), item.a().getType(), item.a().getItemMeta().displayName(),
+                item.a().getItemMeta().lore());
     }
 }

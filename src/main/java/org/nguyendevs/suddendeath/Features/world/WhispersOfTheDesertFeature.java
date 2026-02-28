@@ -57,7 +57,6 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
 
                         for (Player player : world.getPlayers()) {
                             if (Utils.hasCreativeGameMode(player)) continue;
-
                             if (isAridBiome(player.getLocation().getBlock().getBiome())) {
                                 handleWaveSpawning(player);
                             }
@@ -78,26 +77,20 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
         UUID playerId = player.getUniqueId();
         WaveData wave = playerWaves.get(playerId);
 
-        boolean shouldSpawn = false;
+        boolean shouldSpawn = wave == null;
 
-        if (wave == null) {
-            shouldSpawn = true;
-        } else {
-            boolean cooldownExpired = (System.currentTimeMillis() - wave.startTime) > (5 * 60 * 1000);
+        if (wave != null) {
+            boolean cooldownExpired = (System.currentTimeMillis() - wave.startTime) > (5 * 60 * 1000L);
             boolean distanceExceeded = player.getLocation().distance(wave.spawnCenter) > 50;
-
-            wave.activeMobs.removeIf(uuid -> Bukkit.getEntity(uuid) == null || Bukkit.getEntity(uuid).isDead());
-            boolean allKilled = wave.activeMobs.isEmpty();
-
-            if (cooldownExpired || distanceExceeded || allKilled) {
-                shouldSpawn = true;
-            }
+            wave.activeMobs.removeIf(uuid -> {
+                var entity = Bukkit.getEntity(uuid);
+                return entity == null || entity.isDead();
+            });
+            shouldSpawn = cooldownExpired || distanceExceeded || wave.activeMobs.isEmpty();
         }
 
-        if (shouldSpawn) {
-            if (RANDOM.nextDouble() * 100 < Feature.WHISPERS_OF_THE_DESERT.getDouble("chance-percent")) {
-                startNewWave(player);
-            }
+        if (shouldSpawn && RANDOM.nextDouble() * 100 < Feature.WHISPERS_OF_THE_DESERT.getDouble("chance-percent")) {
+            startNewWave(player);
         }
     }
 
@@ -116,15 +109,12 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
             if (isAmbush) ambushTriggered = true;
 
             long delay = RANDOM.nextInt(80);
-
             new BukkitRunnable() {
                 @Override
                 public void run() {
                     if (!player.isOnline()) return;
                     UUID mobId = spawnRisingHusk(player, isAmbush);
-                    if (mobId != null) {
-                        newWave.activeMobs.add(mobId);
-                    }
+                    if (mobId != null) newWave.activeMobs.add(mobId);
                 }
             }.runTaskLater(plugin, delay);
         }
@@ -145,7 +135,6 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
             Location playerLoc = player.getLocation();
             double offsetX = (RANDOM.nextDouble() * 10) - 10;
             double offsetZ = (RANDOM.nextDouble() * 10) - 10;
-
             int x = (int) (playerLoc.getX() + offsetX);
             int z = (int) (playerLoc.getZ() + offsetZ);
             int y = player.getWorld().getHighestBlockYAt(x, z);
@@ -158,7 +147,6 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
         Location graveLoc = surfaceLoc.clone().add(0, -SPAWN_DEPTH, 0);
 
         Husk husk = (Husk) player.getWorld().spawnEntity(graveLoc, EntityType.HUSK);
-
         husk.setMetadata(METADATA_KEY, new FixedMetadataValue(plugin, true));
         husk.setAI(false);
         husk.setInvulnerable(true);
@@ -197,14 +185,14 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                     double progress = (currentLoc.getY() - graveLoc.getY()) / SPAWN_DEPTH;
                     if (progress >= 0.5) {
                         hasPulled = true;
-
                         Location pullDest = surfaceLoc.clone().subtract(0, 1, 0);
 
                         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_HUSK_CONVERTED_TO_ZOMBIE, 1.0f, 0.1f);
-                        player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getEyeLocation(), 30, 0.5, 0.5, 0.5, blockUnder.getBlockData());
+                        player.getWorld().spawnParticle(Particle.BLOCK, player.getEyeLocation(),
+                                30, 0.5, 0.5, 0.5, blockUnder.getBlockData());
 
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 100, 255));
-                        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, 100, 255));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 255));
+                        player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, 100, 255));
 
                         new BukkitRunnable() {
                             int pullFrame = 0;
@@ -218,7 +206,8 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                                     return;
                                 }
                                 double ratio = (double) pullFrame / pullDuration;
-                                Location interp = startPos.clone().add(pullDest.clone().subtract(startPos).multiply(ratio));
+                                Location interp = startPos.clone().add(
+                                        pullDest.clone().subtract(startPos).multiply(ratio));
                                 interp.setYaw(player.getLocation().getYaw());
                                 interp.setPitch(player.getLocation().getPitch());
                                 player.teleport(interp);
@@ -233,13 +222,12 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
                     husk.teleport(currentLoc);
 
                     if (Feature.WHISPERS_OF_THE_DESERT.getBoolean("spawn-particles")) {
-                        husk.getWorld().spawnParticle(Particle.BLOCK_CRACK,
+                        husk.getWorld().spawnParticle(Particle.BLOCK,
                                 surfaceLoc.clone().add(0, 0.2, 0),
-                                15, 0.4, 0.1, 0.4, 0.0,
-                                particleData);
+                                15, 0.4, 0.1, 0.4, 0.0, particleData);
 
                         if (ticksRun % 2 == 0) {
-                            husk.getWorld().spawnParticle(Particle.SMOKE_NORMAL,
+                            husk.getWorld().spawnParticle(Particle.SMOKE,
                                     surfaceLoc.clone().add(0, 0.5, 0),
                                     3, 0.2, 0.2, 0.2, 0.05);
                         }
@@ -262,29 +250,27 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
     }
 
     private void applyRandomBuffs(Husk husk) {
-        if (RANDOM.nextBoolean()) {
-            int roll = RANDOM.nextInt(3);
-            if (roll == 0) husk.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 999999, 0));
-            else if (roll == 1) husk.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 999999, 0));
-            else husk.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 999999, 1));
+        if (!RANDOM.nextBoolean()) return;
+        switch (RANDOM.nextInt(3)) {
+            case 0 -> husk.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 999999, 0));
+            case 1 -> husk.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 999999, 0));
+            case 2 -> husk.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 999999, 1));
         }
     }
 
     private void finalizeMob(Husk husk) {
-        if (husk.isValid()) {
-            husk.setAI(true);
-            husk.setInvulnerable(false);
-            husk.setSilent(false);
-            husk.setGravity(true);
-            husk.setVelocity(new Vector(0, 0.2, 0));
-        }
+        if (!husk.isValid()) return;
+        husk.setAI(true);
+        husk.setInvulnerable(false);
+        husk.setSilent(false);
+        husk.setGravity(true);
+        husk.setVelocity(new Vector(0, 0.2, 0));
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (!(event.getDamager() instanceof Husk husk)) return;
-
         if (husk.hasMetadata(METADATA_KEY)) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 100, 0));
         }
@@ -293,22 +279,18 @@ public class WhispersOfTheDesertFeature extends AbstractFeature {
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
         if (event.getEntityType() != EntityType.HUSK) return;
-
         UUID deadId = event.getEntity().getUniqueId();
         for (WaveData data : playerWaves.values()) {
-            if (data.activeMobs.contains(deadId)) {
-                data.activeMobs.remove(deadId);
-                break;
-            }
+            if (data.activeMobs.remove(deadId)) break;
         }
     }
 
     private static class WaveData {
-        List<UUID> activeMobs = new ArrayList<>();
-        Location spawnCenter;
-        long startTime;
+        final List<UUID> activeMobs = new ArrayList<>();
+        final Location spawnCenter;
+        final long startTime;
 
-        public WaveData(Location center) {
+        WaveData(Location center) {
             this.spawnCenter = center;
             this.startTime = System.currentTimeMillis();
         }
