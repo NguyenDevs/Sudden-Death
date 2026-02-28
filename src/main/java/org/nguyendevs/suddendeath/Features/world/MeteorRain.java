@@ -756,7 +756,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 }
             }
         }
-        
+
         private void placeMeteorCore(Location center, double yaw, double pitch, CraterData craterData) {
             World world = center.getWorld();
             if (world == null) return;
