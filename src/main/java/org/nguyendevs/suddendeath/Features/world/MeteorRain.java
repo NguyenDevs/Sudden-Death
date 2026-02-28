@@ -162,8 +162,8 @@ public class MeteorRain extends WorldEventHandler implements Listener {
     }
 
     private boolean isLocationProtected(Location loc) {
-        if (SuddenDeath.getInstance().getWorldGuard() == null)
-            return false;
+        if (SuddenDeath.getInstance().getClaimManager().isClaimed(loc)) return true;
+        if (SuddenDeath.getInstance().getWorldGuard() == null) return false;
         return !SuddenDeath.getInstance().getWorldGuard()
                 .isFlagAllowedAtLocation(loc, CustomFlag.SDS_EVENT);
     }
@@ -192,8 +192,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
     private void spawnMeteorNearPlayer(Player targetPlayer) {
         try {
-            if (isProtected(targetPlayer))
-                return;
+            if (isProtected(targetPlayer)) return;
 
             Location playerLoc = targetPlayer.getLocation();
             double distance = ThreadLocalRandom.current().nextDouble(10, 60);
@@ -203,8 +202,21 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     (int) (Math.cos(angle) * distance), 0, (int) (Math.sin(angle) * distance));
             targetLocation.setY(getWorld().getHighestBlockYAt(targetLocation));
 
-            if (isLocationProtected(targetLocation))
-                return;
+            if (isLocationProtected(targetLocation)) return;
+
+            int meteorSize = ThreadLocalRandom.current().nextInt(MIN_METEOR_SIZE, MAX_METEOR_SIZE + 1);
+            double impactRadius = meteorSize * 1.3;
+            boolean nearClaim = false;
+            for (double dx = -impactRadius; dx <= impactRadius; dx += impactRadius / 2) {
+                for (double dz = -impactRadius; dz <= impactRadius; dz += impactRadius / 2) {
+                    if (isLocationProtected(targetLocation.clone().add(dx, 0, dz))) {
+                        nearClaim = true;
+                        break;
+                    }
+                }
+                if (nearClaim) break;
+            }
+            if (nearClaim) return;
 
             Vector diagonalDirection = generateRandomDiagonalDirection();
             double spawnDistance = ThreadLocalRandom.current().nextDouble(80, 120);
@@ -213,7 +225,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     .add(diagonalDirection.getX() * spawnDistance, SPAWN_HEIGHT,
                             diagonalDirection.getZ() * spawnDistance);
 
-            int meteorSize = ThreadLocalRandom.current().nextInt(MIN_METEOR_SIZE, MAX_METEOR_SIZE + 1);
+            // int meteorSize = ThreadLocalRandom.current().nextInt(MIN_METEOR_SIZE, MAX_METEOR_SIZE + 1);
             UUID meteorId = UUID.randomUUID();
 
             MeteorTask meteorTask = new MeteorTask(startLocation, targetLocation, meteorSize, meteorId);
@@ -398,8 +410,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                         Location blockLoc = currentLocation.clone().add(x, y, z);
                         if (isLocationProtected(blockLoc))
                             continue;
-                        if (SuddenDeath.getInstance().getClaimManager().isClaimed(blockLoc))
-                            continue;
                         Block block = world.getBlockAt(blockLoc);
                         if (!isSolidTerrain(block.getType()) || block.getType() == Material.BEDROCK)
                             continue;
@@ -437,8 +447,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                                 continue;
                             Location blockLoc = checkLoc.clone().add(x, y, z);
                             if (isLocationProtected(blockLoc))
-                                continue;
-                            if (SuddenDeath.getInstance().getClaimManager().isClaimed(blockLoc))
                                 continue;
                             Block block = world.getBlockAt(blockLoc);
                             if (!isSolidTerrain(block.getType()) || block.getType() == Material.BEDROCK)
