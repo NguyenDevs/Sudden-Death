@@ -13,7 +13,6 @@ public class ClaimManager {
     private final SuddenDeath plugin;
 
     private boolean landsEnabled = false;
-    private boolean factionsEnabled = false;
     private boolean superiorSkyblockEnabled = false;
     private boolean griefPreventionEnabled = false;
 
@@ -42,13 +41,6 @@ public class ClaimManager {
             }
         }
 
-        Plugin factionsPlugin = Bukkit.getPluginManager().getPlugin("Factions");
-        if (factionsPlugin != null && factionsPlugin.isEnabled()) {
-            factionsEnabled = true;
-            Bukkit.getConsoleSender().sendMessage(
-                    Utils.color("&6[&cSudden&4Death&6] &aHooked into Saber-Factions for claim protection."));
-        }
-
         Plugin superiorSkyblockPlugin = Bukkit.getPluginManager().getPlugin("SuperiorSkyblock2");
         if (superiorSkyblockPlugin != null && superiorSkyblockPlugin.isEnabled()) {
             superiorSkyblockEnabled = true;
@@ -72,26 +64,6 @@ public class ClaimManager {
             try {
                 Boolean isClaimed = (Boolean) landsIsClaimedMethod.invoke(landsIntegration, location);
                 if (isClaimed != null && isClaimed) {
-                    return true;
-                }
-            } catch (Exception e) {
-                // Ignore errors
-            }
-        }
-
-        if (factionsEnabled) {
-            try {
-                // Board.getInstance().getFactionAt(new FLocation(location)).isNormal()
-                Class<?> fLocationClass = Class.forName("com.massivecraft.factions.FLocation");
-                Object fLocation = fLocationClass.getConstructor(Location.class).newInstance(location);
-
-                Class<?> boardClass = Class.forName("com.massivecraft.factions.Board");
-                Object boardInstance = boardClass.getMethod("getInstance").invoke(null);
-
-                Object faction = boardClass.getMethod("getFactionAt", fLocationClass).invoke(boardInstance, fLocation);
-
-                Boolean isNormal = (Boolean) faction.getClass().getMethod("isNormal").invoke(faction);
-                if (isNormal != null && isNormal) {
                     return true;
                 }
             } catch (Exception e) {
