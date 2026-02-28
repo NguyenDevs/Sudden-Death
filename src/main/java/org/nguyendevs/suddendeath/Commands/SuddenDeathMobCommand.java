@@ -4,7 +4,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -406,6 +405,6 @@ public class SuddenDeathMobCommand implements CommandExecutor {
     }
 
     private Component color(String message) {
-        return LegacyComponentSerializer.legacyAmpersand().deserialize(message);
+        return Utils.color(message);
     }
 }
