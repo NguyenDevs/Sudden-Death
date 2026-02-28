@@ -1,7 +1,6 @@
 package org.nguyendevs.suddendeath.GUI;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -33,7 +32,6 @@ import java.util.*;
 import java.util.logging.Level;
 
 public class MonsterEdition extends PluginInventory {
-    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
     private static final String PREFIX = "&6[&cSudden&4Death&6]";
     private static final int[] AVAILABLE_SLOTS = { 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39,
             40, 41, 42, 43 };
@@ -56,7 +54,7 @@ public class MonsterEdition extends PluginInventory {
     @Override
     public @NotNull Inventory getInventory() {
         FileConfiguration config = SuddenDeath.getInstance().getConfigManager().getMobConfig(type).getConfig();
-        Inventory inventory = Bukkit.createInventory(this, 54, color(TITLE_PREFIX + id));
+        Inventory inventory = Bukkit.createInventory(this, 54, Utils.color(TITLE_PREFIX + id));
         try {
             for (MobStat stat : MobStat.values()) {
                 inventory.setItem(getAvailableSlot(inventory), createMobStatItem(stat, config));
@@ -74,7 +72,7 @@ public class MonsterEdition extends PluginInventory {
         ItemMeta meta = item.getItemMeta();
         if (meta == null)
             return item;
-        meta.displayName(color("&a" + stat.getName()));
+        meta.displayName(Utils.color("&a" + stat.getName()));
         meta.addItemFlags(ItemFlag.values());
         meta.getPersistentDataContainer().set(Objects.requireNonNull(Utils.nsk("mobStatId")), PersistentDataType.STRING, stat.name());
         meta.lore(createMobStatLore(stat, config));
@@ -85,26 +83,26 @@ public class MonsterEdition extends PluginInventory {
     private List<Component> createMobStatLore(MobStat stat, FileConfiguration config) {
         List<Component> lore = new ArrayList<>();
         for (String line : stat.getLore())
-            lore.add(color("&7" + line));
+            lore.add(Utils.color("&7" + line));
         lore.add(Component.empty());
         switch (stat.getType()) {
             case DOUBLE:
                 double value = config.getDouble(id + "." + stat.getPath(), 0.0);
-                lore.add(color("&7Current Value: &a" + value));
+                lore.add(Utils.color("&7Current Value: &a" + value));
                 if (stat == MobStat.SPAWN_COEFFICIENT) {
                     double actualSpawnRate = calculateActualSpawnRate(value, config);
-                    lore.add(color("&7Actual Spawn Rate: &b" + Math.round(actualSpawnRate) + "%"));
+                    lore.add(Utils.color("&7Actual Spawn Rate: &b" + Math.round(actualSpawnRate) + "%"));
                 }
                 lore.add(Component.empty());
-                lore.add(color("&e► Left click to change this value."));
+                lore.add(Utils.color("&e► Left click to change this value."));
                 break;
             case ITEMSTACK:
                 addItemStackLore(lore, config, stat);
                 break;
             case STRING:
-                lore.add(color("&7Current Value: &a" + config.getString(id + "." + stat.getPath(), "")));
+                lore.add(Utils.color("&7Current Value: &a" + config.getString(id + "." + stat.getPath(), "")));
                 lore.add(Component.empty());
-                lore.add(color("&e► Left click to change this value."));
+                lore.add(Utils.color("&e► Left click to change this value."));
                 break;
             case POTION_EFFECTS:
                 addPotionEffectsLore(lore, config, stat);
@@ -130,44 +128,44 @@ public class MonsterEdition extends PluginInventory {
     }
 
     private void addItemStackLore(List<Component> lore, FileConfiguration config, MobStat stat) {
-        lore.add(color("&7Current Value:"));
+        lore.add(Utils.color("&7Current Value:"));
         ItemStack deserialized = ItemUtils.deserialize(config.getString(id + "." + stat.getPath()));
         String format = Utils.caseOnWords(deserialized.getType().name().toLowerCase().replace("_", " "));
         format += (deserialized.getAmount() > 0 ? " x" + deserialized.getAmount() : "");
-        lore.add(color("&b" + format));
+        lore.add(Utils.color("&b" + format));
         if (deserialized.hasItemMeta() && deserialized.getItemMeta() != null) {
             if (deserialized.getType().name().startsWith("LEATHER_")) {
                 LeatherArmorMeta leatherMeta = (LeatherArmorMeta) deserialized.getItemMeta();
                 leatherMeta.getColor();
-                lore.add(color("&b* Dye color: " + leatherMeta.getColor().asRGB()));
+                lore.add(Utils.color("&b* Dye Utils.color: " + leatherMeta.getColor().asRGB()));
             }
             if (deserialized.getItemMeta().hasEnchants()) {
                 for (Enchantment ench : deserialized.getItemMeta().getEnchants().keySet()) {
-                    lore.add(color("&b* " + Utils.caseOnWords(ench.getKey().getKey().replace("_", " ")) + " "
+                    lore.add(Utils.color("&b* " + Utils.caseOnWords(ench.getKey().getKey().replace("_", " ")) + " "
                             + deserialized.getItemMeta().getEnchantLevel(ench)));
                 }
             }
         }
         lore.add(Component.empty());
-        lore.add(color("&e► Drag & drop an item to change this value."));
-        lore.add(color("&e► Right click to remove this value."));
+        lore.add(Utils.color("&e► Drag & drop an item to change this value."));
+        lore.add(Utils.color("&e► Right click to remove this value."));
     }
 
     private void addPotionEffectsLore(List<Component> lore, FileConfiguration config, MobStat stat) {
-        lore.add(color("&7Current Value:"));
+        lore.add(Utils.color("&7Current Value:"));
         ConfigurationSection section = config.getConfigurationSection(id + "." + stat.getPath());
         if (section == null || section.getKeys(false).isEmpty()) {
-            lore.add(color("&cNo permanent effect."));
+            lore.add(Utils.color("&cNo permanent effect."));
         } else {
             for (String effect : section.getKeys(false)) {
                 String formattedEffect = Utils.caseOnWords(effect.replace("_", " ").toLowerCase());
                 String level = Utils.intToRoman(section.getInt(effect));
-                lore.add(color("&b* " + formattedEffect + " " + level));
+                lore.add(Utils.color("&b* " + formattedEffect + " " + level));
             }
         }
         lore.add(Component.empty());
-        lore.add(color("&e► Left click to add an effect."));
-        lore.add(color("&e► Right click to remove the last effect."));
+        lore.add(Utils.color("&e► Left click to add an effect."));
+        lore.add(Utils.color("&e► Right click to remove the last effect."));
     }
 
     private ItemStack createSpawnTypeItem(FileConfiguration config) {
@@ -175,22 +173,22 @@ public class MonsterEdition extends PluginInventory {
         ItemMeta meta = item.getItemMeta();
         if (meta == null)
             return item;
-        meta.displayName(color("&aSPAWN TYPE"));
+        meta.displayName(Utils.color("&aSPAWN TYPE"));
         meta.addItemFlags(ItemFlag.values());
         meta.getPersistentDataContainer().set(Objects.requireNonNull(Utils.nsk("spawnTypeItem")), PersistentDataType.STRING, "SPAWN_TYPE");
         String currentType = config.getString(id + ".spawn-type", "All");
         List<Component> lore = new ArrayList<>();
-        lore.add(color("&7Spawn type for this mob"));
+        lore.add(Utils.color("&7Spawn type for this mob"));
         lore.add(Component.empty());
         for (String spawnType : SPAWN_TYPES) {
             if (spawnType.equals(currentType)) {
-                lore.add(color("&6► &a" + spawnType));
+                lore.add(Utils.color("&6► &a" + spawnType));
             } else {
-                lore.add(color("&6► &f" + spawnType));
+                lore.add(Utils.color("&6► &f" + spawnType));
             }
         }
         lore.add(Component.empty());
-        lore.add(color("&e► Click to change spawn type."));
+        lore.add(Utils.color("&e► Click to change spawn type."));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
@@ -205,10 +203,10 @@ public class MonsterEdition extends PluginInventory {
             return egg;
 
         String name = config.getString(id + ".name", id);
-        meta.displayName(color("&a" + (name.isEmpty() ? id : name)));
+        meta.displayName(Utils.color("&a" + (name.isEmpty() ? id : name)));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(color("&7" + type.name()));
+        lore.add(Utils.color("&7" + type.name()));
         meta.lore(lore);
 
         egg.setItemMeta(meta);
@@ -267,7 +265,7 @@ public class MonsterEdition extends PluginInventory {
                 config.getConfig().set(id + ".spawn-type", next);
                 config.save();
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.05f);
-                player.sendMessage(color(PREFIX + " &eSpawn type set to &6" + next + "&e."));
+                player.sendMessage(Utils.color(PREFIX + " &eSpawn type set to &6" + next + "&e."));
                 open();
                 return;
             }
@@ -298,7 +296,7 @@ public class MonsterEdition extends PluginInventory {
                     break;
             }
         } catch (Exception e) {
-            player.sendMessage(color(PREFIX + " &cAn error occurred."));
+            player.sendMessage(Utils.color(PREFIX + " &cAn error occurred."));
         }
     }
 
@@ -306,7 +304,7 @@ public class MonsterEdition extends PluginInventory {
         new StatEditor(id, type, stat, config);
         player.closeInventory();
         promptChatInput();
-        player.sendMessage(color(PREFIX + " &eWrite in the chat the value you want!"));
+        player.sendMessage(Utils.color(PREFIX + " &eWrite in the chat the value you want!"));
     }
 
     private void handleItemStackStat(InventoryClickEvent event, MobStat stat, ConfigFile config) {
@@ -319,11 +317,11 @@ public class MonsterEdition extends PluginInventory {
                 config.getConfig().set(id + "." + stat.getPath(), serialized);
                 config.save();
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
-                player.sendMessage(color(PREFIX + " &e" + stat.getName() + " successfully updated."));
+                player.sendMessage(Utils.color(PREFIX + " &e" + stat.getName() + " successfully updated."));
                 event.setCancelled(true);
                 open();
             } else {
-                player.sendMessage(color(PREFIX + " &cNo item on cursor to place."));
+                player.sendMessage(Utils.color(PREFIX + " &cNo item on cursor to place."));
             }
         } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
             ConfigurationSection section = config.getConfig().getConfigurationSection(id);
@@ -331,7 +329,7 @@ public class MonsterEdition extends PluginInventory {
                     !"[material=AIR:0]".equals(config.getConfig().getString(id + "." + stat.getPath()))) {
                 config.getConfig().set(id + "." + stat.getPath(), "[material=AIR:0]");
                 config.save();
-                player.sendMessage(color(PREFIX + " &eSuccessfully removed " + stat.getName() + "."));
+                player.sendMessage(Utils.color(PREFIX + " &eSuccessfully removed " + stat.getName() + "."));
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
                 open();
             }
@@ -343,8 +341,8 @@ public class MonsterEdition extends PluginInventory {
             new StatEditor(id, type, stat, config);
             player.closeInventory();
             promptChatInput();
-            player.sendMessage(color(PREFIX + " &eWrite in the chat the permanent potion effect you want to add."));
-            player.sendMessage(color("&f► &bFormat: [POTION_EFFECT] [AMPLIFIER]"));
+            player.sendMessage(Utils.color(PREFIX + " &eWrite in the chat the permanent potion effect you want to add."));
+            player.sendMessage(Utils.color("&f► &bFormat: [POTION_EFFECT] [AMPLIFIER]"));
         } else if (event.getAction() == InventoryAction.PICKUP_HALF) {
             ConfigurationSection section = config.getConfig().getConfigurationSection(id + "." + stat.getPath());
             if (section != null && !section.getKeys(false).isEmpty()) {
@@ -356,23 +354,23 @@ public class MonsterEdition extends PluginInventory {
                 }
                 config.save();
                 player.sendMessage(
-                        color(PREFIX + " &eSuccessfully removed " + Utils.caseOnWords(lastEffect.toLowerCase()) + "."));
+                        Utils.color(PREFIX + " &eSuccessfully removed " + Utils.caseOnWords(lastEffect.toLowerCase()) + "."));
                 open();
             }
         }
     }
 
     private void promptChatInput() {
-        player.sendMessage(color("&8&m-----------------------------------------------------"));
+        player.sendMessage(Utils.color("&8&m-----------------------------------------------------"));
         player.showTitle(Title.title(
-                color("&6&lMob Edition"),
-                color("&fSee chat."),
+                Utils.color("&6&lMob Edition"),
+                Utils.color("&fSee chat."),
                 Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(2), Duration.ofMillis(500))));
         new BukkitRunnable() {
             @Override
             public void run() {
                 try {
-                    player.sendMessage(color("&f► &eType 'cancel' to abort editing the mob."));
+                    player.sendMessage(Utils.color("&f► &eType 'cancel' to abort editing the mob."));
                 } catch (Exception ignored) {
                 }
             }
@@ -389,9 +387,5 @@ public class MonsterEdition extends PluginInventory {
 
     private boolean isAvailableSlot(int slot) {
         return Arrays.stream(AVAILABLE_SLOTS).anyMatch(s -> s == slot);
-    }
-
-    private static Component color(String message) {
-        return LEGACY.deserialize(message);
     }
 }
