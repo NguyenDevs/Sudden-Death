@@ -212,6 +212,14 @@ public class BloodMoon extends WorldEventHandler {
 					.isFlagAllowedAtLocation(event.getLocation(), CustomFlag.SDS_EVENT))
 				return;
 
+			// Iterate backwards to safely remove elements while iterating
+			for (int i = event.blockList().size() - 1; i >= 0; i--) {
+				Block b = event.blockList().get(i);
+				if (SuddenDeath.getInstance().getClaimManager().isClaimed(b.getLocation())) {
+					event.blockList().remove(i);
+				}
+			}
+
 			final List<Block> blocks = new ArrayList<>(event.blockList());
 			if (blocks.isEmpty())
 				return;
@@ -236,6 +244,7 @@ public class BloodMoon extends WorldEventHandler {
 					for (int y = fy0; y <= fy1; y++) {
 						for (int z = fz0; z <= fz1; z++) {
 							Block block = world.getBlockAt(x, y, z);
+							// Also check claims during the delayed post-explosion crater modification
 							if (SuddenDeath.getInstance().getClaimManager().isClaimed(block.getLocation())) {
 								continue;
 							}
