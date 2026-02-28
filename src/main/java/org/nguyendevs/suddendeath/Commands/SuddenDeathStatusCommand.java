@@ -32,9 +32,9 @@ public class SuddenDeathStatusCommand implements CommandExecutor {
     private static final String PERMISSION_RECIPE = "suddendeath.recipe";
     private static final String PERMISSION_VIEW = "suddendeath.status";
 
-    private static final String DIVIDER = "&8&m---------------";
-    private static final String HEADER_HELP = DIVIDER + "[&d Sudden Death Help Page &8&m]---------------";
-    private static final String HEADER_ITEM_LIST = DIVIDER + "[&d Sudden Death Items &8&m]-----------------";
+    private static final String DIVIDER = "&8&m---------------[&r";
+    private static final String HEADER_HELP = DIVIDER + "&d Sudden Death Help Page &8&m]---------------";
+    private static final String HEADER_ITEM_LIST = DIVIDER + "&d Sudden Death Items &8&m]-----------------";
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,

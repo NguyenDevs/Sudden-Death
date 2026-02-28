@@ -82,7 +82,6 @@ public abstract class BaseFeatureView extends PluginInventory {
     protected Feature[] cachedSource = null;
     protected int cachedFilterIndex = -1;
 
-
     public BaseFeatureView(Player player) {
         super(player);
     }
@@ -331,18 +330,18 @@ public abstract class BaseFeatureView extends PluginInventory {
         lore.add(Utils.color("&7" + Utils.msg("filter-lore-desc")));
         lore.add(Component.empty());
 
-        String defColor = (filterIndex == 0) ? "&a" : "&f";
-        String srvColor = (filterIndex == 1) ? "&a" : "&f";
-        String mobColor = (filterIndex == 2) ? "&a" : "&f";
-        String eventColor = (filterIndex == 3) ? "&a" : "&f";
-        lore.add(Utils.color("&6► " + defColor + Utils.msg("filter-lore-default")));
-        lore.add(Utils.color("&6► " + srvColor + Utils.msg("filter-lore-survival")));
-        lore.add(Utils.color("&6► " + mobColor + Utils.msg("filter-lore-mob")));
-        lore.add(Utils.color("&6► " + eventColor + Utils.msg("filter-lore-event")));
+        String defColor = (filterIndex == 0) ? "&a" : "&8";
+        String srvColor = (filterIndex == 1) ? "&a" : "&8";
+        String mobColor = (filterIndex == 2) ? "&a" : "&8";
+        String eventColor = (filterIndex == 3) ? "&a" : "&8";
+        lore.add(Utils.color(defColor + "► &r" + Utils.msg("filter-lore-default")));
+        lore.add(Utils.color(srvColor + "► &r" + Utils.msg("filter-lore-survival")));
+        lore.add(Utils.color(mobColor + "► &r" + Utils.msg("filter-lore-mob")));
+        lore.add(Utils.color(eventColor + "► &r" + Utils.msg("filter-lore-event")));
 
         lore.add(Component.empty());
-        String visColor = visualMode ? "&6" : "&f";
-        lore.add(Utils.color("&e► " + visColor + Utils.msg("filter-lore-visual")));
+        String visColor = visualMode ? "&a" : "&8";
+        lore.add(Utils.color(visColor + "► &r" + Utils.msg("filter-lore-visual")));
 
         meta.lore(lore);
         item.setItemMeta(meta);

@@ -29,10 +29,10 @@ public class SuddenDeathMobCommand implements CommandExecutor {
 
     private static final String PERMISSION_ADMIN = "suddendeath.admin";
 
-    private static final String DIVIDER = "&8&m---------------";
-    private static final String HEADER_HELP = DIVIDER + "[&d Sudden Death Help Page &8&m]---------------";
-    private static final String HEADER_MOB_LIST = DIVIDER + "[&d Mob List &8&m]---------------------";
-    private static final String HEADER_MOB_TYPES = DIVIDER + "[&d Available Mob Types &8&m]----------------";
+    private static final String DIVIDER = "&8&m---------------[&r";
+    private static final String HEADER_HELP = DIVIDER + "&d Sudden Death Help Page &8&m]---------------";
+    private static final String HEADER_MOB_LIST = DIVIDER + "&d Mob List &8&m]---------------------";
+    private static final String HEADER_MOB_TYPES = DIVIDER + "&d Available Mob Types &8&m]----------------";
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
