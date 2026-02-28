@@ -212,88 +212,47 @@ public class AdminView extends PluginInventory {
     }
 
     private Material getVisualMaterial(Feature f) {
-        switch (f) {
-            case ABYSSAL_VORTEX:
-                return Material.GUARDIAN_SPAWN_EGG;
-            case ARMOR_PIERCING:
-                return Material.NETHERITE_CHESTPLATE;
-            case ANGRY_SPIDERS, LEAPING_SPIDERS, SPIDER_NEST:
-                return Material.SPIDER_SPAWN_EGG;
-            case BLOOD_MOON:
-                return Material.ZOMBIE_HEAD;
-            case BONE_GRENADES, BONE_WIZARDS, SHOCKING_SKELETON_ARROWS:
-                return Material.SKELETON_SPAWN_EGG;
-            case BREEZE_DASH:
-                return Material.BREEZE_SPAWN_EGG;
-            case CREEPER_REVENGE:
-                return Material.CREEPER_SPAWN_EGG;
-            case ENDER_POWER:
-                return Material.ENDER_DRAGON_SPAWN_EGG;
-            case EVERBURNING_BLAZES, HOMING_FLAME_BARRAGE:
-                return Material.BLAZE_SPAWN_EGG;
-            case FORCE_OF_THE_UNDEAD, TANKY_MONSTERS, QUICK_MOBS:
-                return Material.SPAWNER;
-            case FIREWORK_ARROWS:
-                return Material.PILLAGER_SPAWN_EGG;
-            case IMMORTAL_EVOKER:
-                return Material.EVOKER_SPAWN_EGG;
-            case METEOR_RAIN:
-                return Material.FIRE_CHARGE;
-            case MOB_CRITICAL_STRIKES:
-                return Material.SPAWNER;
-            case NETHER_SHIELD:
-                return Material.NETHERRACK;
-            case POISONED_SLIMES, THIEF_SLIMES:
-                return Material.SLIME_SPAWN_EGG;
-            case PHANTOM_BLADE:
-                return Material.PHANTOM_SPAWN_EGG;
-            case SILVERFISHES_SUMMON:
-                return Material.SILVERFISH_SPAWN_EGG;
-            case STRAY_FROST:
-                return Material.STRAY_SPAWN_EGG;
-            case SPIDER_WEB:
-                return Material.CAVE_SPIDER_SPAWN_EGG;
-            case TRIDENT_WRATH:
-                return Material.DROWNED_SPAWN_EGG;
-            case UNDEAD_GUNNERS, ZOMBIE_BREAK_BLOCK, ZOMBIE_TOOLS, UNDEAD_RAGE:
-                return Material.ZOMBIE_SPAWN_EGG;
-            case WITCH_SCROLLS:
-                return Material.WITCH_SPAWN_EGG;
-            case WITHER_MACHINEGUN, WITHER_RUSH:
-                return Material.WITHER_SKELETON_SPAWN_EGG;
-            case ADVANCED_PLAYER_DROPS:
-                return Material.PLAYER_HEAD;
-            case ARROW_SLOW:
-                return Material.TIPPED_ARROW;
-            case BLEEDING:
-                return Material.PAPER;
-            case BLOOD_SCREEN:
-                return Material.FIRE_CORAL;
-            case DANGEROUS_COAL:
-                return Material.COAL;
-            case ELECTRICITY_SHOCK:
-                return Material.REDSTONE;
-            case FALL_STUN:
-                return Material.RABBIT_FOOT;
-            case FREDDY:
-                return Material.ENDER_EYE;
-            case HUNGER_NAUSEA:
-                return Material.COOKED_CHICKEN;
-            case INFECTION:
-                return Material.SUSPICIOUS_STEW;
-            case PHYSIC_ENDER_PEARL:
-                return Material.ENDER_PEARL;
-            case REALISTIC_PICKUP:
-                return Material.BUNDLE;
-            case SNOW_SLOW:
-                return Material.SNOWBALL;
-            case STONE_STIFFNESS:
-                return Material.DEEPSLATE;
-            case THUNDERSTORM:
-                return Material.NETHER_STAR;
-            default:
-                return null;
-        }
+        return switch (f) {
+            case ABYSSAL_VORTEX -> Material.GUARDIAN_SPAWN_EGG;
+            case ARMOR_PIERCING -> Material.NETHERITE_CHESTPLATE;
+            case ANGRY_SPIDERS, LEAPING_SPIDERS, SPIDER_NEST -> Material.SPIDER_SPAWN_EGG;
+            case BLOOD_MOON -> Material.ZOMBIE_HEAD;
+            case BONE_GRENADES, BONE_WIZARDS, SHOCKING_SKELETON_ARROWS -> Material.SKELETON_SPAWN_EGG;
+            case BREEZE_DASH -> Material.BREEZE_SPAWN_EGG;
+            case CREEPER_REVENGE -> Material.CREEPER_SPAWN_EGG;
+            case ENDER_POWER -> Material.ENDER_DRAGON_SPAWN_EGG;
+            case EVERBURNING_BLAZES, HOMING_FLAME_BARRAGE -> Material.BLAZE_SPAWN_EGG;
+            case FORCE_OF_THE_UNDEAD, TANKY_MONSTERS, QUICK_MOBS, MOB_CRITICAL_STRIKES -> Material.SPAWNER;
+            case FIREWORK_ARROWS -> Material.PILLAGER_SPAWN_EGG;
+            case IMMORTAL_EVOKER -> Material.EVOKER_SPAWN_EGG;
+            case METEOR_RAIN -> Material.FIRE_CHARGE;
+            case NETHER_SHIELD -> Material.NETHERRACK;
+            case POISONED_SLIMES, THIEF_SLIMES -> Material.SLIME_SPAWN_EGG;
+            case PHANTOM_BLADE -> Material.PHANTOM_SPAWN_EGG;
+            case SILVERFISHES_SUMMON -> Material.SILVERFISH_SPAWN_EGG;
+            case STRAY_FROST -> Material.STRAY_SPAWN_EGG;
+            case SPIDER_WEB -> Material.CAVE_SPIDER_SPAWN_EGG;
+            case TRIDENT_WRATH -> Material.DROWNED_SPAWN_EGG;
+            case UNDEAD_GUNNERS, ZOMBIE_BREAK_BLOCK, ZOMBIE_TOOLS, UNDEAD_RAGE -> Material.ZOMBIE_SPAWN_EGG;
+            case WITCH_SCROLLS -> Material.WITCH_SPAWN_EGG;
+            case WITHER_MACHINEGUN, WITHER_RUSH -> Material.WITHER_SKELETON_SPAWN_EGG;
+            case ADVANCED_PLAYER_DROPS -> Material.PLAYER_HEAD;
+            case ARROW_SLOW -> Material.TIPPED_ARROW;
+            case BLEEDING -> Material.PAPER;
+            case BLOOD_SCREEN -> Material.FIRE_CORAL;
+            case DANGEROUS_COAL -> Material.COAL;
+            case ELECTRICITY_SHOCK -> Material.REDSTONE;
+            case FALL_STUN -> Material.RABBIT_FOOT;
+            case FREDDY -> Material.ENDER_EYE;
+            case HUNGER_NAUSEA -> Material.COOKED_CHICKEN;
+            case INFECTION -> Material.SUSPICIOUS_STEW;
+            case PHYSIC_ENDER_PEARL -> Material.ENDER_PEARL;
+            case REALISTIC_PICKUP -> Material.DIAMOND;
+            case SNOW_SLOW -> Material.SNOWBALL;
+            case STONE_STIFFNESS -> Material.DEEPSLATE;
+            case THUNDERSTORM -> Material.NETHER_STAR;
+            default -> null;
+        };
     }
 
     @Override
