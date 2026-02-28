@@ -15,6 +15,7 @@ import org.nguyendevs.suddendeath.Utils.SuddenDeathPlaceholders;
 import org.nguyendevs.suddendeath.Hook.WGPlugin;
 import org.nguyendevs.suddendeath.Features.CustomMobs;
 import org.nguyendevs.suddendeath.GUI.listener.GuiListener;
+import org.nguyendevs.suddendeath.Managers.ClaimManager;
 import org.nguyendevs.suddendeath.Managers.ConfigurationManager;
 import org.nguyendevs.suddendeath.Managers.EventManager;
 import org.nguyendevs.suddendeath.Managers.FeatureManager;
@@ -40,6 +41,7 @@ public class SuddenDeath extends JavaPlugin {
 
     private ConfigurationManager configManager;
     private WorldGuardManager worldGuardManager;
+    private ClaimManager claimManager;
     private FeatureManager featureManager;
     private EventManager eventManager;
 
@@ -61,7 +63,10 @@ public class SuddenDeath extends JavaPlugin {
             this.configManager = new ConfigurationManager(this);
             this.configManager.initialize();
 
+            this.worldGuardManager = new WorldGuardManager(this);
             this.worldGuardManager.initialize();
+
+            this.claimManager = new ClaimManager(this);
 
             registerListeners();
             hookIntoPlaceholderAPI();
@@ -192,6 +197,10 @@ public class SuddenDeath extends JavaPlugin {
 
     public WorldGuardManager getWorldGuardManager() {
         return worldGuardManager;
+    }
+
+    public ClaimManager getClaimManager() {
+        return claimManager;
     }
 
     public WGPlugin getWorldGuard() {
