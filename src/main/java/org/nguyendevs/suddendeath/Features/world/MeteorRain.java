@@ -398,6 +398,8 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                         Location blockLoc = currentLocation.clone().add(x, y, z);
                         if (isLocationProtected(blockLoc))
                             continue;
+                        if (SuddenDeath.getInstance().getClaimManager().isClaimed(blockLoc))
+                            continue;
                         Block block = world.getBlockAt(blockLoc);
                         if (!isSolidTerrain(block.getType()) || block.getType() == Material.BEDROCK)
                             continue;
@@ -435,6 +437,8 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                                 continue;
                             Location blockLoc = checkLoc.clone().add(x, y, z);
                             if (isLocationProtected(blockLoc))
+                                continue;
+                            if (SuddenDeath.getInstance().getClaimManager().isClaimed(blockLoc))
                                 continue;
                             Block block = world.getBlockAt(blockLoc);
                             if (!isSolidTerrain(block.getType()) || block.getType() == Material.BEDROCK)

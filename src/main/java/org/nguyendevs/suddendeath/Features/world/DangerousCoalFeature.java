@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
+import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
 import java.util.logging.Level;
@@ -29,6 +30,10 @@ public class DangerousCoalFeature extends AbstractFeature {
             return;
         }
 
+        if (SuddenDeath.getInstance().getClaimManager().isClaimed(block.getLocation())) {
+            return;
+        }
+
         try {
             double chance = Feature.DANGEROUS_COAL.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() >= chance) {
@@ -40,6 +45,7 @@ public class DangerousCoalFeature extends AbstractFeature {
 
             new BukkitRunnable() {
                 double ticks = 0;
+
                 @Override
                 public void run() {
                     try {
