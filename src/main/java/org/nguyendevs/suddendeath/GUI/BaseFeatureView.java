@@ -43,7 +43,8 @@ public abstract class BaseFeatureView extends PluginInventory {
             Feature.CREEPER_REVENGE, Feature.ENDER_POWER, Feature.EVERBURNING_BLAZES, Feature.FORCE_OF_THE_UNDEAD,
             Feature.HOMING_FLAME_BARRAGE, Feature.IMMORTAL_EVOKER, Feature.LEAPING_SPIDERS,
             Feature.MOB_CRITICAL_STRIKES, Feature.NETHER_SHIELD, Feature.POISONED_SLIMES, Feature.QUICK_MOBS,
-            Feature.SHOCKING_SKELETON_ARROWS, Feature.SILVERFISHES_SUMMON, Feature.STRAY_FROST, Feature.SPIDER_WEB,
+            Feature.SHOCKING_SKELETON_ARROWS, Feature.SHULKER_THORN, Feature.SILVERFISHES_SUMMON, Feature.STRAY_FROST,
+            Feature.SPIDER_WEB,
             Feature.SPIDER_NEST, Feature.TANKY_MONSTERS, Feature.THIEF_SLIMES, Feature.TRIDENT_WRATH,
             Feature.UNDEAD_GUNNERS, Feature.UNDEAD_RAGE, Feature.WITCH_SCROLLS, Feature.WITHER_MACHINEGUN,
             Feature.WITHER_RUSH, Feature.ZOMBIE_BREAK_BLOCK, Feature.ZOMBIE_TOOLS, Feature.FIREWORK_ARROWS,
@@ -216,6 +217,7 @@ public abstract class BaseFeatureView extends PluginInventory {
             case POISONED_SLIMES, THIEF_SLIMES -> Material.SLIME_SPAWN_EGG;
             case PHANTOM_BLADE -> Material.PHANTOM_SPAWN_EGG;
             case SILVERFISHES_SUMMON -> Material.SILVERFISH_SPAWN_EGG;
+            case SHULKER_THORN -> Material.SHULKER_SPAWN_EGG;
             case STRAY_FROST -> Material.STRAY_SPAWN_EGG;
             case SPIDER_WEB -> Material.CAVE_SPIDER_SPAWN_EGG;
             case TRIDENT_WRATH -> Material.DROWNED_SPAWN_EGG;

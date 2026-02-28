@@ -45,6 +45,7 @@ public class FeatureManager {
         register(new SpiderFeatures());
         register(new SpiderNestFeature());
         register(new StrayFrostFeature());
+        register(new ShulkerThornFeature());
         register(new WitchScrollsFeature());
         register(new WitherRushFeature());
         register(new WitherMachineGunFeature());

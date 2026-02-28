@@ -218,6 +218,11 @@ features:
       - "&8◆ &fSkeletons &7have a &f#chance-percent#% &7chance to shoot shocking arrows"
       - "&8◆ &7Shock effect lasts &e#shock-duration# &7seconds"
 
+  shulker-thorn:
+    name: "Shulker Thorn"
+    lore:
+      - "&8◆ &5Shulkers &7reflect &f#reflection-percent#% &7damage when closed"
+
   silverfishes-summon:
     name: "Silverfishes Summon"
     lore:
