@@ -466,6 +466,16 @@ public enum Feature {
 					new Modifier("shock-duration", 0.75)
 			}),
 
+	SHULKER_THORN(
+			"Shulker Thorn",
+			new String[] {
+					"&8◆ &5Shulkers &7reflect &f#reflection-percent#% &7damage when closed"
+			},
+			"shulker-thorn",
+			new Modifier[] {
+					new Modifier("reflection-percent", 20.0)
+			}),
+
 	SILVERFISHES_SUMMON(
 			"Silverfishes Summon",
 			new String[] {
