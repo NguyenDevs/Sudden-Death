@@ -1,6 +1,9 @@
 package org.nguyendevs.suddendeath.Features.mob.hostile;
 
-import org.bukkit.*;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -11,6 +14,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
+
 import java.util.logging.Level;
 
 public class EnderFeatures extends AbstractFeature {
@@ -30,45 +34,51 @@ public class EnderFeatures extends AbstractFeature {
 
         try {
             double chance = Feature.ENDER_POWER.getDouble("chance-percent") / 100.0;
-            if (RANDOM.nextDouble() <= chance) {
-                double duration = Feature.ENDER_POWER.getDouble("duration");
-                spawnEnderParticles(player);
-                event.getEntity().getWorld().playSound(event.getEntity().getLocation(),
-                        Sound.ENTITY_ENDERMAN_DEATH, 2.0f, 2.0f);
-                player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS,
-                        (int) (duration * 20), 0));
-                Location loc = player.getLocation();
-                loc.setYaw(player.getEyeLocation().getYaw() - 180);
-                loc.setPitch(player.getEyeLocation().getPitch());
-                player.teleport(loc);
-            }
+            if (RANDOM.nextDouble() > chance) return;
+
+            double duration = Feature.ENDER_POWER.getDouble("duration");
+
+            spawnEnderParticles(player);
+            event.getEntity().getWorld().playSound(
+                    event.getEntity().getLocation(), Sound.ENTITY_ENDERMAN_DEATH, 2.0f, 2.0f);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, (int) (duration * 20), 0));
+
+            Location loc = player.getLocation().clone();
+            loc.setYaw(player.getEyeLocation().getYaw() - 180);
+            loc.setPitch(player.getEyeLocation().getPitch());
+            player.teleport(loc);
+
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in EnderFeatures.onEntityDamageByEntity", e);
         }
     }
 
     private boolean isEnderEntity(Entity entity) {
-        return entity instanceof Enderman || entity.getType().name().equalsIgnoreCase("SHULKER") ||
-                entity instanceof Endermite || entity instanceof EnderDragon;
+        return entity instanceof Enderman
+                || entity instanceof Shulker
+                || entity instanceof Endermite
+                || entity instanceof EnderDragon;
     }
 
     private void spawnEnderParticles(Player player) {
+        Particle.DustOptions blackDust = new Particle.DustOptions(Color.BLACK, 1);
+
         new BukkitRunnable() {
             double y = 0;
 
             @Override
             public void run() {
                 try {
-                    for (int j1 = 0; j1 < 3; j1++) {
+                    for (int i = 0; i < 3; i++) {
                         y += 0.07;
-                        int particleCount = 3;
-                        for (int j = 0; j < particleCount; j++) {
-                            player.getWorld().spawnParticle(Particle.REDSTONE,
-                                    player.getLocation().clone().add(
-                                            Math.cos(y * Math.PI + (j * Math.PI * 2 / particleCount)) * (3 - y) / 2.5,
-                                            y,
-                                            Math.sin(y * Math.PI + (j * Math.PI * 2 / particleCount)) * (3 - y) / 2.5),
-                                    0, new Particle.DustOptions(Color.BLACK, 1));
+                        for (int j = 0; j < 3; j++) {
+                            double angle = y * Math.PI + (j * Math.PI * 2.0 / 3);
+                            double radius = (3 - y) / 2.5;
+                            Location loc = player.getLocation().clone().add(
+                                    Math.cos(angle) * radius,
+                                    y,
+                                    Math.sin(angle) * radius);
+                            player.getWorld().spawnParticle(Particle.DUST, loc, 0, blackDust);
                         }
                     }
                     if (y > 3) cancel();

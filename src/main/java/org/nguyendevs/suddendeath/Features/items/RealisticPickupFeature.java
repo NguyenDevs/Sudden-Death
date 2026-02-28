@@ -29,7 +29,7 @@ public class RealisticPickupFeature extends AbstractFeature {
             Item item = event.getItem();
             if ((player.getEyeLocation().getPitch() > 70 || item.getLocation().getY() >= player.getLocation().getY() + 1) &&
                     player.isSneaking()) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 10, 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 10, 1));
             } else {
                 event.setCancelled(true);
             }

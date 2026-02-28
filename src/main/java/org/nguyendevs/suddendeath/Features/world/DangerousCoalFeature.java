@@ -44,7 +44,7 @@ public class DangerousCoalFeature extends AbstractFeature {
                 public void run() {
                     try {
                         ticks++;
-                        block.getWorld().spawnParticle(Particle.SMOKE_LARGE, block.getLocation().add(0.5, 0, 0.5), 0);
+                        block.getWorld().spawnParticle(Particle.LARGE_SMOKE, block.getLocation().add(0.5, 0, 0.5), 0);
                         if (ticks > 39) {
                             block.getWorld().createExplosion(block.getLocation(), (float) radius);
                             cancel();

@@ -26,9 +26,7 @@ public class PlayerCoreFeature extends AbstractFeature {
     public void onPlayerJoin(PlayerJoinEvent event) {
         try {
             Player player = event.getPlayer();
-            if (player != null) {
-                PlayerData.setup(player);
-            }
+            PlayerData.setup(player);
         } catch (Exception e) {
             plugin.getLogger().log(Level.SEVERE, "Error setting up player data: " + e.getMessage());
         }
@@ -38,9 +36,7 @@ public class PlayerCoreFeature extends AbstractFeature {
     public void onPlayerQuit(PlayerQuitEvent event) {
         try {
             Player player = event.getPlayer();
-            if (player != null) {
-                noDropPlayers.remove(player.getUniqueId());
-            }
+            noDropPlayers.remove(player.getUniqueId());
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error cleaning up player data: " + e.getMessage());
         }
@@ -50,12 +46,10 @@ public class PlayerCoreFeature extends AbstractFeature {
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         try {
             Player player = event.getPlayer();
-            if (player != null) {
-                UUID playerId = player.getUniqueId();
-                if (noDropPlayers.contains(playerId)) {
-                    noDropPlayers.remove(playerId);
-                    event.setCancelled(true);
-                }
+            UUID playerId = player.getUniqueId();
+            if (noDropPlayers.contains(playerId)) {
+                noDropPlayers.remove(playerId);
+                event.setCancelled(true);
             }
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error handling item drop: " + e.getMessage());

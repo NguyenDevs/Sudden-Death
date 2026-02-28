@@ -80,7 +80,7 @@ public class BlazeFeatures extends AbstractFeature {
                     Location particleLoc = blazeLoc.clone().add(direction.clone().multiply(j));
                     if (particleLoc.getWorld() != null) {
                         particleLoc.getWorld().spawnParticle(Particle.FLAME, particleLoc, 8, 0.2D, 0.2D, 0.2D, 0.0D);
-                        particleLoc.getWorld().spawnParticle(Particle.SMOKE_NORMAL, particleLoc, 8, 0.2D, 0.2D, 0.2D, 0.0D);
+                        particleLoc.getWorld().spawnParticle(Particle.SMOKE, particleLoc, 8, 0.2D, 0.2D, 0.2D, 0.0D);
                     }
                 }
             }

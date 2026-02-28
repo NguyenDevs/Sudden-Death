@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.Features.mob.hostile;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -12,6 +13,7 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.NoInteractItemEntity;
 import org.nguyendevs.suddendeath.Utils.Utils;
+
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -45,15 +47,13 @@ public class WitherSkeletonFeature extends AbstractFeature {
 
     private void loop6s_wither_skeleton(Creature witherSkeleton) {
         if (witherSkeleton == null || witherSkeleton.getHealth() <= 0 || !(witherSkeleton.getTarget() instanceof Player target)) return;
-        try {
-            if (!target.getWorld().equals(witherSkeleton.getWorld())) return;
+        if (!target.getWorld().equals(witherSkeleton.getWorld())) return;
 
+        try {
             if (Feature.WITHER_MACHINEGUN.isEnabled(witherSkeleton) && RANDOM.nextDouble() < 0.5) {
-                double damage = Feature.WITHER_MACHINEGUN.getDouble("damage");
-                launchWitherMachineGun(witherSkeleton, target, damage);
+                launchWitherMachineGun(witherSkeleton, target, Feature.WITHER_MACHINEGUN.getDouble("damage"));
             } else {
-                double damage = Feature.WITHER_RUSH.getDouble("damage");
-                applyWitherRush(witherSkeleton, target, damage);
+                applyWitherRush(witherSkeleton, target, Feature.WITHER_RUSH.getDouble("damage"));
             }
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in WitherSkeleton loop for entity: " + witherSkeleton.getUniqueId(), e);
@@ -68,24 +68,34 @@ public class WitherSkeletonFeature extends AbstractFeature {
                     public void run() {
                         try {
                             target.getWorld().playSound(target.getLocation(), Sound.ENTITY_SKELETON_DEATH, 1.0F, 2.0F);
+
                             ItemStack stack = new ItemStack(Material.COAL);
                             ItemMeta meta = stack.getItemMeta();
                             if (meta != null) {
-                                meta.setDisplayName("SUDDEN_DEATH:" + UUID.randomUUID().toString());
+                                meta.displayName(Component.text("SUDDEN_DEATH:" + UUID.randomUUID()));
                                 stack.setItemMeta(meta);
                             }
+
                             NoInteractItemEntity item = new NoInteractItemEntity(witherSkeleton.getLocation().add(0, 1, 0), stack);
-                            item.getEntity().setVelocity(target.getLocation().add(0, 2, 0).toVector().subtract(witherSkeleton.getLocation().add(0, 1, 0).toVector()).normalize().multiply(2));
+                            item.getEntity().setVelocity(
+                                    target.getLocation().add(0, 2, 0).toVector()
+                                            .subtract(witherSkeleton.getLocation().add(0, 1, 0).toVector())
+                                            .normalize().multiply(2));
 
                             new BukkitRunnable() {
                                 double ticks = 0;
+
                                 @Override
                                 public void run() {
                                     try {
                                         ticks++;
                                         Item entityItem = item.getEntity();
-                                        if (ticks >= 20 || entityItem.isDead()) { item.close(); cancel(); return; }
-                                        entityItem.getWorld().spawnParticle(Particle.SMOKE_NORMAL, entityItem.getLocation(), 0);
+                                        if (ticks >= 20 || entityItem.isDead()) {
+                                            item.close();
+                                            cancel();
+                                            return;
+                                        }
+                                        entityItem.getWorld().spawnParticle(Particle.SMOKE, entityItem.getLocation(), 0);
                                         for (Entity nearby : entityItem.getNearbyEntities(1.3, 1.3, 1.3)) {
                                             if (nearby instanceof Player player) {
                                                 item.close();
@@ -94,10 +104,15 @@ public class WitherSkeletonFeature extends AbstractFeature {
                                                 return;
                                             }
                                         }
-                                    } catch (Exception e) { item.close(); cancel(); }
+                                    } catch (Exception e) {
+                                        item.close();
+                                        cancel();
+                                    }
                                 }
                             }.runTaskTimer(plugin, 0, 1);
-                        } catch (Exception e) {}
+                        } catch (Exception e) {
+                            plugin.getLogger().log(Level.WARNING, "Error in WitherSkeleton machine gun shot", e);
+                        }
                     }
                 }.runTaskLater(plugin, delay);
             }
@@ -109,34 +124,40 @@ public class WitherSkeletonFeature extends AbstractFeature {
     private void applyWitherRush(Creature witherSkeleton, Player target, double damage) {
         try {
             witherSkeleton.getWorld().playSound(witherSkeleton.getLocation(), Sound.ENTITY_WITHER_SPAWN, 4.0f, 2.0f);
-            witherSkeleton.removePotionEffect(PotionEffectType.SLOW);
-            witherSkeleton.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 20, 255));
+            witherSkeleton.removePotionEffect(PotionEffectType.SLOWNESS);
+            witherSkeleton.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20, 255));
 
             new BukkitRunnable() {
                 double ticks = 0;
+
                 @Override
                 public void run() {
                     try {
-                        if (witherSkeleton.getHealth() <= 0) { cancel(); return; }
+                        if (witherSkeleton.getHealth() <= 0) {
+                            cancel();
+                            return;
+                        }
                         ticks += Math.PI / 20;
                         Location loc = witherSkeleton.getLocation();
                         for (int j = 0; j < 2; j++) {
-                            Location circleLoc = loc.clone().add(Math.cos(j * Math.PI + ticks), 2.2, Math.sin(j * Math.PI + ticks));
-                            circleLoc.getWorld().spawnParticle(Particle.SMOKE_LARGE, circleLoc, 0);
+                            loc.getWorld().spawnParticle(Particle.LARGE_SMOKE,
+                                    loc.clone().add(Math.cos(j * Math.PI + ticks), 2.2, Math.sin(j * Math.PI + ticks)), 0);
                         }
                         if (ticks >= Math.PI) {
                             Location start = witherSkeleton.getLocation().add(0, 1, 0);
                             Vector direction = target.getLocation().add(0, 1, 0).toVector().subtract(start.toVector());
                             for (double j = 0; j < 1; j += 0.03) {
-                                Location point = start.clone().add(direction.getX() * j, direction.getY() * j, direction.getZ() * j);
-                                point.getWorld().spawnParticle(Particle.SMOKE_LARGE, point, 0);
+                                start.getWorld().spawnParticle(Particle.LARGE_SMOKE,
+                                        start.clone().add(direction.getX() * j, direction.getY() * j, direction.getZ() * j), 0);
                             }
                             witherSkeleton.getWorld().playSound(witherSkeleton.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 2.0f, 0.0f);
                             witherSkeleton.teleport(target);
                             Utils.damage(target, damage, true);
                             cancel();
                         }
-                    } catch (Exception e) { cancel(); }
+                    } catch (Exception e) {
+                        cancel();
+                    }
                 }
             }.runTaskTimer(plugin, 0, 1);
         } catch (Exception e) {

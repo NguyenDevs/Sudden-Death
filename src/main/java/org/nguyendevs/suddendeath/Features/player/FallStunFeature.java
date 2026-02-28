@@ -10,6 +10,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
+
 import java.util.logging.Level;
 
 public class FallStunFeature extends AbstractFeature {
@@ -27,11 +28,13 @@ public class FallStunFeature extends AbstractFeature {
         if (event.getCause() != EntityDamageEvent.DamageCause.FALL) return;
 
         try {
-            player.removePotionEffect(PotionEffectType.SLOW);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
+            player.removePotionEffect(PotionEffectType.SLOWNESS);
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
                     (int) (event.getDamage() * 10 * Feature.FALL_STUN.getDouble("duration-amplifier")), 2));
 
             Location loc = player.getLocation().clone();
+            World world = player.getWorld();
+
             new BukkitRunnable() {
                 double ticks = 0;
 
@@ -40,18 +43,14 @@ public class FallStunFeature extends AbstractFeature {
                     try {
                         ticks += 0.25;
                         for (double j = 0; j < Math.PI * 2; j += Math.PI / 16) {
-                            Location particleLoc = loc.clone().add(
-                                    Math.cos(j) * ticks, 0.1, Math.sin(j) * ticks);
-                            particleLoc.getWorld().spawnParticle(Particle.BLOCK_CRACK,
-                                    particleLoc, 0, Material.DIRT.createBlockData());
+                            loc.getWorld().spawnParticle(Particle.BLOCK,
+                                    loc.clone().add(Math.cos(j) * ticks, 0.1, Math.sin(j) * ticks),
+                                    0, Material.DIRT.createBlockData());
                         }
-                        loc.getWorld().playSound(loc, Sound.BLOCK_GRAVEL_BREAK, 2.0f, 2.0f);
-                        if (ticks >= 2) {
-                            cancel();
-                        }
+                        world.playSound(loc, Sound.BLOCK_GRAVEL_BREAK, 2.0f, 2.0f);
+                        if (ticks >= 2) cancel();
                     } catch (Exception e) {
-                        plugin.getLogger().log(Level.WARNING,
-                                "Error in FallStunFeature particle task", e);
+                        plugin.getLogger().log(Level.WARNING, "Error in FallStunFeature particle task", e);
                         cancel();
                     }
                 }

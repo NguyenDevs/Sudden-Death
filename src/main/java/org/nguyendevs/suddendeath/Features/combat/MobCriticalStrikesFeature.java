@@ -32,7 +32,7 @@ public class MobCriticalStrikesFeature extends AbstractFeature {
                         Sound.ENTITY_PLAYER_ATTACK_CRIT, 2.0f, 1.0f);
                 player.getWorld().spawnParticle(Particle.CRIT,
                         player.getLocation().add(0, 1, 0), 32, 0, 0, 0, 0.5);
-                player.getWorld().spawnParticle(Particle.EXPLOSION_LARGE,
+                player.getWorld().spawnParticle(Particle.EXPLOSION,
                         player.getLocation().add(0, 1, 0), 0);
                 double multiplier = Feature.MOB_CRITICAL_STRIKES.getDouble("damage-percent") / 100.0;
                 event.setDamage(event.getDamage() * (1 + multiplier));

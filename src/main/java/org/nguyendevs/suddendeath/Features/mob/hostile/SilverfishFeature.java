@@ -33,7 +33,7 @@ public class SilverfishFeature extends AbstractFeature {
                         RANDOM.nextDouble() - 0.5,
                         RANDOM.nextDouble() - 0.5,
                         RANDOM.nextDouble() - 0.5);
-                entity.getWorld().spawnParticle(Particle.SMOKE_LARGE, entity.getLocation(), 0);
+                entity.getWorld().spawnParticle(Particle.LARGE_SMOKE, entity.getLocation(), 0);
                 entity.getWorld().spawnEntity(entity.getLocation(), EntityType.SILVERFISH)
                         .setVelocity(velocity);
             }

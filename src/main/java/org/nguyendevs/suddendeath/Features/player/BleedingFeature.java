@@ -1,5 +1,6 @@
 package org.nguyendevs.suddendeath.Features.player;
 
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,12 +13,15 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
+import org.nguyendevs.suddendeath.Hook.CustomFlag;
 import org.nguyendevs.suddendeath.Player.PlayerData;
 import org.nguyendevs.suddendeath.Utils.*;
-import org.nguyendevs.suddendeath.Hook.CustomFlag;
+
 import java.util.logging.Level;
 
 public class BleedingFeature extends AbstractFeature {
+
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacyAmpersand();
 
     @Override
     public String getName() {
@@ -31,10 +35,9 @@ public class BleedingFeature extends AbstractFeature {
             public void run() {
                 try {
                     for (Player player : Bukkit.getOnlinePlayers()) {
-                        if (player == null || Utils.hasCreativeGameMode(player)) continue;
+                        if (Utils.hasCreativeGameMode(player)) continue;
                         PlayerData data = PlayerData.get(player);
                         if (data == null) continue;
-
                         if (Feature.BLEEDING.isEnabled(player) && data.isBleeding() &&
                                 plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_EFFECT) &&
                                 player.getHealth() >= Feature.BLEEDING.getDouble("health-min")) {
@@ -66,14 +69,11 @@ public class BleedingFeature extends AbstractFeature {
     @EventHandler
     public void onEntityRegainHealth(EntityRegainHealthEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        if (player.hasMetadata("NPC")) return;
-        if (!Feature.BLEEDING.isEnabled(player)) return;
+        if (player.hasMetadata("NPC") || !Feature.BLEEDING.isEnabled(player)) return;
         try {
             PlayerData data = PlayerData.get(player);
-            if (data != null && data.isBleeding()) {
-                event.setCancelled(true);
-            }
-        } catch (Exception e) {}
+            if (data != null && data.isBleeding()) event.setCancelled(true);
+        } catch (Exception ignored) {}
     }
 
     @EventHandler
@@ -83,69 +83,66 @@ public class BleedingFeature extends AbstractFeature {
         if (!Feature.BLEEDING.isEnabled(player)) return;
         try {
             PlayerData data = PlayerData.get(player);
-            if (data == null) return;
-            if (plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_REMOVE)) {
-                if (data.isBleeding()) {
-                    data.setBleeding(false);
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("no-longer-bleeding")));
-                    player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1.0f, 0.0f);
-                }
-            }
-        } catch (Exception e) {}
+            if (data == null || !data.isBleeding()) return;
+            if (!plugin.getWorldGuard().isFlagAllowed(player, CustomFlag.SDS_REMOVE)) return;
+            data.setBleeding(false);
+            sendMsg(player, "no-longer-bleeding");
+            player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1.0f, 0.0f);
+        } catch (Exception ignored) {}
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        if (!event.hasItem()) return;
-        if (!Feature.BLEEDING.isEnabled(player)) return;
+        if (!event.hasItem() || !Feature.BLEEDING.isEnabled(player)) return;
         try {
             var item = player.getInventory().getItemInMainHand();
-            if (!Utils.isPluginItem(item, false)) return;
-            if (!item.isSimilar(CustomItem.BANDAGE.a())) return;
+            if (!Utils.isPluginItem(item, false) || !item.isSimilar(CustomItem.BANDAGE.a())) return;
             PlayerData data = PlayerData.get(player);
             if (data == null || !data.isBleeding()) return;
             event.setCancelled(true);
             consumeItem(player);
             data.setBleeding(false);
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("use-bandage")));
+            sendMsg(player, "use-bandage");
             player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_LEATHER, 1.0f, 0.0f);
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
 
     private void applyBleeding(Player player) {
         double chance = Feature.BLEEDING.getDouble("chance-percent") / 100.0;
         PlayerData data = PlayerData.get(player);
-        if (data == null) return;
+        if (data == null || data.isBleeding() || RANDOM.nextDouble() > chance) return;
 
-        if (RANDOM.nextDouble() <= chance && !data.isBleeding()) {
-            if (data.getBleedingTask() != null) data.getBleedingTask().cancel();
-            data.setBleeding(true);
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("now-bleeding")));
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 1));
-            player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
+        if (data.getBleedingTask() != null) data.getBleedingTask().cancel();
+        data.setBleeding(true);
+        sendMsg(player, "now-bleeding");
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 1));
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ZOMBIFIED_PIGLIN_ANGRY, 1.0f, 2.0f);
+        spawnBleedingParticles(player);
 
-            BukkitRunnable task = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (data.isBleeding()) {
-                        data.setBleeding(false);
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', Utils.msg("prefix") + " " + Utils.msg("no-longer-bleeding")));
-                        data.setBleedingTask(null);
-                    }
-                }
-            };
-            data.setBleedingTask(task);
-            spawnBleedingParticles(player);
-            task.runTaskLater(plugin, (long)(Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
-        }
+        BukkitRunnable task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!data.isBleeding()) return;
+                data.setBleeding(false);
+                sendMsg(player, "no-longer-bleeding");
+                data.setBleedingTask(null);
+            }
+        };
+        data.setBleedingTask(task);
+        task.runTaskLater(plugin, (long) (Feature.BLEEDING.getDouble("auto-stop-bleed-time") * 20));
     }
 
     private void spawnBleedingParticles(Player player) {
-        double offsetX = (Math.random() - 0.5D) * 0.4D;
-        double offsetY = 1.0 + ((Math.random() - 0.5D) * 0.5D);
-        double offsetZ = (Math.random() - 0.5D) * 2.0D;
-        player.getWorld().spawnParticle(Particle.BLOCK_CRACK, player.getLocation().add(offsetX, offsetY, offsetZ), 30, Material.REDSTONE_BLOCK.createBlockData());
+        double offsetX = (RANDOM.nextDouble() - 0.5) * 0.4;
+        double offsetY = 1.0 + (RANDOM.nextDouble() - 0.5) * 0.5;
+        double offsetZ = (RANDOM.nextDouble() - 0.5) * 2.0;
+        player.getWorld().spawnParticle(Particle.BLOCK, player.getLocation().add(offsetX, offsetY, offsetZ),
+                30, Material.REDSTONE_BLOCK.createBlockData());
+    }
+
+    private void sendMsg(Player player, String key) {
+        player.sendMessage(LEGACY.deserialize(Utils.msg("prefix") + " " + Utils.msg(key)));
     }
 
     private void consumeItem(Player player) {
@@ -157,13 +154,13 @@ public class BleedingFeature extends AbstractFeature {
     private boolean hasMovedBlock(PlayerMoveEvent event) {
         Location from = event.getFrom();
         Location to = event.getTo();
-        return to != null && (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ());
+        return from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ();
     }
 
     private boolean isExcludedDamageCause(EntityDamageEvent.DamageCause cause) {
-        return cause == EntityDamageEvent.DamageCause.STARVATION || cause == EntityDamageEvent.DamageCause.DROWNING ||
-                cause == EntityDamageEvent.DamageCause.SUICIDE || cause == EntityDamageEvent.DamageCause.MELTING ||
-                cause == EntityDamageEvent.DamageCause.FIRE_TICK || cause == EntityDamageEvent.DamageCause.VOID ||
-                cause == EntityDamageEvent.DamageCause.SUFFOCATION || cause == EntityDamageEvent.DamageCause.POISON;
+        return switch (cause) {
+            case STARVATION, DROWNING, SUICIDE, MELTING, FIRE_TICK, VOID, SUFFOCATION, POISON -> true;
+            default -> false;
+        };
     }
 }

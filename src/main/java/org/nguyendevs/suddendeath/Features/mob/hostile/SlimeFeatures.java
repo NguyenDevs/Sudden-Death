@@ -1,7 +1,8 @@
 package org.nguyendevs.suddendeath.Features.mob.hostile;
 
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -14,6 +15,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Player.ExperienceCalculator;
 import org.nguyendevs.suddendeath.Utils.*;
+
 import java.util.logging.Level;
 
 public class SlimeFeatures extends AbstractFeature {
@@ -54,19 +56,19 @@ public class SlimeFeatures extends AbstractFeature {
         int currentExp = calculator.getTotalExperience();
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 2.0f, 1.0f);
 
-        String message = ChatColor.DARK_RED + Utils.msg("lost-exp").replace("#exp#", String.valueOf(exp));
-        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+        Component message = Component.text(Utils.msg("lost-exp").replace("#exp#", String.valueOf(exp)),
+                NamedTextColor.DARK_RED);
+        player.sendActionBar(message);
 
         for (int i = 0; i < 8; i++) {
             ItemStack stack = new ItemStack(Material.GOLD_NUGGET);
             ItemMeta meta = stack.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName("BOUNTYHUNTERS:chest " + player.getUniqueId() + " " + i);
-                stack.setItemMeta(meta);
+            if (meta == null) continue;
+            meta.displayName(Component.text("BOUNTYHUNTERS:chest " + player.getUniqueId() + " " + i));
+            stack.setItemMeta(meta);
 
-                NoInteractItemEntity item = new NoInteractItemEntity(player.getLocation(), stack);
-                Bukkit.getScheduler().runTaskLater(plugin, item::close, 30 + RANDOM.nextInt(30));
-            }
+            NoInteractItemEntity item = new NoInteractItemEntity(player.getLocation(), stack);
+            Bukkit.getScheduler().runTaskLater(plugin, item::close, 30 + RANDOM.nextInt(30));
         }
         calculator.setTotalExperience(Math.max(currentExp - exp, 0));
     }
@@ -77,9 +79,11 @@ public class SlimeFeatures extends AbstractFeature {
 
         double duration = Feature.POISONED_SLIMES.getDouble("duration");
         int amplifier = (int) Feature.POISONED_SLIMES.getDouble("amplifier");
-        slime.getWorld().spawnParticle(Particle.SLIME, slime.getLocation(), 32, 1, 1, 1, 0);
-        slime.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, slime.getLocation(), 24, 1, 1, 1, 0);
-        slime.getWorld().playSound(slime.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 2.0f, 1.0f);
+        Location loc = slime.getLocation();
+        World world = slime.getWorld();
+        world.spawnParticle(Particle.ITEM_SLIME, loc, 32, 1, 1, 1, 0);
+        world.spawnParticle(Particle.HAPPY_VILLAGER, loc, 24, 1, 1, 1, 0);
+        world.playSound(loc, Sound.BLOCK_BREWING_STAND_BREW, 2.0f, 1.0f);
         player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, (int) (duration * 20), amplifier));
     }
 }

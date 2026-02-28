@@ -19,9 +19,9 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Hook.CustomFlag;
 import org.nguyendevs.suddendeath.Managers.EventManager.WorldStatus;
+import org.nguyendevs.suddendeath.SuddenDeath;
 import org.nguyendevs.suddendeath.Utils.Feature;
 
 import java.util.*;
@@ -53,27 +53,21 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
     private final Map<UUID, MeteorTask> activeMeteors = new ConcurrentHashMap<>();
     private final Map<BlockPosition, Set<UUID>> phantomBlockTracking = new ConcurrentHashMap<>();
+    private final List<CraterData> cratersToRecover = new ArrayList<>();
+    private int spawningTaskId = -1;
 
     private static class CraterData {
-        Location center;
-        Map<Location, Material> originalBlocks;
-        int radius;
-        long impactTime;
-        long recoveryStartTime;
+        final Location center;
+        final Map<Location, Material> originalBlocks = new HashMap<>();
+        final int radius;
+        final long recoveryStartTime;
 
         CraterData(Location center, int radius) {
             this.center = center;
             this.radius = radius;
-            this.originalBlocks = new HashMap<>();
-            this.impactTime = System.currentTimeMillis();
-            this.recoveryStartTime = System.currentTimeMillis() +
-                    (30000 + ThreadLocalRandom.current().nextInt(60000));
+            this.recoveryStartTime = System.currentTimeMillis() + 30000 + ThreadLocalRandom.current().nextInt(60000);
         }
     }
-
-    private final List<CraterData> cratersToRecover = new ArrayList<>();
-
-    private int spawningTaskId = -1;
 
     public MeteorRain(World world) {
         super(world, 20 * 10, WorldStatus.METEOR_RAIN);
@@ -119,13 +113,11 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         super.close();
         try {
             stopSpawning();
-            List<MeteorTask> tasks = new ArrayList<>(activeMeteors.values());
-            for (MeteorTask t : tasks) t.cancel();
+            new ArrayList<>(activeMeteors.values()).forEach(MeteorTask::cancel);
             activeMeteors.clear();
             clearAllPhantomBlocks();
 
-            boolean craterRecovery = Feature.METEOR_RAIN.getBoolean("crater-recovery");
-            if (craterRecovery && !cratersToRecover.isEmpty()) {
+            if (Feature.METEOR_RAIN.getBoolean("crater-recovery") && !cratersToRecover.isEmpty()) {
                 startCraterRecoveryProcess();
             } else {
                 cratersToRecover.clear();
@@ -139,11 +131,10 @@ public class MeteorRain extends WorldEventHandler implements Listener {
     private void clearAllPhantomBlocks() {
         World world = getWorld();
         if (world == null) return;
-
-        for (Map.Entry<BlockPosition, Set<UUID>> entry : phantomBlockTracking.entrySet()) {
-            BlockPosition pos = entry.getKey();
+        WrappedBlockData air = WrappedBlockData.createData(Material.AIR.createBlockData());
+        for (BlockPosition pos : phantomBlockTracking.keySet()) {
             for (Player player : world.getPlayers()) {
-                sendBlockChange(player, pos, WrappedBlockData.createData(Material.AIR.createBlockData()));
+                sendBlockChange(player, pos, air);
             }
         }
         phantomBlockTracking.clear();
@@ -170,20 +161,18 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             List<Player> worldPlayers = getWorld().getPlayers();
             if (worldPlayers.isEmpty()) return;
 
-            List<Player> eligible = new ArrayList<>();
-            for (Player p : worldPlayers) if (!isProtected(p)) eligible.add(p);
+            List<Player> eligible = worldPlayers.stream().filter(p -> !isProtected(p)).toList();
             if (eligible.isEmpty()) return;
 
             int meteorCount = ThreadLocalRandom.current().nextInt(1, 5);
             for (int i = 0; i < meteorCount; i++) {
                 Player targetPlayer = eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
-                long delay = i * ThreadLocalRandom.current().nextInt(3, 11);
+                long delay = (long) i * ThreadLocalRandom.current().nextInt(3, 11);
                 Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(),
                         () -> spawnMeteorNearPlayer(targetPlayer), delay);
             }
         } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error spawning meteor shower", e);
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error spawning meteor shower", e);
         }
     }
 
@@ -194,12 +183,10 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             Location playerLoc = targetPlayer.getLocation();
             double distance = ThreadLocalRandom.current().nextDouble(10, 60);
             double angle = ThreadLocalRandom.current().nextDouble(0, 2 * Math.PI);
-            int offsetX = (int) (Math.cos(angle) * distance);
-            int offsetZ = (int) (Math.sin(angle) * distance);
 
-            Location targetLocation = playerLoc.clone().add(offsetX, 0, offsetZ);
-            int groundY = getWorld().getHighestBlockYAt(targetLocation);
-            targetLocation.setY(groundY);
+            Location targetLocation = playerLoc.clone().add(
+                    (int) (Math.cos(angle) * distance), 0, (int) (Math.sin(angle) * distance));
+            targetLocation.setY(getWorld().getHighestBlockYAt(targetLocation));
 
             if (!SuddenDeath.getInstance().getWorldGuard()
                     .isFlagAllowedAtLocation(targetLocation, CustomFlag.SDS_EVENT)) return;
@@ -208,9 +195,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double spawnDistance = ThreadLocalRandom.current().nextDouble(80, 120);
 
             Location startLocation = targetLocation.clone()
-                    .add(diagonalDirection.getX() * spawnDistance,
-                            SPAWN_HEIGHT,
-                            diagonalDirection.getZ() * spawnDistance);
+                    .add(diagonalDirection.getX() * spawnDistance, SPAWN_HEIGHT, diagonalDirection.getZ() * spawnDistance);
 
             int meteorSize = ThreadLocalRandom.current().nextInt(MIN_METEOR_SIZE, MAX_METEOR_SIZE + 1);
             UUID meteorId = UUID.randomUUID();
@@ -218,39 +203,31 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             MeteorTask meteorTask = new MeteorTask(startLocation, targetLocation, meteorSize, meteorId);
             activeMeteors.put(meteorId, meteorTask);
             meteorTask.runTaskTimer(SuddenDeath.getInstance(), 0L, 1L);
-
         } catch (Exception e) {
-            SuddenDeath.getInstance().getLogger().log(Level.WARNING,
-                    "Error spawning meteor near player", e);
+            SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error spawning meteor near player", e);
         }
     }
 
     private Vector generateRandomDiagonalDirection() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         double angle = random.nextDouble(0.3, 2 * Math.PI - 0.3);
-        double[] avoidAngles = {0, Math.PI/2, Math.PI, 3*Math.PI/2};
+        double[] avoidAngles = {0, Math.PI / 2, Math.PI, 3 * Math.PI / 2};
         for (double avoidAngle : avoidAngles) {
             if (Math.abs(angle - avoidAngle) < 0.2) angle += 0.3;
         }
-        double x = Math.cos(angle);
-        double z = Math.sin(angle);
-        return new Vector(x, 0, z).normalize();
+        return new Vector(Math.cos(angle), 0, Math.sin(angle)).normalize();
     }
 
-    private static boolean inHorizontalRange(Player p, Location c, int range) {
+    private static boolean inHorizontalRange(Player p, Location c) {
         if (!p.getWorld().equals(c.getWorld())) return false;
         Location pl = p.getLocation();
         double dx = pl.getX() - c.getX();
         double dz = pl.getZ() - c.getZ();
-        return (dx * dx + dz * dz) <= (range * range);
+        return (dx * dx + dz * dz) <= (MeteorRain.VIEW_RANGE * MeteorRain.VIEW_RANGE);
     }
 
     private enum MeteorShape {
-        SPHERICAL,
-        ARROW,
-        IRREGULAR,
-        TAILED,
-        COMPLEX
+        SPHERICAL, ARROW, IRREGULAR, TAILED, COMPLEX
     }
 
     private class MeteorTask extends BukkitRunnable {
@@ -261,16 +238,15 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         private final UUID meteorId;
         private final Vector flightDirection;
         private final MeteorShape meteorShape;
-        private Location currentLocation;
-        private int tickCount = 0;
-        private boolean hasImpacted = false;
         private final double speed;
         private final Map<UUID, Set<BlockPosition>> lastSentPerPlayer = new HashMap<>();
         private final List<MeteorVoxel> meteorVoxels;
-        private final int MAX_TICKS = 20 * 40;
         private final Map<Location, Material> destroyedBlocksInFlight = new HashMap<>();
+        private final int MAX_TICKS = 20 * 40;
 
-
+        private Location currentLocation;
+        private int tickCount = 0;
+        private boolean hasImpacted = false;
 
         private static class MeteorVoxel {
             final Vector offset;
@@ -289,6 +265,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             this.meteorId = meteorId;
             this.currentLocation = start.clone();
             this.meteorShape = selectRandomMeteorShape(size);
+
             Vector baseDirection = target.toVector().subtract(start.toVector()).normalize();
             double randomOffset = ThreadLocalRandom.current().nextDouble(-0.3, 0.3);
             this.flightDirection = new Vector(
@@ -302,28 +279,25 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
         private MeteorShape selectRandomMeteorShape(int size) {
             ThreadLocalRandom random = ThreadLocalRandom.current();
+            double rand = random.nextDouble();
+
             if (size >= 9) {
-                double rand = random.nextDouble();
                 if (rand < 0.25) return MeteorShape.COMPLEX;
                 if (rand < 0.45) return MeteorShape.IRREGULAR;
                 if (rand < 0.65) return MeteorShape.TAILED;
                 if (rand < 0.85) return MeteorShape.ARROW;
-                return MeteorShape.SPHERICAL;
             } else if (size >= 6) {
-                double rand = random.nextDouble();
-                if (rand < 0.2) return MeteorShape.COMPLEX;
-                if (rand < 0.4) return MeteorShape.IRREGULAR;
-                if (rand < 0.6) return MeteorShape.TAILED;
-                if (rand < 0.8) return MeteorShape.ARROW;
-                return MeteorShape.SPHERICAL;
+                if (rand < 0.20) return MeteorShape.COMPLEX;
+                if (rand < 0.40) return MeteorShape.IRREGULAR;
+                if (rand < 0.60) return MeteorShape.TAILED;
+                if (rand < 0.80) return MeteorShape.ARROW;
             } else {
-                double rand = random.nextDouble();
-                if (rand < 0.1) return MeteorShape.COMPLEX;
-                if (rand < 0.3) return MeteorShape.IRREGULAR;
-                if (rand < 0.5) return MeteorShape.TAILED;
-                if (rand < 0.7) return MeteorShape.ARROW;
-                return MeteorShape.SPHERICAL;
+                if (rand < 0.10) return MeteorShape.COMPLEX;
+                if (rand < 0.30) return MeteorShape.IRREGULAR;
+                if (rand < 0.50) return MeteorShape.TAILED;
+                if (rand < 0.70) return MeteorShape.ARROW;
             }
+            return MeteorShape.SPHERICAL;
         }
 
         @Override
@@ -343,20 +317,16 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 if (w != null) {
                     org.bukkit.util.RayTraceResult r = w.rayTraceBlocks(
                             prev, movement.normalize(), movement.length(),
-                            FluidCollisionMode.NEVER, true
-                    );
+                            FluidCollisionMode.NEVER, true);
                     if (r != null && r.getHitPosition() != null) {
                         Block hitBlock = r.getHitBlock();
                         if (hitBlock != null && isSolidTerrain(hitBlock.getType())) {
-
                             saveAndDestroyBlocksInPath(prev, currentLocation);
-
-                            Location hit = new Location(w,
+                            hasImpacted = true;
+                            impact(new Location(w,
                                     r.getHitPosition().getX(),
                                     r.getHitPosition().getY(),
-                                    r.getHitPosition().getZ());
-                            hasImpacted = true;
-                            impact(hit);
+                                    r.getHitPosition().getZ()));
                             cancel();
                             return;
                         }
@@ -370,7 +340,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
                 if (currentLocation.getBlockY() <= getGroundLevel(currentLocation)) {
                     saveAndDestroyBlocksInPath(prev, currentLocation);
-
                     hasImpacted = true;
                     impact(currentLocation.clone());
                     cancel();
@@ -381,35 +350,26 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             }
         }
 
-
         private void checkAndDestroyBlocksAlongPath() {
             World world = currentLocation.getWorld();
             if (world == null) return;
 
             int checkRadius = Math.max(2, meteorSize / 3);
+            double threshold = checkRadius * 0.7;
 
             for (int x = -checkRadius; x <= checkRadius; x++) {
                 for (int y = -checkRadius; y <= checkRadius; y++) {
                     for (int z = -checkRadius; z <= checkRadius; z++) {
-                        double distance = Math.sqrt(x * x + y * y + z * z);
+                        if (Math.sqrt(x * x + y * y + z * z) > threshold) continue;
+                        Location blockLoc = currentLocation.clone().add(x, y, z);
+                        Block block = world.getBlockAt(blockLoc);
+                        if (!isSolidTerrain(block.getType()) || block.getType() == Material.BEDROCK) continue;
+                        if (destroyedBlocksInFlight.containsKey(blockLoc)) continue;
 
-                        if (distance <= checkRadius * 0.7) {
-                            Location blockLoc = currentLocation.clone().add(x, y, z);
-                            Block block = world.getBlockAt(blockLoc);
-
-                            if (isSolidTerrain(block.getType()) &&
-                                    block.getType() != Material.BEDROCK &&
-                                    !destroyedBlocksInFlight.containsKey(blockLoc)) {
-
-                                destroyedBlocksInFlight.put(blockLoc.clone(), block.getType());
-
-                                block.setType(Material.AIR, false);
-
-                                world.spawnParticle(Particle.BLOCK_CRACK,
-                                        blockLoc.add(0.5, 0.5, 0.5), 3,
-                                        0.3, 0.3, 0.3, 0, block.getBlockData());
-                            }
-                        }
+                        destroyedBlocksInFlight.put(blockLoc.clone(), block.getType());
+                        world.spawnParticle(Particle.BLOCK, blockLoc.clone().add(0.5, 0.5, 0.5),
+                                3, 0.3, 0.3, 0.3, 0, block.getBlockData());
+                        block.setType(Material.AIR, false);
                     }
                 }
             }
@@ -424,28 +384,22 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             direction.normalize();
 
             int checkRadius = Math.max(2, meteorSize / 3);
+            double threshold = checkRadius * 0.7;
             int steps = (int) Math.ceil(distance);
 
             for (int step = 0; step < steps; step++) {
                 Location checkLoc = start.clone().add(direction.clone().multiply(step));
-
                 for (int x = -checkRadius; x <= checkRadius; x++) {
                     for (int y = -checkRadius; y <= checkRadius; y++) {
                         for (int z = -checkRadius; z <= checkRadius; z++) {
-                            double blockDist = Math.sqrt(x * x + y * y + z * z);
+                            if (Math.sqrt(x * x + y * y + z * z) > threshold) continue;
+                            Location blockLoc = checkLoc.clone().add(x, y, z);
+                            Block block = world.getBlockAt(blockLoc);
+                            if (!isSolidTerrain(block.getType()) || block.getType() == Material.BEDROCK) continue;
+                            if (destroyedBlocksInFlight.containsKey(blockLoc)) continue;
 
-                            if (blockDist <= checkRadius * 0.7) {
-                                Location blockLoc = checkLoc.clone().add(x, y, z);
-                                Block block = world.getBlockAt(blockLoc);
-
-                                if (isSolidTerrain(block.getType()) &&
-                                        block.getType() != Material.BEDROCK &&
-                                        !destroyedBlocksInFlight.containsKey(blockLoc)) {
-
-                                    destroyedBlocksInFlight.put(blockLoc.clone(), block.getType());
-                                    block.setType(Material.AIR, false);
-                                }
-                            }
+                            destroyedBlocksInFlight.put(blockLoc.clone(), block.getType());
+                            block.setType(Material.AIR, false);
                         }
                     }
                 }
@@ -460,18 +414,17 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, currentLocation, 15, offset, offset, offset, 0.05);
             world.spawnParticle(Particle.LAVA, currentLocation, 8, offset / 2, offset / 2, offset / 2, 0);
             world.spawnParticle(Particle.CRIT, currentLocation, 10, offset, offset, offset, 0.1);
-            world.spawnParticle(Particle.EXPLOSION_NORMAL, currentLocation, 5, offset / 3, offset / 3, offset / 3, 0.02);
+            world.spawnParticle(Particle.EXPLOSION, currentLocation, 5, offset / 3, offset / 3, offset / 3, 0.02);
         }
 
         private void playMeteorFlightSound() {
             World world = currentLocation.getWorld();
             if (world == null) return;
             for (Player player : world.getPlayers()) {
-                if (player.getLocation().distance(currentLocation) <= SOUND_RADIUS) {
-                    player.playSound(currentLocation, Sound.ENTITY_BREEZE_SHOOT, SoundCategory.AMBIENT, 0.8f, 0.6f);
-                    player.playSound(currentLocation, Sound.BLOCK_FIRE_AMBIENT, SoundCategory.AMBIENT, 1.0f, 0.4f);
-                    player.playSound(currentLocation, Sound.ENTITY_FIREWORK_ROCKET_BLAST, SoundCategory.AMBIENT, 0.5f, 0.8f);
-                }
+                if (player.getLocation().distance(currentLocation) > SOUND_RADIUS) continue;
+                player.playSound(currentLocation, Sound.ENTITY_BREEZE_SHOOT, SoundCategory.AMBIENT, 0.8f, 0.6f);
+                player.playSound(currentLocation, Sound.BLOCK_FIRE_AMBIENT, SoundCategory.AMBIENT, 1.0f, 0.4f);
+                player.playSound(currentLocation, Sound.ENTITY_FIREWORK_ROCKET_BLAST, SoundCategory.AMBIENT, 0.5f, 0.8f);
             }
         }
 
@@ -480,26 +433,20 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             if (world == null) return;
 
             Map<BlockPosition, WrappedBlockData> currentBlocks = new HashMap<>();
-
             for (MeteorVoxel voxel : meteorVoxels) {
                 Location blockLoc = currentLocation.clone().add(voxel.offset);
-                BlockPosition pos = new BlockPosition(
-                        blockLoc.getBlockX(),
-                        blockLoc.getBlockY(),
-                        blockLoc.getBlockZ()
-                );
-                currentBlocks.put(pos, voxel.data);
+                currentBlocks.put(new BlockPosition(blockLoc.getBlockX(), blockLoc.getBlockY(), blockLoc.getBlockZ()), voxel.data);
             }
 
-            for (Player player : world.getPlayers()) {
-                if (!inHorizontalRange(player, currentLocation, VIEW_RANGE)) continue;
+            WrappedBlockData air = WrappedBlockData.createData(Material.AIR.createBlockData());
 
-                Set<BlockPosition> lastSent = lastSentPerPlayer.computeIfAbsent(
-                        player.getUniqueId(), k -> new HashSet<>()
-                );
+            for (Player player : world.getPlayers()) {
+                if (!inHorizontalRange(player, currentLocation)) continue;
+
+                Set<BlockPosition> lastSent = lastSentPerPlayer.computeIfAbsent(player.getUniqueId(), k -> new HashSet<>());
 
                 for (BlockPosition oldPos : lastSent) {
-                    sendBlockChange(player, oldPos, WrappedBlockData.createData(Material.AIR.createBlockData()));
+                    sendBlockChange(player, oldPos, air);
                     removePhantomBlockTracking(oldPos, player.getUniqueId());
                 }
                 lastSent.clear();
@@ -519,21 +466,18 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
         private void removePhantomBlockTracking(BlockPosition pos, UUID playerId) {
             Set<UUID> players = phantomBlockTracking.get(pos);
-            if (players != null) {
-                players.remove(playerId);
-                if (players.isEmpty()) {
-                    phantomBlockTracking.remove(pos);
-                }
-            }
+            if (players == null) return;
+            players.remove(playerId);
+            if (players.isEmpty()) phantomBlockTracking.remove(pos);
         }
 
         private void clearAllFakeBlocks() {
+            WrappedBlockData air = WrappedBlockData.createData(Material.AIR.createBlockData());
             for (Map.Entry<UUID, Set<BlockPosition>> entry : lastSentPerPlayer.entrySet()) {
                 Player player = Bukkit.getPlayer(entry.getKey());
                 if (player == null || !player.isOnline()) continue;
-
                 for (BlockPosition pos : entry.getValue()) {
-                    sendBlockChange(player, pos, WrappedBlockData.createData(Material.AIR.createBlockData()));
+                    sendBlockChange(player, pos, air);
                     removePhantomBlockTracking(pos, entry.getKey());
                 }
                 entry.getValue().clear();
@@ -551,14 +495,13 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 world.playSound(impactPoint, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.AMBIENT, 1.5f, 0.7f);
                 world.playSound(impactPoint, Sound.BLOCK_ANVIL_PLACE, SoundCategory.AMBIENT, 1.2f, 0.4f);
 
-                world.spawnParticle(Particle.EXPLOSION_LARGE, impactPoint, 10, 3, 3, 3, 0);
+                world.spawnParticle(Particle.EXPLOSION_EMITTER, impactPoint, 10, 3, 3, 3, 0);
                 world.spawnParticle(Particle.LAVA, impactPoint, 50, 4, 4, 4, 0);
                 world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, impactPoint, 30, 3, 3, 3, 0.05);
                 world.spawnParticle(Particle.FLAME, impactPoint, 40, 3, 3, 3, 0.1);
 
                 applyShockwaveAt(impactPoint);
                 createEnhancedMeteorCrater(impactPoint);
-
             } catch (Exception e) {
                 SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error creating meteor impact", e);
             }
@@ -567,48 +510,29 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         private int getGroundLevel(Location loc) {
             World world = loc.getWorld();
             if (world == null) return loc.getBlockY();
-
             for (int y = loc.getBlockY(); y >= world.getMinHeight(); y--) {
-                Material mat = world.getBlockAt(loc.getBlockX(), y, loc.getBlockZ()).getType();
-                if (isSolidTerrain(mat)) {
-                    return y;
-                }
+                if (isSolidTerrain(world.getBlockAt(loc.getBlockX(), y, loc.getBlockZ()).getType())) return y;
             }
             return world.getMinHeight();
         }
 
         private boolean isSolidTerrain(Material material) {
-            return material.isSolid() &&
-                    material != Material.WATER &&
-                    !material.name().contains("LEAVES") &&
-                    !material.name().contains("LOG") &&
-                    !material.name().contains("WOOD") &&
-                    !isVegetation(material);
+            return material.isSolid()
+                    && material != Material.WATER
+                    && !material.name().contains("LEAVES")
+                    && !material.name().contains("LOG")
+                    && !material.name().contains("WOOD")
+                    && !isVegetation(material);
         }
 
         private boolean isVegetation(Material material) {
-            return material == Material.SHORT_GRASS ||
-                    material == Material.TALL_GRASS ||
-                    material == Material.FERN ||
-                    material == Material.LARGE_FERN ||
-                    material == Material.DEAD_BUSH ||
-                    material == Material.DANDELION ||
-                    material == Material.POPPY ||
-                    material == Material.BLUE_ORCHID ||
-                    material == Material.ALLIUM ||
-                    material == Material.AZURE_BLUET ||
-                    material == Material.RED_TULIP ||
-                    material == Material.ORANGE_TULIP ||
-                    material == Material.WHITE_TULIP ||
-                    material == Material.PINK_TULIP ||
-                    material == Material.OXEYE_DAISY ||
-                    material == Material.SUNFLOWER ||
-                    material == Material.LILAC ||
-                    material == Material.ROSE_BUSH ||
-                    material == Material.PEONY ||
-                    material == Material.GLOWSTONE ||
-                    material.name().contains("SAPLING") ||
-                    material.name().contains("MUSHROOM");
+            return switch (material) {
+                case SHORT_GRASS, TALL_GRASS, FERN, LARGE_FERN, DEAD_BUSH,
+                     DANDELION, POPPY, BLUE_ORCHID, ALLIUM, AZURE_BLUET,
+                     RED_TULIP, ORANGE_TULIP, WHITE_TULIP, PINK_TULIP,
+                     OXEYE_DAISY, SUNFLOWER, LILAC, ROSE_BUSH, PEONY, GLOWSTONE -> true;
+                default -> material.name().contains("SAPLING") || material.name().contains("MUSHROOM");
+            };
         }
 
         private void applyShockwaveAt(Location center) {
@@ -618,26 +542,20 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double knockRadius = meteorSize * 2.5;
 
             for (Entity entity : world.getNearbyEntities(center, knockRadius, knockRadius, knockRadius)) {
-                if (!(entity instanceof LivingEntity livingEntity)) continue;
-                if (entity instanceof ArmorStand) continue;
+                if (!(entity instanceof LivingEntity livingEntity) || entity instanceof ArmorStand) continue;
 
                 double distance = livingEntity.getLocation().distance(center);
-                if (distance <= knockRadius) {
-                    Vector direction = livingEntity.getLocation().toVector().subtract(center.toVector()).normalize();
+                if (distance > knockRadius) continue;
 
-                    double strength = (1.0 - distance / knockRadius) * (meteorSize / 3.5) + 1.5;
+                double ratio = 1.0 - distance / knockRadius;
+                Vector direction = livingEntity.getLocation().toVector().subtract(center.toVector()).normalize();
+                double strength = ratio * (meteorSize / 3.5) + 1.5;
+                livingEntity.setVelocity(direction.multiply(strength).add(new Vector(0, 0.8 + meteorSize * 0.04, 0)));
+                livingEntity.damage(Math.max(1.0, (5.0 + meteorSize) * ratio));
+                livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 4));
+                livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 100, 2));
 
-                    livingEntity.setVelocity(direction.multiply(strength).add(new Vector(0, 0.8 + meteorSize * 0.04, 0)));
-
-                    double baseDamage = 5.0 + meteorSize * 1.0;
-                    double damage = Math.max(1.0, baseDamage * (1.0 - (distance / knockRadius)));
-                    livingEntity.damage(damage);
-
-                    livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, 60, 4));
-                    livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, 100, 2));
-
-                    world.spawnParticle(Particle.CRIT, livingEntity.getEyeLocation().add(0, 0.5, 0), 5, 0.3, 0.1, 0.3, 0.1);
-                }
+                world.spawnParticle(Particle.CRIT, livingEntity.getEyeLocation().add(0, 0.5, 0), 5, 0.3, 0.1, 0.3, 0.1);
             }
         }
 
@@ -663,9 +581,6 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             if (craterData != null) {
                 craterData.originalBlocks.putAll(destroyedBlocksInFlight);
-            }
-
-            if (craterData != null) {
                 trackScorchedAreaBlocks(impactPoint, craterData);
             }
 
@@ -674,8 +589,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
                 performFinalCleanup(impactPoint, craterData);
-
-                if (craterRecovery && craterData != null && craterData.originalBlocks.size() > 0) {
+                if (craterRecovery && craterData != null && !craterData.originalBlocks.isEmpty()) {
                     cratersToRecover.add(craterData);
                 }
             }, 60L);
@@ -689,21 +603,13 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             for (int x = -radius; x <= radius; x++) {
                 for (int z = -radius; z <= radius; z++) {
-                    double distance = Math.sqrt(x * x + z * z);
-                    if (distance > radius) continue;
-
+                    if (Math.sqrt(x * x + z * z) > radius) continue;
                     int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
-
                     for (int y = 0; y >= -2; y--) {
-                        Location blockLoc = new Location(world,
-                                center.getBlockX() + x,
-                                groundY + y,
-                                center.getBlockZ() + z);
+                        Location blockLoc = new Location(world, center.getBlockX() + x, groundY + y, center.getBlockZ() + z);
                         Block block = world.getBlockAt(blockLoc);
-
-                        if (block.getType().isSolid() &&
-                                block.getType() != Material.BEDROCK &&
-                                !craterData.originalBlocks.containsKey(blockLoc)) {
+                        if (block.getType().isSolid() && block.getType() != Material.BEDROCK
+                                && !craterData.originalBlocks.containsKey(blockLoc)) {
                             craterData.originalBlocks.put(blockLoc.clone(), block.getType());
                         }
                     }
@@ -720,23 +626,18 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (int x = -radius; x <= radius; x++) {
                 for (int y = -15; y <= 10; y++) {
                     for (int z = -radius; z <= radius; z++) {
-                        double distance = Math.sqrt(x * x + z * z);
-                        if (distance > radius) continue;
-
+                        if (Math.sqrt(x * x + z * z) > radius) continue;
                         Location loc = impactPoint.clone().add(x, y, z);
                         Block block = world.getBlockAt(loc);
-
-                        if ((block.getType() == Material.FIRE || block.getType() == Material.SOUL_FIRE)) {
-                            Block below = world.getBlockAt(loc.clone().subtract(0, 1, 0));
-                            if (!below.getType().isSolid()) block.setType(Material.AIR, false);
+                        if ((block.getType() == Material.FIRE || block.getType() == Material.SOUL_FIRE)
+                                && !world.getBlockAt(loc.clone().subtract(0, 1, 0)).getType().isSolid()) {
+                            block.setType(Material.AIR, false);
                         }
                     }
                 }
             }
-
             smoothCraterEdges(impactPoint, craterData);
         }
-
 
         private void smoothCraterEdges(Location center, CraterData craterData) {
             World world = center.getWorld();
@@ -747,47 +648,33 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
             for (double angle = 0; angle < 2 * Math.PI; angle += 0.1) {
                 for (double r = smoothRadius * 0.8; r <= smoothRadius * 1.2; r += 0.3) {
-                    double x = Math.cos(angle) * r;
-                    double z = Math.sin(angle) * r;
-
-                    Location edgeLoc = center.clone().add(x, 0, z);
+                    Location edgeLoc = center.clone().add(Math.cos(angle) * r, 0, Math.sin(angle) * r);
                     int groundY = world.getHighestBlockYAt(edgeLoc);
 
                     boolean isEdge = false;
                     for (int checkY = groundY - 1; checkY >= groundY - 5; checkY--) {
-                        Block checkBlock = world.getBlockAt(edgeLoc.getBlockX(), checkY, edgeLoc.getBlockZ());
-                        if (checkBlock.getType().isAir()) {
+                        if (world.getBlockAt(edgeLoc.getBlockX(), checkY, edgeLoc.getBlockZ()).getType().isAir()) {
                             isEdge = true;
                             break;
                         }
                     }
 
-                    if (isEdge && random.nextDouble() < 0.6) {
-                        for (int step = 0; step < 3; step++) {
-                            Location stepLoc = new Location(world,
-                                    edgeLoc.getBlockX(),
-                                    groundY - step,
-                                    edgeLoc.getBlockZ());
-                            Block stepBlock = world.getBlockAt(stepLoc);
+                    if (!isEdge || random.nextDouble() >= 0.6) continue;
 
-                            if (stepBlock.getType().isAir() && random.nextDouble() < 0.4) {
-                                if (craterData != null && !craterData.originalBlocks.containsKey(stepLoc)) {
-                                    craterData.originalBlocks.put(stepLoc.clone(), Material.AIR);
-                                }
+                    for (int step = 0; step < 3; step++) {
+                        Location stepLoc = new Location(world, edgeLoc.getBlockX(), groundY - step, edgeLoc.getBlockZ());
+                        Block stepBlock = world.getBlockAt(stepLoc);
+                        if (!stepBlock.getType().isAir() || random.nextDouble() >= 0.4) continue;
 
-                                Material material;
-                                if (step == 0) {
-                                    material = SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)];
-                                } else {
-                                    material = METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)];
-                                }
-                                stepBlock.setType(material, false);
-                            }
-                        }
+                        if (craterData != null) craterData.originalBlocks.putIfAbsent(stepLoc.clone(), Material.AIR);
+                        stepBlock.setType(step == 0
+                                ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
+                                : METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)], false);
                     }
                 }
             }
         }
+
         private void clearVegetationAndFloatingObjects(Location center) {
             World world = center.getWorld();
             int radius = Math.max(6, meteorSize + 4);
@@ -795,43 +682,19 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (int x = -radius; x <= radius; x++) {
                 for (int y = -12; y <= 12; y++) {
                     for (int z = -radius; z <= radius; z++) {
-                        double distance = Math.sqrt(x * x + z * z);
-                        if (distance > radius) continue;
-
-                        Location loc = center.clone().add(x, y, z);
-                        Block block = world.getBlockAt(loc);
-
-                        if (isVegetation(block.getType()) ||
-                                block.getType() == Material.FIRE ||
-                                block.getType() == Material.SOUL_FIRE ||
-                                block.getType().name().contains("TORCH") ||
-                                block.getType().name().contains("SIGN") ||
-                                block.getType().name().contains("BANNER") ||
-                                block.getType() == Material.SNOW ||
-                                block.getType() == Material.POWDER_SNOW ||
-                                (!block.getType().isSolid() && block.getType() != Material.AIR && block.getType() != Material.WATER)) {
+                        if (Math.sqrt(x * x + z * z) > radius) continue;
+                        Block block = world.getBlockAt(center.clone().add(x, y, z));
+                        Material type = block.getType();
+                        if (isVegetation(type) || type == Material.FIRE || type == Material.SOUL_FIRE
+                                || type.name().contains("TORCH") || type.name().contains("SIGN")
+                                || type.name().contains("BANNER") || type == Material.SNOW
+                                || type == Material.POWDER_SNOW
+                                || (!type.isSolid() && type != Material.AIR && type != Material.WATER)) {
                             block.setType(Material.AIR, false);
                         }
                     }
                 }
             }
-        }
-
-
-        private boolean isStableTerrainMaterial(Material material) {
-            return material == Material.STONE ||
-                    material == Material.DEEPSLATE ||
-                    material == Material.COBBLESTONE ||
-                    material == Material.COBBLED_DEEPSLATE ||
-                    material == Material.BLACKSTONE ||
-                    material == Material.MAGMA_BLOCK ||
-                    material == Material.BEDROCK ||
-                    material == Material.DIRT ||
-                    material == Material.GRASS_BLOCK ||
-                    material == Material.ANDESITE ||
-                    material == Material.GRANITE ||
-                    material == Material.DIORITE ||
-                    material.name().contains("_ORE");
         }
 
         private void createInstantDrillingCraterWithTracking(Location impactPoint, CraterData craterData) {
@@ -860,23 +723,21 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
                     for (int layer = 0; layer < 4 && currentDepth < totalDepth; layer++) {
                         double depthRatio = (double) currentDepth / totalDepth;
-                        double currentRadius = maxRadius * (1.0 - depthRatio * 0.7);
-                        if (currentRadius < 1.0) currentRadius = 1.0;
-
+                        double currentRadius = Math.max(1.0, maxRadius * (1.0 - depthRatio * 0.7));
                         drillCraterLayerWithTracking(impactPoint, direction, currentDepth, currentRadius, rotationAngle, craterData);
                         currentDepth++;
                         rotationAngle += 0.15;
                     }
 
                     if (currentDepth < 4 && craterData != null) {
-                        Location layerCenter = impactPoint.clone().add(direction.clone().multiply(currentDepth * 0.8));
-                        addCrustAndScorchedMaterials(layerCenter, maxRadius * 1.8, currentDepth, craterData);
+                        addCrustAndScorchedMaterials(
+                                impactPoint.clone().add(direction.clone().multiply(currentDepth * 0.8)),
+                                maxRadius * 1.8, currentDepth, craterData);
                     }
 
                     if (currentDepth % 6 == 0) {
                         Location drillPoint = impactPoint.clone().add(direction.clone().multiply(currentDepth * 0.8));
                         world.spawnParticle(Particle.CAMPFIRE_COSY_SMOKE, drillPoint, 2, 0.4, 0.4, 0.4, 0.01);
-
                         for (Player player : world.getPlayers()) {
                             if (player.getLocation().distance(drillPoint) <= 20) {
                                 player.playSound(drillPoint, Sound.BLOCK_GRINDSTONE_USE, SoundCategory.AMBIENT, 0.15f, 1.9f);
@@ -887,17 +748,13 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             }.runTaskTimer(SuddenDeath.getInstance(), 3L, 1L);
         }
 
-
         private void drillCraterLayerWithTracking(Location impactPoint, Vector direction, int depth,
                                                   double radius, double rotation, CraterData craterData) {
             World world = impactPoint.getWorld();
             ThreadLocalRandom random = ThreadLocalRandom.current();
-
             Location layerCenter = impactPoint.clone().add(direction.clone().multiply(depth * 0.8));
 
-            if (depth < 4) {
-                addCrustAndScorchedMaterials(layerCenter, radius * 1.8, depth, craterData);
-            }
+            if (depth < 4) addCrustAndScorchedMaterials(layerCenter, radius * 1.8, depth, craterData);
 
             Vector right = new Vector(-direction.getZ(), 0, direction.getX()).normalize();
             Vector up = direction.clone().crossProduct(right).normalize();
@@ -905,53 +762,34 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             int numPoints = Math.max(12, (int) (radius * 4));
             for (int i = 0; i < numPoints; i++) {
                 double angle = (2.0 * Math.PI * i / numPoints) + rotation;
-
                 for (double r = 0; r <= radius; r += 0.5) {
-                    double localX = Math.cos(angle) * r;
-                    double localY = Math.sin(angle) * r;
-
-                    Vector offset = right.clone().multiply(localX).add(up.clone().multiply(localY));
+                    Vector offset = right.clone().multiply(Math.cos(angle) * r).add(up.clone().multiply(Math.sin(angle) * r));
                     Location blockLoc = layerCenter.clone().add(offset);
                     Block block = world.getBlockAt(blockLoc);
+                    if (block.getType() == Material.BEDROCK || !block.getType().isSolid()) continue;
 
-                    if (block.getType() != Material.BEDROCK && block.getType().isSolid()) {
-                        if (craterData != null) {
-                            craterData.originalBlocks.put(blockLoc.clone(), block.getType());
-                        }
-
-                        if (random.nextDouble() < 0.4) {
-                            world.spawnParticle(Particle.BLOCK_CRACK, blockLoc.add(0.5, 0.5, 0.5), 2,
-                                    0.2, 0.2, 0.2, 0, block.getBlockData());
-                        }
-
-                        if (depth <= 2 && random.nextDouble() < 0.2) {
-                            Material scorchedMaterial = SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)];
-                            block.setType(scorchedMaterial, false);
-                        } else {
-                            block.setType(Material.AIR, false);
-                        }
+                    if (craterData != null) craterData.originalBlocks.putIfAbsent(blockLoc.clone(), block.getType());
+                    if (random.nextDouble() < 0.4) {
+                        world.spawnParticle(Particle.BLOCK, blockLoc.clone().add(0.5, 0.5, 0.5),
+                                2, 0.2, 0.2, 0.2, 0, block.getBlockData());
                     }
+                    block.setType(depth <= 2 && random.nextDouble() < 0.2
+                            ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
+                            : Material.AIR, false);
                 }
             }
 
             for (int x = -2; x <= 2; x++) {
                 for (int y = -2; y <= 2; y++) {
-                    Vector offset = right.clone().multiply(x * 0.5).add(up.clone().multiply(y * 0.5));
-                    Location centerBlockLoc = layerCenter.clone().add(offset);
+                    Location centerBlockLoc = layerCenter.clone().add(
+                            right.clone().multiply(x * 0.5).add(up.clone().multiply(y * 0.5)));
                     Block centerBlock = world.getBlockAt(centerBlockLoc);
+                    if (centerBlock.getType() == Material.BEDROCK || !centerBlock.getType().isSolid()) continue;
 
-                    if (centerBlock.getType() != Material.BEDROCK && centerBlock.getType().isSolid()) {
-                        if (craterData != null) {
-                            craterData.originalBlocks.put(centerBlockLoc.clone(), centerBlock.getType());
-                        }
-
-                        if (depth <= 3 && random.nextDouble() < 0.3) {
-                            Material scorchedMaterial = SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)];
-                            centerBlock.setType(scorchedMaterial, false);
-                        } else {
-                            centerBlock.setType(Material.AIR, false);
-                        }
-                    }
+                    if (craterData != null) craterData.originalBlocks.putIfAbsent(centerBlockLoc.clone(), centerBlock.getType());
+                    centerBlock.setType(depth <= 3 && random.nextDouble() < 0.3
+                            ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
+                            : Material.AIR, false);
                 }
             }
         }
@@ -959,37 +797,29 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         private void createMeteorCrust(Location center, double yaw, double pitch, CraterData craterData) {
             World world = center.getWorld();
             ThreadLocalRandom random = ThreadLocalRandom.current();
-
             double crustRadius = meteorSize * 0.7;
 
             for (double x = -crustRadius; x <= crustRadius; x += 0.8) {
                 for (double y = -crustRadius; y <= crustRadius; y += 0.8) {
                     for (double z = -crustRadius; z <= crustRadius; z += 0.8) {
                         double distance = Math.sqrt(x * x + y * y + z * z);
+                        if (distance < crustRadius * 0.4 || distance > crustRadius || random.nextDouble() >= 0.8) continue;
 
-                        if (distance >= crustRadius * 0.4 && distance <= crustRadius && random.nextDouble() < 0.8) {
-                            Vector offset = new Vector(x, y, z);
-                            Vector rotatedOffset = rotateOffset(offset, yaw, pitch);
-                            Location blockLoc = center.clone().add(rotatedOffset);
+                        Location blockLoc = center.clone().add(rotateOffset(new Vector(x, y, z), yaw, pitch));
+                        Block block = world.getBlockAt(blockLoc);
+                        if (block.getType() == Material.BEDROCK || !block.getType().isAir()) continue;
 
-                            Block block = world.getBlockAt(blockLoc);
-                            if (block.getType() != Material.BEDROCK && block.getType().isAir()) {
-                                Material crustMaterial;
-                                double materialRoll = random.nextDouble();
-                                if (materialRoll < 0.15) {
-                                    crustMaterial = Material.MAGMA_BLOCK;
-                                } else if (materialRoll < 0.25) {
-                                    crustMaterial = Material.GILDED_BLACKSTONE;
-                                } else {
-                                    crustMaterial = METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)];
-                                }
-                                block.setType(crustMaterial, false);
-
-                                if (craterData != null) {
-                                    craterData.originalBlocks.remove(blockLoc);
-                                }
-                            }
+                        double materialRoll = random.nextDouble();
+                        Material crustMaterial;
+                        if (materialRoll < 0.15) {
+                            crustMaterial = Material.MAGMA_BLOCK;
+                        } else if (materialRoll < 0.25) {
+                            crustMaterial = Material.GILDED_BLACKSTONE;
+                        } else {
+                            crustMaterial = METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)];
                         }
+                        block.setType(crustMaterial, false);
+                        if (craterData != null) craterData.originalBlocks.remove(blockLoc);
                     }
                 }
             }
@@ -1003,28 +833,16 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 for (double r = radius * 0.6; r <= radius * 1.2; r += 0.5) {
                     double x = Math.cos(angle) * r;
                     double z = Math.sin(angle) * r;
-
                     for (int y = -1; y <= 1; y++) {
                         Location loc = center.clone().add(x, y + random.nextInt(2), z);
                         Block block = world.getBlockAt(loc);
+                        if (!block.getType().isSolid() || block.getType() == Material.BEDROCK) continue;
 
-                        if (block.getType().isSolid() && block.getType() != Material.BEDROCK) {
-                            if (craterData != null && !craterData.originalBlocks.containsKey(loc)) {
-                                craterData.originalBlocks.put(loc.clone(), block.getType());
-                            }
-
-                            double placementChance = depth == 0 ? 0.4 : 0.25;
-
-                            if (random.nextDouble() < placementChance) {
-                                if (random.nextDouble() < 0.6) {
-                                    Material scorchedMaterial = SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)];
-                                    block.setType(scorchedMaterial, false);
-                                } else {
-                                    Material crustMaterial = METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)];
-                                    block.setType(crustMaterial, false);
-                                }
-                            }
-                        }
+                        if (craterData != null) craterData.originalBlocks.putIfAbsent(loc.clone(), block.getType());
+                        if (random.nextDouble() >= (depth == 0 ? 0.4 : 0.25)) continue;
+                        block.setType(random.nextDouble() < 0.6
+                                ? SCORCHED_MATERIALS[random.nextInt(SCORCHED_MATERIALS.length)]
+                                : METEOR_CRUST_MATERIALS[random.nextInt(METEOR_CRUST_MATERIALS.length)], false);
                     }
                 }
             }
@@ -1032,41 +850,27 @@ public class MeteorRain extends WorldEventHandler implements Listener {
 
         private void placeMeteorWithCrust(Location impactPoint, Vector direction, int depth, CraterData craterData) {
             World world = impactPoint.getWorld();
-
             Location meteorCenter = impactPoint.clone().add(direction.clone().multiply(depth * 0.8));
-
             double yaw = Math.atan2(-direction.getX(), direction.getZ());
             double pitch = Math.atan2(-direction.getY(), Math.sqrt(direction.getX() * direction.getX() + direction.getZ() * direction.getZ()));
-
             ThreadLocalRandom random = ThreadLocalRandom.current();
 
             createMeteorCrust(meteorCenter, yaw, pitch, craterData);
 
-            int totalVoxels = meteorVoxels.size();
-            int coreVoxelsToPlace = (int) (totalVoxels * 0.6);
+            int coreVoxelsToPlace = (int) (meteorVoxels.size() * 0.6);
+            double coreThreshold = meteorSize * 0.4;
 
-            for (int i = 0; i < coreVoxelsToPlace && i < totalVoxels; i++) {
+            for (int i = 0; i < coreVoxelsToPlace; i++) {
                 MeteorVoxel voxel = meteorVoxels.get(i);
+                if (voxel.offset.length() > coreThreshold) continue;
 
-                if (voxel.offset.length() <= meteorSize * 0.4) {
-                    Vector rotatedOffset = rotateOffset(voxel.offset.clone(), yaw, pitch);
-                    Location blockLoc = meteorCenter.clone().add(rotatedOffset);
+                Location blockLoc = meteorCenter.clone().add(rotateOffset(voxel.offset.clone(), yaw, pitch));
+                Block block = world.getBlockAt(blockLoc);
+                if (block.getType() == Material.BEDROCK) continue;
 
-                    Block block = world.getBlockAt(blockLoc);
-                    if (block.getType() != Material.BEDROCK) {
-                        Material material;
-                        if (random.nextDouble() < 0.4) {
-                            material = selectOreMaterial();
-                        } else {
-                            material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
-                        }
-                        block.setType(material, false);
-
-                        if (craterData != null) {
-                            craterData.originalBlocks.remove(blockLoc);
-                        }
-                    }
-                }
+                block.setType(random.nextDouble() < 0.4 ? selectOreMaterial()
+                        : METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)], false);
+                if (craterData != null) craterData.originalBlocks.remove(blockLoc);
             }
 
             world.spawnParticle(Particle.END_ROD, meteorCenter, 10, 0.8, 0.8, 0.8, 0.01);
@@ -1076,70 +880,53 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         private void createMinimalScorchedArea(Location center, CraterData craterData) {
             World world = center.getWorld();
             ThreadLocalRandom random = ThreadLocalRandom.current();
-
             int radius = Math.max(3, meteorSize / 2);
 
             for (int x = -radius; x <= radius; x++) {
                 for (int z = -radius; z <= radius; z++) {
                     double distance = Math.sqrt(x * x + z * z);
-                    if (distance <= radius) {
-                        double placementChance = distance <= radius * 0.5 ? 0.15 : 0.05;
+                    if (distance > radius) continue;
 
-                        if (random.nextDouble() < placementChance) {
-                            int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
+                    if (random.nextDouble() < (distance <= radius * 0.5 ? 0.15 : 0.05)) {
+                        int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
+                        for (int y = 0; y >= -1; y--) {
+                            Location blockLoc = new Location(world, center.getBlockX() + x, groundY + y, center.getBlockZ() + z);
+                            Block block = blockLoc.getBlock();
+                            if (!block.getType().isSolid() || block.getType() == Material.BEDROCK) continue;
 
-                            for (int y = 0; y >= -1; y--) {
-                                Location blockLoc = new Location(world, center.getBlockX() + x, groundY + y, center.getBlockZ() + z);
-                                Block block = blockLoc.getBlock();
+                            if (craterData != null) craterData.originalBlocks.putIfAbsent(blockLoc.clone(), block.getType());
+                            if (random.nextDouble() >= (y == 0 ? 0.6 : 0.3)) continue;
 
-                                if (block.getType().isSolid() && block.getType() != Material.BEDROCK) {
-                                    if (craterData != null && !craterData.originalBlocks.containsKey(blockLoc)) {
-                                        craterData.originalBlocks.put(blockLoc.clone(), block.getType());
-                                    }
-
-                                    double replaceChance = y == 0 ? 0.6 : 0.3;
-
-                                    if (random.nextDouble() < replaceChance) {
-                                        Material scorchedMaterial;
-                                        if (distance <= radius * 0.3) {
-                                            double rand = random.nextDouble();
-                                            if (rand < 0.3) scorchedMaterial = Material.MAGMA_BLOCK;
-                                            else if (rand < 0.6) scorchedMaterial = Material.DEEPSLATE;
-                                            else scorchedMaterial = Material.COBBLESTONE;
-                                        } else {
-                                            scorchedMaterial = random.nextDouble() < 0.7 ?
-                                                    Material.COBBLESTONE : Material.DEEPSLATE;
-                                        }
-                                        block.setType(scorchedMaterial, false);
-                                    }
-                                }
+                            Material scorchedMaterial;
+                            if (distance <= radius * 0.3) {
+                                double rand = random.nextDouble();
+                                if (rand < 0.3) scorchedMaterial = Material.MAGMA_BLOCK;
+                                else if (rand < 0.6) scorchedMaterial = Material.DEEPSLATE;
+                                else scorchedMaterial = Material.COBBLESTONE;
+                            } else {
+                                scorchedMaterial = random.nextDouble() < 0.7 ? Material.COBBLESTONE : Material.DEEPSLATE;
                             }
+                            block.setType(scorchedMaterial, false);
                         }
+                    }
 
-                        if (random.nextDouble() < 0.08 && distance <= radius * 0.6) {
-                            int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
-                            Location fireLoc = new Location(world, center.getBlockX() + x, groundY + 1, center.getBlockZ() + z);
-                            Block fireBlock = world.getBlockAt(fireLoc);
-                            Block belowFire = world.getBlockAt(center.getBlockX() + x, groundY, center.getBlockZ() + z);
+                    if (random.nextDouble() < 0.08 && distance <= radius * 0.6) {
+                        int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
+                        Location fireLoc = new Location(world, center.getBlockX() + x, groundY + 1, center.getBlockZ() + z);
+                        Block fireBlock = world.getBlockAt(fireLoc);
+                        Block belowFire = world.getBlockAt(center.getBlockX() + x, groundY, center.getBlockZ() + z);
 
-                            if (fireBlock.getType().isAir() && belowFire.getType().isSolid()) {
-                                fireBlock.setType(Material.FIRE, false);
-
-                                int burnTime = 200 + random.nextInt(400);
-                                Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-                                    if (fireBlock.getType() == Material.FIRE) {
-                                        Block supportBlock = world.getBlockAt(fireBlock.getLocation().subtract(0, 1, 0));
-                                        if (!supportBlock.getType().isSolid()) {
-                                            fireBlock.setType(Material.AIR, false);
-                                            return;
-                                        }
-                                        if (random.nextDouble() < 0.5) {
-                                            return;
-                                        }
-                                        fireBlock.setType(Material.AIR, false);
-                                    }
-                                }, burnTime);
-                            }
+                        if (fireBlock.getType().isAir() && belowFire.getType().isSolid()) {
+                            fireBlock.setType(Material.FIRE, false);
+                            int burnTime = 200 + random.nextInt(400);
+                            Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
+                                if (fireBlock.getType() != Material.FIRE) return;
+                                if (!world.getBlockAt(fireBlock.getLocation().subtract(0, 1, 0)).getType().isSolid()) {
+                                    fireBlock.setType(Material.AIR, false);
+                                    return;
+                                }
+                                if (random.nextDouble() >= 0.5) fireBlock.setType(Material.AIR, false);
+                            }, burnTime);
                         }
                     }
                 }
@@ -1149,42 +936,30 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (int x = -fireRadius; x <= fireRadius; x++) {
                 for (int z = -fireRadius; z <= fireRadius; z++) {
                     double distance = Math.sqrt(x * x + z * z);
-                    if (distance > radius && distance <= fireRadius && random.nextDouble() < 0.04) {
-                        int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
-                        Location groundLoc = new Location(world, center.getBlockX() + x, groundY, center.getBlockZ() + z);
-                        Block groundBlock = world.getBlockAt(groundLoc);
+                    if (distance <= radius || distance > fireRadius || random.nextDouble() >= 0.04) continue;
 
-                        if (groundBlock.getType().isSolid() && random.nextDouble() < 0.2) {
-                            if (craterData != null && !craterData.originalBlocks.containsKey(groundLoc)) {
-                                craterData.originalBlocks.put(groundLoc.clone(), groundBlock.getType());
+                    int groundY = world.getHighestBlockYAt(center.getBlockX() + x, center.getBlockZ() + z);
+                    Location groundLoc = new Location(world, center.getBlockX() + x, groundY, center.getBlockZ() + z);
+                    Block groundBlock = world.getBlockAt(groundLoc);
+
+                    if (groundBlock.getType().isSolid() && random.nextDouble() < 0.2) {
+                        if (craterData != null) craterData.originalBlocks.putIfAbsent(groundLoc.clone(), groundBlock.getType());
+                        groundBlock.setType(random.nextDouble() < 0.8 ? Material.COBBLESTONE : Material.DEEPSLATE, false);
+                    }
+
+                    if (!groundBlock.getType().isSolid()) continue;
+                    Location fireLoc = groundLoc.clone().add(0, 1, 0);
+                    Block fireBlock = world.getBlockAt(fireLoc);
+                    if (!fireBlock.getType().isAir()) continue;
+
+                    if (checkNearbyVegetation(fireLoc) || random.nextDouble() < 0.3) {
+                        fireBlock.setType(Material.FIRE, false);
+                        Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
+                            if (fireBlock.getType() == Material.FIRE
+                                    && !world.getBlockAt(fireBlock.getLocation().subtract(0, 1, 0)).getType().isSolid()) {
+                                fireBlock.setType(Material.AIR, false);
                             }
-
-                            Material scorchedMaterial = random.nextDouble() < 0.8 ?
-                                    Material.COBBLESTONE : Material.DEEPSLATE;
-                            groundBlock.setType(scorchedMaterial, false);
-                        }
-
-                        if (groundBlock.getType().isSolid()) {
-                            Location fireLoc = groundLoc.clone().add(0, 1, 0);
-                            Block fireBlock = world.getBlockAt(fireLoc);
-
-                            if (fireBlock.getType().isAir()) {
-                                boolean nearLeaves = checkNearbyVegetation(fireLoc);
-
-                                if (nearLeaves || random.nextDouble() < 0.3) {
-                                    fireBlock.setType(Material.FIRE, false);
-
-                                    Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-                                        Block supportCheck = world.getBlockAt(fireBlock.getLocation().subtract(0, 1, 0));
-                                        if (!supportCheck.getType().isSolid()) {
-                                            if (fireBlock.getType() == Material.FIRE) {
-                                                fireBlock.setType(Material.AIR, false);
-                                            }
-                                        }
-                                    }, 20L);
-                                }
-                            }
-                        }
+                        }, 20L);
                     }
                 }
             }
@@ -1195,12 +970,8 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             for (int dx = -2; dx <= 2; dx++) {
                 for (int dz = -2; dz <= 2; dz++) {
                     for (int dy = -1; dy <= 2; dy++) {
-                        Block nearby = world.getBlockAt(fireLoc.clone().add(dx, dy, dz));
-                        if (nearby.getType().name().contains("LEAVES") ||
-                                nearby.getType().name().contains("LOG") ||
-                                nearby.getType().name().contains("WOOD")) {
-                            return true;
-                        }
+                        String name = world.getBlockAt(fireLoc.clone().add(dx, dy, dz)).getType().name();
+                        if (name.contains("LEAVES") || name.contains("LOG") || name.contains("WOOD")) return true;
                     }
                 }
             }
@@ -1212,29 +983,20 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double x1 = o.getX() * cy - o.getZ() * sy;
             double z1 = o.getX() * sy + o.getZ() * cy;
             double cp = Math.cos(pitch), sp = Math.sin(pitch);
-            double y2 = o.getY() * cp - z1 * sp;
-            double z2 = o.getY() * sp + z1 * cp;
-            return new Vector(x1, y2, z2);
+            return new Vector(x1, o.getY() * cp - z1 * sp, o.getY() * sp + z1 * cp);
         }
 
         private Material selectOreMaterial() {
             double rand = ThreadLocalRandom.current().nextDouble(100);
-            double coalRate = Feature.METEOR_RAIN.getDouble("coal-ore-rate");
-            double ironRate = Feature.METEOR_RAIN.getDouble("iron-ore-rate");
-            double goldRate = Feature.METEOR_RAIN.getDouble("gold-ore-rate");
-            double diamondRate = Feature.METEOR_RAIN.getDouble("diamond-ore-rate");
-            double emeraldRate = Feature.METEOR_RAIN.getDouble("emerald-ore-rate");
-            double ancientDebrisRate = Feature.METEOR_RAIN.getDouble("ancient-debris-rate");
-
-            rand -= ancientDebrisRate;
+            rand -= Feature.METEOR_RAIN.getDouble("ancient-debris-rate");
             if (rand < 0) return Material.ANCIENT_DEBRIS;
-            rand -= emeraldRate;
+            rand -= Feature.METEOR_RAIN.getDouble("emerald-ore-rate");
             if (rand < 0) return Material.EMERALD_ORE;
-            rand -= diamondRate;
+            rand -= Feature.METEOR_RAIN.getDouble("diamond-ore-rate");
             if (rand < 0) return Material.DIAMOND_ORE;
-            rand -= goldRate;
+            rand -= Feature.METEOR_RAIN.getDouble("gold-ore-rate");
             if (rand < 0) return Material.GOLD_ORE;
-            rand -= ironRate;
+            rand -= Feature.METEOR_RAIN.getDouble("iron-ore-rate");
             if (rand < 0) return Material.IRON_ORE;
             return Material.COAL_ORE;
         }
@@ -1244,29 +1006,19 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             super.cancel();
             try {
                 clearAllFakeBlocks();
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
             activeMeteors.remove(this.meteorId);
         }
 
         private List<MeteorVoxel> generateMeteorVoxels(int size, UUID seed, MeteorShape shape) {
-            long s = seed.getMostSignificantBits() ^ seed.getLeastSignificantBits();
-            Random random = new Random(s);
-
-            switch (shape) {
-                case SPHERICAL:
-                    return generateSphericalMeteor(size, random);
-                case ARROW:
-                    return generateArrowMeteor(size, random);
-                case IRREGULAR:
-                    return generateIrregularMeteor(size, random);
-                case TAILED:
-                    return generateTailedMeteor(size, random);
-                case COMPLEX:
-                    return generateComplexMeteor(size, random);
-                default:
-                    return generateSphericalMeteor(size, random);
-            }
+            Random random = new Random(seed.getMostSignificantBits() ^ seed.getLeastSignificantBits());
+            return switch (shape) {
+                case ARROW -> generateArrowMeteor(size, random);
+                case IRREGULAR -> generateIrregularMeteor(size, random);
+                case TAILED -> generateTailedMeteor(size, random);
+                case COMPLEX -> generateComplexMeteor(size, random);
+                default -> generateSphericalMeteor(size, random);
+            };
         }
 
         private List<MeteorVoxel> generateSphericalMeteor(int size, Random random) {
@@ -1274,23 +1026,15 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double rx = size * (0.55 + random.nextDouble() * 0.25);
             double ry = size * (0.50 + random.nextDouble() * 0.25);
             double rz = size * (0.55 + random.nextDouble() * 0.25);
-            int maxX = (int) Math.ceil(rx) + 1;
-            int maxY = (int) Math.ceil(ry) + 1;
-            int maxZ = (int) Math.ceil(rz) + 1;
+            int maxX = (int) Math.ceil(rx) + 1, maxY = (int) Math.ceil(ry) + 1, maxZ = (int) Math.ceil(rz) + 1;
             for (int x = -maxX; x <= maxX; x++) {
                 for (int y = -maxY; y <= maxY; y++) {
                     for (int z = -maxZ; z <= maxZ; z++) {
-                        double nx = x / rx;
-                        double ny = y / ry;
-                        double nz = z / rz;
-                        double distance = nx * nx + ny * ny + nz * nz;
+                        double nx = x / rx, ny = y / ry, nz = z / rz;
                         double noise = (random.nextDouble() * 2 - 1) * 0.12;
-                        if (distance <= 1.0 + noise && random.nextDouble() < 0.85) {
-                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
-                            voxels.add(new MeteorVoxel(
-                                    new Vector(x, y, z),
-                                    WrappedBlockData.createData(material.createBlockData())
-                            ));
+                        if (nx * nx + ny * ny + nz * nz <= 1.0 + noise && random.nextDouble() < 0.85) {
+                            voxels.add(new MeteorVoxel(new Vector(x, y, z),
+                                    WrappedBlockData.createData(METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)].createBlockData())));
                         }
                     }
                 }
@@ -1303,24 +1047,16 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double rx = size * (0.35 + random.nextDouble() * 0.2);
             double ry = size * (0.35 + random.nextDouble() * 0.2);
             double rz = size * (1.0 + random.nextDouble() * 0.5);
-            int maxX = (int) Math.ceil(rx) + 1;
-            int maxY = (int) Math.ceil(ry) + 1;
-            int maxZ = (int) Math.ceil(rz) + 1;
+            int maxX = (int) Math.ceil(rx) + 1, maxY = (int) Math.ceil(ry) + 1, maxZ = (int) Math.ceil(rz) + 1;
             for (int x = -maxX; x <= maxX; x++) {
                 for (int y = -maxY; y <= maxY; y++) {
                     for (int z = -maxZ; z <= maxZ; z++) {
                         double tapering = z < 0 ? 1.0 + (z / rz) * 0.8 : 1.0;
-                        double nx = x / (rx * tapering);
-                        double ny = y / (ry * tapering);
-                        double nz = z / rz;
-                        double distance = nx * nx + ny * ny + nz * nz;
+                        double nx = x / (rx * tapering), ny = y / (ry * tapering), nz = z / rz;
                         double noise = (random.nextDouble() * 2 - 1) * 0.1;
-                        if (distance <= 1.0 + noise && random.nextDouble() < 0.82) {
-                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
-                            voxels.add(new MeteorVoxel(
-                                    new Vector(x, y, z),
-                                    WrappedBlockData.createData(material.createBlockData())
-                            ));
+                        if (nx * nx + ny * ny + nz * nz <= 1.0 + noise && random.nextDouble() < 0.82) {
+                            voxels.add(new MeteorVoxel(new Vector(x, y, z),
+                                    WrappedBlockData.createData(METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)].createBlockData())));
                         }
                     }
                 }
@@ -1335,8 +1071,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 Vector chunkCenter = new Vector(
                         random.nextDouble(-size * 0.6, size * 0.6),
                         random.nextDouble(-size * 0.6, size * 0.6),
-                        random.nextDouble(-size * 0.6, size * 0.6)
-                );
+                        random.nextDouble(-size * 0.6, size * 0.6));
                 double chunkSize = size * (0.3 + random.nextDouble() * 0.4);
                 double rx = chunkSize * (0.5 + random.nextDouble() * 0.5);
                 double ry = chunkSize * (0.5 + random.nextDouble() * 0.5);
@@ -1348,17 +1083,11 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     for (int y = -maxY; y <= maxY; y++) {
                         for (int z = -maxZ; z <= maxZ; z++) {
                             Vector pos = new Vector(x, y, z).subtract(chunkCenter);
-                            double nx = pos.getX() / rx;
-                            double ny = pos.getY() / ry;
-                            double nz = pos.getZ() / rz;
-                            double distance = nx * nx + ny * ny + nz * nz;
+                            double nx = pos.getX() / rx, ny = pos.getY() / ry, nz = pos.getZ() / rz;
                             double noise = (random.nextDouble() * 2 - 1) * 0.25;
-                            if (distance <= 1.0 + noise && random.nextDouble() < 0.75) {
-                                Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
-                                voxels.add(new MeteorVoxel(
-                                        new Vector(x, y, z),
-                                        WrappedBlockData.createData(material.createBlockData())
-                                ));
+                            if (nx * nx + ny * ny + nz * nz <= 1.0 + noise && random.nextDouble() < 0.75) {
+                                voxels.add(new MeteorVoxel(new Vector(x, y, z),
+                                        WrappedBlockData.createData(METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)].createBlockData())));
                             }
                         }
                     }
@@ -1373,22 +1102,14 @@ public class MeteorRain extends WorldEventHandler implements Listener {
             double rx = headSize * (0.55 + random.nextDouble() * 0.25);
             double ry = headSize * (0.50 + random.nextDouble() * 0.25);
             double rz = headSize * (0.35 + random.nextDouble() * 0.25);
-            int maxX = (int) Math.ceil(rx) + 1;
-            int maxY = (int) Math.ceil(ry) + 1;
-            int maxZ = (int) Math.ceil(rz) + 1;
+            int maxX = (int) Math.ceil(rx) + 1, maxY = (int) Math.ceil(ry) + 1, maxZ = (int) Math.ceil(rz) + 1;
             for (int x = -maxX; x <= maxX; x++) {
                 for (int y = -maxY; y <= maxY; y++) {
                     for (int z = -maxZ; z <= maxZ; z++) {
-                        double nx = x / rx;
-                        double ny = y / ry;
-                        double nz = z / rz;
-                        double distance = nx * nx + ny * ny + nz * nz;
-                        if (distance <= 1.0 && random.nextDouble() < 0.88) {
-                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
-                            voxels.add(new MeteorVoxel(
-                                    new Vector(x, y, z),
-                                    WrappedBlockData.createData(material.createBlockData())
-                            ));
+                        double nx = x / rx, ny = y / ry, nz = z / rz;
+                        if (nx * nx + ny * ny + nz * nz <= 1.0 && random.nextDouble() < 0.88) {
+                            voxels.add(new MeteorVoxel(new Vector(x, y, z),
+                                    WrappedBlockData.createData(METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)].createBlockData())));
                         }
                     }
                 }
@@ -1399,13 +1120,9 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 double tailRadius = Math.max(1, rx * tailFactor * 0.6);
                 for (int x = (int) -tailRadius; x <= tailRadius; x++) {
                     for (int y = (int) -tailRadius; y <= tailRadius; y++) {
-                        double distance = Math.sqrt(x * x + y * y);
-                        if (distance <= tailRadius && random.nextDouble() < 0.4 * tailFactor) {
-                            Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
-                            voxels.add(new MeteorVoxel(
-                                    new Vector(x, y, maxZ + t),
-                                    WrappedBlockData.createData(material.createBlockData())
-                            ));
+                        if (Math.sqrt(x * x + y * y) <= tailRadius && random.nextDouble() < 0.4 * tailFactor) {
+                            voxels.add(new MeteorVoxel(new Vector(x, y, maxZ + t),
+                                    WrappedBlockData.createData(METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)].createBlockData())));
                         }
                     }
                 }
@@ -1414,8 +1131,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
         }
 
         private List<MeteorVoxel> generateComplexMeteor(int size, Random random) {
-            List<MeteorVoxel> voxels = new ArrayList<>();
-            voxels.addAll(generateSphericalMeteor(size, random));
+            List<MeteorVoxel> voxels = new ArrayList<>(generateSphericalMeteor(size, random));
             int numProtrusions = 2 + random.nextInt(3);
             for (int i = 0; i < numProtrusions; i++) {
                 double angle1 = random.nextDouble() * 2 * Math.PI;
@@ -1423,8 +1139,7 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                 Vector direction = new Vector(
                         Math.cos(angle1) * Math.sin(angle2),
                         Math.cos(angle2),
-                        Math.sin(angle1) * Math.sin(angle2)
-                ).normalize();
+                        Math.sin(angle1) * Math.sin(angle2)).normalize();
                 double protrusionSize = size * (0.3 + random.nextDouble() * 0.4);
                 int protrusionLength = (int) (protrusionSize * (1.0 + random.nextDouble()));
                 for (int j = 1; j <= protrusionLength; j++) {
@@ -1434,14 +1149,9 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     for (int x = (int) -radius; x <= radius; x++) {
                         for (int y = (int) -radius; y <= radius; y++) {
                             for (int z = (int) -radius; z <= radius; z++) {
-                                double distance = Math.sqrt(x * x + y * y + z * z);
-                                if (distance <= radius && random.nextDouble() < 0.7) {
-                                    Vector finalPos = basePos.clone().add(new Vector(x, y, z));
-                                    Material material = METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)];
-                                    voxels.add(new MeteorVoxel(
-                                            finalPos,
-                                            WrappedBlockData.createData(material.createBlockData())
-                                    ));
+                                if (Math.sqrt(x * x + y * y + z * z) <= radius && random.nextDouble() < 0.7) {
+                                    voxels.add(new MeteorVoxel(basePos.clone().add(new Vector(x, y, z)),
+                                            WrappedBlockData.createData(METEOR_MATERIALS[random.nextInt(METEOR_MATERIALS.length)].createBlockData())));
                                 }
                             }
                         }
@@ -1455,26 +1165,20 @@ public class MeteorRain extends WorldEventHandler implements Listener {
     private void startCraterRecoveryProcess() {
         List<CraterData> cratersToProcess = new ArrayList<>(cratersToRecover);
         cratersToRecover.clear();
-
         for (CraterData craterData : cratersToProcess) {
-            long currentTime = System.currentTimeMillis();
-            long delayUntilRecovery = Math.max(0, craterData.recoveryStartTime - currentTime);
-            long delayInTicks = delayUntilRecovery / 50;
-
-            Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(), () -> {
-                scheduleCraterRecovery(craterData);
-            }, delayInTicks);
+            long delayInTicks = Math.max(0, craterData.recoveryStartTime - System.currentTimeMillis()) / 50;
+            Bukkit.getScheduler().runTaskLater(SuddenDeath.getInstance(),
+                    () -> scheduleCraterRecovery(craterData), delayInTicks);
         }
     }
 
     private void scheduleCraterRecovery(CraterData craterData) {
-        int totalBlocks = craterData.originalBlocks.size();
-        if (totalBlocks == 0) return;
+        if (craterData.originalBlocks.isEmpty()) return;
 
+        int totalBlocks = craterData.originalBlocks.size();
         int blocksPerTick = Math.max(1, Math.min(3, totalBlocks / 300));
 
         List<Map.Entry<Location, Material>> blockList = new ArrayList<>(craterData.originalBlocks.entrySet());
-
         blockList.sort(Comparator.comparingInt(e -> e.getKey().getBlockY()));
 
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -1489,45 +1193,33 @@ public class MeteorRain extends WorldEventHandler implements Listener {
                     return;
                 }
 
-                int actualBlocksThisTick = Math.max(1, blocksPerTick + random.nextInt(-1, 2));
-                int endIndex = Math.min(currentIndex + actualBlocksThisTick, blockList.size());
-
+                int endIndex = Math.min(currentIndex + Math.max(1, blocksPerTick + random.nextInt(-1, 2)), blockList.size());
                 for (int i = currentIndex; i < endIndex; i++) {
                     Map.Entry<Location, Material> entry = blockList.get(i);
                     Location loc = entry.getKey();
                     Block block = loc.getBlock();
+                    Material original = entry.getValue();
 
-                    Material currentMaterial = block.getType();
-                    Material originalMaterial = entry.getValue();
-
-                    if (currentMaterial != originalMaterial) {
-                        if (!isValuableOre(currentMaterial)) {
-                            block.setType(originalMaterial, false);
-
-                            if (random.nextDouble() < 0.1) {
-                                World world = loc.getWorld();
-                                if (world != null) {
-                                    world.spawnParticle(Particle.BLOCK_CRACK,
-                                            loc.clone().add(0.5, 0.5, 0.5),
-                                            1, 0.2, 0.2, 0.2, 0,
-                                            originalMaterial.createBlockData());
-                                }
+                    if (block.getType() != original && !isValuableOre(block.getType())) {
+                        block.setType(original, false);
+                        if (random.nextDouble() < 0.1) {
+                            World world = loc.getWorld();
+                            if (world != null) {
+                                world.spawnParticle(Particle.BLOCK, loc.clone().add(0.5, 0.5, 0.5),
+                                        1, 0.2, 0.2, 0.2, 0, original.createBlockData());
                             }
                         }
                     }
                 }
-
                 currentIndex = endIndex;
             }
         }.runTaskTimer(SuddenDeath.getInstance(), 200L, 15L + random.nextInt(10));
     }
 
     private boolean isValuableOre(Material material) {
-        return material == Material.DIAMOND_ORE ||
-                material == Material.EMERALD_ORE ||
-                material == Material.ANCIENT_DEBRIS ||
-                material == Material.GOLD_ORE ||
-                material == Material.IRON_ORE ||
-                material == Material.COAL_ORE;
+        return switch (material) {
+            case DIAMOND_ORE, EMERALD_ORE, ANCIENT_DEBRIS, GOLD_ORE, IRON_ORE, COAL_ORE -> true;
+            default -> false;
+        };
     }
 }

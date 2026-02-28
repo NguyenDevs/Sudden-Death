@@ -12,6 +12,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Utils.Feature;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -24,15 +25,24 @@ public class ZombieToolsFeature extends AbstractFeature {
         GOLDEN("GOLDEN", "gold-chance"),
         IRON("IRON", "iron-chance"),
         WOODEN("WOODEN", "wood-chance");
+
         final String prefix;
         final String configKey;
-        ToolTier(String prefix, String configKey) { this.prefix = prefix; this.configKey = configKey; }
+
+        ToolTier(String prefix, String configKey) {
+            this.prefix = prefix;
+            this.configKey = configKey;
+        }
     }
 
     private enum ToolType {
         AXE("_AXE"), PICKAXE("_PICKAXE"), SHOVEL("_SHOVEL");
+
         final String suffix;
-        ToolType(String suffix) { this.suffix = suffix; }
+
+        ToolType(String suffix) {
+            this.suffix = suffix;
+        }
     }
 
     @Override
@@ -44,11 +54,8 @@ public class ZombieToolsFeature extends AbstractFeature {
     public void onZombieSpawn(CreatureSpawnEvent event) {
         if (!(event.getEntity() instanceof Zombie zombie)) return;
         if (zombie.hasMetadata("SDCustomMob")) return;
-
         if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie)) return;
-
-        double spawnChance = Feature.ZOMBIE_TOOLS.getDouble("chance-percent") / 100.0;
-        if (RANDOM.nextDouble() > spawnChance) return;
+        if (RANDOM.nextDouble() > Feature.ZOMBIE_TOOLS.getDouble("chance-percent") / 100.0) return;
 
         ToolTier tier = selectTier();
         if (tier == null) return;
@@ -58,38 +65,33 @@ public class ZombieToolsFeature extends AbstractFeature {
         if (mat == null) return;
 
         ItemStack tool = new ItemStack(mat);
-        double enchantChance = Feature.ZOMBIE_TOOLS.getDouble("enchantment-chance") / 100.0;
-        if (RANDOM.nextDouble() <= enchantChance) {
+        if (RANDOM.nextDouble() <= Feature.ZOMBIE_TOOLS.getDouble("enchantment-chance") / 100.0) {
             applyRandomEnchants(tool);
         }
 
-        if (zombie.getEquipment() != null) {
-            zombie.getEquipment().setItemInMainHand(tool);
-            zombie.getEquipment().setItemInMainHandDropChance(0.0f);
-            zombie.setCanPickupItems(false);
-        }
+        zombie.getEquipment();
+        zombie.getEquipment().setItemInMainHand(tool);
+        zombie.getEquipment().setItemInMainHandDropChance(0.0f);
+        zombie.setCanPickupItems(false);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onZombieDeath(EntityDeathEvent event) {
         if (!(event.getEntity() instanceof Zombie zombie)) return;
         if (!Feature.ZOMBIE_TOOLS.isEnabled(zombie)) return;
+        if (RANDOM.nextDouble() > Feature.ZOMBIE_TOOLS.getDouble("drop-chance-percent") / 100.0) return;
 
-        double dropChance = Feature.ZOMBIE_TOOLS.getDouble("drop-chance-percent") / 100.0;
-        if (RANDOM.nextDouble() > dropChance) return;
+        zombie.getEquipment();
+        ItemStack mainHand = zombie.getEquipment().getItemInMainHand();
+        if (!isTool(mainHand.getType())) return;
 
-        ItemStack mainHand = zombie.getEquipment() != null ? zombie.getEquipment().getItemInMainHand() : null;
-        if (mainHand != null && isTool(mainHand.getType())) {
-            ItemStack dropItem = mainHand.clone();
-            ItemMeta meta = dropItem.getItemMeta();
-            if (meta instanceof Damageable damageable) {
-                int maxDurability = dropItem.getType().getMaxDurability();
-                int damage = ThreadLocalRandom.current().nextInt(maxDurability);
-                damageable.setDamage(damage);
-                dropItem.setItemMeta(meta);
-            }
-            zombie.getWorld().dropItemNaturally(zombie.getLocation(), dropItem);
+        ItemStack dropItem = mainHand.clone();
+        ItemMeta meta = dropItem.getItemMeta();
+        if (meta instanceof Damageable damageable) {
+            damageable.setDamage(ThreadLocalRandom.current().nextInt(dropItem.getType().getMaxDurability()));
+            dropItem.setItemMeta(meta);
         }
+        zombie.getWorld().dropItemNaturally(zombie.getLocation(), dropItem);
     }
 
     private ToolTier selectTier() {
@@ -99,34 +101,32 @@ public class ZombieToolsFeature extends AbstractFeature {
         double iron = Feature.ZOMBIE_TOOLS.getDouble("iron-chance");
         double wood = Feature.ZOMBIE_TOOLS.getDouble("wood-chance");
         double total = netherite + diamond + gold + iron + wood;
-        double randomVal = RANDOM.nextDouble() * total;
+        double roll = RANDOM.nextDouble() * total;
 
-        if (randomVal <= netherite) return ToolTier.NETHERITE;
-        if (randomVal <= netherite + diamond) return ToolTier.DIAMOND;
-        if (randomVal <= netherite + diamond + gold) return ToolTier.GOLDEN;
-        if (randomVal <= netherite + diamond + gold + iron) return ToolTier.IRON;
+        if (roll <= netherite) return ToolTier.NETHERITE;
+        if (roll <= netherite + diamond) return ToolTier.DIAMOND;
+        if (roll <= netherite + diamond + gold) return ToolTier.GOLDEN;
+        if (roll <= netherite + diamond + gold + iron) return ToolTier.IRON;
         return ToolTier.WOODEN;
     }
 
     private void applyRandomEnchants(ItemStack item) {
-        int maxEnchants = (int) Feature.ZOMBIE_TOOLS.getDouble("max-enchantments");
-        int count = RANDOM.nextInt(maxEnchants) + 1;
-        List<Enchantment> possibleEnchants = new ArrayList<>();
-        possibleEnchants.add(Enchantment.DIG_SPEED);
-        possibleEnchants.add(Enchantment.DURABILITY);
-        possibleEnchants.add(Enchantment.LOOT_BONUS_BLOCKS);
+        int count = RANDOM.nextInt((int) Feature.ZOMBIE_TOOLS.getDouble("max-enchantments")) + 1;
+        List<Enchantment> possible = new ArrayList<>(List.of(
+                Enchantment.EFFICIENCY,
+                Enchantment.UNBREAKING,
+                Enchantment.FORTUNE
+        ));
         if (item.getType().name().contains("_AXE")) {
-            possibleEnchants.add(Enchantment.DAMAGE_ALL);
-            possibleEnchants.add(Enchantment.DAMAGE_UNDEAD);
+            possible.add(Enchantment.SHARPNESS);
+            possible.add(Enchantment.SMITE);
         }
-        for (int i = 0; i < count; i++) {
-            if (possibleEnchants.isEmpty()) break;
-            Enchantment enchant = possibleEnchants.get(RANDOM.nextInt(possibleEnchants.size()));
+        for (int i = 0; i < count && !possible.isEmpty(); i++) {
+            Enchantment enchant = possible.remove(RANDOM.nextInt(possible.size()));
             int level = RANDOM.nextInt(enchant.getMaxLevel()) + enchant.getStartLevel();
             try {
                 item.addUnsafeEnchantment(enchant, level);
             } catch (Exception ignored) {}
-            possibleEnchants.remove(enchant);
         }
     }
 

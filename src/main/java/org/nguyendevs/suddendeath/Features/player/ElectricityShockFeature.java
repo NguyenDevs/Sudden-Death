@@ -10,6 +10,7 @@ import org.nguyendevs.suddendeath.Features.base.AbstractFeature;
 import org.nguyendevs.suddendeath.Player.PlayerData;
 import org.nguyendevs.suddendeath.Utils.Feature;
 import org.nguyendevs.suddendeath.Utils.Utils;
+
 import java.util.logging.Level;
 
 public class ElectricityShockFeature extends AbstractFeature {
@@ -28,8 +29,7 @@ public class ElectricityShockFeature extends AbstractFeature {
 
         try {
             PlayerData data = PlayerData.get(player);
-            if (data == null) return;
-            if (data.isOnCooldown(Feature.ELECTRICITY_SHOCK)) return;
+            if (data == null || data.isOnCooldown(Feature.ELECTRICITY_SHOCK)) return;
             if (!isPoweredRedstoneBlock(player.getLocation().getBlock())) return;
 
             data.applyCooldown(Feature.ELECTRICITY_SHOCK, 3);
@@ -40,25 +40,26 @@ public class ElectricityShockFeature extends AbstractFeature {
     }
 
     private void applyElectricityShock(Player player) {
-        player.getWorld().spawnParticle(Particle.SNOW_SHOVEL, player.getLocation(), 16, 0, 0, 0, 0.15);
-        player.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, player.getLocation(), 24, 0, 0, 0, 0.15);
+        World world = player.getWorld();
+        Location loc = player.getLocation();
+        world.spawnParticle(Particle.ITEM_SNOWBALL, loc, 16, 0, 0, 0, 0.15);
+        world.spawnParticle(Particle.FIREWORK, loc, 24, 0, 0, 0, 0.15);
         Utils.damage(player, Feature.ELECTRICITY_SHOCK.getDouble("damage"), true);
 
         new BukkitRunnable() {
             int ticksPassed = 0;
+
             @Override
             public void run() {
                 try {
-                    ticksPassed++;
-                    if (ticksPassed > 15) {
+                    if (ticksPassed++ > 15) {
                         cancel();
                         return;
                     }
                     player.playHurtAnimation(0.002f);
                     player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1.0f, 1.2f);
                 } catch (Exception e) {
-                    plugin.getLogger().log(Level.WARNING,
-                            "Error in ElectricityShockFeature task", e);
+                    plugin.getLogger().log(Level.WARNING, "Error in ElectricityShockFeature task", e);
                     cancel();
                 }
             }
@@ -75,9 +76,6 @@ public class ElectricityShockFeature extends AbstractFeature {
     private boolean hasMovedBlock(PlayerMoveEvent event) {
         Location from = event.getFrom();
         Location to = event.getTo();
-        return to != null &&
-                (from.getBlockX() != to.getBlockX() ||
-                        from.getBlockY() != to.getBlockY() ||
-                        from.getBlockZ() != to.getBlockZ());
+        return from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ();
     }
 }

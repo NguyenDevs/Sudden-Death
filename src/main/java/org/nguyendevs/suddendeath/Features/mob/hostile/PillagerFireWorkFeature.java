@@ -28,17 +28,17 @@ public class PillagerFireWorkFeature extends AbstractFeature {
     }
 
     @EventHandler
-    public void onPillagerShoot(EntityShootBowEvent event){
-        if(!(event.getEntity() instanceof Pillager pillager)) return;
-        if(event.getBow() == null || event.getBow().getType() != Material.CROSSBOW) return;
-        if(!Feature.FIREWORK_ARROWS.isEnabled(pillager)) return;
-        if(!(event.getProjectile() instanceof Arrow arrow)) return;
+    public void onPillagerShoot(EntityShootBowEvent event) {
+        if (!(event.getEntity() instanceof Pillager pillager)) return;
+        if (event.getBow() == null || event.getBow().getType() != Material.CROSSBOW) return;
+        if (!Feature.FIREWORK_ARROWS.isEnabled(pillager)) return;
+        if (!(event.getProjectile() instanceof Arrow arrow)) return;
 
-        try{
+        try {
             double chance = Feature.FIREWORK_ARROWS.getDouble("chance-percent") / 100.0;
             if (RANDOM.nextDouble() > chance) return;
 
-            Vector velocity = arrow.getVelocity();
+            Vector velocity = arrow.getVelocity().clone();
             velocity.setY(velocity.getY() * 0.7);
 
             Location spawnLoc = pillager.getEyeLocation()
@@ -48,86 +48,75 @@ public class PillagerFireWorkFeature extends AbstractFeature {
             event.setCancelled(true);
 
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                try{
+                try {
                     Firework firework = pillager.getWorld().spawn(spawnLoc, Firework.class);
                     FireworkMeta meta = firework.getFireworkMeta();
 
-                    Color brown = Color.fromRGB(160,82,45);
-                    Color maroon = Color.MAROON;
-
-                    FireworkEffect effect = FireworkEffect.builder()
+                    meta.addEffect(FireworkEffect.builder()
                             .with(FireworkEffect.Type.BALL)
-                            .withColor(brown, maroon)
+                            .withColor(Color.fromRGB(160, 82, 45), Color.MAROON)
                             .withFade(Color.BLACK)
                             .trail(true)
                             .flicker(true)
-                            .build();
-                    meta.addEffect(effect);
+                            .build());
                     meta.setPower(0);
                     firework.setFireworkMeta(meta);
-
                     firework.setVelocity(velocity);
                     firework.setShooter(pillager);
-
                     firework.setMetadata(FIREWORK_ARROW_KEY, new FixedMetadataValue(plugin, true));
 
-                    pillager.getWorld().playSound(pillager.getLocation(), Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
+                    pillager.getWorld().playSound(pillager.getLocation(),
+                            Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1.0f, 1.0f);
 
-                    new BukkitRunnable(){
+                    new BukkitRunnable() {
                         @Override
-                        public void run(){
-                            if(firework.isDead() || !firework.isValid()) {
-                                cancel();
-                                return;
-                            }
-                            firework.getWorld().spawnParticle(Particle.FIREWORKS_SPARK, firework.getLocation(), 1, 0, 0, 0, 0);
+                        public void run() {
+                            if (firework.isDead() || !firework.isValid()) { cancel(); return; }
+                            firework.getWorld().spawnParticle(Particle.FIREWORK, firework.getLocation(), 1, 0, 0, 0, 0);
                         }
                     }.runTaskTimer(plugin, 1L, 1L);
-                } catch(Exception e){
-                    plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature shoot event", e);
+
+                } catch (Exception e) {
+                    plugin.getLogger().log(Level.WARNING, "Error spawning firework arrow", e);
                 }
             }, RANDOM.nextInt(5) + 1);
-        } catch(Exception e){
-            plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature shoot event", e);
+
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature.onPillagerShoot", e);
         }
     }
 
     @EventHandler
     public void onProjectileHit(ProjectileHitEvent event) {
-        if(!(event.getEntity() instanceof Firework firework)) return;
-        if(!firework.hasMetadata(FIREWORK_ARROW_KEY)) return;
-
+        if (!(event.getEntity() instanceof Firework firework)) return;
+        if (!firework.hasMetadata(FIREWORK_ARROW_KEY)) return;
         firework.detonate();
     }
 
     @EventHandler
-    public void onFireworkExplode(FireworkExplodeEvent event){
-        if(event.getEntity().hasMetadata(FIREWORK_ARROW_KEY)){
-            handleExplosion(event.getEntity());
-        }
+    public void onFireworkExplode(FireworkExplodeEvent event) {
+        if (!event.getEntity().hasMetadata(FIREWORK_ARROW_KEY)) return;
+        handleExplosion(event.getEntity());
     }
 
-    private void handleExplosion(Firework firework){
-        try{
+    private void handleExplosion(Firework firework) {
+        try {
             Location loc = firework.getLocation();
             double range = Feature.FIREWORK_ARROWS.getDouble("area");
             double damage = Feature.FIREWORK_ARROWS.getDouble("damage");
-            double duration = Feature.FIREWORK_ARROWS.getDouble("duration");
+            int durationTicks = (int) (Feature.FIREWORK_ARROWS.getDouble("duration") * 20);
 
             loc.getWorld().playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 2.0f, 0.8f);
             loc.getWorld().playSound(loc, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.5f, 1.0f);
 
-            for(Entity entity : loc.getWorld().getNearbyEntities(loc, range, range, range)){
-                if(entity instanceof Player player && !Utils.hasCreativeGameMode(player)){
-                    Utils.damage(player, damage, true);
-
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.CONFUSION, (int)(duration * 20), 1));
-                    player.playHurtAnimation(0);
-                }
+            for (Entity entity : loc.getWorld().getNearbyEntities(loc, range, range, range)) {
+                if (!(entity instanceof Player player) || Utils.hasCreativeGameMode(player)) continue;
+                Utils.damage(player, damage, true);
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, durationTicks, 1));
+                player.playHurtAnimation(0);
             }
-
-        } catch (Exception e){
-            plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature explode event", e);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Error in PillagerFireworkFeature.handleExplosion", e);
         }
     }
 }

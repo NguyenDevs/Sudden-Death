@@ -1,9 +1,9 @@
 name: SuddenDeath
-version: 2.3.0
+version: 2.3.1
 main: org.nguyendevs.suddendeath.SuddenDeath
 depend: [ProtocolLib]
 softdepend: [WorldGuard, SkinsRestorer]
-api-version: 1.19
+api-version: 1.21
 commands:
   sds:
     description: Shows your current status (bleeding, ...).

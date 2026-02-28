@@ -25,7 +25,7 @@ public class ArrowSlowFeature extends AbstractFeature {
         if (!Feature.ARROW_SLOW.isEnabled(player)) return;
 
         try {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW,
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS,
                     (int) (Feature.ARROW_SLOW.getDouble("slow-duration") * 20), 2));
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in ArrowSlowFeature.onEntityDamageByEntity", e);
