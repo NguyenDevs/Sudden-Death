@@ -10,7 +10,11 @@ import org.nguyendevs.suddendeath.SuddenDeath;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.logging.Level;
+
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 
 public final class Utils {
     private Utils() {
@@ -96,16 +100,46 @@ public final class Utils {
 
         StringBuilder result = new StringBuilder();
 
-        while (input >= 400) { result.append("CD"); input -= 400; }
-        while (input >= 100) { result.append("C");  input -= 100; }
-        while (input >= 90)  { result.append("XC"); input -= 90;  }
-        while (input >= 50)  { result.append("L");  input -= 50;  }
-        while (input >= 40)  { result.append("XL"); input -= 40;  }
-        while (input >= 10)  { result.append("X");  input -= 10;  }
-        while (input >= 9)   { result.append("IX"); input -= 9;   }
-        while (input >= 5)   { result.append("V");  input -= 5;   }
-        while (input >= 4)   { result.append("IV"); input -= 4;   }
-        while (input >= 1)   { result.append("I");  input -= 1;   }
+        while (input >= 400) {
+            result.append("CD");
+            input -= 400;
+        }
+        while (input >= 100) {
+            result.append("C");
+            input -= 100;
+        }
+        while (input >= 90) {
+            result.append("XC");
+            input -= 90;
+        }
+        while (input >= 50) {
+            result.append("L");
+            input -= 50;
+        }
+        while (input >= 40) {
+            result.append("XL");
+            input -= 40;
+        }
+        while (input >= 10) {
+            result.append("X");
+            input -= 10;
+        }
+        while (input >= 9) {
+            result.append("IX");
+            input -= 9;
+        }
+        while (input >= 5) {
+            result.append("V");
+            input -= 5;
+        }
+        while (input >= 4) {
+            result.append("IV");
+            input -= 4;
+        }
+        while (input >= 1) {
+            result.append("I");
+            input -= 1;
+        }
 
         return result.toString();
     }
@@ -122,7 +156,8 @@ public final class Utils {
                 if (isLastSpace && ch >= 'a' && ch <= 'z') {
                     builder.setCharAt(i, (char) (ch - 32));
                     isLastSpace = false;
-                } else isLastSpace = ch == ' ';
+                } else
+                    isLastSpace = ch == ' ';
             }
             return builder.toString();
         } catch (Exception e) {
@@ -175,5 +210,69 @@ public final class Utils {
             SuddenDeath.getInstance().getLogger().log(Level.WARNING, "Error formatting lowercase ID: " + str, e);
             return str;
         }
+    }
+
+    public static Component color(String str) {
+        if (str == null || str.isEmpty()) {
+            return Component.empty();
+        }
+
+        char[] chars = str.toCharArray();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] == '&' && i + 1 < chars.length) {
+                char code = Character.toLowerCase(chars[i + 1]);
+                String tag = switch (code) {
+                    case '0' -> "<black>";
+                    case '1' -> "<dark_blue>";
+                    case '2' -> "<dark_green>";
+                    case '3' -> "<dark_aqua>";
+                    case '4' -> "<dark_red>";
+                    case '5' -> "<dark_purple>";
+                    case '6' -> "<gold>";
+                    case '7' -> "<gray>";
+                    case '8' -> "<dark_gray>";
+                    case '9' -> "<blue>";
+                    case 'a' -> "<green>";
+                    case 'b' -> "<aqua>";
+                    case 'c' -> "<red>";
+                    case 'd' -> "<light_purple>";
+                    case 'e' -> "<yellow>";
+                    case 'f' -> "<white>";
+                    case 'k' -> "<obfuscated>";
+                    case 'l' -> "<bold>";
+                    case 'm' -> "<strikethrough>";
+                    case 'n' -> "<underlined>";
+                    case 'o' -> "<italic>";
+                    case 'r' -> "<reset>";
+                    default -> null;
+                };
+                if (tag != null) {
+                    builder.append(tag);
+                    i++;
+                    continue;
+                }
+            }
+            builder.append(chars[i]);
+        }
+
+        String parsed = builder.toString();
+
+        parsed = parsed.replaceAll("&#([A-Fa-f0-9]{6})", "<#$1>");
+        parsed = parsed.replaceAll("</#[A-Fa-f0-9]{6}>", "</color>");
+
+        parsed = parsed.replaceAll("<#([A-Fa-f0-9]{6})>", "<color:#$1>");
+        parsed = parsed.replaceAll("</#([A-Fa-f0-9]{6})>", "</color>");
+
+        return MiniMessage.miniMessage().deserialize(parsed)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC,
+                        net.kyori.adventure.text.format.TextDecoration.State.FALSE);
+    }
+
+    public static List<Component> color(List<String> list) {
+        if (list == null || list.isEmpty()) {
+            return List.of();
+        }
+        return list.stream().map(Utils::color).collect(Collectors.toList());
     }
 }
