@@ -4,7 +4,7 @@ Done with predictable, easy survival worlds? Brace yourself for Sudden Death! Th
 
 ![image](https://github.com/user-attachments/assets/9b628bd9-f92e-4d21-bf58-3f8039309d89)
 ## Survival features
-- **Advanced Player Drops:** Players drop a skull, bones, and human flesh on death. Flesh can be cooked.
+- **Advanced Player Drops:** Players drop a skull, bones, and human flesh on death. Flesh can be cooked
 - **Arrow Slow:** Arrows slow players for a short duration.
 - **Bleeding:** Damage has a chance to cause bleeding, disabling health regen and dealing periodic damage. Stopped with a bandage.
 - **Blood Screen:** Player screen turns red when damaged, based on health or interval.
