@@ -51,7 +51,7 @@ public class BloodScreenFeature extends AbstractFeature {
                         int newDistance = (int) (currentDistance * Feature.BLOOD_SCREEN.getDouble("coefficient"));
                         entry.setValue(newDistance);
 
-                        if (distanceToBorder >= currentDistance) {
+                        if (newDistance <= 0 || distanceToBorder >= currentDistance) {
                             iterator.remove();
                             player.setWorldBorder(null);
                         }
@@ -65,8 +65,14 @@ public class BloodScreenFeature extends AbstractFeature {
 
     private void sendRedScreenEffect(Player player, int warningDistance) {
         WorldBorder original = player.getWorld().getWorldBorder();
+        double originalSize = original.getSize();
+
+        // Guard: WorldBorder size must be between 1.0 and 5.9999968E7
+        if (originalSize < 1.0) return;
+        if (warningDistance <= 0) return;
+
         WorldBorder fakeBorder = Bukkit.createWorldBorder();
-        fakeBorder.setSize(original.getSize());
+        fakeBorder.setSize(Math.max(1.0, Math.min(originalSize, 5.9999968E7)));
         fakeBorder.setCenter(original.getCenter());
         fakeBorder.setDamageBuffer(original.getDamageBuffer());
         fakeBorder.setDamageAmount(original.getDamageAmount());
@@ -94,6 +100,10 @@ public class BloodScreenFeature extends AbstractFeature {
         try {
             WorldBorder border = player.getWorld().getWorldBorder();
             double distance = border.getSize() / 2.0 - player.getLocation().distance(border.getCenter());
+
+            // Guard: if player is outside or exactly at border edge, skip
+            if (distance <= 0) return;
+
             int fakeDistance = (int) (distance * Feature.BLOOD_SCREEN.getDouble("interval"));
 
             FadingType mode = FadingType.valueOf(Feature.BLOOD_SCREEN.getString("mode"));
@@ -102,7 +112,11 @@ public class BloodScreenFeature extends AbstractFeature {
             } else if (mode == FadingType.HEALTH) {
                 fakeDistance *= Math.max((int) (Objects.requireNonNull(player.getAttribute(Attribute.GENERIC_MAX_HEALTH)).getValue() - player.getHealth()), 1);
             }
-            plugin.getPlayers().put(player, Math.abs(fakeDistance));
+
+            // Ensure fakeDistance is a meaningful positive value
+            int finalDistance = Math.abs(fakeDistance);
+            if (finalDistance <= 0) return;
+            plugin.getPlayers().put(player, finalDistance);
             spawnBleedingParticles(player);
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Error in BloodScreenFeature.onEntityDamage", e);
