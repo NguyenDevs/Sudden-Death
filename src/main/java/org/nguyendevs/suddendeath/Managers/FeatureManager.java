@@ -90,6 +90,7 @@ public class FeatureManager {
     }
 
     private void initializeFeatureConfigs() {
+        List<EntityType> livingTypes = Utils.getLivingEntityTypes();
         for (Feature feature : Feature.values()) {
             feature.updateConfig();
             ConfigFile modifiers = feature.getConfigFile();
@@ -102,7 +103,7 @@ public class FeatureManager {
                     modifiers.getConfig().set(mod.name(), mod.value());
                     saveNeeded = true;
                 } else if (mod.type() == Modifier.Type.EACH_MOB) {
-                    for (EntityType type : Utils.getLivingEntityTypes()) {
+                    for (EntityType type : livingTypes) {
                         String path = mod.name() + "." + type.name();
                         if (!modifiers.getConfig().contains(path)) {
                             modifiers.getConfig().set(path, mod.value());

@@ -12,6 +12,7 @@ import org.nguyendevs.suddendeath.Player.Modifier.Type;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public enum Feature {
 
@@ -746,6 +747,8 @@ public enum Feature {
 	private final Function<World, WorldEventHandler> event;
 	private ConfigFile configFile;
 
+	private static final Map<String, Set<String>> enabledWorldsCache = new HashMap<>();
+
 	Feature(String defaultName, String[] defaultLore, String path, Modifier[] modifiers) {
 		this(defaultName, defaultLore, path, modifiers, null);
 	}
@@ -858,13 +861,22 @@ public enum Feature {
 
 	public boolean isEnabled(World world) {
 		try {
-			List<String> enabledWorlds = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
-					.getStringList(path);
-			return enabledWorlds.contains(world.getName());
+			Set<String> enabled = enabledWorldsCache.get(path);
+			if (enabled == null) {
+				List<String> list = SuddenDeath.getInstance().getConfigManager().getMainConfig().getConfig()
+						.getStringList(path);
+				enabled = Set.copyOf(list);
+				enabledWorldsCache.put(path, enabled);
+			}
+			return enabled.contains(world.getName());
 		} catch (Exception e) {
 			SuddenDeath.getInstance().getLogger().log(Level.WARNING,
 					"Error while checking feature " + name + " the world " + world.getName(), e);
 			return false;
 		}
+	}
+
+	public static void invalidateCache() {
+		enabledWorldsCache.clear();
 	}
 }

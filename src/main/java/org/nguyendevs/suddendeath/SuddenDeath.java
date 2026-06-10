@@ -147,15 +147,13 @@ public class SuddenDeath extends JavaPlugin {
     public void reloadConfigFiles() {
         List<Player> adminViewPlayers = new ArrayList<>();
         for (Player p : Bukkit.getOnlinePlayers()) {
-            p.getOpenInventory();
-            if (p.getOpenInventory().getTopInventory().getHolder() instanceof AdminView) {
+            var inventory = p.getOpenInventory().getTopInventory();
+            var holder = inventory.getHolder();
+            if (holder instanceof AdminView) {
                 adminViewPlayers.add(p);
                 p.closeInventory();
-            } else {
-                p.getOpenInventory();
-                if (p.getOpenInventory().getTopInventory().getHolder() instanceof PluginInventory) {
-                    p.closeInventory();
-                }
+            } else if (holder instanceof PluginInventory) {
+                p.closeInventory();
             }
         }
 

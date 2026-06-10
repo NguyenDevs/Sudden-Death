@@ -72,6 +72,8 @@ public class ConfigurationManager {
         items.reload();
         features.reload();
 
+        Feature.invalidateCache();
+
         loadMobConfigs();
 
         initializeDefaultMessages();
@@ -85,7 +87,7 @@ public class ConfigurationManager {
     private void loadMobConfigs() {
         mobConfigs.clear();
         for (EntityType type : EntityType.values()) {
-            if (type.isAlive()) {
+            if (type.isAlive() && type.isSpawnable()) {
                 ConfigFile mobConfig = new ConfigFile(plugin, "/customMobs", Utils.lowerCaseId(type.name()));
                 mobConfig.setup();
                 mobConfigs.put(type, mobConfig);
@@ -113,7 +115,7 @@ public class ConfigurationManager {
             }
         }
         for (EntityType type : EntityType.values()) {
-            if (type.isAlive() && !configSection.contains("default-spawn-coef." + type.name())) {
+            if (type.isAlive() && type.isSpawnable() && !configSection.contains("default-spawn-coef." + type.name())) {
                 configSection.set("default-spawn-coef." + type.name(), 20);
             }
         }

@@ -87,10 +87,19 @@ public final class Utils {
         }
     }
 
+    private static List<EntityType> livingEntityTypes = null;
+
     public static List<EntityType> getLivingEntityTypes() {
-        return Arrays.stream(EntityType.values())
-                .filter(type -> type.isSpawnable() && type.isAlive())
-                .toList();
+        if (livingEntityTypes == null) {
+            livingEntityTypes = Arrays.stream(EntityType.values())
+                    .filter(type -> type.isSpawnable() && type.isAlive())
+                    .toList();
+        }
+        return livingEntityTypes;
+    }
+
+    public static void invalidateLivingEntityCache() {
+        livingEntityTypes = null;
     }
 
     public static String intToRoman(int input) {
